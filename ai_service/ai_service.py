@@ -24,7 +24,7 @@ app.add_middleware(
 )
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
-DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
 AUDIO_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "audio_outputs")
 os.makedirs(AUDIO_OUTPUT_DIR, exist_ok=True)
 
