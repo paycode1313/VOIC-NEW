@@ -64,10 +64,18 @@
                 <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xs border border-gray-100 dark:border-gray-700/60 p-6 sm:p-8">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                         <div>
-                            <span class="text-xs font-bold px-3 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full uppercase tracking-wider">
-                                Langkah 1: Pilih Karakter AI Penguji
-                            </span>
-                            <h3 class="text-xl font-extrabold text-gray-900 dark:text-white mt-2">
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <span class="text-xs font-bold px-3 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full uppercase tracking-wider">
+                                    Langkah 1: Pilih Karakter AI Penguji
+                                </span>
+                                <template x-if="ollamaStatus.checked && ollamaStatus.active">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        🧠 Ollama LLM Aktif (<span x-text="ollamaStatus.model"></span>)
+                                    </span>
+                                </template>
+                            </div>
+                            <h3 class="text-xl font-extrabold text-gray-900 dark:text-white mt-1">
                                 Siapa yang Akan Menguji & Mengevaluasi Anda Hari Ini?
                             </h3>
                             <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -185,6 +193,12 @@
                                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300">
                                     Live Roleplay
                                 </span>
+                                <template x-if="ollamaStatus.checked && ollamaStatus.active">
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center gap-1 border border-indigo-200 dark:border-indigo-800">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                                        Ollama: <span x-text="ollamaStatus.model"></span>
+                                    </span>
+                                </template>
                             </div>
                             <p class="text-xs text-gray-400">
                                 Durasi Sesi: <span class="font-mono font-bold text-gray-700 dark:text-gray-200" x-text="formattedTime"></span>
@@ -429,6 +443,9 @@
                 isStarting: false,
                 isFinishing: false,
 
+                // Ollama Engine Status
+                ollamaStatus: { checked: false, active: false, model: 'qwen2.5:3b' },
+
                 // Hardware & Media
                 mediaStream: null,
                 audioContext: null,
@@ -465,6 +482,22 @@
                 secondsElapsed: 0,
                 sessionTimerInterval: null,
                 telemetrySamplerInterval: null,
+
+                async init() {
+                    try {
+                        const res = await fetch('http://127.0.0.1:8001/health/ollama');
+                        if (res.ok) {
+                            const data = await res.json();
+                            this.ollamaStatus = {
+                                checked: true,
+                                active: !!data.ollama_active,
+                                model: (data.available_models && data.available_models.length > 0) ? data.available_models[0] : 'qwen2.5:3b'
+                            };
+                        }
+                    } catch (e) {
+                        this.ollamaStatus = { checked: true, active: false, model: null };
+                    }
+                },
 
                 selectRole(role) {
                     this.selectedRole = role;
