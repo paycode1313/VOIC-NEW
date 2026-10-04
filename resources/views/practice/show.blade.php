@@ -4,13 +4,13 @@
             <div>
                 <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1">
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    Sesi Latihan Selesai • Hasil Analisis AI
+                    Sesi Latihan Selesai • Hasil Rapor Evaluasi AI
                 </div>
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {{ __('Laporan Evaluasi Performa') }}
+                    {{ __('Laporan Evaluasi Performa Interaktif') }}
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Sesi #{{ $session->id }} • {{ $session->scenario_type }} • {{ $session->created_at->format('d M Y, H:i') }} WIB
+                    Sesi #{{ $session->id }} • {{ $session->aiRole ? $session->aiRole->name : $session->scenario_type }} • {{ $session->created_at->format('d M Y, H:i') }} WIB
                 </p>
             </div>
 
@@ -44,26 +44,78 @@
                             <span>Predikat: {{ $session->overall_score >= 85 ? 'Sangat Baik (Distinction)' : ($session->overall_score >= 70 ? 'Cukup Baik (Pass)' : 'Perlu Peningkatan') }}</span>
                         </div>
                         <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                            Evaluasi Skenario: {{ $session->scenario_type }}
+                            Evaluasi Simulasi: {{ $session->scenario_type }}
                         </h1>
                         <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xl">
-                            Durasi latihan: <strong>{{ floor($session->duration_seconds / 60) }} menit {{ $session->duration_seconds % 60 }} detik</strong>. Data telemetri kamera dan suara telah diproses oleh modul evaluasi VOIC.
+                            Durasi latihan: <strong>{{ floor($session->duration_seconds / 60) }} menit {{ $session->duration_seconds % 60 }} detik</strong>.
+                            Karakter Penguji: <strong>{{ $session->aiRole ? $session->aiRole->name : 'Evaluator AI' }}</strong>.
                         </p>
                     </div>
 
-                    <!-- Score Dial Badge -->
-                    <div class="shrink-0 flex flex-col items-center">
-                        <div class="relative w-36 h-36 rounded-full flex items-center justify-center bg-gradient-to-tr {{ $session->overall_score >= 80 ? 'from-emerald-500 to-teal-400 shadow-emerald-500/25' : ($session->overall_score >= 65 ? 'from-amber-500 to-yellow-400 shadow-amber-500/25' : 'from-rose-500 to-pink-500 shadow-rose-500/25') }} text-white shadow-2xl p-1.5 ring-8 ring-gray-50 dark:ring-gray-750">
+                    <!-- Triple Score Summary (Face, Voice, Overall) -->
+                    <div class="flex flex-wrap items-center justify-center gap-4">
+                        <!-- Face Score -->
+                        @if($session->face_score !== null)
+                            <div class="flex flex-col items-center p-3 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 w-28 text-center">
+                                <span class="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400">Skor Wajah</span>
+                                <span class="text-2xl font-black text-indigo-700 dark:text-indigo-300 mt-0.5">
+                                    {{ number_format($session->face_score, 1) }}
+                                </span>
+                                <span class="text-[9px] text-gray-400">Optik Kamera</span>
+                            </div>
+                        @endif
+
+                        <!-- Voice Score -->
+                        @if($session->voice_score !== null)
+                            <div class="flex flex-col items-center p-3 rounded-2xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/60 w-28 text-center">
+                                <span class="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400">Skor Suara</span>
+                                <span class="text-2xl font-black text-purple-700 dark:text-purple-300 mt-0.5">
+                                    {{ number_format($session->voice_score, 1) }}
+                                </span>
+                                <span class="text-[9px] text-gray-400">Artikulasi</span>
+                            </div>
+                        @endif
+
+                        <!-- Overall Score Dial -->
+                        <div class="relative w-32 h-32 rounded-full flex items-center justify-center bg-gradient-to-tr {{ $session->overall_score >= 80 ? 'from-emerald-500 to-teal-400 shadow-emerald-500/25' : ($session->overall_score >= 65 ? 'from-amber-500 to-yellow-400 shadow-amber-500/25' : 'from-rose-500 to-pink-500 shadow-rose-500/25') }} text-white shadow-2xl p-1 ring-6 ring-gray-50 dark:ring-gray-750">
                             <div class="w-full h-full rounded-full bg-white dark:bg-gray-800 flex flex-col items-center justify-center text-gray-900 dark:text-white">
-                                <span class="text-3xl sm:text-4xl font-black tracking-tight {{ $session->overall_score >= 80 ? 'text-emerald-600 dark:text-emerald-400' : ($session->overall_score >= 65 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400') }}">
+                                <span class="text-3xl font-black tracking-tight {{ $session->overall_score >= 80 ? 'text-emerald-600 dark:text-emerald-400' : ($session->overall_score >= 65 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400') }}">
                                     {{ number_format($session->overall_score, 1) }}
                                 </span>
-                                <span class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Skor Total</span>
+                                <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Skor Total</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Official AI Conclusion Card -->
+            @if($session->ai_conclusion)
+                <div class="p-6 rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-950 to-purple-950 text-white shadow-xl border border-indigo-800/60 relative overflow-hidden">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl shrink-0 border border-white/20">
+                            @if($session->aiRole && $session->aiRole->role_type === 'dosen_penguji')
+                                🎓
+                            @elseif($session->aiRole && $session->aiRole->role_type === 'hrd')
+                                💼
+                            @else
+                                🚀
+                            @endif
+                        </div>
+                        <div class="space-y-1">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+                                Kesimpulan Resmi Penguji (AI Roleplay Verdict)
+                            </span>
+                            <h3 class="text-lg font-bold text-white">
+                                {{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}
+                            </h3>
+                            <p class="text-xs sm:text-sm text-indigo-100 leading-relaxed pt-1">
+                                "{{ $session->ai_conclusion }}"
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <!-- 4 Parameters Telemetry Grid -->
             @php
@@ -148,6 +200,68 @@
                 </div>
             </div>
 
+            <!-- Dialogue History & Turn-by-Turn Facial Timeline -->
+            @if($session->messages && $session->messages->count() > 0)
+                <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xs border border-gray-100 dark:border-gray-700/60 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60">
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                <span>💬</span>
+                                <span>Riwayat Obrolan Bolak-Balik & Status Ekspresi Wajah</span>
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Rekaman ucapan beserta telemetri ekspresi pada detik terjadinya percakapan.
+                            </p>
+                        </div>
+                        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                            {{ $session->messages->count() }} Giliran Bicara
+                        </span>
+                    </div>
+
+                    <div class="space-y-4 pt-2">
+                        @foreach($session->messages as $msg)
+                            <div class="flex flex-col {{ $msg->sender === 'user' ? 'items-end' : 'items-start' }}">
+                                <div class="flex items-center gap-2 text-[11px] text-gray-400 mb-1">
+                                    <span class="font-bold {{ $msg->sender === 'user' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300' }}">
+                                        {{ $msg->sender === 'user' ? 'Anda' : ($session->aiRole ? $session->aiRole->name : 'AI Evaluator') }}
+                                    </span>
+                                    <span>• Detik {{ $msg->timestamp_seconds ?? 0 }}s</span>
+
+                                    <!-- Facial Status Tag for User -->
+                                    @if($msg->sender === 'user' && !empty($msg->facial_status))
+                                        @php
+                                            $st = $msg->facial_status['status'] ?? 'fokus';
+                                            $eye = $msg->facial_status['eye_contact_score'] ?? null;
+                                        @endphp
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $st === 'tegang' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : ($st === 'tersenyum' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : ($st === 'mata_melenceng' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300')) }}">
+                                            @if($st === 'tegang') 😬 Tegang
+                                            @elseif($st === 'tersenyum') 😊 Senyum Rileks
+                                            @elseif($st === 'mata_melenceng') 👀 Tatapan Melenceng
+                                            @else 🎯 Fokus
+                                            @endif
+                                            @if($eye) ({{ $eye }}%) @endif
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <div class="p-4 rounded-2xl text-xs sm:text-sm leading-relaxed max-w-[85%] {{ $msg->sender === 'user' ? 'bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-600/10' : 'bg-gray-50 dark:bg-gray-750 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200 dark:border-gray-700/60' }}">
+                                    <p>{{ $msg->message }}</p>
+
+                                    @if($msg->audio_url)
+                                        <div class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700/60 flex items-center gap-2">
+                                            <audio controls class="h-8 max-w-xs">
+                                                <source src="{{ $msg->audio_url }}" type="audio/mpeg">
+                                                Browser tidak mendukung audio.
+                                            </audio>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             <!-- AI Qualitative Feedback Section -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -162,7 +276,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </span>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Ulasan Komprehensif AI</h3>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Ulasan Analisis AI</h3>
                         </div>
                         <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-750/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/40">
                             {{ $feedback['summary'] ?? 'Sesi latihan telah selesai dianalisis dengan baik.' }}
@@ -220,7 +334,7 @@
                                 @else
                                     <li class="flex items-start gap-2">
                                         <span class="text-amber-500 font-bold shrink-0">→</span>
-                                        <span>Kurangi jeda jeda kosong dan atur pernapasan lebih tenang.</span>
+                                        <span>Kurangi jeda kosong dan atur pernapasan lebih tenang.</span>
                                     </li>
                                     <li class="flex items-start gap-2">
                                         <span class="text-amber-500 font-bold shrink-0">→</span>
@@ -241,24 +355,24 @@
                             <span>Rekomendasi Skenario</span>
                         </h4>
                         <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
-                            Untuk skenario <strong>{{ $session->scenario_type }}</strong>, pertahankan ritme pemaparan dan usahakan jeda antar slide/poin tidak melebihi 2 detik.
+                            Untuk skenario <strong>{{ $session->scenario_type }}</strong>, pertahankan ritme pemaparan dan usahakan jeda antar kalimat tidak melebihi 1,5 detik.
                         </p>
 
                         <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs text-indigo-900 dark:text-indigo-200 space-y-2">
                             <div class="font-bold">Kunci Sukses Pameran Innofest:</div>
                             <p class="text-indigo-800/80 dark:text-indigo-300">
-                                Tunjukkan kepada juri perbandingan skor sebelum dan sesudah latihan untuk memperlihatkan progres nyata berkat bimbingan AI VOIC!
+                                Tunjukkan kepada juri perbandingan skor optik kamera dan suara sebelum vs sesudah latihan untuk memperlihatkan progres nyata berkat bimbingan VOIC AI!
                             </p>
                         </div>
 
                         <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-750 flex flex-col gap-3">
                             <a href="{{ route('practice.create') }}"
                                class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition shadow-md shadow-indigo-600/20">
-                                Ulangi Skenario Ini
+                                Latihan dengan Karakter Lain
                             </a>
                             <a href="{{ route('dashboard') }}"
                                class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition">
-                                Lihat Grafik di Dashboard
+                                Kembali ke Dashboard
                             </a>
                         </div>
                     </div>

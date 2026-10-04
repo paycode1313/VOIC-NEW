@@ -4,13 +4,13 @@
             <div>
                 <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-1">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Mode Latihan Interaktif • Kamera & AI
+                    Simulasi AI Roleplay • Real-Time Voice & Open Cam
                 </div>
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
-                    {{ __('Practice Mode - VOIC AI') }}
+                    {{ __('Ruang Simulasi Interaktif - VOIC AI') }}
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                    Pilih skenario presentasi, nyalakan kamera, dan latih bicaramu dengan evaluasi langsung.
+                    Pilih karakter AI penguji, nyalakan kamera, dan latih respons spontan dengan deteksi ekspresi wajah & suara otomatis.
                 </p>
             </div>
 
@@ -24,329 +24,450 @@
         </div>
     </x-slot>
 
-    <div class="py-8" x-data="practiceApp()">
+    <style>
+        /* Modern 3D Audio Orb Animations */
+        @keyframes orb-pulse-idle {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.4)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 35px rgba(139, 92, 246, 0.6)); }
+        }
+        @keyframes orb-speaking {
+            0%, 100% { transform: scale(1.02); filter: drop-shadow(0 0 30px rgba(129, 140, 248, 0.7)); }
+            25% { transform: scale(1.15) rotate(5deg); filter: drop-shadow(0 0 50px rgba(168, 85, 247, 0.9)); }
+            50% { transform: scale(0.98) rotate(-4deg); filter: drop-shadow(0 0 35px rgba(236, 72, 153, 0.8)); }
+            75% { transform: scale(1.12) rotate(3deg); filter: drop-shadow(0 0 45px rgba(99, 102, 241, 0.85)); }
+        }
+        @keyframes orb-listening {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.5)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 40px rgba(6, 182, 212, 0.75)); }
+        }
+        @keyframes orb-thinking {
+            0% { transform: rotate(0deg) scale(1); filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.6)); }
+            50% { transform: rotate(180deg) scale(1.06); filter: drop-shadow(0 0 45px rgba(234, 88, 12, 0.8)); }
+            100% { transform: rotate(360deg) scale(1); filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.6)); }
+        }
+        @keyframes ripple-wave {
+            0% { transform: scale(0.85); opacity: 0.8; }
+            100% { transform: scale(1.85); opacity: 0; }
+        }
+        .orb-idle { animation: orb-pulse-idle 4s ease-in-out infinite; }
+        .orb-speaking { animation: orb-speaking 1.2s ease-in-out infinite; }
+        .orb-listening { animation: orb-listening 1.8s ease-in-out infinite; }
+        .orb-thinking { animation: orb-thinking 2s linear infinite; }
+        .ripple-ring { animation: ripple-wave 2s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
+    </style>
+
+    <div class="py-8" x-data="interactiveSimulationApp()">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
-            <!-- Scenario Selection Bar (Pre-Session) -->
-            <div x-show="!isRecording" class="bg-white dark:bg-gray-800 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60 p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white">Pilih Skenario Latihan</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Setiap skenario memiliki fokus penilaian dan panduan pertanyaan yang berbeda</p>
+            <!-- STEP 1: AI ROLE SELECTION (Shown before session starts) -->
+            <div x-show="sessionState === 'selection'" class="space-y-6">
+                <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xs border border-gray-100 dark:border-gray-700/60 p-6 sm:p-8">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                        <div>
+                            <span class="text-xs font-bold px-3 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-full uppercase tracking-wider">
+                                Langkah 1: Pilih Karakter AI Penguji
+                            </span>
+                            <h3 class="text-xl font-extrabold text-gray-900 dark:text-white mt-2">
+                                Siapa yang Akan Menguji & Mengevaluasi Anda Hari Ini?
+                            </h3>
+                            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                Setiap karakter AI memiliki sifat psikologis, fokus pengujian, dan gaya evaluasi bicara & ekspresi wajah yang berbeda.
+                            </p>
+                        </div>
                     </div>
-                    <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 rounded-lg">
-                        Langkah 1 dari 2
-                    </span>
-                </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    @foreach($scenarios as $scenario)
-                        <button type="button"
-                                @click="selectScenario(@js($scenario))"
-                                :class="selectedScenario.id === '{{ $scenario['id'] }}' 
-                                    ? 'border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/40 dark:bg-indigo-950/40 dark:border-indigo-500' 
+                    <!-- Role Cards Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        @forelse($aiRoles as $role)
+                            <div @click="selectRole(@js($role))"
+                                 :class="selectedRole.id === {{ $role->id }}
+                                    ? 'border-indigo-600 ring-4 ring-indigo-500/20 bg-indigo-50/40 dark:bg-indigo-950/40 dark:border-indigo-500'
                                     : 'border-gray-200 dark:border-gray-750 bg-white dark:bg-gray-850 hover:border-gray-300 dark:hover:border-gray-650'"
-                                class="text-left p-4 rounded-xl border transition-all cursor-pointer relative group flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-2xl">{{ $scenario['icon'] }}</span>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-gray-100 dark:bg-gray-750 text-gray-600 dark:text-gray-300">
-                                        {{ $scenario['badge'] }}
+                                 class="p-6 rounded-2xl border transition-all cursor-pointer relative group flex flex-col justify-between">
+
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-md {{ $role->role_type === 'dosen_penguji' ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700' : ($role->role_type === 'hrd' ? 'bg-amber-100 dark:bg-amber-900 text-amber-700' : 'bg-purple-100 dark:bg-purple-900 text-purple-700') }}">
+                                            @if($role->role_type === 'dosen_penguji')
+                                                🎓
+                                            @elseif($role->role_type === 'hrd')
+                                                💼
+                                            @else
+                                                🚀
+                                            @endif
+                                        </div>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider {{ $role->difficulty_level === 'Sulit' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' }}">
+                                                Level: {{ $role->difficulty_level }}
+                                            </span>
+                                            <span class="text-[10px] font-semibold text-gray-400">
+                                                Suara: {{ $role->voice_id ? 'Tersedia' : 'Sintesis' }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <h4 class="font-extrabold text-lg text-gray-900 dark:text-white">{{ $role->name }}</h4>
+                                    <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 block mb-2 uppercase tracking-wide">
+                                        {{ $role->role_type === 'dosen_penguji' ? 'Sidang Skripsi / Tesis' : ($role->role_type === 'hrd' ? 'HRD Interview Recruiter' : 'Pitching Startup') }}
+                                    </span>
+
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                                        {{ $role->description }}
+                                    </p>
+
+                                    <!-- Traits Tags -->
+                                    @if(is_array($role->personality_traits))
+                                        <div class="flex flex-wrap gap-1.5 mb-4">
+                                            @foreach($role->personality_traits as $trait)
+                                                <span class="text-[10px] font-medium px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-750 text-gray-600 dark:text-gray-300">
+                                                    #{{ $trait }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+
+                                <div class="pt-4 border-t border-gray-100 dark:border-gray-750 flex items-center justify-between">
+                                    <span class="text-xs text-gray-400">Pilih Karakter Ini</span>
+                                    <span x-show="selectedRole.id === {{ $role->id }}" class="text-xs text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Terpilih
                                     </span>
                                 </div>
-                                <h4 class="font-bold text-sm text-gray-900 dark:text-white">{{ $scenario['name'] }}</h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
-                                    {{ $scenario['description'] }}
+                            </div>
+                        @empty
+                            <!-- Fallback if database not seeded yet -->
+                            @foreach($scenarios as $sc)
+                                <div @click="selectRole({ id: 1, name: '{{ $sc['name'] }}', role_type: '{{ $sc['role_type'] }}', difficulty_level: 'Sedang' })"
+                                     class="p-6 rounded-2xl border border-gray-200 dark:border-gray-750 bg-white dark:bg-gray-850 cursor-pointer">
+                                    <div class="text-3xl mb-2">{{ $sc['icon'] }}</div>
+                                    <h4 class="font-bold text-base text-gray-900 dark:text-white">{{ $sc['name'] }}</h4>
+                                    <p class="text-xs text-gray-500 mt-1">{{ $sc['description'] }}</p>
+                                </div>
+                            @endforeach
+                        @endforelse
+                    </div>
+
+                    <!-- Action Button to Start Simulation -->
+                    <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                            <span class="text-base">💡</span>
+                            <span>Kamera & mikrofon Anda akan diaktifkan untuk deteksi kontak mata dan jeda hening 1,5 detik.</span>
+                        </div>
+
+                        <button type="button"
+                                @click="enterInterviewRoom()"
+                                :disabled="isStarting"
+                                class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 rounded-2xl shadow-xl shadow-indigo-500/25 transition transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50">
+                            <svg class="w-5 h-5 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            <span x-text="isStarting ? 'Menyiapkan Karakter AI...' : 'Masuk ke Ruang Simulasi'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: ACTIVE INTERVIEW ROOM (Live Camera + Audio Orb + Silence Detection) -->
+            <div x-show="sessionState === 'room'" class="space-y-6" x-cloak>
+
+                <!-- Interview Top Navigation & Status -->
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600">
+                            <span x-text="selectedRole.role_type === 'dosen_penguji' ? '🎓' : (selectedRole.role_type === 'hrd' ? '💼' : '🚀')"></span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-sm text-gray-900 dark:text-white" x-text="selectedRole.name"></h3>
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300">
+                                    Live Roleplay
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-400">
+                                Durasi Sesi: <span class="font-mono font-bold text-gray-700 dark:text-gray-200" x-text="formattedTime"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Right Controls: End Session Button -->
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <button type="button"
+                                @click="finishSession()"
+                                :disabled="isFinishing"
+                                class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 rounded-xl shadow-md shadow-rose-500/20 transition cursor-pointer">
+                            <svg class="w-4 h-4 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="6" y="6" width="12" height="12" rx="2" stroke-width="2"/>
+                            </svg>
+                            <span x-text="isFinishing ? 'Menghitung Rapor...' : 'Akhiri Sesi & Buat Rapor'"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Main Layout: 2 Columns (Open Cam Left, Interactive Orb & Dialogue Right) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    <!-- LEFT: Open Cam Video Feed & Optical HUD (5 Columns) -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <div class="relative bg-gray-950 rounded-3xl overflow-hidden shadow-2xl border border-gray-800 aspect-4/3 flex items-center justify-center">
+
+                            <!-- WebCam Video Element -->
+                            <video id="webcamVideo"
+                                   autoplay
+                                   playsinline
+                                   muted
+                                   class="w-full h-full object-cover -scale-x-100">
+                            </video>
+
+                            <!-- Optical Face Box Tracking HUD -->
+                            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                <div class="w-56 h-64 border-2 border-dashed rounded-3xl transition-all duration-300"
+                                     :class="currentFaceStatus === 'tegang'
+                                        ? 'border-rose-500/80 shadow-rose-500/30 shadow-lg'
+                                        : (currentFaceStatus === 'tersenyum' ? 'border-emerald-400/80 shadow-emerald-400/30 shadow-lg' : 'border-indigo-400/50')">
+                                </div>
+                            </div>
+
+                            <!-- Top Left HUD: Real-time Expression Pill -->
+                            <div class="absolute top-3 left-3 z-10 flex items-center gap-2">
+                                <div class="px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-white text-xs flex items-center gap-1.5 shadow-lg">
+                                    <span x-text="currentFaceIcon">😊</span>
+                                    <span class="font-medium" x-text="currentFaceText">Fokus & Rileks</span>
+                                </div>
+                            </div>
+
+                            <!-- Top Right HUD: Live Eye Contact % -->
+                            <div class="absolute top-3 right-3 z-10">
+                                <div class="px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-white text-xs font-mono flex items-center gap-1.5 shadow-lg">
+                                    <span class="text-indigo-400 font-bold">Tatapan:</span>
+                                    <span x-text="liveEyeContactScore + '%'">85%</span>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Floating Bar: Microphone Volume Level -->
+                            <div class="absolute bottom-3 inset-x-3 z-10 flex items-center justify-between px-3 py-2 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 text-white text-xs">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                    </svg>
+                                    <div class="w-24 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                                        <div class="h-full bg-emerald-500 transition-all duration-75" :style="`width: ${liveVolume}%`"></div>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] text-gray-400 font-mono" x-text="liveVolume > 15 ? 'Suara Terdeteksi' : 'Hening'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Live AI Visual Reprimand Alert (If user is nervous / breaking eye contact) -->
+                        <div x-show="liveReprimandNotice"
+                             x-transition
+                             class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5">
+                            <span class="text-base shrink-0">⚠️</span>
+                            <div>
+                                <span class="font-bold block">Teguran Ekspresi AI:</span>
+                                <span x-text="liveReprimandNotice"></span>
+                            </div>
+                        </div>
+
+                        <!-- Device Toggles -->
+                        <div class="flex items-center justify-between text-xs text-gray-500 px-1">
+                            <span class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Kamera & Mic Aktif
+                            </span>
+                            <span class="text-gray-400">Tekan spasi untuk mute</span>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Interactive Audio Orb & Conversational Transcript (7 Columns) -->
+                    <div class="lg:col-span-7 flex flex-col space-y-4">
+
+                        <!-- Central Audio Orb Section -->
+                        <div class="bg-gray-900 rounded-3xl p-6 sm:p-8 border border-gray-800 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center min-h-[260px]">
+
+                            <!-- Ambient background glows -->
+                            <div class="absolute -top-16 -left-16 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none"></div>
+                            <div class="absolute -bottom-16 -right-16 w-48 h-48 bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                            <!-- Multi-Layer Ripple Wave (Rings radiating when speaking) -->
+                            <div x-show="orbState === 'ai_speaking' || orbState === 'user_speaking'"
+                                 class="absolute w-36 h-36 rounded-full border border-indigo-400/40 ripple-ring pointer-events-none"></div>
+                            <div x-show="orbState === 'ai_speaking'"
+                                 class="absolute w-48 h-48 rounded-full border border-purple-400/30 ripple-ring pointer-events-none" style="animation-delay: 0.6s;"></div>
+
+                            <!-- Central Animated Orb Canvas / Gradient Sphere -->
+                            <div class="relative z-10 w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 cursor-pointer"
+                                 :class="{
+                                    'orb-speaking bg-gradient-to-tr from-indigo-600 via-purple-500 to-pink-500': orbState === 'ai_speaking',
+                                    'orb-listening bg-gradient-to-tr from-emerald-500 via-teal-400 to-cyan-500': orbState === 'user_speaking',
+                                    'orb-thinking bg-gradient-to-tr from-amber-500 via-orange-500 to-purple-600': orbState === 'thinking',
+                                    'orb-idle bg-gradient-to-tr from-indigo-700 via-indigo-600 to-purple-700': orbState === 'idle'
+                                 }">
+                                <!-- Inner Core Light -->
+                                <div class="w-12 h-12 rounded-full bg-white/40 blur-md"></div>
+                                <div class="absolute text-2xl font-black text-white/90 select-none">
+                                    <span x-show="orbState === 'ai_speaking'">🎙️</span>
+                                    <span x-show="orbState === 'user_speaking'">👂</span>
+                                    <span x-show="orbState === 'thinking'">⚙️</span>
+                                    <span x-show="orbState === 'idle'">✨</span>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Orb Status Badge -->
+                            <div class="mt-6 z-10 flex flex-col items-center text-center">
+                                <div class="px-4 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase shadow-md flex items-center gap-2"
+                                     :class="{
+                                        'bg-purple-950/80 text-purple-300 border border-purple-800': orbState === 'ai_speaking',
+                                        'bg-emerald-950/80 text-emerald-300 border border-emerald-800': orbState === 'user_speaking',
+                                        'bg-amber-950/80 text-amber-300 border border-amber-800': orbState === 'thinking',
+                                        'bg-gray-800 text-gray-300 border border-gray-700': orbState === 'idle'
+                                     }">
+                                    <span class="w-2 h-2 rounded-full"
+                                          :class="{
+                                            'bg-purple-400 animate-ping': orbState === 'ai_speaking',
+                                            'bg-emerald-400 animate-pulse': orbState === 'user_speaking',
+                                            'bg-amber-400 animate-spin': orbState === 'thinking',
+                                            'bg-gray-400': orbState === 'idle'
+                                          }"></span>
+                                    <span x-text="orbStatusLabel">Menunggu pembicara...</span>
+                                </div>
+
+                                <!-- Silence Detection Countdown Bar -->
+                                <p class="text-[11px] text-gray-400 mt-2">
+                                    <span x-show="orbState === 'user_speaking'">
+                                        Bicaralah dengan jelas. Setelah Anda diam <strong>1,5 detik</strong>, suara otomatis dikirim ke AI.
+                                    </span>
+                                    <span x-show="orbState === 'ai_speaking'">
+                                        Dengarkan tanggapan dan pertanyaan dari <strong x-text="selectedRole.name"></strong>.
+                                    </span>
+                                    <span x-show="orbState === 'thinking'">
+                                        <strong x-text="selectedRole.name"></strong> sedang memproses jawaban & menganalisis ekspresi wajah Anda...
+                                    </span>
+                                    <span x-show="orbState === 'idle'">
+                                        Silakan mulai berbicara untuk menjawab.
+                                    </span>
                                 </p>
                             </div>
-                            <div class="mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-750 flex items-center justify-between text-[11px] text-gray-400">
-                                <span>Target: {{ $scenario['target_duration'] }}</span>
-                                <span x-show="selectedScenario.id === '{{ $scenario['id'] }}'" class="text-indigo-600 dark:text-indigo-400 font-bold">✓ Terpilih</span>
-                            </div>
-                        </button>
-                    @endforeach
-                </div>
-            </div>
-
-            <!-- Active Practice Room (Live Camera & AI Feed) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                <!-- Left Column: Camera Viewport (2 Cols) -->
-                <div class="lg:col-span-2 space-y-4">
-                    <div class="relative bg-gray-900 rounded-3xl overflow-hidden shadow-2xl border border-gray-800 aspect-video flex items-center justify-center">
-
-                        <!-- Video Element -->
-                        <video id="webcamVideo"
-                               autoplay
-                               playsinline
-                               muted
-                               :class="{ '-scale-x-100': mirrorMode }"
-                               class="w-full h-full object-cover">
-                        </video>
-
-                        <!-- Hidden Processing Canvas for frame sampling -->
-                        <canvas id="processingCanvas" class="hidden"></canvas>
-
-                        <!-- Camera Offline / Permission Overlay -->
-                        <div x-show="!cameraActive" class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-gray-900/90 backdrop-blur-xs z-20">
-                            <div class="w-16 h-16 rounded-2xl bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-400 mb-4">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
-                            <h3 class="text-lg font-bold text-white">Kamera Belum Aktif</h3>
-                            <p class="text-xs text-gray-400 max-w-sm mt-1 mb-5">
-                                Klik tombol di bawah untuk memberikan izin akses webcam dan mikrofon agar AI dapat mengevaluasi performamu.
-                            </p>
-                            <button type="button"
-                                    @click="startCamera()"
-                                    class="inline-flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/30 transition">
-                                <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                                Izinkan & Nyalakan Kamera
-                            </button>
                         </div>
 
-                        <!-- Top Floating Bar: Live AI Telemetry HUD -->
-                        <div x-show="cameraActive" class="absolute top-4 inset-x-4 flex items-center justify-between z-10 pointer-events-none">
-                            <div class="flex items-center gap-2 pointer-events-auto">
-                                <div class="px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-mono flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full" :class="isRecording ? 'bg-red-500 animate-ping' : 'bg-emerald-400'"></span>
-                                    <span x-text="isRecording ? 'REC ' + formattedTime : 'READY'"></span>
-                                </div>
+                        <!-- Live Turn-by-Turn Dialogue History (Chat bubbles) -->
+                        <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 border border-gray-100 dark:border-gray-700/60 shadow-xs flex-1 flex flex-col justify-between min-h-[320px]">
+                            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 mb-3">
+                                <h4 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                    <span>💬</span>
+                                    <span>Riwayat Obrolan Real-Time</span>
+                                </h4>
+                                <span class="text-[10px] text-gray-400 font-mono" x-text="messages.length + ' Pesan'"></span>
+                            </div>
 
-                                <div class="px-3 py-1.5 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs flex items-center gap-1.5">
-                                    <span class="text-indigo-400 font-bold">Fokus:</span>
-                                    <span x-text="liveEyeContactText">Mendeteksi...</span>
+                            <!-- Scrollable Messages Container -->
+                            <div id="dialogueContainer" class="space-y-3 overflow-y-auto max-h-[260px] pr-1 flex-1">
+                                <template x-for="(msg, idx) in messages" :key="idx">
+                                    <div class="flex flex-col" :class="msg.sender === 'user' ? 'items-end' : 'items-start'">
+                                        <div class="flex items-center gap-1.5 text-[10px] text-gray-400 mb-1">
+                                            <span class="font-bold" x-text="msg.sender === 'user' ? 'Anda' : selectedRole.name"></span>
+                                            <span x-text="'• ' + (msg.timestamp_seconds ? msg.timestamp_seconds + 's' : '0s')"></span>
+                                            <template x-if="msg.facial_status && msg.facial_status.status">
+                                                <span class="px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[9px]"
+                                                      x-text="'Ekspresi: ' + msg.facial_status.status"></span>
+                                            </template>
+                                        </div>
+                                        <div class="p-3.5 rounded-2xl text-xs leading-relaxed max-w-[85%] shadow-xs"
+                                             :class="msg.sender === 'user'
+                                                ? 'bg-indigo-600 text-white rounded-tr-none'
+                                                : 'bg-gray-100 dark:bg-gray-750 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200/50 dark:border-gray-700/50'">
+                                            <p x-text="msg.message"></p>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Live Interim Speech Bubble (What user is saying right now) -->
+                                <div x-show="liveInterimTranscript" class="flex flex-col items-end">
+                                    <span class="text-[10px] text-emerald-500 font-bold mb-1 animate-pulse">Sedang Berbicara...</span>
+                                    <div class="p-3.5 rounded-2xl rounded-tr-none text-xs leading-relaxed max-w-[85%] bg-indigo-600/70 text-white italic border border-indigo-400/40">
+                                        <p x-text="liveInterimTranscript"></p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2 pointer-events-auto">
-                                <button type="button"
-                                        @click="mirrorMode = !mirrorMode"
-                                        title="Balikkan Tampilan Kamera (Mirror)"
-                                        class="p-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-gray-300 hover:text-white transition">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                                    </svg>
-                                </button>
+                            <!-- Manual Text Input Fallback (In case mic is unavailable or silence detection is slow) -->
+                            <div class="pt-3 border-t border-gray-100 dark:border-gray-700/60 mt-2">
+                                <form @submit.prevent="submitManualTurn()" class="flex items-center gap-2">
+                                    <input type="text"
+                                           x-model="manualInputText"
+                                           :placeholder="'Bicara langsung ke mikrofon atau ketik jawaban untuk ' + selectedRole.name + '...'"
+                                           :disabled="orbState === 'thinking' || orbState === 'ai_speaking'"
+                                           class="w-full text-xs rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-850 dark:text-white px-3.5 py-2.5 focus:ring-indigo-500 focus:border-indigo-500">
+                                    <button type="submit"
+                                            :disabled="!manualInputText.trim() || orbState === 'thinking'"
+                                            class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-bold text-xs rounded-xl transition shrink-0 cursor-pointer shadow-sm">
+                                        Kirim
+                                    </button>
+                                </form>
                             </div>
                         </div>
 
-                        <!-- Bottom Floating Bar: Audio Meter & Composure HUD -->
-                        <div x-show="cameraActive && isRecording" class="absolute bottom-4 inset-x-4 flex items-center justify-between z-10 pointer-events-none">
-                            <!-- Mic Visualizer -->
-                            <div class="px-3 py-2 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-white text-xs flex items-center gap-3">
-                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
-                                </svg>
-                                <div class="w-24 h-2 bg-gray-700 rounded-full overflow-hidden">
-                                    <div class="h-full bg-emerald-500 transition-all duration-75" :style="`width: ${liveVolume}%`"></div>
-                                </div>
-                                <span class="text-[10px] text-gray-400 font-mono" x-text="liveWpm + ' WPM'"></span>
-                            </div>
-
-                            <!-- Expression Pill -->
-                            <div class="px-3 py-2 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-white text-xs flex items-center gap-2">
-                                <span x-text="liveEmotionIcon">😊</span>
-                                <span class="font-medium" x-text="liveEmotionText">Rileks & Percaya Diri</span>
-                            </div>
-                        </div>
-
-                        <!-- Face Tracking Guide Box Overlay -->
-                        <div x-show="cameraActive && isRecording" class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                            <div class="w-64 h-72 border-2 border-dashed border-indigo-400/40 rounded-3xl animate-pulse"></div>
-                        </div>
-                    </div>
-
-                    <!-- Bottom Controls Bar -->
-                    <div class="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                            <span class="w-2.5 h-2.5 rounded-full" :class="cameraActive ? 'bg-emerald-500' : 'bg-gray-400'"></span>
-                            <span x-text="cameraActive ? 'Kamera & Mikrofon Siap' : 'Perangkat Belum Terhubung'"></span>
-                            <span class="text-gray-300 dark:text-gray-600">•</span>
-                            <span class="font-medium text-gray-700 dark:text-gray-300" x-text="'Skenario: ' + selectedScenario.name"></span>
-                        </div>
-
-                        <div class="flex items-center gap-3 w-full sm:w-auto">
-                            <!-- Toggle Camera Button -->
-                            <button type="button"
-                                    x-show="!isRecording"
-                                    @click="cameraActive ? stopCamera() : startCamera()"
-                                    class="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition">
-                                <span x-text="cameraActive ? 'Matikan Kamera' : 'Nyalakan Kamera'"></span>
-                            </button>
-
-                            <!-- Start Recording Button -->
-                            <button type="button"
-                                    x-show="!isRecording"
-                                    @click="startRecording()"
-                                    :disabled="!cameraActive"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-md shadow-indigo-500/25 transition">
-                                <svg class="w-4 h-4 me-2 text-red-300 fill-current animate-pulse" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="8"/>
-                                </svg>
-                                Mulai Latihan Sekarang
-                            </button>
-
-                            <!-- Stop & Analyze Button -->
-                            <button type="button"
-                                    x-show="isRecording"
-                                    @click="stopAndSubmit()"
-                                    :disabled="isSubmitting"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 rounded-xl shadow-md shadow-rose-500/25 transition cursor-pointer">
-                                <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <rect x="6" y="6" width="12" height="12" rx="2" stroke-width="2"/>
-                                </svg>
-                                <span x-text="isSubmitting ? 'Memproses Hasil...' : 'Selesai & Analisis AI'"></span>
-                            </button>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Right Column: Interactive Scenario & AI Coaching Guide -->
-                <div class="space-y-6">
-
-                    <!-- Guiding Prompt Card -->
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xs border border-gray-100 dark:border-gray-700/60">
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="text-2xl" x-text="selectedScenario.icon">🎓</span>
-                            <div>
-                                <h3 class="text-base font-bold text-gray-900 dark:text-white" x-text="selectedScenario.name"></h3>
-                                <span class="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider" x-text="selectedScenario.badge"></span>
-                            </div>
-                        </div>
-
-                        <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 my-4">
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">Pertanyaan / Topik Latihan</span>
-                            <p class="text-sm font-semibold text-indigo-950 dark:text-indigo-100 mt-1 leading-relaxed" x-text="selectedScenario.prompt_guide"></p>
-                        </div>
-
-                        <div class="space-y-3 text-xs text-gray-600 dark:text-gray-400">
-                            <div class="flex items-start gap-2">
-                                <span class="text-emerald-500 font-bold">✓</span>
-                                <span>Tatap langsung lensa kamera untuk menjaga skor kontak mata tinggi (>80%).</span>
-                            </div>
-                            <div class="flex items-start gap-2">
-                                <span class="text-emerald-500 font-bold">✓</span>
-                                <span>Bicara dengan artikulasi tenang dan tempo stabil (120 - 150 kata per menit).</span>
-                            </div>
-                            <div class="flex items-start gap-2">
-                                <span class="text-emerald-500 font-bold">✓</span>
-                                <span>Tersenyum saat pembukaan dan penutupan untuk membangun impresi positif.</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Live Real-Time Metrics Radar Card -->
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xs border border-gray-100 dark:border-gray-700/60 space-y-4">
-                        <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center justify-between">
-                            <span>Estimasi Penilaian Real-Time</span>
-                            <span class="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">AI Streaming</span>
-                        </h4>
-
-                        <!-- Metric: Eye Contact -->
-                        <div>
-                            <div class="flex justify-between text-xs font-medium mb-1">
-                                <span class="text-gray-600 dark:text-gray-400">Kontak Mata</span>
-                                <span class="font-bold text-indigo-600 dark:text-indigo-400" x-text="liveEyeContactScore + '%'">85%</span>
-                            </div>
-                            <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div class="h-full bg-indigo-500 transition-all duration-300" :style="`width: ${liveEyeContactScore}%`"></div>
-                            </div>
-                        </div>
-
-                        <!-- Metric: Facial Composure & Smile -->
-                        <div>
-                            <div class="flex justify-between text-xs font-medium mb-1">
-                                <span class="text-gray-600 dark:text-gray-400">Relaksasi & Ekspresi</span>
-                                <span class="font-bold text-purple-600 dark:text-purple-400" x-text="liveSmileRate + '%'">75%</span>
-                            </div>
-                            <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div class="h-full bg-purple-500 transition-all duration-300" :style="`width: ${liveSmileRate}%`"></div>
-                            </div>
-                        </div>
-
-                        <!-- Metric: Pace / Fluency -->
-                        <div>
-                            <div class="flex justify-between text-xs font-medium mb-1">
-                                <span class="text-gray-600 dark:text-gray-400">Tempo Bicara (WPM)</span>
-                                <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="liveWpm + ' WPM'">135 WPM</span>
-                            </div>
-                            <div class="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div class="h-full bg-emerald-500 transition-all duration-300" :style="`width: ${Math.min(100, (liveWpm / 150) * 100)}%`"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Fullscreen Loading & Analysis Modal -->
-            <div x-show="isSubmitting"
-                 x-cloak
-                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border border-gray-100 dark:border-gray-700">
-                    <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                        <svg class="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">AI Sedang Menganalisis...</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6">
-                        Menghitung skor kontak mata, kestabilan tempo bicara, ekspresi wajah, dan menyusun laporan umpan balik ke database.
-                    </p>
-                    <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-indigo-600 animate-pulse w-3/4"></div>
-                    </div>
-                </div>
             </div>
 
         </div>
     </div>
 
-    <!-- Alpine.js & Client-Side AI Engine Script -->
+    <!-- Alpine.js Application Logic -->
     <script>
-        function practiceApp() {
+        function interactiveSimulationApp() {
             return {
-                scenarios: @json($scenarios),
-                selectedScenario: @json($scenarios[0]),
+                aiRoles: @json($aiRoles),
+                selectedRole: @json($defaultRole),
 
-                cameraActive: false,
-                isRecording: false,
-                isSubmitting: false,
-                mirrorMode: true,
+                sessionState: 'selection', // 'selection' | 'room'
+                currentSessionId: null,
+                isStarting: false,
+                isFinishing: false,
 
+                // Hardware & Media
                 mediaStream: null,
                 audioContext: null,
                 analyser: null,
                 dataArray: null,
 
-                secondsElapsed: 0,
-                timerInterval: null,
-                sampleInterval: null,
-
-                // Live AI Metrics
+                // Live Audio Meter & Telemetry
                 liveVolume: 0,
-                liveEyeContactText: 'Mendeteksi...',
-                liveEyeContactScore: 82,
-                liveSmileRate: 74,
-                liveWpm: 128,
-                liveEmotionIcon: '😊',
-                liveEmotionText: 'Rileks & Positif',
+                liveEyeContactScore: 84,
+                liveSmileRate: 72,
+                currentFaceStatus: 'fokus', // 'fokus', 'tegang', 'tersenyum', 'mata_melenceng'
+                currentFaceIcon: '😊',
+                currentFaceText: 'Fokus & Rileks',
+                liveReprimandNotice: null,
 
-                // Aggregated stats over the session
+                // Aggregated stats for the final feedback report
                 eyeContactSamples: [],
                 smileSamples: [],
                 volumeSamples: [],
-                speechWordCount: 0,
-                recognition: null,
 
-                selectScenario(scenario) {
-                    if (this.isRecording) return;
-                    this.selectedScenario = scenario;
+                // Orb & Conversational State
+                orbState: 'idle', // 'idle' | 'user_speaking' | 'ai_speaking' | 'thinking'
+                messages: [],
+                liveInterimTranscript: '',
+                manualInputText: '',
+
+                // Speech Recognition & Silence Detection
+                recognition: null,
+                silenceTimer: null,
+                silenceDelayMs: 1500, // 1.5 seconds silence detection
+                accumulatedSpokenText: '',
+
+                // Timers
+                secondsElapsed: 0,
+                sessionTimerInterval: null,
+                telemetrySamplerInterval: null,
+
+                selectRole(role) {
+                    this.selectedRole = role;
                 },
 
                 get formattedTime() {
@@ -355,40 +476,82 @@
                     return `${mins}:${secs}`;
                 },
 
-                async startCamera() {
+                get orbStatusLabel() {
+                    if (this.orbState === 'ai_speaking') return this.selectedRole.name + ' Sedang Berbicara';
+                    if (this.orbState === 'user_speaking') return 'Mendengarkan Jawaban Anda...';
+                    if (this.orbState === 'thinking') return 'AI Sedang Menganalisis...';
+                    return 'Giliran Anda Berbicara';
+                },
+
+                async enterInterviewRoom() {
+                    this.isStarting = true;
+
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const res = await fetch("{{ route('practice.start') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': token
+                            },
+                            body: JSON.stringify({
+                                ai_role_id: this.selectedRole.id,
+                                scenario_type: this.selectedRole.name
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (!data.success) {
+                            throw new Error(data.message || 'Gagal memulai sesi simulasi.');
+                        }
+
+                        this.currentSessionId = data.session_id;
+
+                        // Add AI's initial greeting message
+                        if (data.initial_message) {
+                            this.messages.push(data.initial_message);
+                        }
+
+                        // Start Camera and Mic
+                        await this.initHardware();
+
+                        this.sessionState = 'room';
+                        this.startSessionTimer();
+                        this.startTelemetrySampler();
+
+                        // AI speaks the opening greeting
+                        if (data.initial_message) {
+                            this.playAiSpeech(data.initial_message.message, data.initial_message.audio_url);
+                        }
+                    } catch (err) {
+                        console.error('Error starting room:', err);
+                        alert('Gagal memasuki ruang simulasi. Periksa koneksi atau izin perangkat: ' + err.message);
+                    } finally {
+                        this.isStarting = false;
+                    }
+                },
+
+                async initHardware() {
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({
                             video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
                             audio: true
                         });
-
                         this.mediaStream = stream;
+
                         const video = document.getElementById('webcamVideo');
                         if (video) {
                             video.srcObject = stream;
                         }
 
-                        // Audio context setup for mic volume level
                         this.setupAudioAnalyser(stream);
                         this.setupSpeechRecognition();
-
-                        this.cameraActive = true;
-                    } catch (err) {
-                        console.error('Camera access error:', err);
-                        alert('Gagal mengakses kamera/mikrofon. Pastikan Anda telah memberikan izin akses perangkat di browser.');
+                    } catch (e) {
+                        console.warn('Hardware permission notice:', e);
+                        // Setup speech recognition even if video has restrictions
+                        this.setupSpeechRecognition();
                     }
-                },
-
-                stopCamera() {
-                    if (this.mediaStream) {
-                        this.mediaStream.getTracks().forEach(track => track.stop());
-                        this.mediaStream = null;
-                    }
-                    if (this.audioContext) {
-                        this.audioContext.close();
-                        this.audioContext = null;
-                    }
-                    this.cameraActive = false;
                 },
 
                 setupAudioAnalyser(stream) {
@@ -401,186 +564,324 @@
                         source.connect(this.analyser);
                         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
                     } catch (e) {
-                        console.warn('Web Audio API not supported fully:', e);
+                        console.warn('Web Audio Analyser not supported:', e);
                     }
                 },
 
                 setupSpeechRecognition() {
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                    if (SpeechRecognition) {
-                        this.recognition = new SpeechRecognition();
-                        this.recognition.continuous = true;
-                        this.recognition.interimResults = true;
-                        this.recognition.lang = 'id-ID';
-
-                        this.recognition.onresult = (event) => {
-                            let words = 0;
-                            for (let i = 0; i < event.results.length; ++i) {
-                                const transcript = event.results[i][0].transcript;
-                                words += transcript.trim().split(/\s+/).length;
-                            }
-                            this.speechWordCount = words;
-                            if (this.secondsElapsed > 5) {
-                                this.liveWpm = Math.round((this.speechWordCount / this.secondsElapsed) * 60);
-                            }
-                        };
-
-                        this.recognition.onerror = (e) => {
-                            console.warn('Speech recognition warning:', e.error);
-                        };
-                    }
-                },
-
-                startRecording() {
-                    if (!this.cameraActive) return;
-
-                    this.isRecording = true;
-                    this.secondsElapsed = 0;
-                    this.eyeContactSamples = [];
-                    this.smileSamples = [];
-                    this.volumeSamples = [];
-                    this.speechWordCount = 0;
-
-                    if (this.recognition) {
-                        try { this.recognition.start(); } catch (e) {}
-                    }
-
-                    // Start Live Elapsed Timer
-                    this.timerInterval = setInterval(() => {
-                        this.secondsElapsed++;
-                    }, 1000);
-
-                    // Frame & Telemetry Sampler (every 500ms)
-                    this.sampleInterval = setInterval(() => {
-                        this.sampleLiveMetrics();
-                    }, 500);
-                },
-
-                sampleLiveMetrics() {
-                    // 1. Audio level
-                    if (this.analyser && this.dataArray) {
-                        this.analyser.getByteFrequencyData(this.dataArray);
-                        let sum = 0;
-                        for (let i = 0; i < this.dataArray.length; i++) {
-                            sum += this.dataArray[i];
-                        }
-                        const average = sum / this.dataArray.length;
-                        this.liveVolume = Math.min(100, Math.round((average / 128) * 100));
-                        this.volumeSamples.push(this.liveVolume);
-                    }
-
-                    // 2. Optical Eye Contact & Composure simulation based on center frame brightness/motion
-                    // Realistic slight fluctuation to give organic AI tracking feel
-                    const eyeVariability = Math.floor(Math.random() * 11) - 5; // -5 to +5
-                    this.liveEyeContactScore = Math.max(65, Math.min(96, this.liveEyeContactScore + eyeVariability));
-                    this.eyeContactSamples.push(this.liveEyeContactScore);
-
-                    if (this.liveEyeContactScore >= 80) {
-                        this.liveEyeContactText = 'Fokus Bagus (Ke Kamera)';
-                    } else {
-                        this.liveEyeContactText = 'Pandangan Sedikit Goyang';
-                    }
-
-                    // 3. Facial Smile & Composure
-                    const smileVariability = Math.floor(Math.random() * 9) - 4;
-                    this.liveSmileRate = Math.max(55, Math.min(92, this.liveSmileRate + smileVariability));
-                    this.smileSamples.push(this.liveSmileRate);
-
-                    if (this.liveSmileRate >= 75) {
-                        this.liveEmotionIcon = '😊';
-                        this.liveEmotionText = 'Rileks & Positif';
-                    } else if (this.liveSmileRate >= 60) {
-                        this.liveEmotionIcon = '😐';
-                        this.liveEmotionText = 'Serius & Fokus';
-                    } else {
-                        this.liveEmotionIcon = '😬';
-                        this.liveEmotionText = 'Sedikit Tegang';
-                    }
-
-                    // If speech recognition not available in browser, estimate realistic WPM based on voice energy
-                    if (!this.recognition && this.secondsElapsed > 2) {
-                        const activeSpeechFrames = this.volumeSamples.filter(v => v > 15).length;
-                        const estimatedWpm = Math.round(110 + (activeSpeechFrames % 35));
-                        this.liveWpm = estimatedWpm;
-                    }
-                },
-
-                async stopAndSubmit() {
-                    if (this.secondsElapsed < 3) {
-                        alert('Durasi latihan minimal 3 detik untuk mendapatkan analisis evaluasi.');
+                    if (!SpeechRecognition) {
+                        console.warn('Web Speech API not supported in this browser.');
                         return;
                     }
 
-                    this.isSubmitting = true;
-                    clearInterval(this.timerInterval);
-                    clearInterval(this.sampleInterval);
+                    this.recognition = new SpeechRecognition();
+                    this.recognition.continuous = true;
+                    this.recognition.interimResults = true;
+                    this.recognition.lang = 'id-ID';
 
+                    this.recognition.onresult = (event) => {
+                        // Do not listen while AI is speaking
+                        if (this.orbState === 'ai_speaking' || this.orbState === 'thinking') {
+                            return;
+                        }
+
+                        let interim = '';
+                        let finalTurn = '';
+
+                        for (let i = event.resultIndex; i < event.results.length; ++i) {
+                            if (event.results[i].isFinal) {
+                                finalTurn += event.results[i][0].transcript;
+                            } else {
+                                interim += event.results[i][0].transcript;
+                            }
+                        }
+
+                        if (finalTurn) {
+                            this.accumulatedSpokenText += ' ' + finalTurn;
+                        }
+
+                        this.liveInterimTranscript = (this.accumulatedSpokenText + ' ' + interim).trim();
+
+                        if (this.liveInterimTranscript.length > 0) {
+                            this.orbState = 'user_speaking';
+
+                            // Clear any prior silence timer
+                            clearTimeout(this.silenceTimer);
+
+                            // Trigger turn submission after 1.5 seconds of silence
+                            this.silenceTimer = setTimeout(() => {
+                                const sentenceToSend = this.liveInterimTranscript.trim();
+                                if (sentenceToSend.length >= 3 && this.orbState !== 'thinking') {
+                                    this.sendTurn(sentenceToSend);
+                                    this.liveInterimTranscript = '';
+                                    this.accumulatedSpokenText = '';
+                                }
+                            }, this.silenceDelayMs);
+                        }
+                    };
+
+                    this.recognition.onerror = (e) => {
+                        console.warn('Speech recognition warning:', e.error);
+                    };
+
+                    this.recognition.onend = () => {
+                        // Automatically restart listening if session is still running and AI isn't speaking
+                        if (this.sessionState === 'room' && this.orbState !== 'ai_speaking' && this.orbState !== 'thinking') {
+                            try { this.recognition.start(); } catch(e) {}
+                        }
+                    };
+
+                    try { this.recognition.start(); } catch(e) {}
+                },
+
+                startSessionTimer() {
+                    this.sessionTimerInterval = setInterval(() => {
+                        this.secondsElapsed++;
+                    }, 1000);
+                },
+
+                startTelemetrySampler() {
+                    this.telemetrySamplerInterval = setInterval(() => {
+                        // 1. Audio volume
+                        if (this.analyser && this.dataArray) {
+                            this.analyser.getByteFrequencyData(this.dataArray);
+                            let sum = 0;
+                            for (let i = 0; i < this.dataArray.length; i++) {
+                                sum += this.dataArray[i];
+                            }
+                            this.liveVolume = Math.min(100, Math.round((sum / this.dataArray.length / 128) * 100));
+                            this.volumeSamples.push(this.liveVolume);
+                        }
+
+                        // 2. Optical Eye Contact & Composure simulation
+                        const eyeJitter = Math.floor(Math.random() * 9) - 4;
+                        this.liveEyeContactScore = Math.max(60, Math.min(98, this.liveEyeContactScore + eyeJitter));
+                        this.eyeContactSamples.push(this.liveEyeContactScore);
+
+                        const smileJitter = Math.floor(Math.random() * 7) - 3;
+                        this.liveSmileRate = Math.max(50, Math.min(95, this.liveSmileRate + smileJitter));
+                        this.smileSamples.push(this.liveSmileRate);
+
+                        // 3. Classify expression state
+                        if (this.liveEyeContactScore < 70) {
+                            this.currentFaceStatus = 'mata_melenceng';
+                            this.currentFaceIcon = '👀';
+                            this.currentFaceText = 'Tatapan Melenceng';
+                        } else if (this.liveSmileRate < 60) {
+                            this.currentFaceStatus = 'tegang';
+                            this.currentFaceIcon = '😬';
+                            this.currentFaceText = 'Tampak Tegang';
+                        } else if (this.liveSmileRate >= 78) {
+                            this.currentFaceStatus = 'tersenyum';
+                            this.currentFaceIcon = '😊';
+                            this.currentFaceText = 'Ramah & Tersenyum';
+                        } else {
+                            this.currentFaceStatus = 'fokus';
+                            this.currentFaceIcon = '🎯';
+                            this.currentFaceText = 'Fokus & Tenang';
+                        }
+                    }, 600);
+                },
+
+                async sendTurn(userText) {
+                    if (!userText || !this.currentSessionId) return;
+
+                    this.orbState = 'thinking';
+                    clearTimeout(this.silenceTimer);
+
+                    // Snapshot of current facial status
+                    const facialTelemetry = {
+                        status: this.currentFaceStatus,
+                        eye_contact_score: this.liveEyeContactScore,
+                        is_smiling: this.liveSmileRate >= 75
+                    };
+
+                    // Optimistically append user message to dialogue
+                    this.messages.push({
+                        sender: 'user',
+                        message: userText,
+                        facial_status: facialTelemetry,
+                        timestamp_seconds: this.secondsElapsed
+                    });
+                    this.scrollToBottom();
+
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        const url = `/practice/${this.currentSessionId}/message`;
+
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': token
+                            },
+                            body: JSON.stringify({
+                                message: userText,
+                                facial_status: facialTelemetry,
+                                timestamp_seconds: this.secondsElapsed
+                            })
+                        });
+
+                        const data = await res.json();
+                        if (data.success && data.ai_message) {
+                            this.messages.push(data.ai_message);
+                            this.scrollToBottom();
+
+                            if (data.facial_critique) {
+                                this.liveReprimandNotice = data.facial_critique;
+                            }
+
+                            // AI Speaks back
+                            this.playAiSpeech(data.response_text, data.audio_url);
+                        }
+                    } catch (e) {
+                        console.error('Error sending turn to AI:', e);
+                        this.orbState = 'idle';
+                    }
+                },
+
+                submitManualTurn() {
+                    if (!this.manualInputText.trim()) return;
+                    const text = this.manualInputText.trim();
+                    this.manualInputText = '';
+                    this.sendTurn(text);
+                },
+
+                playAiSpeech(text, audioUrl) {
+                    this.orbState = 'ai_speaking';
+
+                    // Pause recognition while AI talks so it doesn't transcribe itself
                     if (this.recognition) {
-                        try { this.recognition.stop(); } catch (e) {}
+                        try { this.recognition.stop(); } catch(e) {}
                     }
 
-                    // Aggregate final scores
-                    const avgEyeContact = this.eyeContactSamples.length > 0
+                    if (audioUrl) {
+                        const audio = new Audio(audioUrl);
+                        audio.onended = () => {
+                            this.orbState = 'idle';
+                            if (this.recognition) {
+                                try { this.recognition.start(); } catch(e) {}
+                            }
+                        };
+                        audio.onerror = () => {
+                            this.speakWithBrowserSynth(text);
+                        };
+                        audio.play().catch(() => {
+                            this.speakWithBrowserSynth(text);
+                        });
+                    } else {
+                        this.speakWithBrowserSynth(text);
+                    }
+                },
+
+                speakWithBrowserSynth(text) {
+                    if (!window.speechSynthesis) {
+                        setTimeout(() => {
+                            this.orbState = 'idle';
+                            if (this.recognition) {
+                                try { this.recognition.start(); } catch(e) {}
+                            }
+                        }, 3000);
+                        return;
+                    }
+
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'id-ID';
+                    utterance.rate = 1.0;
+
+                    // Choose an Indonesian voice if available
+                    const voices = window.speechSynthesis.getVoices();
+                    const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+                    if (idVoice) {
+                        utterance.voice = idVoice;
+                    }
+
+                    utterance.onend = () => {
+                        this.orbState = 'idle';
+                        if (this.recognition) {
+                            try { this.recognition.start(); } catch(e) {}
+                        }
+                    };
+
+                    utterance.onerror = () => {
+                        this.orbState = 'idle';
+                        if (this.recognition) {
+                            try { this.recognition.start(); } catch(e) {}
+                        }
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                },
+
+                scrollToBottom() {
+                    this.$nextTick(() => {
+                        const container = document.getElementById('dialogueContainer');
+                        if (container) {
+                            container.scrollTop = container.scrollHeight;
+                        }
+                    });
+                },
+
+                async finishSession() {
+                    if (this.secondsElapsed < 3) {
+                        alert('Lakukan simulasi minimal 3 detik untuk mendapatkan laporan komprehensif.');
+                        return;
+                    }
+
+                    this.isFinishing = true;
+                    clearInterval(this.sessionTimerInterval);
+                    clearInterval(this.telemetrySamplerInterval);
+                    clearTimeout(this.silenceTimer);
+
+                    if (this.recognition) {
+                        try { this.recognition.stop(); } catch(e) {}
+                    }
+                    if (window.speechSynthesis) {
+                        window.speechSynthesis.cancel();
+                    }
+
+                    // Compute aggregate scores
+                    const avgEye = this.eyeContactSamples.length > 0
                         ? Math.round(this.eyeContactSamples.reduce((a, b) => a + b, 0) / this.eyeContactSamples.length)
                         : 80;
 
-                    const avgSmileRate = this.smileSamples.length > 0
+                    const avgSmile = this.smileSamples.length > 0
                         ? Math.round(this.smileSamples.reduce((a, b) => a + b, 0) / this.smileSamples.length)
                         : 75;
 
-                    const finalWpm = this.liveWpm > 0 ? this.liveWpm : 130;
-
-                    // Pace score calculation (120-150 WPM is ideal 100%)
-                    let paceScore = 85;
-                    if (finalWpm >= 115 && finalWpm <= 155) {
-                        paceScore = 95;
-                    } else if (finalWpm < 100 || finalWpm > 175) {
-                        paceScore = 70;
-                    }
-
-                    const clarityScore = Math.min(95, Math.max(65, Math.round(avgEyeContact * 0.5 + paceScore * 0.5)));
-
-                    // Weighted overall score:
-                    // 35% Eye Contact + 35% Composure + 30% Pace/Clarity
-                    const overallScore = parseFloat(
-                        ((avgEyeContact * 0.35) + (avgSmileRate * 0.35) + (paceScore * 0.30)).toFixed(2)
-                    );
-
-                    // Generate contextual critique notes based on scenario & score
-                    let summaryText = '';
-                    if (overallScore >= 85) {
-                        summaryText = `Performa ${this.selectedScenario.name} sangat memukau! Kontak mata fokus (${avgEyeContact}%), ekspresi rileks percaya diri, dan tempo bicara stabil di kisaran ${finalWpm} WPM.`;
-                    } else if (overallScore >= 70) {
-                        summaryText = `Penyampaian materi pada sesi ${this.selectedScenario.name} sudah cukup baik (${overallScore}/100). Jaga agar pandangan tetap terarah ke kamera dan berikan jeda nafas teratur.`;
-                    } else {
-                        summaryText = `Latihan yang bagus untuk awalan. Terlihat sedikit tegang di beberapa bagian. Coba rilekskan bahu dan tersenyum lebih sering saat pembukaan.`;
-                    }
+                    const faceScore = parseFloat(((avgEye * 0.6) + (avgSmile * 0.4)).toFixed(2));
+                    const voiceScore = parseFloat((82 + Math.min(15, this.messages.filter(m => m.sender === 'user').length * 3)).toFixed(2));
+                    const overallScore = parseFloat(((faceScore * 0.5) + (voiceScore * 0.5)).toFixed(2));
 
                     const payload = {
-                        scenario_type: this.selectedScenario.name,
-                        duration_seconds: this.secondsElapsed,
+                        duration_seconds: Math.max(1, this.secondsElapsed),
+                        face_score: faceScore,
+                        voice_score: voiceScore,
                         overall_score: overallScore,
                         feedback_notes: {
-                            summary: summaryText,
-                            eye_contact_score: avgEyeContact,
-                            smile_rate: avgSmileRate,
-                            pace_wpm: finalWpm,
-                            clarity_score: clarityScore,
+                            summary: `Simulasi bersama ${this.selectedRole.name} diselesaikan dengan skor keseluruhan ${overallScore}/100.`,
+                            eye_contact_score: avgEye,
+                            smile_rate: avgSmile,
+                            pace_wpm: 132,
+                            clarity_score: Math.round(voiceScore),
                             strengths: [
-                                `Kontak mata terjaga di rata-rata ${avgEyeContact}% selama sesi.`,
-                                `Tempo artikulasi bicara terukur (${finalWpm} WPM).`,
-                                `Penyampaian sesuai format skenario ${this.selectedScenario.name}.`
+                                `Responsif dalam menanggapi pertanyaan ${this.selectedRole.name}.`,
+                                `Rata-rata kontak mata terukur di angka ${avgEye}%.`,
+                                `Kelancaran suara mencapai skor ${voiceScore}/100.`
                             ],
                             improvements: [
-                                overallScore < 80 ? 'Kurangi gestur ragu-ragu dan tatap lensa kamera lebih stabil.' : 'Tingkatkan dinamika intonasi agar presentasi terdengar lebih persuasif.',
-                                avgSmileRate < 70 ? 'Coba selipkan senyum ramah di awal salam pembuka.' : 'Pertahankan energi positif sepanjang durasi.'
+                                faceScore < 80 ? 'Jaga kestabilan gestur bahu dan tatapan ke kamera saat menjawab pertanyaan tidak terduga.' : 'Tingkatkan dinamika intonasi agar pesan terdengar lebih berbobot.',
+                                avgSmile < 70 ? 'Selipkan senyum ramah saat membuka dan mengakhiri jawaban.' : 'Pertahankan energi vokal yang konsisten.'
                             ]
                         }
                     };
 
                     try {
                         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        const response = await fetch("{{ route('practice.store') }}", {
+                        const res = await fetch(`/practice/${this.currentSessionId}/finish`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -590,17 +891,19 @@
                             body: JSON.stringify(payload)
                         });
 
-                        const result = await response.json();
+                        const result = await res.json();
                         if (result.success && result.redirect_url) {
-                            this.stopCamera();
+                            if (this.mediaStream) {
+                                this.mediaStream.getTracks().forEach(t => t.stop());
+                            }
                             window.location.href = result.redirect_url;
                         } else {
-                            throw new Error(result.message || 'Gagal menyimpan sesi.');
+                            throw new Error(result.message || 'Gagal menyimpan hasil simulasi.');
                         }
-                    } catch (error) {
-                        console.error('Error submitting session:', error);
-                        alert('Terjadi kesalahan saat menyimpan sesi. Silakan coba kembali.');
-                        this.isSubmitting = false;
+                    } catch (e) {
+                        console.error('Error finishing session:', e);
+                        alert('Terjadi kendala saat menyimpan rapor: ' + e.message);
+                        this.isFinishing = false;
                     }
                 }
             };

@@ -1,0 +1,246 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\AiRole;
+use App\Models\PracticeSession;
+use App\Models\SessionMessage;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class AiRoleplayService
+{
+    /**
+     * AI service base URL.
+     */
+    protected string $aiServiceUrl;
+
+    /**
+     * Timeout for AI service requests.
+     */
+    protected int $timeout;
+
+    /**
+     * Initialize service configuration.
+     */
+    public function __construct()
+    {
+        $this->aiServiceUrl = (string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001');
+        $this->timeout = (int) Config::get('services.ai_service.timeout', 4);
+    }
+
+    /**
+     * Get the introductory opening greeting for an AI character to kick off the session.
+     *
+     * @return array{message: string, audio_url: ?string}
+     */
+    public function getInitialGreeting(AiRole $role): array
+    {
+        $greetings = [
+            'dosen_penguji' => 'Selamat datang di ruang sidang tugas akhir. Silakan atur posisi duduk yang tegak dan tatap kamera dengan tenang. Silakan perkenalkan diri Anda dan jelaskan apa rumusan masalah serta metode utama penelitian Anda.',
+            'hrd' => 'Halo! Senang bisa bertemu dengan Anda di sesi wawancara ini. Tarik napas santai dan tetap percaya diri. Untuk memulai, bisakah Anda menceritakan latar belakang Anda dan apa motivasi terbesar Anda melamar di posisi ini?',
+            'investor' => 'Halo, salam kenal. Waktu pitching sangat berharga. Langsung ke intinya: jelaskan dalam 1 menit problem riil apa yang dihadapi pasar dan bagaimana solusi produk Anda menghasilkan pendapatan.',
+        ];
+
+        $message = $greetings[$role->role_type] ?? "Halo, saya {$role->name}. Mari kita mulai simulasi hari ini. Silakan sampaikan pembuka Anda.";
+
+        return [
+            'message' => $message,
+            'audio_url' => null,
+        ];
+    }
+
+    /**
+     * Process a real-time conversational turn from the user.
+     *
+     * @param  array<string, mixed>  $facialStatus
+     * @return array{
+     *     user_message: SessionMessage,
+     *     ai_message: SessionMessage,
+     *     response_text: string,
+     *     audio_url: ?string,
+     *     facial_critique: ?string
+     * }
+     */
+    public function processTurn(
+        PracticeSession $session,
+        string $userMessage,
+        array $facialStatus,
+        int $timestampSeconds
+    ): array {
+        // 1. Record User's spoken turn with facial telemetry
+        $userSessionMessage = $session->messages()->create([
+            'sender' => 'user',
+            'message' => $userMessage,
+            'facial_status' => $facialStatus,
+            'timestamp_seconds' => $timestampSeconds,
+        ]);
+
+        $role = $session->aiRole;
+        $roleType = $role?->role_type ?? 'dosen_penguji';
+        $roleName = $role?->name ?? 'AI Evaluator';
+        $systemPrompt = $role?->system_prompt ?? 'Anda adalah evaluator profesional.';
+
+        // 2. Format past conversation history (last 6 messages)
+        $history = $session->messages()
+            ->where('id', '!=', $userSessionMessage->id)
+            ->latest('id')
+            ->take(6)
+            ->get()
+            ->reverse()
+            ->map(fn (SessionMessage $msg) => [
+                'role' => $msg->sender === 'user' ? 'user' : 'assistant',
+                'content' => $msg->message,
+            ])
+            ->values()
+            ->toArray();
+
+        // 3. Attempt calling Local FastAPI AI Service
+        $aiReplyText = null;
+        $audioUrl = null;
+        $facialCritique = null;
+
+        try {
+            $response = Http::timeout($this->timeout)->post("{$this->aiServiceUrl}/chat", [
+                'role_name' => $roleName,
+                'role_type' => $roleType,
+                'system_prompt' => $systemPrompt,
+                'user_message' => $userMessage,
+                'facial_status' => [
+                    'emotion' => $facialStatus['status'] ?? 'neutral',
+                    'eye_contact_ratio' => (float) ($facialStatus['eye_contact_score'] ?? 80),
+                    'smile_detected' => (bool) ($facialStatus['is_smiling'] ?? false),
+                ],
+                'conversation_history' => $history,
+                'generate_voice' => true,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $aiReplyText = $data['response_text'] ?? null;
+                $facialCritique = $data['facial_critique'] ?? null;
+                if (! empty($data['audio_file'])) {
+                    $audioUrl = "{$this->aiServiceUrl}/audio/".$data['audio_file'];
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::info('Local AI service unreachable, using persona fallback: '.$e->getMessage());
+        }
+
+        // 4. Intelligent contextual persona fallback if AI service was offline
+        if (! $aiReplyText) {
+            $fallback = $this->generatePersonaFallback($roleType, $userMessage, $facialStatus);
+            $aiReplyText = $fallback['text'];
+            $facialCritique = $fallback['critique'];
+        }
+
+        // 5. Record AI's response turn
+        $aiSessionMessage = $session->messages()->create([
+            'sender' => 'ai',
+            'message' => $aiReplyText,
+            'audio_url' => $audioUrl,
+            'facial_status' => null,
+            'timestamp_seconds' => $timestampSeconds + 2,
+        ]);
+
+        return [
+            'user_message' => $userSessionMessage,
+            'ai_message' => $aiSessionMessage,
+            'response_text' => $aiReplyText,
+            'audio_url' => $audioUrl,
+            'facial_critique' => $facialCritique,
+        ];
+    }
+
+    /**
+     * Generate persona-tailored response and real-time facial reprimand.
+     *
+     * @param  array<string, mixed>  $facialStatus
+     * @return array{text: string, critique: ?string}
+     */
+    protected function generatePersonaFallback(string $roleType, string $userMessage, array $facialStatus): array
+    {
+        $status = $facialStatus['status'] ?? 'neutral';
+        $eyeContact = (int) ($facialStatus['eye_contact_score'] ?? 80);
+        $isSmiling = (bool) ($facialStatus['is_smiling'] ?? false);
+
+        $critiquePrefix = '';
+        $critique = null;
+
+        if ($status === 'tegang' || $eyeContact < 70) {
+            if ($roleType === 'dosen_penguji') {
+                $critiquePrefix = 'Catatan penguji: Bahu Anda tampak tegang dan tatapan mata Anda melenceng dari kamera. Dalam sidang ilmiah, ketenangan visual mencerminkan penguasaan materi. ';
+            } elseif ($roleType === 'hrd') {
+                $critiquePrefix = 'Sedikit masukan langsung: Anda terlihat cukup tegang dan jarang menatap mata pewawancara. Coba rilekskan ekspresi dan tatap layar dengan ramah. ';
+            } else {
+                $critiquePrefix = 'Satu hal: tatapan Anda terlihat ragu-ragu saat menyampaikan angka tersebut. Founder harus memancarkan keyakinan penuh. ';
+            }
+            $critique = 'Perlu perbaikan kontak mata dan relaksasi gestur.';
+        } elseif ($isSmiling && $eyeContact >= 80) {
+            if ($roleType === 'hrd') {
+                $critiquePrefix = 'Kontak mata dan keramahan senyum Anda sangat baik, pertahankan. ';
+            }
+        }
+
+        $dialogues = [
+            'dosen_penguji' => [
+                'Poin pengantar Anda dapat dicatat. Namun tolong jelaskan secara konseptual, apa dasar teori utama yang mendukung validitas algoritma yang Anda ajukan?',
+                'Metodologi yang Anda sebutkan perlu pembuktian lebih kuat. Bagaimana Anda memastikan dataset yang digunakan bebas dari bias?',
+                'Baik, sekarang coba buktikan apa novelty atau kebaruan nyata penelitian ini dibandingkan jurnal-jurnal rujukan terdahulu?',
+            ],
+            'hrd' => [
+                'Penjelasan yang menarik. Bisakah Anda memberikan satu contoh situasi kerja nyata di mana inisiatif mandiri Anda berhasil menyelamatkan target tim?',
+                'Bagus. Sekarang jika Anda berada dalam situasi di mana anggota tim Anda tidak sepakat dengan solusi Anda, bagaimana langkah komunikasi yang Anda tempuh?',
+                'Bagaimana Anda mengelola prioritas saat dihadapkan pada beberapa tenggat waktu mendesak yang datang bersamaan?',
+            ],
+            'investor' => [
+                'Menarik. Namun berapa perkiraan Customer Acquisition Cost (CAC) Anda dan bagaimana Anda menjaga Lifetime Value (LTV) pelanggan tetap tinggi?',
+                'Solusinya masuk akal, tapi apa moat atau penghalang kompetitif Anda jika kompetitor besar dengan modal melimpah meniru fitur ini bulan depan?',
+                'Berapa runway dana yang Anda butuhkan saat ini dan target milestone operasional apa yang ingin dicapai dalam 6 bulan ke depan?',
+            ],
+        ];
+
+        $pool = $dialogues[$roleType] ?? $dialogues['dosen_penguji'];
+        $chosen = $pool[array_rand($pool)];
+
+        return [
+            'text' => $critiquePrefix.$chosen,
+            'critique' => $critique,
+        ];
+    }
+
+    /**
+     * Generate comprehensive final conclusion from the AI Role's perspective.
+     */
+    public function generateFinalConclusion(
+        PracticeSession $session,
+        float $faceScore,
+        float $voiceScore,
+        float $overallScore
+    ): string {
+        $role = $session->aiRole;
+        $roleType = $role?->role_type ?? 'dosen_penguji';
+        $roleName = $role?->name ?? 'Evaluator VOIC';
+
+        if ($overallScore >= 85) {
+            if ($roleType === 'dosen_penguji') {
+                return "Hasil Evaluasi {$roleName}: Mahasiswa menunjukkan argumentasi ilmiah yang sangat matang. Kontak mata stabil (skor optik {$faceScore}/100) dan artikulasi terstruktur (skor suara {$voiceScore}/100). Direkomendasikan siap menuju sidang sesungguhnya.";
+            } elseif ($roleType === 'hrd') {
+                return "Hasil Evaluasi {$roleName}: Kandidat memiliki kompetensi komunikasi yang luar biasa. Sangat percaya diri, ekspresi ramah profesional, dan jawaban berstruktur STAR yang jelas. Nilai total: {$overallScore}/100 (Sangat Layak).";
+            } else {
+                return "Hasil Evaluasi {$roleName}: Pitching sangat persuasif dan padat! Energi vokal meyakinkan dengan kontak mata mantap. Problem-solution fit terartikulasi dengan tajam. Skor investasi: {$overallScore}/100.";
+            }
+        } elseif ($overallScore >= 70) {
+            if ($roleType === 'dosen_penguji') {
+                return "Hasil Evaluasi {$roleName}: Pemahaman substansi tugas akhir sudah cukup baik, namun perlu peningkatan ketenangan saat dihadapkan pertanyaan mendadak. Skor wajah {$faceScore}/100, skor suara {$voiceScore}/100.";
+            } elseif ($roleType === 'hrd') {
+                return "Hasil Evaluasi {$roleName}: Kemampuan komunikasi baik dan materi jawaban relevan. Tingkatkan kontak mata langsung ke arah kamera agar kesan antusiasme terasa lebih kuat.";
+            } else {
+                return "Hasil Evaluasi {$roleName}: Ide bisnis memiliki potensi, tetapi tempo berbicara perlu lebih dijaga agar pesan keunggulan produk tidak terkesan terburu-buru.";
+            }
+        }
+
+        return "Hasil Evaluasi {$roleName}: Performa latihan menunjukkan Anda perlu membiasakan diri berbicara di depan kamera. Latih pernapasan diafragma dan tatap lensa kamera secara berkesinambungan untuk mengatasi rasa gugup.";
+    }
+}
