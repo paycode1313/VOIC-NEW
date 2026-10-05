@@ -91,10 +91,22 @@
         </div>
 
         <!-- Candidate & Session Identity Details -->
+        @php
+            $feedback = is_array($session->feedback_notes) ? $session->feedback_notes : [];
+            $badges = $feedback['badges'] ?? [];
+            $pitchScore = $feedback['pitch_dynamics_score'] ?? 80;
+            $simLanguage = $feedback['language'] ?? 'id';
+        @endphp
+
         <div class="bg-slate-900/80 rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl space-y-6">
             <div class="border-b border-slate-800 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <span class="text-xs uppercase font-bold tracking-wider text-slate-400">Identitas Peserta Uji</span>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="text-xs uppercase font-bold tracking-wider text-slate-400">Identitas Peserta Uji</span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-800">
+                            {{ $simLanguage === 'en' ? '🇬🇧 English' : '🇮🇩 Bahasa Indonesia' }}
+                        </span>
+                    </div>
                     <h2 class="text-2xl font-extrabold text-white mt-0.5">
                         {{ $user ? $user->name : 'Peserta Uji Terkalibrasi' }}
                     </h2>
@@ -112,41 +124,75 @@
                 </div>
             </div>
 
-            <!-- Scorecards -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- Scorecards (Quad Metrics) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <!-- Overall Score -->
-                <div class="p-5 rounded-2xl bg-gradient-to-tr from-slate-950 to-indigo-950/60 border border-indigo-500/30 text-center relative overflow-hidden">
-                    <span class="text-[10px] uppercase font-bold text-indigo-300 tracking-wider">Skor Total Evaluasi</span>
-                    <div class="text-4xl font-black text-white mt-1">
+                <div class="p-4 rounded-2xl bg-gradient-to-tr from-slate-950 to-indigo-950/60 border border-indigo-500/30 text-center relative overflow-hidden">
+                    <span class="text-[10px] uppercase font-bold text-indigo-300 tracking-wider">Skor Total</span>
+                    <div class="text-3xl font-black text-white mt-1">
                         {{ number_format($session->overall_score, 1) }}
                     </div>
-                    <span class="text-[10px] text-slate-400 block mt-1">
-                        Predikat: <strong class="text-indigo-300">{{ $session->overall_score >= 85 ? 'Sangat Baik' : ($session->overall_score >= 70 ? 'Cukup Baik' : 'Berkembang') }}</strong>
+                    <span class="text-[9px] text-slate-400 block mt-1">
+                        {{ $session->overall_score >= 85 ? 'Sangat Baik' : ($session->overall_score >= 70 ? 'Cukup Baik' : 'Berkembang') }}
                     </span>
                 </div>
 
                 <!-- Optical Face Score -->
-                <div class="p-5 rounded-2xl bg-gradient-to-tr from-slate-950 to-purple-950/60 border border-purple-500/30 text-center">
-                    <span class="text-[10px] uppercase font-bold text-purple-300 tracking-wider">Telemetri Optik Kamera</span>
-                    <div class="text-4xl font-black text-white mt-1">
+                <div class="p-4 rounded-2xl bg-gradient-to-tr from-slate-950 to-purple-950/60 border border-purple-500/30 text-center">
+                    <span class="text-[10px] uppercase font-bold text-purple-300 tracking-wider">Optik Kamera</span>
+                    <div class="text-3xl font-black text-white mt-1">
                         {{ number_format($session->face_score ?? 80, 1) }}
                     </div>
-                    <span class="text-[10px] text-slate-400 block mt-1">
-                        Kontak Mata & Ketenangan Wajah
+                    <span class="text-[9px] text-slate-400 block mt-1">
+                        Kontak Mata Wajah
                     </span>
                 </div>
 
                 <!-- Voice Score -->
-                <div class="p-5 rounded-2xl bg-gradient-to-tr from-slate-950 to-emerald-950/60 border border-emerald-500/30 text-center">
-                    <span class="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Artikulasi & Vokal</span>
-                    <div class="text-4xl font-black text-white mt-1">
+                <div class="p-4 rounded-2xl bg-gradient-to-tr from-slate-950 to-emerald-950/60 border border-emerald-500/30 text-center">
+                    <span class="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Artikulasi</span>
+                    <div class="text-3xl font-black text-white mt-1">
                         {{ number_format($session->voice_score ?? 85, 1) }}
                     </div>
-                    <span class="text-[10px] text-slate-400 block mt-1">
-                        Kejelasan & Kelancaran Nada
+                    <span class="text-[9px] text-slate-400 block mt-1">
+                        Kelancaran Vokal
+                    </span>
+                </div>
+
+                <!-- Pitch Dynamics Score -->
+                <div class="p-4 rounded-2xl bg-gradient-to-tr from-slate-950 to-teal-950/60 border border-teal-500/30 text-center">
+                    <span class="text-[10px] uppercase font-bold text-teal-300 tracking-wider">Dinamika Nada</span>
+                    <div class="text-3xl font-black text-white mt-1">
+                        {{ number_format($pitchScore, 0) }}%
+                    </div>
+                    <span class="text-[9px] text-slate-400 block mt-1">
+                        Intonasi Ekspresif
                     </span>
                 </div>
             </div>
+
+            <!-- Unlocked Badges Section on Certificate -->
+            @if(!empty($badges))
+                <div class="p-4 rounded-2xl bg-slate-950/80 border border-amber-500/30 space-y-2">
+                    <div class="flex items-center justify-between text-xs font-bold text-amber-400">
+                        <span class="flex items-center gap-1.5">
+                            <span>🏆</span>
+                            <span>Lencana Prestasi Resmi Terverifikasi:</span>
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300">
+                            {{ count($badges) }} Lencana
+                        </span>
+                    </div>
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        @foreach($badges as $badge)
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-750 text-xs">
+                                <span>{{ $badge['icon'] ?? '🎖️' }}</span>
+                                <span class="font-bold text-white">{{ $badge['name'] ?? 'Lencana' }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             <!-- National Benchmark Ranking Badge -->
             <div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">

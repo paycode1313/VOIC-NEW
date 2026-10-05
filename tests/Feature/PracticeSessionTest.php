@@ -136,6 +136,11 @@ class PracticeSessionTest extends TestCase
             'ai_role_id' => $role->id,
             'scenario_type' => 'Sidang Skripsi AI',
             'overall_score' => 89.5,
+            'feedback_notes' => [
+                'language' => 'en',
+                'pitch_dynamics_score' => 84,
+                'badges' => ['Tatapan Elang', 'Artikulasi Emas'],
+            ],
         ]);
 
         $response = $this->actingAs($user)->get(route('practice.export'));
@@ -143,5 +148,67 @@ class PracticeSessionTest extends TestCase
         $response->assertOk();
         $this->assertStringContainsString('text/csv', $response->headers->get('Content-Type'));
         $this->assertStringContainsString('voic-telemetry-sessions-', $response->headers->get('Content-Disposition'));
+    }
+
+    /**
+     * Test that authenticated user can start a practice session in English.
+     */
+    public function test_user_can_start_practice_session_in_english(): void
+    {
+        $this->seed(AiRoleSeeder::class);
+        $user = User::factory()->create();
+        $role = AiRole::where('role_type', 'hrd')->firstOrFail();
+
+        $response = $this->actingAs($user)->postJson(route('practice.start'), [
+            'ai_role_id' => $role->id,
+            'scenario_type' => 'Fullstack Engineer',
+            'language' => 'en',
+        ]);
+
+        $response->assertCreated();
+        $response->assertJson([
+            'success' => true,
+            'language' => 'en',
+        ]);
+
+        $sessionId = $response->json('session_id');
+        $session = PracticeSession::findOrFail($sessionId);
+        $this->assertSame('en', $session->feedback_notes['language']);
+        $this->assertStringContainsString('Fullstack Engineer', $response->json('initial_message.message'));
+    }
+
+    /**
+     * Test that authenticated user can finish session with pitch dynamics and badges.
+     */
+    public function test_user_can_finish_session_with_pitch_dynamics_and_badges(): void
+    {
+        $this->seed(AiRoleSeeder::class);
+        $user = User::factory()->create();
+        $role = AiRole::firstOrFail();
+
+        $session = PracticeSession::factory()->create([
+            'user_id' => $user->id,
+            'ai_role_id' => $role->id,
+            'scenario_type' => 'Pitching AI',
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('practice.finish', $session), [
+            'duration_seconds' => 60,
+            'face_score' => 85,
+            'voice_score' => 90,
+            'overall_score' => 87.5,
+            'feedback_notes' => [
+                'language' => 'en',
+                'pitch_dynamics_score' => 88,
+                'badges' => ['Tatapan Elang', 'Vokal Dinamis', 'High Achiever'],
+                'pace_wpm' => 125,
+            ],
+        ]);
+
+        $response->assertOk();
+        $session->refresh();
+        $this->assertSame(87.5, (float) $session->overall_score);
+        $this->assertSame(88, $session->feedback_notes['pitch_dynamics_score']);
+        $this->assertContains('Vokal Dinamis', $session->feedback_notes['badges']);
     }
 }

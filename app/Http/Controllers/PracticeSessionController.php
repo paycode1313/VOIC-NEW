@@ -98,6 +98,7 @@ class PracticeSessionController extends Controller
         $validated = $request->validate([
             'ai_role_id' => ['required', 'exists:ai_roles,id'],
             'scenario_type' => ['nullable', 'string', 'max:100'],
+            'language' => ['nullable', 'string', 'in:id,en'],
         ]);
 
         /** @var User $user */
@@ -107,6 +108,7 @@ class PracticeSessionController extends Controller
         $role = AiRole::findOrFail($validated['ai_role_id']);
 
         $scenarioType = $validated['scenario_type'] ?? $role->name;
+        $language = $validated['language'] ?? 'id';
 
         /** @var PracticeSession $session */
         $session = $user->practiceSessions()->create([
@@ -114,9 +116,12 @@ class PracticeSessionController extends Controller
             'scenario_type' => $scenarioType,
             'duration_seconds' => 0,
             'overall_score' => 0,
+            'feedback_notes' => [
+                'language' => $language,
+            ],
         ]);
 
-        $greeting = $aiService->getInitialGreeting($role, $scenarioType);
+        $greeting = $aiService->getInitialGreeting($role, $scenarioType, $language);
 
         // Store opening turn from the AI character
         $initialMessage = $session->messages()->create([
@@ -130,6 +135,7 @@ class PracticeSessionController extends Controller
         return response()->json([
             'success' => true,
             'session_id' => $session->id,
+            'language' => $language,
             'role' => [
                 'id' => $role->id,
                 'name' => $role->name,
@@ -162,13 +168,17 @@ class PracticeSessionController extends Controller
             'facial_status.is_smiling' => ['nullable', 'boolean'],
             'facial_status.face_detected' => ['nullable', 'boolean'],
             'timestamp_seconds' => ['required', 'integer', 'min:0'],
+            'language' => ['nullable', 'string', 'in:id,en'],
         ]);
+
+        $language = $validated['language'] ?? ($practiceSession->feedback_notes['language'] ?? 'id');
 
         $result = $aiService->processTurn(
             $practiceSession,
             $validated['message'],
             $validated['facial_status'] ?? [],
-            (int) $validated['timestamp_seconds']
+            (int) $validated['timestamp_seconds'],
+            $language
         );
 
         return response()->json([
@@ -194,16 +204,20 @@ class PracticeSessionController extends Controller
             'voice_score' => ['required', 'numeric', 'between:0,100'],
             'overall_score' => ['required', 'numeric', 'between:0,100'],
             'feedback_notes' => ['nullable', 'array'],
+            'feedback_notes.language' => ['nullable', 'string', 'in:id,en'],
             'feedback_notes.summary' => ['nullable', 'string', 'max:1000'],
             'feedback_notes.eye_contact_score' => ['nullable', 'numeric', 'between:0,100'],
             'feedback_notes.smile_rate' => ['nullable', 'numeric', 'between:0,100'],
             'feedback_notes.pace_wpm' => ['nullable', 'numeric', 'min:0'],
+            'feedback_notes.pitch_dynamics_score' => ['nullable', 'numeric', 'between:0,100'],
             'feedback_notes.clarity_score' => ['nullable', 'numeric', 'between:0,100'],
             'feedback_notes.avg_volume' => ['nullable', 'numeric', 'min:0'],
             'feedback_notes.total_words' => ['nullable', 'integer', 'min:0'],
             'feedback_notes.filler_words_count' => ['nullable', 'integer', 'min:0'],
             'feedback_notes.filler_words_list' => ['nullable', 'array'],
             'feedback_notes.filler_words_list.*' => ['nullable', 'string', 'max:50'],
+            'feedback_notes.badges' => ['nullable', 'array'],
+            'feedback_notes.badges.*' => ['nullable', 'string', 'max:100'],
             'feedback_notes.strengths' => ['nullable', 'array'],
             'feedback_notes.strengths.*' => ['nullable', 'string', 'max:500'],
             'feedback_notes.improvements' => ['nullable', 'array'],
@@ -213,13 +227,16 @@ class PracticeSessionController extends Controller
         $faceScore = (float) $validated['face_score'];
         $voiceScore = (float) $validated['voice_score'];
         $overallScore = (float) $validated['overall_score'];
+        $feedbackNotes = $validated['feedback_notes'] ?? [];
+        $language = $feedbackNotes['language'] ?? ($practiceSession->feedback_notes['language'] ?? 'id');
 
         $aiConclusion = $aiService->generateFinalConclusion(
             $practiceSession,
             $faceScore,
             $voiceScore,
             $overallScore,
-            $validated['feedback_notes'] ?? []
+            $feedbackNotes,
+            $language
         );
 
         $practiceSession->update([
@@ -228,7 +245,7 @@ class PracticeSessionController extends Controller
             'voice_score' => $voiceScore,
             'overall_score' => $overallScore,
             'ai_conclusion' => $aiConclusion,
-            'feedback_notes' => $validated['feedback_notes'] ?? null,
+            'feedback_notes' => $feedbackNotes,
         ]);
 
         return response()->json([
@@ -318,6 +335,7 @@ class PracticeSessionController extends Controller
                 'ID Sesi',
                 'Skenario / Topik',
                 'Karakter AI Penguji',
+                'Bahasa',
                 'Tanggal Sesi',
                 'Durasi (Detik)',
                 'Skor Optik Wajah (0-100)',
@@ -326,16 +344,20 @@ class PracticeSessionController extends Controller
                 'Kontak Mata (%)',
                 'Ekspresi Rileks (%)',
                 'Kecepatan Bicara (WPM)',
+                'Dinamika Intonasi (%)',
                 'Jumlah Kata Gumaman (Filler)',
+                'Lencana / Badges',
                 'Kesimpulan AI',
             ]);
 
             foreach ($sessions as $session) {
                 $feedback = is_array($session->feedback_notes) ? $session->feedback_notes : [];
+                $badges = isset($feedback['badges']) && is_array($feedback['badges']) ? implode(', ', $feedback['badges']) : '-';
                 fputcsv($file, [
                     $session->id,
                     $session->scenario_type,
                     $session->aiRole?->name ?? 'Evaluator AI',
+                    strtoupper($feedback['language'] ?? 'ID'),
                     $session->created_at->format('Y-m-d H:i:s'),
                     $session->duration_seconds,
                     $session->face_score ?? '-',
@@ -344,7 +366,9 @@ class PracticeSessionController extends Controller
                     $feedback['eye_contact_score'] ?? '-',
                     $feedback['smile_rate'] ?? '-',
                     $feedback['pace_wpm'] ?? '-',
+                    $feedback['pitch_dynamics_score'] ?? '-',
                     $feedback['filler_words_count'] ?? 0,
+                    $badges,
                     $session->ai_conclusion ?? '-',
                 ]);
             }
