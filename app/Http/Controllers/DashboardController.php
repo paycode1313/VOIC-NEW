@@ -15,6 +15,7 @@ class DashboardController extends Controller
         $user = $request->user();
 
         $recentSessions = $user->practiceSessions()
+            ->with('aiRole')
             ->latest()
             ->take(10)
             ->get();
@@ -25,6 +26,12 @@ class DashboardController extends Controller
             : 0;
         $bestScore = $totalSessions > 0
             ? round((float) $user->practiceSessions()->max('overall_score'), 1)
+            : 0;
+        $averageEyeScore = $totalSessions > 0
+            ? round((float) $user->practiceSessions()->whereNotNull('face_score')->avg('face_score'), 1)
+            : 0;
+        $averageVoiceScore = $totalSessions > 0
+            ? round((float) $user->practiceSessions()->whereNotNull('voice_score')->avg('voice_score'), 1)
             : 0;
         $totalDurationSeconds = (int) $user->practiceSessions()->sum('duration_seconds');
 
@@ -47,6 +54,8 @@ class DashboardController extends Controller
             'totalSessions' => $totalSessions,
             'averageScore' => $averageScore,
             'bestScore' => $bestScore,
+            'averageEyeScore' => $averageEyeScore,
+            'averageVoiceScore' => $averageVoiceScore,
             'totalDurationSeconds' => $totalDurationSeconds,
             'chartLabels' => $chartLabels,
             'chartScores' => $chartScores,

@@ -22,7 +22,10 @@ class PracticeSessionController extends Controller
     {
         $aiRoles = AiRole::where('is_active', true)->orderBy('id')->get();
 
-        $defaultRole = $aiRoles->first() ?? [
+        $roleQuery = $request->query('role');
+        $matchedRole = $roleQuery ? $aiRoles->firstWhere('role_type', $roleQuery) : null;
+
+        $defaultRole = $matchedRole ?? $aiRoles->first() ?? [
             'id' => 1,
             'name' => 'VOIC-Dosen Penguji',
             'role_type' => 'dosen_penguji',

@@ -57,7 +57,7 @@
                 <!-- Average Score Card -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60 transition hover:shadow-md">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Rata-rata Skor</span>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Rata-rata Skor Total</span>
                         <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
@@ -72,57 +72,58 @@
                     </div>
                     <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
                         <span class="inline-block w-2 h-2 rounded-full {{ $averageScore >= 80 ? 'bg-emerald-500' : ($averageScore >= 65 ? 'bg-amber-500' : 'bg-rose-500') }}"></span>
-                        {{ $averageScore >= 80 ? 'Sangat Baik' : ($averageScore >= 65 ? 'Cukup Baik' : 'Perlu Latihan') }}
+                        {{ $averageScore >= 80 ? 'Predikat: Sangat Baik' : ($averageScore >= 65 ? 'Predikat: Cukup Baik' : 'Predikat: Perlu Latihan') }}
                     </div>
                 </div>
 
-                <!-- Best Score Card -->
+                <!-- Optic Face Score Card -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60 transition hover:shadow-md">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Skor Tertinggi</span>
-                        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 flex items-center justify-center text-amber-600 dark:text-amber-400">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Rata-rata Kontak Mata</span>
+                        <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/80 flex items-center justify-center text-purple-600 dark:text-purple-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                             </svg>
                         </div>
                     </div>
                     <div class="mt-4 flex items-baseline gap-2">
                         <span class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                            {{ $bestScore > 0 ? number_format($bestScore, 1) : '-' }}
+                            {{ $averageEyeScore > 0 ? number_format($averageEyeScore, 1) : '-' }}%
                         </span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">/ 100</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">terfokus</span>
                     </div>
                     <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        Pencapaian terbaik sejauh ini
+                        Telemetri optik kamera tatapan
+                    </div>
+                </div>
+
+                <!-- Voice Score Card -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60 transition hover:shadow-md">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Rata-rata Vokal</span>
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-baseline gap-2">
+                        <span class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                            {{ $averageVoiceScore > 0 ? number_format($averageVoiceScore, 1) : '-' }}
+                        </span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">artikulasi</span>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        Dinamika nada & kecepatan WPM
                     </div>
                 </div>
 
                 <!-- Total Sessions Card -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60 transition hover:shadow-md">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Sesi</span>
-                        <div class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/80 flex items-center justify-center text-purple-600 dark:text-purple-400">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex items-baseline gap-2">
-                        <span class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                            {{ $totalSessions }}
-                        </span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Latihan Selesai</span>
-                    </div>
-                    <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        Tercatat di database MySQL
-                    </div>
-                </div>
-
-                <!-- Total Time Card -->
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60 transition hover:shadow-md">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Durasi Bicara</span>
-                        <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Total Sesi Latihan</span>
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/80 flex items-center justify-center text-amber-600 dark:text-amber-400">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
@@ -130,15 +131,93 @@
                     </div>
                     <div class="mt-4 flex items-baseline gap-2">
                         <span class="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                            @php
-                                $minutes = floor($totalDurationSeconds / 60);
-                                $seconds = $totalDurationSeconds % 60;
-                            @endphp
-                            {{ $minutes }}<span class="text-lg font-medium text-gray-500">m</span> {{ $seconds }}<span class="text-lg font-medium text-gray-500">s</span>
+                            {{ $totalSessions }}
                         </span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Sesi</span>
                     </div>
                     <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        Total waktu latihan berbicara
+                        @php
+                            $minutes = floor($totalDurationSeconds / 60);
+                            $seconds = $totalDurationSeconds % 60;
+                        @endphp
+                        Total durasi: <strong>{{ $minutes }}m {{ $seconds }}s</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Start Practice Scenarios Grid -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white tracking-tight flex items-center gap-2">
+                            <span>⚡</span>
+                            <span>Mulai Simulasi Berdasarkan Skenario Ujian</span>
+                        </h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Pilih skenario yang ingin kamu latih hari ini dan hadapi karakter AI penguji secara langsung
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <!-- Scenario 1: Sidang Skripsi -->
+                    <div class="p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/60 shadow-xs hover:border-indigo-500/50 transition flex flex-col justify-between group">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl">🎓</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">Akademik</span>
+                            </div>
+                            <h4 class="font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">Sidang Skripsi</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                Latih presentasi tugas akhir bersama <strong>VOIC-Dosen Penguji</strong>. Kritis menguji metodologi, batasan masalah, dan ketenangan tatapan.
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/60">
+                            <a href="{{ route('practice.create', ['role' => 'dosen_penguji']) }}"
+                               class="w-full inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition shadow-sm">
+                                Latih Sidang Skripsi →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Scenario 2: Wawancara Kerja -->
+                    <div class="p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/60 shadow-xs hover:border-amber-500/50 transition flex flex-col justify-between group">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl">💼</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800">Karier</span>
+                            </div>
+                            <h4 class="font-bold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">Wawancara Kerja</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                Jawab pertanyaan behavioral bersama <strong>VOIC-HRD</strong> dengan metode STAR. Fokus pada ekspresi senyum, ketenangan, dan eliminasi filler words.
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/60">
+                            <a href="{{ route('practice.create', ['role' => 'hrd']) }}"
+                               class="w-full inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-xl transition shadow-sm">
+                                Latih Interview HRD →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Scenario 3: Pitching Startup -->
+                    <div class="p-5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/60 shadow-xs hover:border-purple-500/50 transition flex flex-col justify-between group">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl">🚀</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-800">Bisnis</span>
+                            </div>
+                            <h4 class="font-bold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">Pitching Startup</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                Sampaikan elevator pitch di hadapan <strong>VOIC-Investor</strong>. Menguji problem-solution fit, validasi pasar, dan keunggulan kompetitif.
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700/60">
+                            <a href="{{ route('practice.create', ['role' => 'investor']) }}"
+                               class="w-full inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white bg-purple-600 hover:bg-purple-500 rounded-xl transition shadow-sm">
+                                Latih Pitching Investor →
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -286,10 +365,11 @@
                             <thead>
                                 <tr class="border-b border-gray-100 dark:border-gray-700/60 bg-gray-50/50 dark:bg-gray-850/50 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     <th class="py-3.5 px-6">Skenario / Topik</th>
+                                    <th class="py-3.5 px-6">Penguji AI</th>
                                     <th class="py-3.5 px-6">Tanggal & Waktu</th>
                                     <th class="py-3.5 px-6">Durasi</th>
                                     <th class="py-3.5 px-6">Skor AI</th>
-                                    <th class="py-3.5 px-6">Catatan Ringkasan AI</th>
+                                    <th class="py-3.5 px-6 text-right">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700/60 text-sm">
@@ -314,6 +394,11 @@
                                                 </div>
                                             </div>
                                         </td>
+                                        <td class="py-4 px-6 text-gray-700 dark:text-gray-300">
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold {{ $session->aiRole?->role_type === 'dosen_penguji' ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800' : ($session->aiRole?->role_type === 'hrd' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800' : 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800') }}">
+                                                {{ $session->aiRole ? $session->aiRole->name : 'Evaluator AI' }}
+                                            </span>
+                                        </td>
                                         <td class="py-4 px-6 text-gray-600 dark:text-gray-300">
                                             <div>{{ $session->created_at->format('d M Y') }}</div>
                                             <div class="text-xs text-gray-400">{{ $session->created_at->format('H:i') }} WIB</div>
@@ -333,22 +418,14 @@
                                                 </span>
                                             </div>
                                         </td>
-                                        <td class="py-4 px-6 text-xs text-gray-600 dark:text-gray-300 max-w-xs">
-                                            @if(is_array($session->feedback_notes) && isset($session->feedback_notes['summary']))
-                                                <p class="line-clamp-2">{{ $session->feedback_notes['summary'] }}</p>
-                                                <div class="mt-1 flex flex-wrap gap-2 text-[10px] text-gray-400">
-                                                    @if(isset($session->feedback_notes['eye_contact_score']))
-                                                        <span>Mata: {{ $session->feedback_notes['eye_contact_score'] }}%</span>
-                                                    @endif
-                                                    @if(isset($session->feedback_notes['pace_wpm']))
-                                                        <span>Tempo: {{ $session->feedback_notes['pace_wpm'] }} WPM</span>
-                                                    @endif
-                                                </div>
-                                            @elseif(is_string($session->feedback_notes))
-                                                <p class="line-clamp-2">{{ $session->feedback_notes }}</p>
-                                            @else
-                                                <span class="text-gray-400 italic">Tidak ada catatan</span>
-                                            @endif
+                                        <td class="py-4 px-6 text-right whitespace-nowrap">
+                                            <a href="{{ route('practice.show', $session) }}"
+                                               class="inline-flex items-center px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 transition shadow-xs">
+                                                <span>Lihat Rapor & QR</span>
+                                                <svg class="w-3.5 h-3.5 ms-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                                </svg>
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach

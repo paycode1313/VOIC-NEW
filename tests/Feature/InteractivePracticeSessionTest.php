@@ -279,4 +279,18 @@ class InteractivePracticeSessionTest extends TestCase
         $response->assertSee('VOIC-Dosen Penguji');
         $response->assertSee('VOIC-CERT-');
     }
+
+    /**
+     * Test that user can preselect role via query parameter on practice page.
+     */
+    public function test_user_can_preselect_role_via_query_parameter(): void
+    {
+        $this->seed(AiRoleSeeder::class);
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get(route('practice.create', ['role' => 'investor']));
+
+        $response->assertOk();
+        $response->assertSee('VOIC-Investor');
+    }
 }
