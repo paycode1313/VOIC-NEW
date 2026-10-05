@@ -238,16 +238,56 @@
                             <!-- Off-screen Computer Vision Telemetry Canvas -->
                             <canvas id="telemetryCanvas" width="320" height="240" class="hidden"></canvas>
 
+                            <!-- Four Sci-Fi HUD Corner Brackets -->
+                            <div class="absolute inset-2.5 pointer-events-none z-10">
+                                <div class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-indigo-400/80 rounded-tl-lg shadow-sm shadow-indigo-500/50"></div>
+                                <div class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-indigo-400/80 rounded-tr-lg shadow-sm shadow-indigo-500/50"></div>
+                                <div class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-indigo-400/80 rounded-bl-lg shadow-sm shadow-indigo-500/50"></div>
+                                <div class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-indigo-400/80 rounded-br-lg shadow-sm shadow-indigo-500/50"></div>
+                            </div>
+
                             <!-- Optical Face Box Tracking HUD (Real Dynamic Computer Vision Coordinates) -->
-                            <div class="absolute inset-0 pointer-events-none">
+                            <div class="absolute inset-0 pointer-events-none z-10">
                                 <template x-if="faceDetected">
-                                    <div class="absolute border-2 rounded-2xl transition-all duration-150"
-                                         :style="`left: ${faceBoxCoords.left}%; top: ${faceBoxCoords.top}%; width: ${faceBoxCoords.width}%; height: ${faceBoxCoords.height}%;`"
-                                         :class="currentFaceStatus === 'tegang'
-                                            ? 'border-rose-500/80 shadow-rose-500/30 shadow-lg'
-                                            : (currentFaceStatus === 'tersenyum' ? 'border-emerald-400/80 shadow-emerald-400/30 shadow-lg' : 'border-indigo-400/60 shadow-indigo-500/20 shadow-md')">
-                                        <span class="absolute -top-5 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/75 text-white tracking-wider flex items-center gap-1"
-                                              x-text="currentFaceText"></span>
+                                    <div class="absolute transition-all duration-150 rounded-2xl"
+                                         :style="`left: ${faceBoxCoords.left}%; top: ${faceBoxCoords.top}%; width: ${faceBoxCoords.width}%; height: ${faceBoxCoords.height}%;`">
+
+                                        <!-- Outer Glow Face Box -->
+                                        <div class="absolute inset-0 border-2 rounded-2xl transition-all duration-150"
+                                             :class="currentFaceStatus === 'tegang'
+                                                ? 'border-rose-500 shadow-rose-500/40 shadow-lg'
+                                                : (currentFaceStatus === 'tersenyum' ? 'border-emerald-400 shadow-emerald-400/40 shadow-lg' : 'border-indigo-400 shadow-indigo-500/30 shadow-md')">
+                                        </div>
+
+                                        <!-- Dynamic Center Crosshair & Reticle Ring -->
+                                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                            <div class="w-12 h-12 rounded-full border border-dashed transition-all duration-300 animate-spin"
+                                                 style="animation-duration: 9s;"
+                                                 :class="liveEyeContactScore >= 70 ? 'border-emerald-400/80' : 'border-amber-400/80'"></div>
+                                            <div class="absolute w-2.5 h-2.5 rounded-full"
+                                                 :class="liveEyeContactScore >= 70 ? 'bg-emerald-400' : 'bg-amber-400'"></div>
+                                            <div class="absolute w-4 h-0.5"
+                                                 :class="liveEyeContactScore >= 70 ? 'bg-emerald-400/80' : 'bg-amber-400/80'"></div>
+                                            <div class="absolute w-0.5 h-4"
+                                                 :class="liveEyeContactScore >= 70 ? 'bg-emerald-400/80' : 'bg-amber-400/80'"></div>
+                                        </div>
+
+                                        <!-- Dynamic Gaze Status Pill (Above Box) -->
+                                        <div class="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                                            <span class="text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider shadow-lg flex items-center gap-1 font-mono uppercase"
+                                                  :class="liveEyeContactScore >= 70 ? 'bg-emerald-950/90 text-emerald-300 border border-emerald-400/40' : 'bg-amber-950/90 text-amber-300 border border-amber-400/40'">
+                                                <span class="w-1.5 h-1.5 rounded-full" :class="liveEyeContactScore >= 70 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400 animate-ping'"></span>
+                                                <span x-text="liveEyeContactScore >= 70 ? `TARGET LOCKED • ${liveEyeContactScore}%` : `GAZE DEFLECTED • ${liveEyeContactScore}%`"></span>
+                                            </span>
+                                        </div>
+
+                                        <!-- Emotion Composure Pill (Below Box) -->
+                                        <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                                            <span class="text-[8px] font-bold px-2 py-0.5 rounded-full bg-black/85 text-white/90 border border-white/10 font-mono tracking-wider flex items-center gap-1">
+                                                <span x-text="currentFaceIcon"></span>
+                                                <span x-text="'COMPO: ' + currentFaceText.toUpperCase()"></span>
+                                            </span>
+                                        </div>
                                     </div>
                                 </template>
                                 <template x-if="!faceDetected">
@@ -261,33 +301,51 @@
                                 </template>
                             </div>
 
-                            <!-- Top Left HUD: Real-time Expression Pill -->
-                            <div class="absolute top-3 left-3 z-10 flex items-center gap-2">
-                                <div class="px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-white text-xs flex items-center gap-1.5 shadow-lg">
-                                    <span x-text="currentFaceIcon">😊</span>
-                                    <span class="font-medium" x-text="currentFaceText">Fokus & Rileks</span>
+                            <!-- Top Left HUD: Optical Engine FPS + Status -->
+                            <div class="absolute top-3 left-3 z-20 flex items-center gap-2">
+                                <div class="px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/15 text-white text-xs flex items-center gap-2 shadow-lg">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span class="font-mono text-[11px] font-bold text-emerald-400">VISION AI 30 FPS</span>
+                                    <span class="text-white/30 text-[10px]">|</span>
+                                    <span class="text-xs" x-text="currentFaceIcon + ' ' + currentFaceText">😊 Fokus & Rileks</span>
                                 </div>
                             </div>
 
                             <!-- Top Right HUD: Live Eye Contact % -->
-                            <div class="absolute top-3 right-3 z-10">
-                                <div class="px-3 py-1.5 rounded-xl bg-black/70 backdrop-blur-md border border-white/10 text-white text-xs font-mono flex items-center gap-1.5 shadow-lg">
-                                    <span class="text-indigo-400 font-bold">Tatapan:</span>
-                                    <span x-text="liveEyeContactScore + '%'">85%</span>
+                            <div class="absolute top-3 right-3 z-20">
+                                <div class="px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/15 text-white text-xs font-mono flex items-center gap-1.5 shadow-lg">
+                                    <span class="text-indigo-400 font-bold">TATAPAN:</span>
+                                    <span :class="liveEyeContactScore >= 70 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'" x-text="liveEyeContactScore + '%'">85%</span>
                                 </div>
                             </div>
 
-                            <!-- Bottom Floating Bar: Microphone Volume Level -->
-                            <div class="absolute bottom-3 inset-x-3 z-10 flex items-center justify-between px-3 py-2 rounded-xl bg-black/75 backdrop-blur-md border border-white/10 text-white text-xs">
-                                <div class="flex items-center gap-2">
-                                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            <!-- Bottom Floating Bar: Privacy & Security Badge -->
+                            <div class="absolute bottom-3 inset-x-3 z-20 flex items-center justify-between px-3 py-1.5 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 text-white text-[10px]">
+                                <div class="flex items-center gap-1.5 font-mono text-emerald-400">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                     </svg>
-                                    <div class="w-24 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                                        <div class="h-full bg-emerald-500 transition-all duration-75" :style="`width: ${liveVolume}%`"></div>
-                                    </div>
+                                    <span>EDGE AI • ZERO CLOUD VIDEO</span>
                                 </div>
-                                <span class="text-[10px] text-gray-400 font-mono" x-text="liveVolume > 15 ? 'Suara Terdeteksi' : 'Hening'"></span>
+                                <span class="text-gray-400 font-mono">100% PRIVATE</span>
+                            </div>
+                        </div>
+
+                        <!-- Live Dynamic Audio Waveform Visualizer & Decibel Meter -->
+                        <div class="p-3.5 rounded-2xl bg-gray-900/90 dark:bg-gray-950/90 border border-gray-800 shadow-xl space-y-2">
+                            <div class="flex items-center justify-between text-xs px-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span class="font-bold text-gray-200">Spektrum Suara Mikrofon (Live Acoustic Waveform)</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 font-mono text-[11px]">
+                                    <span class="text-indigo-400 font-bold" x-text="(liveDecibels || 25) + ' dB'">25 dB</span>
+                                    <span class="text-gray-500">•</span>
+                                    <span :class="liveVolume > 15 ? 'text-emerald-400 font-bold' : 'text-gray-400'" x-text="liveVolume > 15 ? 'Suara Terdeteksi' : 'Hening'">Hening</span>
+                                </div>
+                            </div>
+                            <div class="w-full h-11 relative">
+                                <canvas id="audioWaveformCanvas" class="w-full h-full rounded-xl bg-black/60 border border-white/10"></canvas>
                             </div>
                         </div>
 
@@ -473,6 +531,8 @@
                 faceDetected: false,
                 faceBoxCoords: { left: 20, top: 15, width: 60, height: 70 },
                 liveVolume: 0,
+                liveDecibels: 25,
+                waveformAnimationId: null,
                 liveEyeContactScore: 0,
                 liveSmileRate: 0,
                 currentFaceStatus: 'menunggu', // 'fokus', 'tegang', 'tersenyum', 'mata_melenceng', 'wajah_hilang'
@@ -615,9 +675,79 @@
                         this.analyser.fftSize = 256;
                         source.connect(this.analyser);
                         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                        this.startAudioWaveformVisualizer();
                     } catch (e) {
                         console.warn('Web Audio Analyser not supported:', e);
                     }
+                },
+
+                startAudioWaveformVisualizer() {
+                    const canvas = document.getElementById('audioWaveformCanvas');
+                    if (!canvas || !this.analyser) return;
+
+                    const ctx = canvas.getContext('2d');
+                    const bufferLength = this.analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+
+                    const render = () => {
+                        if (this.sessionState !== 'room') return;
+
+                        this.waveformAnimationId = requestAnimationFrame(render);
+
+                        // Ensure canvas dimensions match parent container
+                        const parent = canvas.parentElement;
+                        if (parent) {
+                            const targetWidth = parent.clientWidth || 320;
+                            const targetHeight = parent.clientHeight || 44;
+                            if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+                                canvas.width = targetWidth;
+                                canvas.height = targetHeight;
+                            }
+                        }
+
+                        const width = canvas.width;
+                        const height = canvas.height;
+
+                        this.analyser.getByteFrequencyData(dataArray);
+
+                        ctx.clearRect(0, 0, width, height);
+
+                        const numBars = 32;
+                        const barSpacing = 3;
+                        const totalSpacing = barSpacing * (numBars - 1);
+                        const barWidth = Math.max(3, (width - totalSpacing) / numBars);
+
+                        const gradient = ctx.createLinearGradient(0, height, 0, 0);
+                        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.7)');    // Indigo
+                        gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.9)');  // Purple
+                        gradient.addColorStop(1, 'rgba(34, 211, 238, 0.95)');   // Cyan
+
+                        let sum = 0;
+                        for (let i = 0; i < numBars; i++) {
+                            const sampleIdx = Math.floor((i / numBars) * (bufferLength * 0.55));
+                            const val = dataArray[sampleIdx] || 0;
+                            sum += val;
+
+                            const percent = val / 255;
+                            const barHeight = Math.max(3, percent * (height * 0.85));
+                            const x = i * (barWidth + barSpacing);
+                            const y = height - barHeight;
+
+                            ctx.fillStyle = gradient;
+                            ctx.beginPath();
+                            if (ctx.roundRect) {
+                                ctx.roundRect(x, y, barWidth, barHeight, 2);
+                            } else {
+                                ctx.rect(x, y, barWidth, barHeight);
+                            }
+                            ctx.fill();
+                        }
+
+                        const avg = sum / numBars;
+                        this.liveDecibels = Math.round(20 + (avg / 255) * 65);
+                    };
+
+                    render();
                 },
 
                 setupSpeechRecognition() {
@@ -1001,6 +1131,9 @@
                     clearInterval(this.sessionTimerInterval);
                     clearInterval(this.telemetrySamplerInterval);
                     clearTimeout(this.silenceTimer);
+                    if (this.waveformAnimationId) {
+                        cancelAnimationFrame(this.waveformAnimationId);
+                    }
 
                     if (this.recognition) {
                         try { this.recognition.stop(); } catch(e) {}

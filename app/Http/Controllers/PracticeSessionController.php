@@ -7,6 +7,7 @@ use App\Models\AiRole;
 use App\Models\PracticeSession;
 use App\Models\User;
 use App\Services\AiRoleplayService;
+use App\Services\CredentialVerificationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -254,16 +255,34 @@ class PracticeSessionController extends Controller
     /**
      * Display detailed post-practice feedback and performance metrics.
      */
-    public function show(PracticeSession $practiceSession): View
+    public function show(PracticeSession $practiceSession, CredentialVerificationService $verificationService): View
     {
         Gate::authorize('view', $practiceSession);
 
         $practiceSession->load(['aiRole', 'messages']);
+        $benchmarkData = $verificationService->getBenchmarkData($practiceSession);
 
         return view('practice.show', [
             'session' => $practiceSession,
             'role' => $practiceSession->aiRole,
             'messages' => $practiceSession->messages,
+            'benchmarkData' => $benchmarkData,
+        ]);
+    }
+
+    /**
+     * Public verification page for certificate authentication (scanned via QR code).
+     */
+    public function verify(PracticeSession $practiceSession, CredentialVerificationService $verificationService): View
+    {
+        $practiceSession->load(['aiRole', 'user']);
+        $benchmarkData = $verificationService->getBenchmarkData($practiceSession);
+
+        return view('practice.verify', [
+            'session' => $practiceSession,
+            'role' => $practiceSession->aiRole,
+            'user' => $practiceSession->user,
+            'benchmarkData' => $benchmarkData,
         ]);
     }
 }

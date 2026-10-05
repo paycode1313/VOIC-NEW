@@ -213,4 +213,70 @@ class InteractivePracticeSessionTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    /**
+     * Test that practice report displays industry benchmark analytics and verifiable digital certificate.
+     */
+    public function test_practice_report_displays_industry_benchmark_and_digital_certificate(): void
+    {
+        $this->seed(AiRoleSeeder::class);
+        $user = User::factory()->create();
+        $role = AiRole::where('role_type', 'hrd')->firstOrFail();
+
+        $session = PracticeSession::factory()->create([
+            'user_id' => $user->id,
+            'ai_role_id' => $role->id,
+            'scenario_type' => 'Wawancara HRD',
+            'face_score' => 88.0,
+            'voice_score' => 86.0,
+            'overall_score' => 87.0,
+            'ai_conclusion' => 'Kandidat sangat potensial dan percaya diri.',
+            'feedback_notes' => [
+                'eye_contact_score' => 89.0,
+                'smile_rate' => 85.0,
+                'pace_wpm' => 128,
+                'clarity_score' => 90.0,
+                'filler_words_count' => 1,
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->get(route('practice.show', $session));
+
+        $response->assertOk();
+        $response->assertSee('Tolak Ukur Standar Industri');
+        $response->assertSee('Komparasi Metrik Performa Anda vs Standar Kelulusan');
+        $response->assertSee('Sertifikat Evaluasi Terverifikasi Sistem');
+        $response->assertSee('VOIC-CERT-');
+        $response->assertSee('qrcode.min.js');
+    }
+
+    /**
+     * Test that any user/judge can publicly verify a digital certificate via QR Code link without login.
+     */
+    public function test_public_user_can_access_verification_page_without_authentication(): void
+    {
+        $this->seed(AiRoleSeeder::class);
+        $user = User::factory()->create(['name' => 'Peserta Unggulan']);
+        $role = AiRole::where('role_type', 'dosen_penguji')->firstOrFail();
+
+        $session = PracticeSession::factory()->create([
+            'user_id' => $user->id,
+            'ai_role_id' => $role->id,
+            'scenario_type' => 'Sidang Skripsi',
+            'face_score' => 90.0,
+            'voice_score' => 85.0,
+            'overall_score' => 87.5,
+            'ai_conclusion' => 'Argumen ilmiah sangat kokoh dan lugas.',
+        ]);
+
+        $response = $this->get(route('practice.verify', $session));
+
+        $response->assertOk();
+        $response->assertViewIs('practice.verify');
+        $response->assertSee('Sertifikat Hasil Evaluasi AI Multimodal');
+        $response->assertSee('Kredensial Sah');
+        $response->assertSee('Peserta Unggulan');
+        $response->assertSee('VOIC-Dosen Penguji');
+        $response->assertSee('VOIC-CERT-');
+    }
 }

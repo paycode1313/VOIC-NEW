@@ -13,6 +13,10 @@ Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+// Public Digital Certificate Verification (Accessible via QR Code scan)
+Route::get('/verify/{practiceSession}', [PracticeSessionController::class, 'verify'])
+    ->name('practice.verify');
+
 Route::middleware('auth')->group(function () {
     Route::get('/practice', [PracticeSessionController::class, 'create'])->name('practice.create');
     Route::post('/practice', [PracticeSessionController::class, 'store'])->name('practice.store');

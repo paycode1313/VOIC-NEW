@@ -229,6 +229,135 @@
                 </div>
             </div>
 
+            <!-- Industry Benchmark & National Percentile Comparison -->
+            @if(isset($benchmarkData))
+                <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xs border border-gray-100 dark:border-gray-700/60 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700/60">
+                        <div>
+                            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider mb-1">
+                                <span>🏆</span>
+                                <span>Tolak Ukur Standar Industri & Sidang Nasional</span>
+                            </div>
+                            <h3 class="text-lg font-black text-gray-900 dark:text-white">
+                                Komparasi Metrik Performa Anda vs Standar Kelulusan
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                Dikalibrasi berdasarkan standar penilaian HRD profesional dan dewan dosen penguji sidang tugas akhir.
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <div class="px-4 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md text-center">
+                                <span class="text-[10px] font-bold uppercase tracking-wider block opacity-90">Peringkat Komparatif</span>
+                                <span class="text-sm font-extrabold block">{{ $benchmarkData['percentile_rank'] }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4 Side-by-Side Comparison Metrics -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        @foreach($benchmarkData['metrics'] as $key => $metric)
+                            <div class="p-4 rounded-2xl border transition-all {{ $metric['is_superior'] ? 'border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-amber-200 dark:border-amber-800/80 bg-amber-50/40 dark:bg-amber-950/20' }}">
+                                <span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-1">
+                                    {{ $metric['label'] }}
+                                </span>
+                                <div class="flex items-baseline justify-between mb-1">
+                                    <span class="text-2xl font-black text-gray-900 dark:text-white">
+                                        {{ $metric['candidate_val'] }}
+                                    </span>
+                                    <span class="text-xs font-bold {{ $metric['is_superior'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                                        {{ $metric['delta_val'] }}
+                                    </span>
+                                </div>
+                                <div class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">
+                                    Standar: <strong>{{ $metric['benchmark_val'] }}</strong>
+                                </div>
+                                <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold {{ $metric['is_superior'] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-300' }}">
+                                    {{ $metric['status_badge'] }}
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <!-- Readiness Index Progress Meter -->
+                    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-850 border border-gray-200 dark:border-gray-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="space-y-1 w-full sm:w-2/3">
+                            <div class="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-200">
+                                <span>Indeks Kesiapan Menghadapi Sidang / Kerja (Readiness Score):</span>
+                                <span class="text-indigo-600 dark:text-indigo-400 font-extrabold">{{ $benchmarkData['readiness_index'] }}%</span>
+                            </div>
+                            <div class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 transition-all duration-500" style="width: {{ $benchmarkData['readiness_index'] }}%"></div>
+                            </div>
+                            <span class="text-[10px] text-gray-500 dark:text-gray-400 block">
+                                Status: <strong class="text-emerald-600 dark:text-emerald-400">{{ $benchmarkData['readiness_status'] }}</strong>
+                            </span>
+                        </div>
+
+                        <div class="text-center sm:text-right shrink-0">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-bold border border-emerald-500/30">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Tervalidasi Siap Tampil
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Digital Certificate & Verifiable QR Code Card -->
+                <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-indigo-500/40 relative overflow-hidden">
+                    <div class="absolute -right-12 -top-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
+                        <div class="space-y-3 text-center lg:text-left">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Kredensial Digital Resmi • VOIC AI
+                            </div>
+                            <h3 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+                                Sertifikat Evaluasi Terverifikasi Sistem
+                            </h3>
+                            <p class="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
+                                Hasil penilaian ini memiliki nomor seri kriptografis unik yang dapat dipindai (scan) oleh juri kompetisi, dosen penguji, atau perekrut kerja untuk memastikan keaslian nilai secara langsung di server database VOIC.
+                            </p>
+                            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-1 font-mono text-xs text-indigo-300">
+                                <span>No. Seri: <strong class="text-white">{{ $benchmarkData['serial'] }}</strong></span>
+                                <span>•</span>
+                                <span>Penguji: <strong class="text-white">{{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}</strong></span>
+                            </div>
+
+                            <div class="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-3 print:hidden">
+                                <a href="{{ route('practice.verify', $session) }}"
+                                   target="_blank"
+                                   class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-md shadow-indigo-600/30">
+                                    <svg class="w-3.5 h-3.5 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                    Buka Halaman Verifikasi Publik
+                                </a>
+                                <button type="button"
+                                        onclick="window.print()"
+                                        class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">
+                                    Cetak Sertifikat Resmi PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- QR Code Container -->
+                        <div class="flex flex-col items-center bg-white p-4 rounded-2xl shadow-2xl text-slate-900 shrink-0 border-4 border-indigo-400/40">
+                            <div id="qrcodeSvgContainer" class="w-36 h-36 flex items-center justify-center">
+                                <!-- Rendered dynamically via QR SVG Generator -->
+                            </div>
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-2">
+                                Pindai untuk Verifikasi Asli
+                            </span>
+                            <span class="text-[9px] font-mono text-indigo-600 font-bold mt-0.5">
+                                {{ $benchmarkData['serial'] }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Dialogue History & Turn-by-Turn Facial Timeline -->
             @if($session->messages && $session->messages->count() > 0)
                 <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xs border border-gray-100 dark:border-gray-700/60 space-y-4">
@@ -412,10 +541,14 @@
             <!-- Print-Only Footer Signature & Verification Stamp -->
             <div class="hidden print:block pt-8 mt-6 border-t border-gray-300">
                 <div class="flex justify-between items-end text-xs text-gray-600">
-                    <div>
-                        <p class="font-bold text-gray-900">Platform Evaluator VOIC</p>
-                        <p class="text-[10px] text-gray-500">Innofest 2026 • AI Public Speaking & Presentation Coach</p>
-                        <p class="text-[10px] text-gray-400 mt-1">Verifikasi digital: VOIC-SESSION-{{ strtoupper(substr(md5($session->id . $session->created_at), 0, 10)) }}</p>
+                    <div class="flex items-center gap-4">
+                        <div id="printQrcodeSvgContainer" class="w-20 h-20 bg-white border border-gray-300 p-1 flex items-center justify-center shrink-0"></div>
+                        <div>
+                            <p class="font-bold text-gray-900">Platform Evaluator VOIC</p>
+                            <p class="text-[10px] text-gray-500">Innofest 2026 • AI Public Speaking & Presentation Coach</p>
+                            <p class="text-[10px] text-gray-400 mt-1">Verifikasi digital: {{ $benchmarkData['serial'] ?? 'VOIC-CERT-' . strtoupper(substr(md5($session->id . $session->created_at), 0, 10)) }}</p>
+                            <p class="text-[9px] text-gray-400">Pindai QR Code untuk memvalidasi keaslian laporan secara daring.</p>
+                        </div>
                     </div>
                     <div class="text-right">
                         <p class="text-[10px] text-gray-400">Tanda Tangan Penguji AI:</p>
@@ -464,4 +597,34 @@
             }
         }
     </style>
+
+    <script src="{{ asset('js/qrcode.min.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var verifyUrl = "{{ route('practice.verify', $session) }}";
+            try {
+                if (typeof qrcode === 'function') {
+                    // Render for Screen Card
+                    var qrScreen = qrcode(0, 'M');
+                    qrScreen.addData(verifyUrl);
+                    qrScreen.make();
+                    var screenContainer = document.getElementById('qrcodeSvgContainer');
+                    if (screenContainer) {
+                        screenContainer.innerHTML = qrScreen.createSvgTag(3, 4);
+                    }
+
+                    // Render for Print Footer
+                    var qrPrint = qrcode(0, 'M');
+                    qrPrint.addData(verifyUrl);
+                    qrPrint.make();
+                    var printContainer = document.getElementById('printQrcodeSvgContainer');
+                    if (printContainer) {
+                        printContainer.innerHTML = qrPrint.createSvgTag(2, 2);
+                    }
+                }
+            } catch (err) {
+                console.warn('QR Code generation notice:', err);
+            }
+        });
+    </script>
 </x-app-layout>
