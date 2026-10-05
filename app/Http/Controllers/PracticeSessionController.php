@@ -23,7 +23,7 @@ class PracticeSessionController extends Controller
 
         $defaultRole = $aiRoles->first() ?? [
             'id' => 1,
-            'name' => 'Dr. Ir. Hartono, M.T.',
+            'name' => 'VOIC-Dosen Penguji',
             'role_type' => 'dosen_penguji',
             'difficulty_level' => 'Sulit',
             'voice_id' => 'id-ID-ArdiNeural',

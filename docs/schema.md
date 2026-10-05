@@ -12,7 +12,7 @@
 ## 2. Tabel `ai_roles` (Menyimpan Karakter & Sifat AI)
 Menyimpan karakter lawan bicara (Dosen Penguji, HRD, Investor) beserta kepribadian dan prompt instruksinya.
 - `id` (Primary Key, BigInt Unsigned)
-- `name` (String: misal "Dr. Ir. Hartono, M.T.")
+- `name` (String: misal "VOIC-Dosen Penguji", "VOIC-HRD", "VOIC-Investor")
 - `role_type` (String, Index: misal "dosen_penguji", "hrd", "investor")
 - `avatar` (String, Nullable: URL atau path foto/ilustrasi karakter)
 - `description` (Text: ringkasan peran dan latar belakang karakter)

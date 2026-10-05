@@ -65,7 +65,7 @@ class PracticeSessionTest extends TestCase
     public function test_ai_role_can_be_associated_with_practice_session(): void
     {
         $role = AiRole::factory()->create([
-            'name' => 'Dr. Ir. Hartono, M.T.',
+            'name' => 'VOIC-Dosen Penguji',
             'role_type' => 'dosen_penguji',
         ]);
 

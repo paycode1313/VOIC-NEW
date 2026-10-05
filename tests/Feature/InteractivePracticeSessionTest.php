@@ -25,9 +25,9 @@ class InteractivePracticeSessionTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('practice.create');
-        $response->assertSee('Dr. Ir. Hartono, M.T.');
-        $response->assertSee('Nadia Putri, S.Psi');
-        $response->assertSee('David Wijaya');
+        $response->assertSee('VOIC-Dosen Penguji');
+        $response->assertSee('VOIC-HRD');
+        $response->assertSee('VOIC-Investor');
     }
 
     /**
@@ -187,7 +187,7 @@ class InteractivePracticeSessionTest extends TestCase
         $response = $this->actingAs($user)->get(route('practice.show', $session));
 
         $response->assertOk();
-        $response->assertSee('David Wijaya');
+        $response->assertSee('VOIC-Investor');
         $response->assertSee('Pitching persuasif dan berbobot.');
         $response->assertSee('Model bisnis kami adalah B2B SaaS');
         $response->assertSee('Bagaimana proyeksi churn rate');

@@ -14,9 +14,9 @@ VOIC adalah platform web interaktif cerdas (Laravel 12 + Client-Side Vision + Lo
 
 ### A. AI Roleplay Engine (Karakter Spesifik & Bernyawa)
 - Karakter AI memiliki persona, watak, dan *system prompt* tersendiri:
-  1. **Dr. Ir. Hartono, M.T. (Dosen Penguji Skripsi):** Kritis, berwibawa, menuntut kejelasan metodologi, serta menegur jika mahasiswa tidak menatap layar atau terlihat ragu.
-  2. **Nadia Putri, S.Psi (HRD Recruitment Lead):** Profesional, ramah namun analitis, menguji ketenangan di bawah tekanan dan artikulasi jawaban.
-  3. **David Wijaya (Managing Partner Angel Investor):** Cepat, to-the-point, fokus pada nilai bisnis, validasi pasar, dan solusi konkret.
+  1. **VOIC-Dosen Penguji (Penguji Utama Skripsi):** Kritis, berwibawa, menuntut kejelasan metodologi, serta menegur jika mahasiswa tidak menatap layar atau terlihat ragu.
+  2. **VOIC-HRD (Talent Acquisition Lead):** Profesional, ramah namun analitis, menguji ketenangan di bawah tekanan dan artikulasi jawaban metode STAR.
+  3. **VOIC-Investor (Managing Partner Angel Investor):** Cepat, to-the-point, fokus pada nilai bisnis, validasi pasar, dan solusi konkret.
 
 ### B. Open Cam & Visual Telemetry (Kamera Real-Time)
 - **MediaPipe / Face-API Integration:** Membaca feed webcam secara *real-time*:
