@@ -186,19 +186,25 @@ class AiRoleplayService
 
         $dialogues = [
             'dosen_penguji' => [
-                'Poin pengantar Anda dapat dicatat. Namun tolong jelaskan secara konseptual, apa dasar teori utama yang mendukung validitas algoritma yang Anda ajukan?',
-                'Metodologi yang Anda sebutkan perlu pembuktian lebih kuat. Bagaimana Anda memastikan dataset yang digunakan bebas dari bias?',
-                'Baik, sekarang coba buktikan apa novelty atau kebaruan nyata penelitian ini dibandingkan jurnal-jurnal rujukan terdahulu?',
+                'Hmm, oke poin pengantar Saudara saya catat. Tapi tolong jelaskan secara konseptual, apa dasar teori utama yang mendukung validitas algoritma ini pada bab dua?',
+                'Sebentar Saudara, metodologi yang Anda sebutkan tadi perlu pembuktian empiris. Bagaimana Anda memastikan dataset yang digunakan bebas dari bias sampling?',
+                'Secara konseptual menarik. Namun coba buktikan kepada dewan penguji, apa novelty atau kebaruan nyata penelitian ini dibandingkan jurnal rujukan terdahulu?',
+                'Pemaparan Anda cukup runut, tapi batasan masalahnya masih mengambang. Mengapa Anda tidak menguji skenario data ekstrem pada sistem ini?',
+                'Baik. Sekarang coba tunjukkan apa metrik evaluasi utama yang Anda pakai untuk menyatakan sistem ini berhasil?',
             ],
             'hrd' => [
-                'Penjelasan yang menarik. Bisakah Anda memberikan satu contoh situasi kerja nyata di mana inisiatif mandiri Anda berhasil menyelamatkan target tim?',
-                'Bagus. Sekarang jika Anda berada dalam situasi di mana anggota tim Anda tidak sepakat dengan solusi Anda, bagaimana langkah komunikasi yang Anda tempuh?',
-                'Bagaimana Anda mengelola prioritas saat dihadapkan pada beberapa tenggat waktu mendesak yang datang bersamaan?',
+                'Wah, menarik sekali ceritanya. Bisakah kamu berikan satu contoh situasi kerja nyata di mana inisiatif mandiri kamu berhasil menyelamatkan target tim?',
+                'Oke baik, saya bisa bayangkan situasinya. Nah, jika kamu berada dalam kondisi rekan satu tim menolak solusi yang kamu tawarkan, bagaimana pendekatan komunikasimu?',
+                'Keren ya pengalamannya. Lalu bagaimana caramu mengelola prioritas saat dihadapkan pada beberapa deadline mendesak yang datang bersamaan?',
+                'Saya suka antusiasmemu menceritakan hal itu. Bisakah kamu ceritakan kegagalan terbesar dalam pekerjaanmu dan apa pelajaran terpenting yang kamu petik?',
+                'Menarik sekali. Menurutmu, lingkungan kerja seperti apa yang paling bisa memicu potensimu berkembang maksimal?',
             ],
             'investor' => [
-                'Menarik. Namun berapa perkiraan Customer Acquisition Cost (CAC) Anda dan bagaimana Anda menjaga Lifetime Value (LTV) pelanggan tetap tinggi?',
-                'Solusinya masuk akal, tapi apa moat atau penghalang kompetitif Anda jika kompetitor besar dengan modal melimpah meniru fitur ini bulan depan?',
-                'Berapa runway dana yang Anda butuhkan saat ini dan target milestone operasional apa yang ingin dicapai dalam 6 bulan ke depan?',
+                'Oke, problem pasarnya dapet. Tapi singkat aja ya, berapa perkiraan Customer Acquisition Cost kamu dan bagaimana kamu menjaga retensi pengguna tetap tinggi?',
+                'Gini lho, solusinya masuk akal. Tapi apa moat atau benteng pertahananmu kalau kompetitor besar dengan modal melimpah bikin fitur serupa bulan depan?',
+                'Idenya berani, saya suka. Tapi tolong jelaskan unit economics-nya: butuh berapa lama sampai startup kamu mencapai titik impas atau profit?',
+                'Pasarnya memang besar, tapi eksekusi itu kuncinya. Milestone operasional konkret apa yang ingin kamu capai dalam enam bulan ke depan?',
+                'Bagus energi pitching-nya! Tapi sebutkan satu alasan paling kuat kenapa kami harus berinvestasi di tim kamu sekarang?',
             ],
         ];
 

@@ -124,12 +124,40 @@ async def process_chat(req: ChatRequest):
             elif f.emotion == "fokus":
                 facial_note += " [DATA TELEMETRI KAMERA: Ekspresi wajah tenang dan fokus]."
 
-    # 2. Susun prompt lengkap dengan persona karakter
+    # 2. Susun prompt khusus per peran agar berbicara luwes selayaknya manusia lisan (Spoken Style)
+    role_nuance = ""
+    if req.role_type == "dosen_penguji":
+        role_nuance = (
+            "GAYA PERAN (DOSEN PENGUJI SKRIPSI UTAMA): Anda adalah Dr. Ir. Hartono, M.T. "
+            "Bersikap kritis, berwibawa, akademis, dan langsung menguliti metodologi atau dasar teori. "
+            "Panggil mahasiswa dengan 'Saudara' atau 'Anda'. "
+            "Awali respon dengan reaksi lisan khas dosen penguji sidang (seperti: 'Hmm, oke...', 'Sebentar Saudara...', 'Secara konseptual menarik, tapi...'). "
+            "Fokus: Uji batasan masalah, validitas data, landasan teori bab 2, atau kebaruan (novelty) penelitian."
+        )
+    elif req.role_type == "hrd":
+        role_nuance = (
+            "GAYA PERAN (TALENT ACQUISITION & HR LEAD): Anda adalah Nadia Putri, S.Psi. "
+            "Bersikap ramah, hangat, komunikatif, namun sangat jeli membaca kepribadian dan kedewasaan emosional kandidat. "
+            "Panggil kandidat dengan 'kamu' atau 'Anda'. "
+            "Awali respon dengan apresiasi lisan manusiawi yang tulus (seperti: 'Wah, menarik banget ceritanya...', 'Oke baik, saya bisa bayangkan situasinya...', 'Keren ya inisiatifnya...'). "
+            "Fokus: Uji pengalaman kerja nyata dengan metode STAR (Situation, Task, Action, Result), cara mengatasi konflik tim, dan motivasi kerja."
+        )
+    else:  # investor
+        role_nuance = (
+            "GAYA PERAN (MANAGING PARTNER ANGEL INVESTOR): Anda adalah David Wijaya. "
+            "Bersikap cepat, to-the-point, praktisi bisnis, energik, dan anti basa-basi teoritis. "
+            "Gunakan gaya bicara founder/investor kasual profesional (seperti: 'Oke dapet poinnya, tapi...', 'Gini lho...', 'Singkat aja ya...'). "
+            "Fokus: Validasi pasar riil, Customer Acquisition Cost (CAC), monetisasi, dan apa keunggulan kompetitif (moat) dari kompetitor bermodal besar."
+        )
+
     system_instruction = (
-        f"{req.system_prompt}\n"
-        f"Gunakan Bahasa Indonesia yang alami dan realistis sesuai karakter Anda.\n"
-        f"Komentari atau tegur secara implisit jika ada catatan visual berikut: {facial_note}\n"
-        f"Jaga agar jawaban singkat (maksimal 2-3 kalimat) agar interaksi percakapan terasa hidup dan tidak membosankan."
+        f"{req.system_prompt}\n\n"
+        f"{role_nuance}\n\n"
+        f"PEDOMAN WAJIB PERCAKAPAN LISAN MANUSIAWI (SANGAT PENTING):\n"
+        f"1. JANGAN KAKU: Gunakan Bahasa Indonesia lisan yang luwes, alami, dan mengalir seperti manusia asli berbicara tatap muka. JANGAN PERNAH berbicara seperti robot, buku teks, atau asisten AI umum (jangan pakai pembuka klise seperti 'Tentu, saya memahami...').\n"
+        f"2. MAKSIMAL 2 SAMPAI 3 KALIMAT: Terapkan format ping-pong: (1) Reaksi spontan lisan, (2) Tanggapan atau kritik tajam, (3) Satu pertanyaan lanjutan yang menantang. Jangan berikan ceramah panjang.\n"
+        f"3. DILARANG FORMAT TEKS / MARKDOWN: Jangan gunakan bullet points (- atau nomor 1, 2, 3), jangan gunakan tanda bintang (**teks tebal**), jangan gunakan tanda pagar (###). Jawaban ini akan langsung dibacakan oleh mesin suara TTS.\n"
+        f"4. INTEGRASI KAMERA: Jika ada catatan telemetri visual berikut: '{facial_note}', selipkan teguran santun atau dorongan spontan secara alami sesuai karakter Anda."
     )
 
     messages = [{"role": "system", "content": system_instruction}]
@@ -141,7 +169,7 @@ async def process_chat(req: ChatRequest):
         user_content += f"\n{facial_note}"
     messages.append({"role": "user", "content": user_content})
 
-    # 3. Panggil Ollama secara lokal
+    # 3. Panggil Ollama secara lokal dengan opsi kreatifitas alami
     ai_reply_text = ""
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
@@ -151,10 +179,17 @@ async def process_chat(req: ChatRequest):
                     "model": DEFAULT_MODEL,
                     "messages": messages,
                     "stream": False,
+                    "options": {
+                        "temperature": 0.8,
+                        "repeat_penalty": 1.15,
+                        "top_p": 0.9,
+                    },
                 },
             )
             if ollama_res.status_code == 200:
                 ai_reply_text = ollama_res.json()["message"]["content"].strip()
+                # Bersihkan sisa format markdown jika ada agar suara TTS natural
+                ai_reply_text = ai_reply_text.replace("**", "").replace("*", "").replace("###", "")
             else:
                 ai_reply_text = generate_fallback_response(req)
     except Exception:
@@ -250,12 +285,34 @@ async def generate_tts_audio(text: str, role_type: str) -> Optional[str]:
 
 def generate_fallback_response(req: ChatRequest) -> str:
     """Respons cadangan cerdas jika server Ollama belum di-start."""
-    if req.role_type == "dosen_penguji":
-        return "Bagus, poin Anda dapat dimengerti. Namun tolong jelaskan lebih spesifik apa metode validasi data yang Anda gunakan pada bab 3?"
-    elif req.role_type == "hrd":
-        return "Terima kasih atas jawabannya. Bisakah Anda menceritakan contoh nyata saat Anda menghadapi konflik dalam tim kerja?"
-    else:
-        return "Saya paham idenya. Namun bagaimana strategi Anda mendapatkan 100 pengguna pertama tanpa biaya bakar uang?"
+    import random
+
+    pools = {
+        "dosen_penguji": [
+            "Hmm, oke poin pengantar Saudara saya catat. Tapi tolong jelaskan secara konseptual, apa dasar teori utama yang mendukung validitas algoritma ini pada bab dua?",
+            "Sebentar Saudara, metodologi yang Anda sebutkan tadi perlu pembuktian empiris. Bagaimana Anda memastikan dataset yang digunakan bebas dari bias sampling?",
+            "Secara konseptual menarik. Namun coba buktikan kepada dewan penguji, apa novelty atau kebaruan nyata penelitian ini dibandingkan jurnal rujukan terdahulu?",
+            "Pemaparan Anda cukup runut, tapi batasan masalahnya masih mengambang. Mengapa Anda tidak menguji skenario data ekstrem pada sistem ini?",
+            "Baik. Sekarang coba tunjukkan apa metrik evaluasi utama yang Anda pakai untuk menyatakan sistem ini berhasil?",
+        ],
+        "hrd": [
+            "Wah, menarik sekali ceritanya. Bisakah kamu berikan satu contoh situasi kerja nyata di mana inisiatif mandiri kamu berhasil menyelamatkan target tim?",
+            "Oke baik, saya bisa bayangkan situasinya. Nah, jika kamu berada dalam kondisi rekan satu tim menolak solusi yang kamu tawarkan, bagaimana pendekatan komunikasimu?",
+            "Keren ya pengalamannya. Lalu bagaimana caramu mengelola prioritas saat dihadapkan pada beberapa deadline mendesak yang datang bersamaan?",
+            "Saya suka antusiasmemu menceritakan hal itu. Bisakah kamu ceritakan kegagalan terbesar dalam pekerjaanmu dan apa pelajaran terpenting yang kamu petik?",
+            "Menarik sekali. Menurutmu, lingkungan kerja seperti apa yang paling bisa memicu potensimu berkembang maksimal?",
+        ],
+        "investor": [
+            "Oke, problem pasarnya dapet. Tapi singkat aja ya, berapa perkiraan Customer Acquisition Cost kamu dan bagaimana kamu menjaga retensi pengguna tetap tinggi?",
+            "Gini lho, solusinya masuk akal. Tapi apa moat atau benteng pertahananmu kalau kompetitor besar dengan modal melimpah bikin fitur serupa bulan depan?",
+            "Idenya berani, saya suka. Tapi tolong jelaskan unit economics-nya: butuh berapa lama sampai startup kamu mencapai titik impas atau profit?",
+            "Pasarnya memang besar, tapi eksekusi itu kuncinya. Milestone operasional konkret apa yang ingin kamu capai dalam enam bulan ke depan?",
+            "Bagus energi pitching-nya! Tapi sebutkan satu alasan paling kuat kenapa kami harus berinvestasi di tim kamu sekarang?",
+        ],
+    }
+
+    role_pool = pools.get(req.role_type, pools["dosen_penguji"])
+    return random.choice(role_pool)
 
 
 if __name__ == "__main__":
