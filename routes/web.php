@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/practice/{practiceSession}/message', [PracticeSessionController::class, 'message'])->name('practice.message');
     Route::post('/practice/{practiceSession}/finish', [PracticeSessionController::class, 'finish'])->name('practice.finish');
     Route::get('/practice/{practiceSession}', [PracticeSessionController::class, 'show'])->name('practice.show');
+    Route::get('/practice-export-csv', [PracticeSessionController::class, 'exportCsv'])->name('practice.export');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

@@ -121,4 +121,27 @@ class PracticeSessionTest extends TestCase
         $this->assertDatabaseHas('ai_roles', ['role_type' => 'hrd']);
         $this->assertDatabaseHas('ai_roles', ['role_type' => 'investor']);
     }
+
+    /**
+     * Test that authenticated users can export their session telemetry data to CSV.
+     */
+    public function test_user_can_export_practice_sessions_to_csv(): void
+    {
+        $this->seed(AiRoleSeeder::class);
+        $user = User::factory()->create();
+        $role = AiRole::firstOrFail();
+
+        PracticeSession::factory()->create([
+            'user_id' => $user->id,
+            'ai_role_id' => $role->id,
+            'scenario_type' => 'Sidang Skripsi AI',
+            'overall_score' => 89.5,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('practice.export'));
+
+        $response->assertOk();
+        $this->assertStringContainsString('text/csv', $response->headers->get('Content-Type'));
+        $this->assertStringContainsString('voic-telemetry-sessions-', $response->headers->get('Content-Disposition'));
+    }
 }

@@ -199,6 +199,33 @@
                                 ✕ Reset
                             </button>
                         </div>
+
+                        <!-- Mode Simulasi & Pengaturan Audio SFX -->
+                        <div class="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">Durasi Mode:</span>
+                                <div class="inline-flex p-1 rounded-xl bg-gray-100 dark:bg-gray-750 border border-gray-200 dark:border-gray-700 text-xs">
+                                    <button type="button"
+                                            @click="simulationMode = 'standard'"
+                                            :class="simulationMode === 'standard' ? 'bg-indigo-600 text-white font-bold shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'"
+                                            class="px-3 py-1 rounded-lg transition cursor-pointer">
+                                        🎯 Standar (Fleksibel)
+                                    </button>
+                                    <button type="button"
+                                            @click="simulationMode = 'sprint'"
+                                            :class="simulationMode === 'sprint' ? 'bg-amber-500 text-black font-extrabold shadow-xs' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900'"
+                                            class="px-3 py-1 rounded-lg transition cursor-pointer flex items-center gap-1">
+                                        <span>⚡ Sprint 60s (Pameran)</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="button"
+                                    @click="sfxEnabled = !sfxEnabled"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition cursor-pointer w-fit">
+                                <span x-text="sfxEnabled ? '🔊 Efek Suara Sci-Fi Aktif' : '🔇 Efek Suara Mati'"></span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Action Button to Start Simulation -->
@@ -254,8 +281,22 @@
                         </div>
                     </div>
 
-                    <!-- Right Controls: Fullscreen / Kiosk Mode & End Session Button -->
-                    <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <!-- Right Controls: Sprint Badge, SFX Toggle, Fullscreen & End Session -->
+                    <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+                        <template x-if="simulationMode === 'sprint'">
+                            <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono font-bold animate-pulse">
+                                <span>⚡ SPRINT:</span>
+                                <span x-text="sprintRemaining + 's'">60s</span>
+                            </div>
+                        </template>
+
+                        <button type="button"
+                                @click="sfxEnabled = !sfxEnabled"
+                                :title="sfxEnabled ? 'Matikan Suara SFX' : 'Nyalakan Suara SFX'"
+                                class="inline-flex items-center px-2.5 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-750 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition cursor-pointer">
+                            <span x-text="sfxEnabled ? '🔊' : '🔇'"></span>
+                        </button>
+
                         <button type="button"
                                 @click="toggleFullscreen()"
                                 title="Layar Penuh (Kiosk Mode Pameran)"
@@ -263,17 +304,17 @@
                             <svg class="w-4 h-4 me-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
                             </svg>
-                            <span x-text="isFullscreen ? 'Keluar Fullscreen' : 'Layar Penuh'"></span>
+                            <span x-text="isFullscreen ? 'Keluar' : 'Layar Penuh'"></span>
                         </button>
 
                         <button type="button"
                                 @click="finishSession()"
                                 :disabled="isFinishing"
-                                class="inline-flex items-center justify-center px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 rounded-xl shadow-md shadow-rose-500/20 transition cursor-pointer">
+                                class="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 rounded-xl shadow-md shadow-rose-500/20 transition cursor-pointer">
                             <svg class="w-4 h-4 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <rect x="6" y="6" width="12" height="12" rx="2" stroke-width="2"/>
                             </svg>
-                            <span x-text="isFinishing ? 'Menghitung Rapor...' : 'Akhiri Sesi & Buat Rapor'"></span>
+                            <span x-text="isFinishing ? 'Menghitung...' : 'Akhiri Sesi'"></span>
                         </button>
                     </div>
                 </div>
@@ -537,12 +578,33 @@
 
                         <!-- Live Turn-by-Turn Dialogue History (Chat bubbles) -->
                         <div class="bg-white dark:bg-gray-800 rounded-3xl p-5 border border-gray-100 dark:border-gray-700/60 shadow-xs flex-1 flex flex-col justify-between min-h-[320px]">
-                            <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60 mb-3">
-                                <h4 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                                    <span>💬</span>
-                                    <span>Riwayat Obrolan Real-Time</span>
-                                </h4>
-                                <span class="text-[10px] text-gray-400 font-mono" x-text="messages.length + ' Pesan'"></span>
+                            <div class="pb-3 border-b border-gray-100 dark:border-gray-700/60 mb-3 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                        <span>💬</span>
+                                        <span>Riwayat Obrolan Real-Time</span>
+                                    </h4>
+                                    <div class="flex items-center gap-3">
+                                        <button type="button"
+                                                @click="showCoachGuide = !showCoachGuide"
+                                                class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition cursor-pointer">
+                                            <span>💡</span>
+                                            <span x-text="showCoachGuide ? 'Tutup Tips' : 'Tips Menjawab'"></span>
+                                        </button>
+                                        <span class="text-[10px] text-gray-400 font-mono" x-text="messages.length + ' Pesan'"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Collapsible Coaching Tips Box -->
+                                <div x-show="showCoachGuide"
+                                     x-transition
+                                     class="p-3 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-xs space-y-1 text-gray-800 dark:text-gray-200">
+                                    <div class="font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1">
+                                        <span>🧠</span>
+                                        <span x-text="coachGuideTitle"></span>
+                                    </div>
+                                    <p class="text-[11px] leading-relaxed text-gray-600 dark:text-gray-300" x-text="coachGuideText"></p>
+                                </div>
                             </div>
 
                             <!-- Scrollable Messages Container -->
@@ -612,8 +674,12 @@
                 isStarting: false,
                 isFinishing: false,
 
-                // Custom Topic / Target Context
+                // Custom Topic / Target Context & Modes
                 customTopic: '',
+                simulationMode: 'standard', // 'standard' | 'sprint'
+                sprintRemaining: 60,
+                sfxEnabled: true,
+                showCoachGuide: false,
                 fillerWordAlert: null,
                 fillerAlertTimer: null,
                 cameraAdvice: null,
@@ -720,6 +786,85 @@
                     return 'Atau ketik nama startup & model bisnis pitching Anda di sini...';
                 },
 
+                get coachGuideTitle() {
+                    if (this.selectedRole.role_type === 'hrd') {
+                        return 'Panduan Metode STAR (Situation, Task, Action, Result)';
+                    }
+                    if (this.selectedRole.role_type === 'dosen_penguji') {
+                        return 'Struktur Ujian Skripsi (Urgensi, Metodologi & Validasi)';
+                    }
+                    return 'Formula Elevator Pitch (Problem, Solution & Market Traction)';
+                },
+
+                get coachGuideText() {
+                    if (this.selectedRole.role_type === 'hrd') {
+                        return 'Strukturkan jawaban Anda: Ceritakan Situasi kerja, Tugas yang harus diselesaikan, Aksi nyata yang Anda ambil, dan Hasil konkret berbobot angka/metrik. Tatap kamera dan kurangi gumaman.';
+                    }
+                    if (this.selectedRole.role_type === 'dosen_penguji') {
+                        return 'Jawab secara lugas dan ilmiah: Sebutkan urgensi penelitian, alasan mengapa memilih algoritma/arsitektur tersebut, batasan masalah, serta bagaimana akurasi data diuji secara objektif.';
+                    }
+                    return 'Pikat pendengar dalam 60 detik: Jelaskan masalah kritis yang dihadapi pasar, mengapa inovasi Anda 10x lebih efektif, model bisnis terukur, serta traksi atau roadmap masa depan.';
+                },
+
+                playSfx(type) {
+                    if (!this.sfxEnabled) return;
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioContext) return;
+                        const ctx = (this.audioContext && this.audioContext.state !== 'closed') 
+                            ? this.audioContext 
+                            : new AudioContext();
+                        if (ctx.state === 'suspended') {
+                            ctx.resume();
+                        }
+
+                        const now = ctx.currentTime;
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        if (type === 'start') {
+                            // Sci-fi room entrance chime: 440Hz -> 880Hz
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(440, now);
+                            osc.frequency.exponentialRampToValueAtTime(880, now + 0.22);
+                            gain.gain.setValueAtTime(0.12, now);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                            osc.start(now);
+                            osc.stop(now + 0.35);
+                        } else if (type === 'blip') {
+                            // User turn submitted blip: 587Hz -> 880Hz
+                            osc.type = 'triangle';
+                            osc.frequency.setValueAtTime(587.33, now);
+                            osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+                            gain.gain.setValueAtTime(0.1, now);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                            osc.start(now);
+                            osc.stop(now + 0.18);
+                        } else if (type === 'filler') {
+                            // Subtle low alert chime when filler word triggers: 280Hz -> 200Hz
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(280, now);
+                            osc.frequency.exponentialRampToValueAtTime(200, now + 0.18);
+                            gain.gain.setValueAtTime(0.08, now);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+                            osc.start(now);
+                            osc.stop(now + 0.22);
+                        } else if (type === 'countdown') {
+                            // Sprint final seconds tick: 987Hz
+                            osc.type = 'square';
+                            osc.frequency.setValueAtTime(987.77, now);
+                            gain.gain.setValueAtTime(0.05, now);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                            osc.start(now);
+                            osc.stop(now + 0.08);
+                        }
+                    } catch (e) {
+                        // Ignore audio autoplay restrictions silently
+                    }
+                },
+
                 toggleFullscreen() {
                     if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen().then(() => {
@@ -779,6 +924,7 @@
                         await this.initHardware();
 
                         this.sessionState = 'room';
+                        this.playSfx('start');
                         this.startSessionTimer();
                         this.startTelemetrySampler();
 
@@ -945,6 +1091,9 @@
                         const fillerRegex = /\b(ehm|eh|em|umm|um|uh|anu|ngg|ngga|kayak|apa namanya)\b/i;
                         const fillerMatch = (finalTurn || interim).match(fillerRegex);
                         if (fillerMatch) {
+                            if (!this.fillerWordAlert) {
+                                this.playSfx('filler');
+                            }
                             this.fillerWordAlert = fillerMatch[0].toLowerCase();
                             clearTimeout(this.fillerAlertTimer);
                             this.fillerAlertTimer = setTimeout(() => {
@@ -985,8 +1134,20 @@
                 },
 
                 startSessionTimer() {
+                    if (this.simulationMode === 'sprint') {
+                        this.sprintRemaining = 60;
+                    }
                     this.sessionTimerInterval = setInterval(() => {
                         this.secondsElapsed++;
+                        if (this.simulationMode === 'sprint') {
+                            this.sprintRemaining = Math.max(0, 60 - this.secondsElapsed);
+                            if (this.sprintRemaining <= 5 && this.sprintRemaining > 0) {
+                                this.playSfx('countdown');
+                            }
+                            if (this.sprintRemaining <= 0) {
+                                this.finishSession();
+                            }
+                        }
                     }, 1000);
                 },
 
@@ -1168,6 +1329,7 @@
                 async sendTurn(userText) {
                     if (!userText || !this.currentSessionId) return;
 
+                    this.playSfx('blip');
                     this.orbState = 'thinking';
                     clearTimeout(this.silenceTimer);
 

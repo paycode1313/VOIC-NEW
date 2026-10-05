@@ -12,6 +12,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PracticeSessionController extends Controller
 {
@@ -287,5 +288,70 @@ class PracticeSessionController extends Controller
             'user' => $practiceSession->user,
             'benchmarkData' => $benchmarkData,
         ]);
+    }
+
+    /**
+     * Export all practice session telemetry metrics of the authenticated user to CSV.
+     */
+    public function exportCsv(Request $request): StreamedResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $sessions = $user->practiceSessions()
+            ->with('aiRole')
+            ->orderByDesc('id')
+            ->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="voic-telemetry-sessions-'.now()->format('Ymd-His').'.csv"',
+        ];
+
+        $callback = function () use ($sessions) {
+            $file = fopen('php://output', 'w');
+            // Add UTF-8 BOM for Excel compatibility
+            fwrite($file, "\xEF\xBB\xBF");
+
+            // CSV Header
+            fputcsv($file, [
+                'ID Sesi',
+                'Skenario / Topik',
+                'Karakter AI Penguji',
+                'Tanggal Sesi',
+                'Durasi (Detik)',
+                'Skor Optik Wajah (0-100)',
+                'Skor Suara & Vokal (0-100)',
+                'Skor Keseluruhan (0-100)',
+                'Kontak Mata (%)',
+                'Ekspresi Rileks (%)',
+                'Kecepatan Bicara (WPM)',
+                'Jumlah Kata Gumaman (Filler)',
+                'Kesimpulan AI',
+            ]);
+
+            foreach ($sessions as $session) {
+                $feedback = is_array($session->feedback_notes) ? $session->feedback_notes : [];
+                fputcsv($file, [
+                    $session->id,
+                    $session->scenario_type,
+                    $session->aiRole?->name ?? 'Evaluator AI',
+                    $session->created_at->format('Y-m-d H:i:s'),
+                    $session->duration_seconds,
+                    $session->face_score ?? '-',
+                    $session->voice_score ?? '-',
+                    $session->overall_score ?? '-',
+                    $feedback['eye_contact_score'] ?? '-',
+                    $feedback['smile_rate'] ?? '-',
+                    $feedback['pace_wpm'] ?? '-',
+                    $feedback['filler_words_count'] ?? 0,
+                    $session->ai_conclusion ?? '-',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

@@ -111,29 +111,91 @@
                 </div>
             </div>
 
-            <!-- Official AI Conclusion Card -->
+            <!-- Official AI Conclusion Card with Speech Synthesis Playback -->
             @if($session->ai_conclusion)
-                <div class="p-6 rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-950 to-purple-950 text-white shadow-xl border border-indigo-800/60 relative overflow-hidden">
-                    <div class="flex items-start gap-4">
-                        <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl shrink-0 border border-white/20">
-                            @if($session->aiRole && $session->aiRole->role_type === 'dosen_penguji')
-                                🎓
-                            @elseif($session->aiRole && $session->aiRole->role_type === 'hrd')
-                                💼
-                            @else
-                                🚀
-                            @endif
+                <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-950 to-purple-950 text-white shadow-xl border border-indigo-800/60 relative overflow-hidden"
+                     x-data="{
+                        isPlaying: false,
+                        toggleVerdictAudio() {
+                            if (this.isPlaying) {
+                                if (window.speechSynthesis) window.speechSynthesis.cancel();
+                                this.isPlaying = false;
+                                return;
+                            }
+                            if (!window.speechSynthesis) {
+                                alert('Peramban Anda tidak mendukung pemutar suara.');
+                                return;
+                            }
+                            window.speechSynthesis.cancel();
+                            const text = @js($session->ai_conclusion);
+                            const utterance = new SpeechSynthesisUtterance(text);
+                            utterance.lang = 'id-ID';
+                            utterance.rate = 1.0;
+                            const voices = window.speechSynthesis.getVoices();
+                            const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+                            if (idVoice) utterance.voice = idVoice;
+
+                            utterance.onend = () => { this.isPlaying = false; };
+                            utterance.onerror = () => { this.isPlaying = false; };
+
+                            this.isPlaying = true;
+                            window.speechSynthesis.speak(utterance);
+                        }
+                     }">
+                    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl shrink-0 border border-white/20 shadow-md">
+                                @if($session->aiRole && $session->aiRole->role_type === 'dosen_penguji')
+                                    🎓
+                                @elseif($session->aiRole && $session->aiRole->role_type === 'hrd')
+                                    💼
+                                @else
+                                    🚀
+                                @endif
+                            </div>
+                            <div class="space-y-1">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+                                    Kesimpulan Resmi Penguji (AI Roleplay Verdict)
+                                </span>
+                                <h3 class="text-lg font-bold text-white">
+                                    {{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}
+                                </h3>
+                                <p class="text-xs sm:text-sm text-indigo-100 leading-relaxed pt-1">
+                                    "{{ $session->ai_conclusion }}"
+                                </p>
+                            </div>
                         </div>
-                        <div class="space-y-1">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">
-                                Kesimpulan Resmi Penguji (AI Roleplay Verdict)
-                            </span>
-                            <h3 class="text-lg font-bold text-white">
-                                {{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}
-                            </h3>
-                            <p class="text-xs sm:text-sm text-indigo-100 leading-relaxed pt-1">
-                                "{{ $session->ai_conclusion }}"
-                            </p>
+
+                        <!-- Audio Playback Button & Equalizer -->
+                        <div class="sm:shrink-0 pt-2 sm:pt-0 flex items-center gap-2 print:hidden">
+                            <button type="button"
+                                    @click="toggleVerdictAudio()"
+                                    class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition shadow-lg cursor-pointer"
+                                    :class="isPlaying
+                                        ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/30'
+                                        : 'bg-white/15 hover:bg-white/25 text-white border border-white/20'">
+                                <template x-if="isPlaying">
+                                    <span class="flex items-center gap-1.5">
+                                        <!-- Animated Audio Equalizer Bars -->
+                                        <span class="flex items-end gap-0.5 h-3">
+                                            <span class="w-1 bg-white rounded-full animate-bounce" style="height: 100%; animation-duration: 0.6s;"></span>
+                                            <span class="w-1 bg-white rounded-full animate-bounce" style="height: 60%; animation-duration: 0.8s;"></span>
+                                            <span class="w-1 bg-white rounded-full animate-bounce" style="height: 90%; animation-duration: 0.5s;"></span>
+                                            <span class="w-1 bg-white rounded-full animate-bounce" style="height: 70%; animation-duration: 0.7s;"></span>
+                                        </span>
+                                        <span>Jeda Suara</span>
+                                    </span>
+                                </template>
+                                <template x-if="!isPlaying">
+                                    <span class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span>Dengarkan Suara AI</span>
+                                    </span>
+                                </template>
+                            </button>
                         </div>
                     </div>
                 </div>
