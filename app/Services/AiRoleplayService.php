@@ -108,9 +108,10 @@ class AiRoleplayService
                 'system_prompt' => $systemPrompt,
                 'user_message' => $userMessage,
                 'facial_status' => [
-                    'emotion' => $facialStatus['status'] ?? 'neutral',
-                    'eye_contact_ratio' => (float) ($facialStatus['eye_contact_score'] ?? 80),
-                    'smile_detected' => (bool) ($facialStatus['is_smiling'] ?? false),
+                    'emotion' => $facialStatus['status'] ?? null,
+                    'eye_contact_ratio' => isset($facialStatus['eye_contact_score']) ? (float) $facialStatus['eye_contact_score'] : null,
+                    'smile_detected' => isset($facialStatus['is_smiling']) ? (bool) $facialStatus['is_smiling'] : null,
+                    'face_detected' => isset($facialStatus['face_detected']) ? (bool) $facialStatus['face_detected'] : true,
                 ],
                 'conversation_history' => $history,
                 'generate_voice' => true,
@@ -212,35 +213,82 @@ class AiRoleplayService
 
     /**
      * Generate comprehensive final conclusion from the AI Role's perspective.
+     *
+     * @param  array<string, mixed>  $feedbackNotes
      */
     public function generateFinalConclusion(
         PracticeSession $session,
         float $faceScore,
         float $voiceScore,
-        float $overallScore
+        float $overallScore,
+        array $feedbackNotes = []
     ): string {
         $role = $session->aiRole;
         $roleType = $role?->role_type ?? 'dosen_penguji';
         $roleName = $role?->name ?? 'Evaluator VOIC';
+        $systemPrompt = $role?->system_prompt ?? 'Anda adalah evaluator profesional.';
+
+        // Retrieve last turns of conversation for real context
+        $history = $session->messages()
+            ->latest('id')
+            ->take(8)
+            ->get()
+            ->reverse()
+            ->map(fn (SessionMessage $msg) => [
+                'role' => $msg->sender === 'user' ? 'user' : 'assistant',
+                'content' => $msg->message,
+            ])
+            ->values()
+            ->toArray();
+
+        // 1. Try local AI service via Ollama
+        try {
+            $response = Http::timeout($this->timeout)->post("{$this->aiServiceUrl}/conclude", [
+                'role_name' => $roleName,
+                'role_type' => $roleType,
+                'system_prompt' => $systemPrompt,
+                'face_score' => $faceScore,
+                'voice_score' => $voiceScore,
+                'overall_score' => $overallScore,
+                'duration_seconds' => (int) $session->duration_seconds,
+                'conversation_history' => $history,
+                'feedback_notes' => $feedbackNotes,
+            ]);
+
+            if ($response->successful()) {
+                $conclusion = $response->json('conclusion');
+                if (! empty($conclusion)) {
+                    return $conclusion;
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::info('Local AI service /conclude unavailable: '.$e->getMessage());
+        }
+
+        // 2. Persona verdict based on REAL measurements
+        $userTurnsCount = $session->messages()->where('sender', 'user')->count();
+        $eyeContact = $feedbackNotes['eye_contact_score'] ?? round($faceScore);
+        $wpm = $feedbackNotes['pace_wpm'] ?? null;
+        $paceText = $wpm ? " dengan ritme {$wpm} kata/menit" : '';
 
         if ($overallScore >= 85) {
             if ($roleType === 'dosen_penguji') {
-                return "Hasil Evaluasi {$roleName}: Mahasiswa menunjukkan argumentasi ilmiah yang sangat matang. Kontak mata stabil (skor optik {$faceScore}/100) dan artikulasi terstruktur (skor suara {$voiceScore}/100). Direkomendasikan siap menuju sidang sesungguhnya.";
+                return "Hasil Evaluasi {$roleName}: Mahasiswa menunjukkan argumentasi ilmiah yang sangat matang dalam {$userTurnsCount} respon{$paceText}. Kontak mata stabil (skor optik {$faceScore}/100) dan artikulasi suara mantap (skor vokal {$voiceScore}/100). Direkomendasikan siap menuju sidang sesungguhnya.";
             } elseif ($roleType === 'hrd') {
-                return "Hasil Evaluasi {$roleName}: Kandidat memiliki kompetensi komunikasi yang luar biasa. Sangat percaya diri, ekspresi ramah profesional, dan jawaban berstruktur STAR yang jelas. Nilai total: {$overallScore}/100 (Sangat Layak).";
+                return "Hasil Evaluasi {$roleName}: Kandidat memiliki kompetensi komunikasi yang luar biasa. Sangat percaya diri, ekspresi ramah profesional (skor wajah {$faceScore}/100), dan jawaban mengalir runtut{$paceText}. Nilai total: {$overallScore}/100 (Sangat Layak).";
             } else {
-                return "Hasil Evaluasi {$roleName}: Pitching sangat persuasif dan padat! Energi vokal meyakinkan dengan kontak mata mantap. Problem-solution fit terartikulasi dengan tajam. Skor investasi: {$overallScore}/100.";
+                return "Hasil Evaluasi {$roleName}: Pitching sangat persuasif dan padat! Energi vokal meyakinkan ({$voiceScore}/100) dengan kontak mata mantap ({$faceScore}/100). Problem-solution fit terartikulasi dengan tajam{$paceText}. Skor investasi: {$overallScore}/100.";
             }
         } elseif ($overallScore >= 70) {
             if ($roleType === 'dosen_penguji') {
-                return "Hasil Evaluasi {$roleName}: Pemahaman substansi tugas akhir sudah cukup baik, namun perlu peningkatan ketenangan saat dihadapkan pertanyaan mendadak. Skor wajah {$faceScore}/100, skor suara {$voiceScore}/100.";
+                return "Hasil Evaluasi {$roleName}: Pemahaman substansi tugas akhir sudah cukup baik, namun perlu peningkatan ketenangan gestur saat dihadapkan pertanyaan mendadak. Skor optik wajah {$faceScore}/100, skor artikulasi suara {$voiceScore}/100{$paceText}.";
             } elseif ($roleType === 'hrd') {
-                return "Hasil Evaluasi {$roleName}: Kemampuan komunikasi baik dan materi jawaban relevan. Tingkatkan kontak mata langsung ke arah kamera agar kesan antusiasme terasa lebih kuat.";
+                return "Hasil Evaluasi {$roleName}: Kemampuan komunikasi baik dan materi jawaban relevan. Tingkatkan kontak mata langsung ke arah kamera ({$eyeContact}%) agar kesan antusiasme dan komitmen terasa lebih kuat.";
             } else {
-                return "Hasil Evaluasi {$roleName}: Ide bisnis memiliki potensi, tetapi tempo berbicara perlu lebih dijaga agar pesan keunggulan produk tidak terkesan terburu-buru.";
+                return "Hasil Evaluasi {$roleName}: Ide bisnis memiliki potensi, tetapi tempo berbicara ({$wpm} WPM) dan ketenangan visual ({$faceScore}/100) perlu terus dilatih agar pesan keunggulan produk tidak terkesan terburu-buru.";
             }
         }
 
-        return "Hasil Evaluasi {$roleName}: Performa latihan menunjukkan Anda perlu membiasakan diri berbicara di depan kamera. Latih pernapasan diafragma dan tatap lensa kamera secara berkesinambungan untuk mengatasi rasa gugup.";
+        return "Hasil Evaluasi {$roleName}: Performa latihan menunjukkan Anda perlu membiasakan diri berbicara di depan kamera (skor optik {$faceScore}/100, skor vokal {$voiceScore}/100). Latih pernapasan diafragma dan tatap lensa kamera secara berkesinambungan untuk mengatasi rasa gugup.";
     }
 }

@@ -155,6 +155,7 @@ class PracticeSessionController extends Controller
             'facial_status.status' => ['nullable', 'string'],
             'facial_status.eye_contact_score' => ['nullable', 'numeric'],
             'facial_status.is_smiling' => ['nullable', 'boolean'],
+            'facial_status.face_detected' => ['nullable', 'boolean'],
             'timestamp_seconds' => ['required', 'integer', 'min:0'],
         ]);
 
@@ -193,6 +194,15 @@ class PracticeSessionController extends Controller
             'feedback_notes.smile_rate' => ['nullable', 'numeric', 'between:0,100'],
             'feedback_notes.pace_wpm' => ['nullable', 'numeric', 'min:0'],
             'feedback_notes.clarity_score' => ['nullable', 'numeric', 'between:0,100'],
+            'feedback_notes.avg_volume' => ['nullable', 'numeric', 'min:0'],
+            'feedback_notes.total_words' => ['nullable', 'integer', 'min:0'],
+            'feedback_notes.filler_words_count' => ['nullable', 'integer', 'min:0'],
+            'feedback_notes.filler_words_list' => ['nullable', 'array'],
+            'feedback_notes.filler_words_list.*' => ['nullable', 'string', 'max:50'],
+            'feedback_notes.strengths' => ['nullable', 'array'],
+            'feedback_notes.strengths.*' => ['nullable', 'string', 'max:500'],
+            'feedback_notes.improvements' => ['nullable', 'array'],
+            'feedback_notes.improvements.*' => ['nullable', 'string', 'max:500'],
         ]);
 
         $faceScore = (float) $validated['face_score'];
@@ -203,7 +213,8 @@ class PracticeSessionController extends Controller
             $practiceSession,
             $faceScore,
             $voiceScore,
-            $overallScore
+            $overallScore,
+            $validated['feedback_notes'] ?? []
         );
 
         $practiceSession->update([

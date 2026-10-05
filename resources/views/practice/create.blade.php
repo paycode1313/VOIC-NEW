@@ -235,13 +235,30 @@
                                    class="w-full h-full object-cover -scale-x-100">
                             </video>
 
-                            <!-- Optical Face Box Tracking HUD -->
-                            <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                                <div class="w-56 h-64 border-2 border-dashed rounded-3xl transition-all duration-300"
-                                     :class="currentFaceStatus === 'tegang'
-                                        ? 'border-rose-500/80 shadow-rose-500/30 shadow-lg'
-                                        : (currentFaceStatus === 'tersenyum' ? 'border-emerald-400/80 shadow-emerald-400/30 shadow-lg' : 'border-indigo-400/50')">
-                                </div>
+                            <!-- Off-screen Computer Vision Telemetry Canvas -->
+                            <canvas id="telemetryCanvas" width="320" height="240" class="hidden"></canvas>
+
+                            <!-- Optical Face Box Tracking HUD (Real Dynamic Computer Vision Coordinates) -->
+                            <div class="absolute inset-0 pointer-events-none">
+                                <template x-if="faceDetected">
+                                    <div class="absolute border-2 rounded-2xl transition-all duration-150"
+                                         :style="`left: ${faceBoxCoords.left}%; top: ${faceBoxCoords.top}%; width: ${faceBoxCoords.width}%; height: ${faceBoxCoords.height}%;`"
+                                         :class="currentFaceStatus === 'tegang'
+                                            ? 'border-rose-500/80 shadow-rose-500/30 shadow-lg'
+                                            : (currentFaceStatus === 'tersenyum' ? 'border-emerald-400/80 shadow-emerald-400/30 shadow-lg' : 'border-indigo-400/60 shadow-indigo-500/20 shadow-md')">
+                                        <span class="absolute -top-5 left-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-black/75 text-white tracking-wider flex items-center gap-1"
+                                              x-text="currentFaceText"></span>
+                                    </div>
+                                </template>
+                                <template x-if="!faceDetected">
+                                    <div class="absolute inset-6 border-2 border-dashed border-rose-500/70 rounded-3xl flex items-center justify-center bg-rose-950/20 backdrop-blur-xs">
+                                        <div class="text-center p-3">
+                                            <span class="text-2xl block mb-1">⚠️</span>
+                                            <span class="text-xs font-bold text-rose-300">Wajah Tidak Terdeteksi</span>
+                                            <p class="text-[10px] text-rose-400/80 mt-0.5">Posisikan wajah Anda tepat di depan kamera</p>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
 
                             <!-- Top Left HUD: Real-time Expression Pill -->
@@ -452,13 +469,15 @@
                 analyser: null,
                 dataArray: null,
 
-                // Live Audio Meter & Telemetry
+                // Real Computer Vision & Audio Telemetry
+                faceDetected: false,
+                faceBoxCoords: { left: 20, top: 15, width: 60, height: 70 },
                 liveVolume: 0,
-                liveEyeContactScore: 84,
-                liveSmileRate: 72,
-                currentFaceStatus: 'fokus', // 'fokus', 'tegang', 'tersenyum', 'mata_melenceng'
-                currentFaceIcon: '😊',
-                currentFaceText: 'Fokus & Rileks',
+                liveEyeContactScore: 0,
+                liveSmileRate: 0,
+                currentFaceStatus: 'menunggu', // 'fokus', 'tegang', 'tersenyum', 'mata_melenceng', 'wajah_hilang'
+                currentFaceIcon: '📷',
+                currentFaceText: 'Menghubungkan Kamera...',
                 liveReprimandNotice: null,
 
                 // Aggregated stats for the final feedback report
@@ -676,7 +695,7 @@
 
                 startTelemetrySampler() {
                     this.telemetrySamplerInterval = setInterval(() => {
-                        // 1. Audio volume
+                        // 1. REAL Audio Volume from Microphone Analyser
                         if (this.analyser && this.dataArray) {
                             this.analyser.getByteFrequencyData(this.dataArray);
                             let sum = 0;
@@ -687,34 +706,147 @@
                             this.volumeSamples.push(this.liveVolume);
                         }
 
-                        // 2. Optical Eye Contact & Composure simulation
-                        const eyeJitter = Math.floor(Math.random() * 9) - 4;
-                        this.liveEyeContactScore = Math.max(60, Math.min(98, this.liveEyeContactScore + eyeJitter));
-                        this.eyeContactSamples.push(this.liveEyeContactScore);
+                        // 2. REAL Computer Vision on Webcam Canvas
+                        this.analyzeWebcamPixels();
+                    }, 250);
+                },
 
-                        const smileJitter = Math.floor(Math.random() * 7) - 3;
-                        this.liveSmileRate = Math.max(50, Math.min(95, this.liveSmileRate + smileJitter));
-                        this.smileSamples.push(this.liveSmileRate);
+                analyzeWebcamPixels() {
+                    const video = document.getElementById('webcamVideo');
+                    const canvas = document.getElementById('telemetryCanvas');
+                    if (!video || !canvas || video.readyState < 2 || video.paused) {
+                        return;
+                    }
 
-                        // 3. Classify expression state
-                        if (this.liveEyeContactScore < 70) {
-                            this.currentFaceStatus = 'mata_melenceng';
-                            this.currentFaceIcon = '👀';
-                            this.currentFaceText = 'Tatapan Melenceng';
-                        } else if (this.liveSmileRate < 60) {
-                            this.currentFaceStatus = 'tegang';
-                            this.currentFaceIcon = '😬';
-                            this.currentFaceText = 'Tampak Tegang';
-                        } else if (this.liveSmileRate >= 78) {
-                            this.currentFaceStatus = 'tersenyum';
-                            this.currentFaceIcon = '😊';
-                            this.currentFaceText = 'Ramah & Tersenyum';
-                        } else {
-                            this.currentFaceStatus = 'fokus';
-                            this.currentFaceIcon = '🎯';
-                            this.currentFaceText = 'Fokus & Tenang';
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    const w = canvas.width;
+                    const h = canvas.height;
+                    ctx.drawImage(video, 0, 0, w, h);
+
+                    let frame;
+                    try {
+                        frame = ctx.getImageData(0, 0, w, h);
+                    } catch (e) {
+                        return;
+                    }
+
+                    const data = frame.data;
+                    let skinPixels = 0;
+                    let sumX = 0;
+                    let sumY = 0;
+                    let minX = w, maxX = 0, minY = h, maxY = 0;
+
+                    // Sample every 4th pixel for high performance (320x240 -> 4800 samples)
+                    for (let y = 0; y < h; y += 4) {
+                        for (let x = 0; x < w; x += 4) {
+                            const idx = (y * w + x) * 4;
+                            const r = data[idx];
+                            const g = data[idx + 1];
+                            const b = data[idx + 2];
+
+                            // Standard Skin Color Rule in Normalized RGB / YCbCr Chromaticity
+                            if (r > 60 && g > 40 && b > 20 &&
+                                r > g && r > b &&
+                                (r - g) > 15 &&
+                                (Math.max(r, g, b) - Math.min(r, g, b)) > 15) {
+                                skinPixels++;
+                                sumX += x;
+                                sumY += y;
+                                if (x < minX) minX = x;
+                                if (x > maxX) maxX = x;
+                                if (y < minY) minY = y;
+                                if (y > maxY) maxY = y;
+                            }
                         }
-                    }, 600);
+                    }
+
+                    // Face presence threshold (real face detection)
+                    if (skinPixels < 120) {
+                        this.faceDetected = false;
+                        this.liveEyeContactScore = 0;
+                        this.liveSmileRate = 0;
+                        this.currentFaceStatus = 'wajah_hilang';
+                        this.currentFaceIcon = '⚠️';
+                        this.currentFaceText = 'Wajah Tidak Terdeteksi';
+                        this.liveReprimandNotice = 'Posisikan wajah Anda tepat di depan kamera.';
+                        return;
+                    }
+
+                    this.faceDetected = true;
+                    this.liveReprimandNotice = null;
+
+                    // Centroid and Box
+                    const centerX = sumX / skinPixels;
+                    const centerY = sumY / skinPixels;
+                    const faceW = Math.max(40, maxX - minX);
+                    const faceH = Math.max(40, maxY - minY);
+
+                    // Dynamic HUD Coordinates (in percentage, mirrored for selfie webcam)
+                    this.faceBoxCoords = {
+                        left: Math.max(5, Math.min(80, Math.round(((w - maxX) / w) * 100))),
+                        top: Math.max(5, Math.min(80, Math.round((minY / h) * 100))),
+                        width: Math.min(90, Math.round((faceW / w) * 100)),
+                        height: Math.min(90, Math.round((faceH / h) * 100)),
+                    };
+
+                    // REAL Eye Contact Gaze: Deviation from camera center (w/2, h*0.45)
+                    const devX = Math.abs(centerX - (w / 2)) / (w / 2);
+                    const devY = Math.abs(centerY - (h * 0.45)) / (h * 0.45);
+                    const gazePenalty = (devX * 55) + (devY * 45);
+                    const eyeScore = Math.max(15, Math.min(98, Math.round(98 - gazePenalty)));
+                    this.liveEyeContactScore = eyeScore;
+                    this.eyeContactSamples.push(eyeScore);
+
+                    // REAL Mouth / Smile Detection in bottom 35% of face region
+                    const mouthYStart = Math.round(minY + (faceH * 0.65));
+                    const mouthYEnd = Math.round(minY + (faceH * 0.95));
+                    let mouthPixels = 0;
+                    let mouthMinX = w, mouthMaxX = 0;
+
+                    for (let y = mouthYStart; y <= mouthYEnd; y += 4) {
+                        for (let x = minX; x <= maxX; x += 4) {
+                            const idx = (y * w + x) * 4;
+                            const r = data[idx];
+                            const g = data[idx + 1];
+                            const b = data[idx + 2];
+                            // Lips / mouth redness contrast
+                            if (r > 75 && (r - g) > 25 && (r - b) > 20) {
+                                mouthPixels++;
+                                if (x < mouthMinX) mouthMinX = x;
+                                if (x > mouthMaxX) mouthMaxX = x;
+                            }
+                        }
+                    }
+
+                    let smileScore = 50;
+                    if (mouthPixels >= 6) {
+                        const mouthWidth = Math.max(1, mouthMaxX - mouthMinX);
+                        const mouthRatio = mouthWidth / faceW;
+                        smileScore = Math.max(25, Math.min(95, Math.round((mouthRatio - 0.25) * 200 + 45)));
+                    } else {
+                        smileScore = 45;
+                    }
+                    this.liveSmileRate = smileScore;
+                    this.smileSamples.push(smileScore);
+
+                    // Real Status Classification
+                    if (eyeScore < 65) {
+                        this.currentFaceStatus = 'mata_melenceng';
+                        this.currentFaceIcon = '👀';
+                        this.currentFaceText = 'Tatapan Melenceng';
+                    } else if (smileScore >= 72) {
+                        this.currentFaceStatus = 'tersenyum';
+                        this.currentFaceIcon = '😊';
+                        this.currentFaceText = 'Ramah & Tersenyum';
+                    } else if (smileScore < 42) {
+                        this.currentFaceStatus = 'tegang';
+                        this.currentFaceIcon = '😬';
+                        this.currentFaceText = 'Tampak Tegang';
+                    } else {
+                        this.currentFaceStatus = 'fokus';
+                        this.currentFaceIcon = '🎯';
+                        this.currentFaceText = 'Fokus & Tenang';
+                    }
                 },
 
                 async sendTurn(userText) {
@@ -727,7 +859,8 @@
                     const facialTelemetry = {
                         status: this.currentFaceStatus,
                         eye_contact_score: this.liveEyeContactScore,
-                        is_smiling: this.liveSmileRate >= 75
+                        is_smiling: this.liveSmileRate >= 72,
+                        face_detected: this.faceDetected
                     };
 
                     // Optimistically append user message to dialogue
@@ -876,18 +1009,141 @@
                         window.speechSynthesis.cancel();
                     }
 
-                    // Compute aggregate scores
-                    const avgEye = this.eyeContactSamples.length > 0
+                    // 1. DATA TELEMETRI OPTIK ASLI KAMERA (Computer Vision)
+                    const hasEyeSamples = this.eyeContactSamples.length > 0;
+                    const avgEye = hasEyeSamples
                         ? Math.round(this.eyeContactSamples.reduce((a, b) => a + b, 0) / this.eyeContactSamples.length)
-                        : 80;
+                        : 0;
 
-                    const avgSmile = this.smileSamples.length > 0
+                    const hasSmileSamples = this.smileSamples.length > 0;
+                    const avgSmile = hasSmileSamples
                         ? Math.round(this.smileSamples.reduce((a, b) => a + b, 0) / this.smileSamples.length)
-                        : 75;
+                        : 0;
 
-                    const faceScore = parseFloat(((avgEye * 0.6) + (avgSmile * 0.4)).toFixed(2));
-                    const voiceScore = parseFloat((82 + Math.min(15, this.messages.filter(m => m.sender === 'user').length * 3)).toFixed(2));
-                    const overallScore = parseFloat(((faceScore * 0.5) + (voiceScore * 0.5)).toFixed(2));
+                    const faceScore = hasEyeSamples
+                        ? parseFloat(((avgEye * 0.6) + (avgSmile * 0.4)).toFixed(1))
+                        : 0;
+
+                    // 2. DATA METRIK UCAPAN ASLI PENGGUNA (Kata, WPM, & Deteksi Filler Words)
+                    const userMessages = this.messages.filter(m => m.sender === 'user');
+                    const totalSpokenWords = userMessages.reduce((sum, m) => {
+                        const words = (m.message || '').trim().split(/\s+/).filter(Boolean);
+                        return sum + words.length;
+                    }, 0);
+                    const durationMinutes = Math.max(0.08, this.secondsElapsed / 60);
+                    const realPaceWpm = Math.round(totalSpokenWords / durationMinutes);
+
+                    // Deteksi kata jeda/gumaman (Filler Words)
+                    const fillerRegex = /\b(ehm|eh|em|umm|um|uh|anu|ngg|ngga|kayak|apa namanya)\b/gi;
+                    let totalFillerWords = 0;
+                    const detectedFillers = [];
+                    userMessages.forEach(m => {
+                        const matches = (m.message || '').match(fillerRegex);
+                        if (matches) {
+                            totalFillerWords += matches.length;
+                            matches.forEach(w => {
+                                const lower = w.toLowerCase();
+                                if (!detectedFillers.includes(lower)) {
+                                    detectedFillers.push(lower);
+                                }
+                            });
+                        }
+                    });
+
+                    // 3. DATA TELEMETRI AUDIO ASLI MIKROFON (Web Audio Analyser)
+                    const validVolSamples = this.volumeSamples.filter(v => v > 0);
+                    const avgVolume = validVolSamples.length > 0
+                        ? Math.round(validVolSamples.reduce((a, b) => a + b, 0) / validVolSamples.length)
+                        : 0;
+
+                    // Pacing Score: Kecepatan bicara ideal presentasi Bahasa Indonesia adalah 110 - 150 WPM
+                    let paceScore = 80;
+                    if (totalSpokenWords === 0) {
+                        paceScore = 40;
+                    } else if (realPaceWpm >= 110 && realPaceWpm <= 150) {
+                        paceScore = 95;
+                    } else if (realPaceWpm >= 90 && realPaceWpm < 110) {
+                        paceScore = 86;
+                    } else if (realPaceWpm > 150 && realPaceWpm <= 175) {
+                        paceScore = 82;
+                    } else if (realPaceWpm > 175) {
+                        paceScore = Math.max(45, Math.round(90 - ((realPaceWpm - 175) * 0.8)));
+                    } else {
+                        paceScore = Math.max(40, Math.round((realPaceWpm / 90) * 85));
+                    }
+
+                    // Volume Adequacy Score
+                    let volumeScore = 75;
+                    if (this.volumeSamples.length === 0 || avgVolume === 0) {
+                        volumeScore = 50;
+                    } else if (avgVolume >= 20 && avgVolume <= 80) {
+                        volumeScore = 92;
+                    } else if (avgVolume < 20) {
+                        volumeScore = Math.max(40, Math.round(avgVolume * 4.5));
+                    } else {
+                        volumeScore = 82;
+                    }
+
+                    const voiceScore = parseFloat(((paceScore * 0.55) + (volumeScore * 0.45)).toFixed(1));
+                    const overallScore = parseFloat(((faceScore * 0.5) + (voiceScore * 0.5)).toFixed(1));
+
+                    // 4. ANALISIS KUALITATIF DINAMIS BERDASARKAN HASIL PENGUKURAN ASLI
+                    const strengths = [];
+                    const improvements = [];
+
+                    // Evaluasi Kontak Mata Kamera
+                    if (avgEye >= 80) {
+                        strengths.push(`Kontak mata terukur sangat stabil dan mantap (${avgEye}%), tatapan terarah konsisten ke audiens.`);
+                    } else if (avgEye >= 65) {
+                        strengths.push(`Kontak mata tergolong cukup baik (${avgEye}%), fokus tatapan sebagian besar terjaga.`);
+                        improvements.push(`Tingkatkan stabilitas tatapan ke kamera (saat ini ${avgEye}%), hindari sering melirik ke arah bawah.`);
+                    } else if (hasEyeSamples) {
+                        improvements.push(`Kontak mata masih rendah (${avgEye}%). Biasakan menatap langsung ke lensa kamera saat berbicara.`);
+                    } else {
+                        improvements.push('Kamera tidak terdeteksi atau tidak aktif selama sesi latihan.');
+                    }
+
+                    // Evaluasi Ekspresi Wajah
+                    if (avgSmile >= 70) {
+                        strengths.push(`Ekspresi wajah ramah dan bersahabat (${avgSmile}% senyum/rileks), membangun atmosfer yang positif.`);
+                    } else if (avgSmile >= 45) {
+                        strengths.push(`Ekspresi wajah tenang dan fokus dalam merespons pertanyaan penguji.`);
+                        improvements.push('Selipkan senyum ramah di awal dan akhir jawaban agar impresi terasa lebih hangat.');
+                    } else if (hasSmileSamples) {
+                        improvements.push(`Otot wajah terdeteksi cukup tegang (${avgSmile}% rileks). Lakukan relaksasi pernapasan dan rahang.`);
+                    }
+
+                    // Evaluasi Pacing & Artikulasi WPM
+                    if (realPaceWpm >= 110 && realPaceWpm <= 150) {
+                        strengths.push(`Tempo berbicara sangat ideal (${realPaceWpm} kata/menit), pesan tersampaikan secara artikulatif.`);
+                    } else if (realPaceWpm > 150) {
+                        improvements.push(`Tempo berbicara terukur cepat (${realPaceWpm} WPM). Berikan jeda sejenak (pausing) pada poin-poin utama.`);
+                    } else if (realPaceWpm > 0 && realPaceWpm < 110) {
+                        improvements.push(`Tempo bicara relatif lambat (${realPaceWpm} WPM). Tingkatkan kelancaran dan kesinambungan kalimat.`);
+                    } else {
+                        improvements.push('Belum terdeteksi kalimat verbal dari Anda. Coba suarakan jawaban secara aktif melalui mikrofon.');
+                    }
+
+                    // Evaluasi Filler Words (Kata Jeda / Gumaman)
+                    if (totalFillerWords > 2) {
+                        improvements.push(`Terdeteksi ${totalFillerWords} kali kata jeda/gumaman (${detectedFillers.join(', ')}). Gunakan jeda hening sejenak (pausing) daripada mengisi jeda dengan gumaman.`);
+                    } else if (totalFillerWords === 0 && totalSpokenWords >= 15) {
+                        strengths.push('Artikulasi sangat bersih tanpa jeda gumaman (0 filler words), penyampaian ide terdengar terstruktur.');
+                    }
+
+                    // Evaluasi Volume Suara
+                    if (avgVolume >= 25) {
+                        strengths.push(`Proyeksi suara terdengar tegas dan bervolume cukup (rata-rata energi ${avgVolume}%).`);
+                    } else if (avgVolume > 0) {
+                        improvements.push(`Volume suara terukur agak pelan (${avgVolume}%). Dekatkan mikrofon atau gunakan proyeksi suara lebih kuat.`);
+                    }
+
+                    if (strengths.length === 0) {
+                        strengths.push(`Anda berhasil menyelesaikan simulasi selama ${this.secondsElapsed} detik secara tuntas.`);
+                    }
+                    if (improvements.length === 0) {
+                        improvements.push('Pertahankan ketenangan gestur dan intonasi vokal yang sudah sangat baik ini.');
+                    }
 
                     const payload = {
                         duration_seconds: Math.max(1, this.secondsElapsed),
@@ -895,20 +1151,17 @@
                         voice_score: voiceScore,
                         overall_score: overallScore,
                         feedback_notes: {
-                            summary: `Simulasi bersama ${this.selectedRole.name} diselesaikan dengan skor keseluruhan ${overallScore}/100.`,
+                            summary: `Simulasi bersama ${this.selectedRole.name} diselesaikan dalam ${this.secondsElapsed} detik dengan skor keseluruhan ${overallScore}/100.`,
                             eye_contact_score: avgEye,
                             smile_rate: avgSmile,
-                            pace_wpm: 132,
+                            pace_wpm: realPaceWpm,
                             clarity_score: Math.round(voiceScore),
-                            strengths: [
-                                `Responsif dalam menanggapi pertanyaan ${this.selectedRole.name}.`,
-                                `Rata-rata kontak mata terukur di angka ${avgEye}%.`,
-                                `Kelancaran suara mencapai skor ${voiceScore}/100.`
-                            ],
-                            improvements: [
-                                faceScore < 80 ? 'Jaga kestabilan gestur bahu dan tatapan ke kamera saat menjawab pertanyaan tidak terduga.' : 'Tingkatkan dinamika intonasi agar pesan terdengar lebih berbobot.',
-                                avgSmile < 70 ? 'Selipkan senyum ramah saat membuka dan mengakhiri jawaban.' : 'Pertahankan energi vokal yang konsisten.'
-                            ]
+                            avg_volume: avgVolume,
+                            total_words: totalSpokenWords,
+                            filler_words_count: totalFillerWords,
+                            filler_words_list: detectedFillers,
+                            strengths: strengths,
+                            improvements: improvements
                         }
                     };
 

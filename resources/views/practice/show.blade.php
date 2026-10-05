@@ -14,7 +14,15 @@
                 </p>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 print:hidden">
+                <button type="button"
+                        onclick="window.print()"
+                        class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-750 transition shadow-xs cursor-pointer">
+                    <svg class="w-4 h-4 me-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Cetak / Simpan PDF
+                </button>
                 <a href="{{ route('dashboard') }}"
                    class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-750 transition shadow-xs">
                     <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,6 +43,20 @@
 
     <div class="py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+            <!-- Print-Only Official Report Header -->
+            <div class="hidden print:block pb-4 mb-4 border-b-2 border-gray-800 text-center">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 mb-1">
+                    VOIC • Voice & Optics Intelligent Coach
+                </div>
+                <h1 class="text-2xl font-black text-gray-900 tracking-tight">LAPORAN HASIL EVALUASI SIMULASI</h1>
+                <p class="text-xs text-gray-600 mt-1">
+                    Sesi #{{ $session->id }} • Skenario: <strong>{{ $session->aiRole ? $session->aiRole->name : $session->scenario_type }}</strong> • {{ $session->created_at->format('d M Y, H:i') }} WIB
+                </p>
+                <p class="text-[11px] text-gray-500 mt-0.5">
+                    Nama Peserta: <strong>{{ $session->user ? $session->user->name : 'Pengunjung Demo' }}</strong> ({{ $session->user ? $session->user->email : '-' }})
+                </p>
+            </div>
 
             <!-- Hero Score Banner -->
             <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xs border border-gray-100 dark:border-gray-700/60 relative overflow-hidden">
@@ -195,7 +217,14 @@
                         <div class="h-full bg-teal-600" style="width: {{ $clarity }}%"></div>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        Kejelasan vokal dan dinamika nada bicara.
+                        @if(isset($feedback['avg_volume']) && $feedback['avg_volume'] > 0)
+                            Energi vokal: <strong>{{ $feedback['avg_volume'] }}%</strong> • {{ $feedback['total_words'] ?? 0 }} kata
+                            @if(isset($feedback['filler_words_count']))
+                                • <span class="{{ $feedback['filler_words_count'] > 2 ? 'text-amber-500 dark:text-amber-400 font-bold' : 'text-emerald-500 dark:text-emerald-400 font-bold' }}">{{ $feedback['filler_words_count'] }} kata gumaman (filler)</span>
+                            @endif
+                        @else
+                            Kejelasan vokal dan dinamika nada bicara.
+                        @endif
                     </p>
                 </div>
             </div>
@@ -365,7 +394,7 @@
                             </p>
                         </div>
 
-                        <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-750 flex flex-col gap-3">
+                        <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-750 flex flex-col gap-3 print:hidden">
                             <a href="{{ route('practice.create') }}"
                                class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition shadow-md shadow-indigo-600/20">
                                 Latihan dengan Karakter Lain
@@ -380,6 +409,59 @@
 
             </div>
 
+            <!-- Print-Only Footer Signature & Verification Stamp -->
+            <div class="hidden print:block pt-8 mt-6 border-t border-gray-300">
+                <div class="flex justify-between items-end text-xs text-gray-600">
+                    <div>
+                        <p class="font-bold text-gray-900">Platform Evaluator VOIC</p>
+                        <p class="text-[10px] text-gray-500">Innofest 2026 • AI Public Speaking & Presentation Coach</p>
+                        <p class="text-[10px] text-gray-400 mt-1">Verifikasi digital: VOIC-SESSION-{{ strtoupper(substr(md5($session->id . $session->created_at), 0, 10)) }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-gray-400">Tanda Tangan Penguji AI:</p>
+                        <p class="font-bold text-gray-900 mt-6">{{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
+
+    <!-- Print Optimized Styling -->
+    <style>
+        @media print {
+            nav, header, .print\:hidden {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+                color: #111827 !important;
+                font-size: 12px !important;
+            }
+            .py-8 {
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+            }
+            .max-w-7xl {
+                max-width: 100% !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+            .shadow-xs, .shadow-md, .shadow-xl, .shadow-2xl {
+                box-shadow: none !important;
+            }
+            .rounded-3xl, .rounded-2xl {
+                border-radius: 12px !important;
+            }
+            .border {
+                border-color: #d1d5db !important;
+            }
+            audio {
+                display: none !important;
+            }
+            .break-inside-avoid {
+                break-inside: avoid !important;
+            }
+        }
+    </style>
 </x-app-layout>
