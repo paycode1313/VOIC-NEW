@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Verifikasi Sertifikat Digital • VOIC AI</title>
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -62,6 +65,27 @@
                     <p class="text-[11px] font-mono text-emerald-400/90 pt-1">
                         Nomor Seri Registrasi: <span class="font-bold tracking-wider">{{ $benchmarkData['serial'] }}</span>
                     </p>
+
+                    <div class="pt-3 flex flex-wrap items-center gap-2 print:hidden" x-data="{ copied: false }">
+                        <button type="button"
+                                @click="navigator.clipboard.writeText(window.location.href); copied = true; setTimeout(() => copied = false, 2500)"
+                                class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">
+                            <svg class="w-3.5 h-3.5 me-1 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            <span x-text="copied ? '✓ Tautan Disalin!' : 'Salin Tautan Verifikasi'"></span>
+                        </button>
+                        <a href="https://api.whatsapp.com/send?text={{ urlencode('Verifikasi Sertifikat Resmi VOIC AI: ' . url()->current()) }}"
+                           target="_blank"
+                           class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-300 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700/60 transition">
+                            <span>💬 WhatsApp</span>
+                        </a>
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(url()->current()) }}"
+                           target="_blank"
+                           class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-sky-300 bg-sky-950/80 hover:bg-sky-900 border border-sky-700/60 transition">
+                            <span>💼 LinkedIn</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

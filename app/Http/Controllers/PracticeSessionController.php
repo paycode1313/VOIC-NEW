@@ -115,7 +115,7 @@ class PracticeSessionController extends Controller
             'overall_score' => 0,
         ]);
 
-        $greeting = $aiService->getInitialGreeting($role);
+        $greeting = $aiService->getInitialGreeting($role, $scenarioType);
 
         // Store opening turn from the AI character
         $initialMessage = $session->messages()->create([

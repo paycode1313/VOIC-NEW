@@ -325,7 +325,7 @@
                                 <span>Penguji: <strong class="text-white">{{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}</strong></span>
                             </div>
 
-                            <div class="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-3 print:hidden">
+                            <div class="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-2.5 print:hidden" x-data="{ copied: false }">
                                 <a href="{{ route('practice.verify', $session) }}"
                                    target="_blank"
                                    class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-md shadow-indigo-600/30">
@@ -334,10 +334,35 @@
                                     </svg>
                                     Buka Halaman Verifikasi Publik
                                 </a>
+
+                                <!-- Copy Link Button -->
+                                <button type="button"
+                                        @click="navigator.clipboard.writeText('{{ route('practice.verify', $session) }}'); copied = true; setTimeout(() => copied = false, 2500)"
+                                        class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 me-1.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span x-text="copied ? '✓ Tautan Disalin!' : 'Salin Tautan'"></span>
+                                </button>
+
+                                <!-- WhatsApp Share -->
+                                <a href="https://api.whatsapp.com/send?text={{ urlencode('Saya baru saja menyelesaikan simulasi interview dengan VOIC AI dengan predikat ' . ($session->overall_score >= 85 ? 'Sangat Baik' : 'Baik') . ' (Skor ' . number_format($session->overall_score, 1) . '/100)! Cek sertifikat terverifikasi saya di: ' . route('practice.verify', $session)) }}"
+                                   target="_blank"
+                                   class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 transition">
+                                    <span>💬 WhatsApp</span>
+                                </a>
+
+                                <!-- LinkedIn Share -->
+                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('practice.verify', $session)) }}"
+                                   target="_blank"
+                                   class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-300 bg-sky-950/70 hover:bg-sky-900/80 border border-sky-700/60 transition">
+                                    <span>💼 LinkedIn</span>
+                                </a>
+
                                 <button type="button"
                                         onclick="window.print()"
-                                        class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition">
-                                    Cetak Sertifikat Resmi PDF
+                                        class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">
+                                    🖨️ Cetak PDF
                                 </button>
                             </div>
                         </div>

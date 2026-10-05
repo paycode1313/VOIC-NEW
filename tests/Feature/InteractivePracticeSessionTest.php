@@ -64,6 +64,37 @@ class InteractivePracticeSessionTest extends TestCase
     }
 
     /**
+     * Test starting an interactive AI session with a custom topic generates a tailored opening greeting.
+     */
+    public function test_user_can_start_session_with_custom_topic_and_contextual_greeting(): void
+    {
+        $this->seed(AiRoleSeeder::class);
+        $user = User::factory()->create();
+        $role = AiRole::where('role_type', 'hrd')->firstOrFail();
+
+        $response = $this->actingAs($user)->postJson(route('practice.start'), [
+            'ai_role_id' => $role->id,
+            'scenario_type' => 'Software Engineer / Fullstack',
+        ]);
+
+        $response->assertCreated();
+        $sessionId = $response->json('session_id');
+
+        $this->assertDatabaseHas('practice_sessions', [
+            'id' => $sessionId,
+            'scenario_type' => 'Software Engineer / Fullstack',
+        ]);
+
+        $this->assertDatabaseHas('session_messages', [
+            'practice_session_id' => $sessionId,
+            'sender' => 'ai',
+        ]);
+
+        $initialMessage = $response->json('initial_message.message');
+        $this->assertStringContainsString('Software Engineer / Fullstack', $initialMessage);
+    }
+
+    /**
      * Test sending a turn-by-turn conversational message with facial telemetry.
      */
     public function test_user_can_send_turn_with_facial_telemetry(): void

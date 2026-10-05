@@ -1,0 +1,23 @@
+{
+  "name": "VOIC AI - Voice & Optics Intelligent Coach",
+  "short_name": "VOIC AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#4f46e5",
+  "description": "AI Multimodal Public Speaking & Interview Coach dengan Edge Computer Vision & Web Audio Analyser.",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512 192x192 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

@@ -158,6 +158,49 @@
                         @endforelse
                     </div>
 
+                    <!-- STEP 1.5: TOPIK & TARGET SPESIFIK (Customized Scenario Context) -->
+                    <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/60 space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <span>🎯</span>
+                                    <span>Fokus Topik / Judul Simulasi (Opsional & Fleksibel)</span>
+                                </h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Pilih topik cepat di bawah atau ketik judul tugas akhir / posisi impian agar AI menguji Anda secara kontekstual:
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Quick Topic Presets -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <template x-for="preset in currentTopicPresets" :key="preset">
+                                <button type="button"
+                                        @click="customTopic = preset"
+                                        :class="customTopic === preset
+                                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                                            : 'bg-gray-100 dark:bg-gray-750 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700'"
+                                        class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer">
+                                    <span x-text="preset"></span>
+                                </button>
+                            </template>
+                        </div>
+
+                        <!-- Custom Topic Input Field -->
+                        <div class="relative">
+                            <input type="text"
+                                   x-model="customTopic"
+                                   :placeholder="topicPlaceholder"
+                                   class="w-full text-xs sm:text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-850 text-gray-900 dark:text-white px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400">
+                            <button type="button"
+                                    x-show="customTopic"
+                                    @click="customTopic = ''"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs">
+                                ✕ Reset
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Action Button to Start Simulation -->
                     <div class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -188,11 +231,16 @@
                             <span x-text="selectedRole.role_type === 'dosen_penguji' ? '🎓' : (selectedRole.role_type === 'hrd' ? '💼' : '🚀')"></span>
                         </div>
                         <div>
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-2">
                                 <h3 class="font-bold text-sm text-gray-900 dark:text-white" x-text="selectedRole.name"></h3>
                                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300">
                                     Live Roleplay
                                 </span>
+                                <template x-if="customTopic">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800"
+                                          x-text="'Topik: ' + customTopic">
+                                    </span>
+                                </template>
                                 <template x-if="ollamaStatus.checked && ollamaStatus.active">
                                     <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center gap-1 border border-indigo-200 dark:border-indigo-800">
                                         <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
@@ -200,18 +248,28 @@
                                     </span>
                                 </template>
                             </div>
-                            <p class="text-xs text-gray-400">
+                            <p class="text-xs text-gray-400 mt-0.5">
                                 Durasi Sesi: <span class="font-mono font-bold text-gray-700 dark:text-gray-200" x-text="formattedTime"></span>
                             </p>
                         </div>
                     </div>
 
-                    <!-- Right Controls: End Session Button -->
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <!-- Right Controls: Fullscreen / Kiosk Mode & End Session Button -->
+                    <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+                        <button type="button"
+                                @click="toggleFullscreen()"
+                                title="Layar Penuh (Kiosk Mode Pameran)"
+                                class="inline-flex items-center px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-750 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition cursor-pointer">
+                            <svg class="w-4 h-4 me-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                            </svg>
+                            <span x-text="isFullscreen ? 'Keluar Fullscreen' : 'Layar Penuh'"></span>
+                        </button>
+
                         <button type="button"
                                 @click="finishSession()"
                                 :disabled="isFinishing"
-                                class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 rounded-xl shadow-md shadow-rose-500/20 transition cursor-pointer">
+                                class="inline-flex items-center justify-center px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 rounded-xl shadow-md shadow-rose-500/20 transition cursor-pointer">
                             <svg class="w-4 h-4 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <rect x="6" y="6" width="12" height="12" rx="2" stroke-width="2"/>
                             </svg>
@@ -301,6 +359,21 @@
                                 </template>
                             </div>
 
+                            <!-- Real-time Filler Word Detected Flash Alert -->
+                            <div x-show="fillerWordAlert"
+                                 x-transition
+                                 class="absolute top-14 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1 rounded-full bg-amber-400 text-black font-extrabold text-[11px] shadow-2xl flex items-center gap-1.5 animate-bounce pointer-events-none">
+                                <span>⚠️</span>
+                                <span>GUMAMAN: <span class="uppercase tracking-wider underline font-black" x-text="fillerWordAlert"></span></span>
+                            </div>
+
+                            <!-- Real-time Camera & Lighting Advisor -->
+                            <div x-show="cameraAdvice"
+                                 x-transition
+                                 class="absolute top-22 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-xl bg-black/85 backdrop-blur-md border border-amber-400/40 text-amber-300 text-[10px] font-mono shadow-lg pointer-events-none">
+                                <span x-text="cameraAdvice"></span>
+                            </div>
+
                             <!-- Top Left HUD: Optical Engine FPS + Status -->
                             <div class="absolute top-3 left-3 z-20 flex items-center gap-2">
                                 <div class="px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-md border border-white/15 text-white text-xs flex items-center gap-2 shadow-lg">
@@ -346,6 +419,27 @@
                             </div>
                             <div class="w-full h-11 relative">
                                 <canvas id="audioWaveformCanvas" class="w-full h-full rounded-xl bg-black/60 border border-white/10"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Live Speech Metrics: Real-time Speaking Pace (WPM) & Word Counter -->
+                        <div class="p-3 rounded-2xl bg-gray-900/90 dark:bg-gray-950/90 border border-gray-800 shadow-xl flex items-center justify-between text-xs px-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-gray-400 font-medium">Tempo Berbicara:</span>
+                                <span class="font-mono font-bold text-sm"
+                                      :class="liveWpm >= 115 && liveWpm <= 150 ? 'text-emerald-400' : (liveWpm > 150 ? 'text-amber-400' : 'text-indigo-400')"
+                                      x-text="(liveWpm || 0) + ' WPM'">
+                                    0 WPM
+                                </span>
+                                <span class="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider"
+                                      :class="liveWpm >= 115 && liveWpm <= 150 ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : (liveWpm > 150 ? 'bg-amber-950 text-amber-300 border border-amber-800' : 'bg-indigo-950 text-indigo-300 border border-indigo-800')">
+                                    <span x-text="liveWpm >= 115 && liveWpm <= 150 ? 'Ideal' : (liveWpm > 150 ? 'Cepat' : 'Santai')"></span>
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-1.5 font-mono text-[11px] text-gray-400">
+                                <span>Kata:</span>
+                                <strong class="text-white font-bold" x-text="liveWordCount || 0">0</strong>
                             </div>
                         </div>
 
@@ -518,6 +612,15 @@
                 isStarting: false,
                 isFinishing: false,
 
+                // Custom Topic / Target Context
+                customTopic: '',
+                fillerWordAlert: null,
+                fillerAlertTimer: null,
+                cameraAdvice: null,
+                liveWpm: 0,
+                liveWordCount: 0,
+                isFullscreen: false,
+
                 // Ollama Engine Status
                 ollamaStatus: { checked: false, active: false, model: 'qwen2.5:3b' },
 
@@ -582,6 +685,53 @@
                     this.selectedRole = role;
                 },
 
+                get currentTopicPresets() {
+                    if (this.selectedRole.role_type === 'dosen_penguji') {
+                        return [
+                            'Sistem AI & Vision Computer',
+                            'Cyber Security & Jaringan',
+                            'Rekayasa Aplikasi Web & Mobile',
+                            'Big Data & Cloud Architecture'
+                        ];
+                    }
+                    if (this.selectedRole.role_type === 'hrd') {
+                        return [
+                            'Software Engineer / Fullstack',
+                            'UI/UX & Product Design',
+                            'Data Analyst & BI',
+                            'Project Manager / Scrum Master'
+                        ];
+                    }
+                    return [
+                        'EdTech & Smart Learning SaaS',
+                        'Fintech & Digital Banking',
+                        'HealthTech & Telemedicine',
+                        'AI Workflow & Automation'
+                    ];
+                },
+
+                get topicPlaceholder() {
+                    if (this.selectedRole.role_type === 'dosen_penguji') {
+                        return 'Atau ketik judul skripsi / topik riset spesifik Anda di sini...';
+                    }
+                    if (this.selectedRole.role_type === 'hrd') {
+                        return 'Atau ketik posisi pekerjaan impian yang ingin Anda latih di sini...';
+                    }
+                    return 'Atau ketik nama startup & model bisnis pitching Anda di sini...';
+                },
+
+                toggleFullscreen() {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen().then(() => {
+                            this.isFullscreen = true;
+                        }).catch(() => {});
+                    } else {
+                        document.exitFullscreen().then(() => {
+                            this.isFullscreen = false;
+                        }).catch(() => {});
+                    }
+                },
+
                 get formattedTime() {
                     const mins = String(Math.floor(this.secondsElapsed / 60)).padStart(2, '0');
                     const secs = String(this.secondsElapsed % 60).padStart(2, '0');
@@ -609,7 +759,7 @@
                             },
                             body: JSON.stringify({
                                 ai_role_id: this.selectedRole.id,
-                                scenario_type: this.selectedRole.name
+                                scenario_type: this.customTopic.trim() || this.selectedRole.name
                             })
                         });
 
@@ -785,6 +935,23 @@
 
                         this.liveInterimTranscript = (this.accumulatedSpokenText + ' ' + interim).trim();
 
+                        // 1. Calculate live word count & real-time WPM
+                        const currentWords = this.liveInterimTranscript ? this.liveInterimTranscript.split(/\s+/).filter(Boolean) : [];
+                        this.liveWordCount = currentWords.length;
+                        const activeMins = Math.max(0.08, this.secondsElapsed / 60);
+                        this.liveWpm = Math.round(this.liveWordCount / activeMins);
+
+                        // 2. Real-time filler word detection
+                        const fillerRegex = /\b(ehm|eh|em|umm|um|uh|anu|ngg|ngga|kayak|apa namanya)\b/i;
+                        const fillerMatch = (finalTurn || interim).match(fillerRegex);
+                        if (fillerMatch) {
+                            this.fillerWordAlert = fillerMatch[0].toLowerCase();
+                            clearTimeout(this.fillerAlertTimer);
+                            this.fillerAlertTimer = setTimeout(() => {
+                                this.fillerWordAlert = null;
+                            }, 2200);
+                        }
+
                         if (this.liveInterimTranscript.length > 0) {
                             this.orbState = 'user_speaking';
 
@@ -910,6 +1077,25 @@
                     const centerY = sumY / skinPixels;
                     const faceW = Math.max(40, maxX - minX);
                     const faceH = Math.max(40, maxY - minY);
+
+                    // Real Lighting & Distance Advice Calculation
+                    let totalBrightness = 0;
+                    for (let y = 0; y < h; y += 8) {
+                        for (let x = 0; x < w; x += 8) {
+                            const idx = (y * w + x) * 4;
+                            totalBrightness += (data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114);
+                        }
+                    }
+                    const sampleCount = (h / 8) * (w / 8);
+                    const avgBrightness = sampleCount > 0 ? (totalBrightness / sampleCount) : 100;
+
+                    if (avgBrightness < 38) {
+                        this.cameraAdvice = '💡 Pencahayaan ruangan agak gelap, nyalakan lampu';
+                    } else if (faceW < 50) {
+                        this.cameraAdvice = '🔍 Posisikan wajah sedikit lebih dekat ke kamera';
+                    } else {
+                        this.cameraAdvice = null;
+                    }
 
                     // Dynamic HUD Coordinates (in percentage, mirrored for selfie webcam)
                     this.faceBoxCoords = {
