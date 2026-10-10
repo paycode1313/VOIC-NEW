@@ -41,7 +41,7 @@ class AiRoleSeeder extends Seeder
                     'menilai keramahan senyum & gestur',
                     'menguji resolusi konflik & kepemimpinan',
                 ],
-                'voice_id' => 'id-ID-GadisNeural',
+                'voice_id' => 'id-ID-ArdiNeural',
                 'difficulty_level' => 'Sedang',
                 'is_active' => true,
             ],

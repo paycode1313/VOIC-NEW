@@ -48,6 +48,7 @@ class ChatRequest(BaseModel):
     system_prompt: str
     user_message: str
     language: Optional[str] = "id"  # 'id' or 'en'
+    context_material: Optional[str] = None
     facial_status: Optional[FacialStatus] = None
     conversation_history: Optional[List[ChatMessage]] = []
     generate_voice: Optional[bool] = True
@@ -185,9 +186,14 @@ async def process_chat(req: ChatRequest):
         else "BAHASA: Gunakan Bahasa Indonesia lisan yang luwes, alami, dan mengalir seperti manusia asli berbicara tatap muka."
     )
 
+    context_note = ""
+    if req.context_material:
+        context_note = f"\nCANDIDATE MATERIAL / RESEARCH ABSTRACT:\n\"{req.context_material.strip()}\"\n(Carefully inspect and probe specific methodology, variables, hypothesis, or unit economics mentioned in this abstract)."
+
     system_instruction = (
         f"{req.system_prompt}\n\n"
         f"{role_nuance}\n\n"
+        f"{context_note}\n\n"
         f"MANDATORY SPOKEN CONVERSATIONAL RULES (VITAL):\n"
         f"1. {lang_rule}\n"
         f"2. MAXIMUM 2 TO 3 SENTENCES ONLY: Follow the natural ping-pong structure: (1) Spontaneous reaction, (2) Sharp critique or feedback, (3) One challenging follow-up question. Never give a monologue.\n"
@@ -318,9 +324,9 @@ async def generate_tts_audio(text: str, role_type: str, language: str = "id") ->
     try:
         import edge_tts
         if language == "en":
-            voice = "en-US-GuyNeural" if role_type == "dosen_penguji" else ("en-US-JennyNeural" if role_type == "hrd" else "en-US-BrianNeural")
+            voice = "en-US-GuyNeural" if role_type == "dosen_penguji" else ("en-US-ChristopherNeural" if role_type == "hrd" else "en-US-BrianNeural")
         else:
-            voice = "id-ID-ArdiNeural" if role_type == "dosen_penguji" else ("id-ID-GadisNeural" if role_type == "hrd" else "id-ID-BudiNeural")
+            voice = "id-ID-ArdiNeural" if role_type in ("dosen_penguji", "hrd") else "id-ID-BudiNeural"
 
         filename = f"tts_{asyncio.get_event_loop().time():.0f}.mp3"
         output_path = os.path.join(AUDIO_OUTPUT_DIR, filename)

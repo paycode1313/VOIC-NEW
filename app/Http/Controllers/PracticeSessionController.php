@@ -99,6 +99,7 @@ class PracticeSessionController extends Controller
             'ai_role_id' => ['required', 'exists:ai_roles,id'],
             'scenario_type' => ['nullable', 'string', 'max:100'],
             'language' => ['nullable', 'string', 'in:id,en'],
+            'context_material' => ['nullable', 'string', 'max:3000'],
         ]);
 
         /** @var User $user */
@@ -109,6 +110,7 @@ class PracticeSessionController extends Controller
 
         $scenarioType = $validated['scenario_type'] ?? $role->name;
         $language = $validated['language'] ?? 'id';
+        $contextMaterial = $validated['context_material'] ?? null;
 
         /** @var PracticeSession $session */
         $session = $user->practiceSessions()->create([
@@ -118,10 +120,11 @@ class PracticeSessionController extends Controller
             'overall_score' => 0,
             'feedback_notes' => [
                 'language' => $language,
+                'context_material' => $contextMaterial,
             ],
         ]);
 
-        $greeting = $aiService->getInitialGreeting($role, $scenarioType, $language);
+        $greeting = $aiService->getInitialGreeting($role, $scenarioType, $language, $contextMaterial);
 
         // Store opening turn from the AI character
         $initialMessage = $session->messages()->create([
@@ -205,6 +208,7 @@ class PracticeSessionController extends Controller
             'overall_score' => ['required', 'numeric', 'between:0,100'],
             'feedback_notes' => ['nullable', 'array'],
             'feedback_notes.language' => ['nullable', 'string', 'in:id,en'],
+            'feedback_notes.context_material' => ['nullable', 'string', 'max:3000'],
             'feedback_notes.summary' => ['nullable', 'string', 'max:1000'],
             'feedback_notes.eye_contact_score' => ['nullable', 'numeric', 'between:0,100'],
             'feedback_notes.smile_rate' => ['nullable', 'numeric', 'between:0,100'],
@@ -216,6 +220,7 @@ class PracticeSessionController extends Controller
             'feedback_notes.filler_words_count' => ['nullable', 'integer', 'min:0'],
             'feedback_notes.filler_words_list' => ['nullable', 'array'],
             'feedback_notes.filler_words_list.*' => ['nullable', 'string', 'max:50'],
+            'feedback_notes.timeline_events' => ['nullable', 'array'],
             'feedback_notes.badges' => ['nullable', 'array'],
             'feedback_notes.badges.*' => ['nullable', 'string', 'max:100'],
             'feedback_notes.strengths' => ['nullable', 'array'],
@@ -227,8 +232,9 @@ class PracticeSessionController extends Controller
         $faceScore = (float) $validated['face_score'];
         $voiceScore = (float) $validated['voice_score'];
         $overallScore = (float) $validated['overall_score'];
-        $feedbackNotes = $validated['feedback_notes'] ?? [];
-        $language = $feedbackNotes['language'] ?? ($practiceSession->feedback_notes['language'] ?? 'id');
+        $existingFeedback = is_array($practiceSession->feedback_notes) ? $practiceSession->feedback_notes : [];
+        $feedbackNotes = array_merge($existingFeedback, $validated['feedback_notes'] ?? []);
+        $language = $feedbackNotes['language'] ?? 'id';
 
         $aiConclusion = $aiService->generateFinalConclusion(
             $practiceSession,

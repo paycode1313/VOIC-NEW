@@ -2,23 +2,23 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <!-- 1-Click Demo Login for Innofest Exhibition & Judges -->
-    <div class="mb-6 p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 text-center">
-        <div class="flex items-center justify-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider mb-1">
+    <!-- 1-Click Demo Login for Evaluation -->
+    <div class="mb-6 p-4 rounded-2xl bg-blue-50/80 dark:bg-navy-950/60 border border-blue-200/80 dark:border-navy-800 text-center">
+        <div class="flex items-center justify-center gap-1.5 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-1">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Akses Cepat Pengunjung & Juri Innofest
+            Akses Cepat Mode Evaluator
         </div>
-        <p class="text-xs text-gray-600 dark:text-gray-400 mb-3">
-            Coba demo interaktif tanpa repot mendaftar akun baru:
+        <p class="text-xs text-slate-600 dark:text-slate-400 mb-3">
+            Masuk langsung untuk meninjau seluruh fitur platform simulasi:
         </p>
         <button type="button"
                 id="btnDemoLogin"
                 onclick="fillDemoAccount()"
-                class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl shadow-md shadow-indigo-500/25 transition transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
-            <svg class="w-4 h-4 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 rounded-xl shadow-md shadow-blue-600/25 transition transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
+            <svg class="w-4 h-4 me-1.5 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
-            1-Click Masuk Akun Demo
+            Masuk Akun Evaluasi (1-Klik)
         </button>
     </div>
 
@@ -34,12 +34,12 @@
         }
     </script>
 
-    <div class="relative my-4">
+    <div class="relative my-5">
         <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+            <div class="w-full border-t border-slate-200/80 dark:border-slate-800"></div>
         </div>
-        <div class="relative flex justify-center text-xs uppercase">
-            <span class="bg-white dark:bg-gray-800 px-2 text-gray-400">Atau masuk dengan akun Anda</span>
+        <div class="relative flex justify-center text-[11px] font-semibold uppercase tracking-wider">
+            <span class="bg-white dark:bg-[#0f1c2f] px-3 text-slate-400 dark:text-slate-500">Atau masuk dengan akun Anda</span>
         </div>
     </div>
 
@@ -68,14 +68,14 @@
         <!-- Remember Me -->
         <div class="block mt-4">
             <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
+                <input id="remember_me" type="checkbox" class="rounded dark:bg-navy-950 border-slate-300 dark:border-navy-700 text-blue-600 shadow-sm focus:ring-blue-500 dark:focus:ring-blue-600 dark:focus:ring-offset-navy-900" name="remember">
+                <span class="ms-2 text-sm text-slate-600 dark:text-slate-400">{{ __('Remember me') }}</span>
             </label>
         </div>
 
         <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
+                <a class="underline text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-navy-900" href="{{ route('password.request') }}">
                     {{ __('Forgot your password?') }}
                 </a>
             @endif

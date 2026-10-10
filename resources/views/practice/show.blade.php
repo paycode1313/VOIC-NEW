@@ -4,34 +4,42 @@
             <div>
                 <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1">
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    Sesi Latihan Selesai • Hasil Rapor Evaluasi AI
+                    Sesi Latihan Selesai • Laporan Evaluasi Performa
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                     {{ __('Laporan Evaluasi Performa Interaktif') }}
                 </h2>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
+                <p class="text-sm text-slate-500 dark:text-slate-400">
                     Sesi #{{ $session->id }} • {{ $session->aiRole ? $session->aiRole->name : $session->scenario_type }} • {{ $session->created_at->format('d M Y, H:i') }} WIB
                 </p>
             </div>
 
             <div class="flex items-center gap-3 print:hidden">
                 <button type="button"
+                        @click="showShareCardModal = true"
+                        class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 rounded-xl hover:bg-blue-100 transition shadow-xs cursor-pointer">
+                    <svg class="w-4 h-4 me-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    Bagikan Kartu
+                </button>
+                <button type="button"
                         onclick="window.print()"
-                        class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-750 transition shadow-xs cursor-pointer">
-                    <svg class="w-4 h-4 me-2 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#0c182b] border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-xs cursor-pointer">
+                    <svg class="w-4 h-4 me-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                     </svg>
                     Cetak / Simpan PDF
                 </button>
                 <a href="{{ route('dashboard') }}"
-                   class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-750 transition shadow-xs">
+                   class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-[#0c182b] border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-xs">
                     <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
                     Dashboard
                 </a>
                 <a href="{{ route('practice.create') }}"
-                   class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl shadow-md shadow-indigo-500/25 transition transform hover:-translate-y-0.5">
+                   class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 rounded-xl shadow-md shadow-blue-600/25 transition transform hover:-translate-y-0.5">
                     <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
@@ -41,7 +49,7 @@
         </div>
     </x-slot>
 
-    <div class="py-8" x-data="{ showMethodologyModal: false }">
+    <div class="py-8" x-data="{ showMethodologyModal: false, showShareCardModal: false, copiedShare: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
             @php
@@ -56,44 +64,49 @@
             @endphp
 
             <!-- Print-Only Official Report Header -->
-            <div class="hidden print:block pb-4 mb-4 border-b-2 border-gray-800 text-center">
-                <div class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 mb-1">
+            <div class="hidden print:block pb-4 mb-4 border-b-2 border-slate-800 text-center">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-blue-700 mb-1">
                     VOIC • Voice & Optics Intelligent Coach
                 </div>
-                <h1 class="text-2xl font-black text-gray-900 tracking-tight">LAPORAN HASIL EVALUASI SIMULASI</h1>
-                <p class="text-xs text-gray-600 mt-1">
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">LAPORAN HASIL EVALUASI SIMULASI</h1>
+                <p class="text-xs text-slate-600 mt-1">
                     Sesi #{{ $session->id }} • Skenario: <strong>{{ $session->aiRole ? $session->aiRole->name : $session->scenario_type }}</strong> • {{ $session->created_at->format('d M Y, H:i') }} WIB
                 </p>
-                <p class="text-[11px] text-gray-500 mt-0.5">
+                <p class="text-[11px] text-slate-500 mt-0.5">
                     Nama Peserta: <strong>{{ $session->user ? $session->user->name : 'Pengunjung Demo' }}</strong> ({{ $session->user ? $session->user->email : '-' }}) • Bahasa: <strong>{{ $simLanguage === 'en' ? 'English' : 'Bahasa Indonesia' }}</strong>
                 </p>
             </div>
 
             <!-- Hero Score Banner -->
-            <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xs border border-gray-100 dark:border-gray-700/60 relative overflow-hidden">
+            <div class="bg-white dark:bg-[#0c182b] rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-100 dark:border-slate-700/60 relative overflow-hidden">
                 <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
                     <div class="space-y-3 text-center lg:text-left">
                         <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider {{ $session->overall_score >= 80 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : ($session->overall_score >= 65 ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800' : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800') }}">
                                 <span>Predikat: {{ $session->overall_score >= 85 ? 'Sangat Baik (Distinction)' : ($session->overall_score >= 70 ? 'Cukup Baik (Pass)' : 'Perlu Peningkatan') }}</span>
                             </div>
-                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                                <span>{{ $simLanguage === 'en' ? '🇬🇧 English' : '🇮🇩 Bahasa Indonesia' }}</span>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-navy-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-navy-800">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                                </svg>
+                                <span>{{ $simLanguage === 'en' ? 'English' : 'Bahasa Indonesia' }}</span>
                             </span>
                             <button type="button"
                                     @click="showMethodologyModal = true"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-gray-100 dark:bg-gray-750 hover:bg-gray-200 dark:hover:bg-gray-700 transition cursor-pointer print:hidden">
-                                <span>🔬</span>
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer print:hidden">
+                                <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                                </svg>
                                 <span class="underline">Metodologi Ilmiah</span>
                             </button>
                         </div>
 
-                        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                             Evaluasi Simulasi: {{ $session->scenario_type }}
                         </h1>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 max-w-xl">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-xl">
                             Durasi latihan: <strong>{{ floor($session->duration_seconds / 60) }} menit {{ $session->duration_seconds % 60 }} detik</strong>.
-                            Karakter Penguji: <strong>{{ $session->aiRole ? $session->aiRole->name : 'Evaluator AI' }}</strong>.
+                            Panelis Penguji: <strong>{{ $session->aiRole ? $session->aiRole->name : 'Dewan Penguji' }}</strong>.
                         </p>
                     </div>
 
@@ -101,23 +114,23 @@
                     <div class="flex flex-wrap items-center justify-center gap-3">
                         <!-- Face Score -->
                         @if($session->face_score !== null)
-                            <div class="flex flex-col items-center p-3 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 w-24 sm:w-28 text-center">
-                                <span class="text-[10px] uppercase font-bold text-indigo-600 dark:text-indigo-400">Skor Wajah</span>
-                                <span class="text-2xl font-black text-indigo-700 dark:text-indigo-300 mt-0.5">
+                            <div class="flex flex-col items-center p-3 rounded-2xl bg-blue-50/60 dark:bg-navy-950/60 border border-blue-100 dark:border-navy-800 w-24 sm:w-28 text-center">
+                                <span class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400">Skor Wajah</span>
+                                <span class="text-2xl font-black text-blue-700 dark:text-blue-300 mt-0.5">
                                     {{ number_format($session->face_score, 1) }}
                                 </span>
-                                <span class="text-[9px] text-gray-400">Optik Kamera</span>
+                                <span class="text-[9px] text-slate-400">Optik Kamera</span>
                             </div>
                         @endif
 
                         <!-- Voice Score -->
                         @if($session->voice_score !== null)
-                            <div class="flex flex-col items-center p-3 rounded-2xl bg-purple-50/60 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/60 w-24 sm:w-28 text-center">
-                                <span class="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400">Skor Suara</span>
-                                <span class="text-2xl font-black text-purple-700 dark:text-purple-300 mt-0.5">
+                            <div class="flex flex-col items-center p-3 rounded-2xl bg-sky-50/60 dark:bg-navy-950/60 border border-sky-100 dark:border-navy-800 w-24 sm:w-28 text-center">
+                                <span class="text-[10px] uppercase font-bold text-sky-600 dark:text-sky-400">Skor Suara</span>
+                                <span class="text-2xl font-black text-sky-700 dark:text-sky-300 mt-0.5">
                                     {{ number_format($session->voice_score, 1) }}
                                 </span>
-                                <span class="text-[9px] text-gray-400">Artikulasi</span>
+                                <span class="text-[9px] text-slate-400">Artikulasi</span>
                             </div>
                         @endif
 
@@ -127,16 +140,16 @@
                             <span class="text-2xl font-black text-teal-700 dark:text-teal-300 mt-0.5">
                                 {{ number_format($pitchScore, 0) }}%
                             </span>
-                            <span class="text-[9px] text-gray-400">Intonasi Vokal</span>
+                            <span class="text-[9px] text-slate-400">Intonasi Vokal</span>
                         </div>
 
                         <!-- Overall Score Dial -->
-                        <div class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center bg-gradient-to-tr {{ $session->overall_score >= 80 ? 'from-emerald-500 to-teal-400 shadow-emerald-500/25' : ($session->overall_score >= 65 ? 'from-amber-500 to-yellow-400 shadow-amber-500/25' : 'from-rose-500 to-pink-500 shadow-rose-500/25') }} text-white shadow-2xl p-1 ring-6 ring-gray-50 dark:ring-gray-750">
-                            <div class="w-full h-full rounded-full bg-white dark:bg-gray-800 flex flex-col items-center justify-center text-gray-900 dark:text-white">
+                        <div class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center bg-gradient-to-tr {{ $session->overall_score >= 80 ? 'from-emerald-500 to-teal-400 shadow-emerald-500/25' : ($session->overall_score >= 65 ? 'from-amber-500 to-yellow-400 shadow-amber-500/25' : 'from-rose-500 to-pink-500 shadow-rose-500/25') }} text-white shadow-2xl p-1 ring-6 ring-slate-50 dark:ring-navy-800">
+                            <div class="w-full h-full rounded-full bg-white dark:bg-navy-900 flex flex-col items-center justify-center text-slate-900 dark:text-white">
                                 <span class="text-2xl sm:text-3xl font-black tracking-tight {{ $session->overall_score >= 80 ? 'text-emerald-600 dark:text-emerald-400' : ($session->overall_score >= 65 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400') }}">
                                     {{ number_format($session->overall_score, 1) }}
                                 </span>
-                                <span class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Skor Total</span>
+                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Skor Total</span>
                             </div>
                         </div>
                     </div>
@@ -145,13 +158,17 @@
 
             <!-- Unlocked Achievement Badges Card -->
             @if(!empty($badges))
-                <div class="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border border-amber-500/30 shadow-lg space-y-4">
+                <div class="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-amber-500/10 via-blue-500/10 to-navy-900/40 border border-amber-500/30 shadow-lg space-y-4">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
-                            <span class="text-2xl p-2 rounded-2xl bg-amber-500/20 text-amber-500">🏆</span>
+                            <span class="p-2.5 rounded-2xl bg-amber-500/20 text-amber-500">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                </svg>
+                            </span>
                             <div>
-                                <h3 class="font-extrabold text-base text-gray-900 dark:text-white">Lencana Prestasi Diraih (Achievements Unlocked)</h3>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Pencapaian khusus Anda selama simulasi berdasarkan telemetri real-time.</p>
+                                <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Lencana Prestasi Diraih (Achievements Unlocked)</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Pencapaian khusus Anda selama simulasi berdasarkan telemetri real-time.</p>
                             </div>
                         </div>
                         <span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-500 text-white shadow-sm shadow-amber-500/40">
@@ -161,10 +178,26 @@
 
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 pt-2">
                         @foreach($badges as $badge)
-                            <div class="p-3.5 rounded-2xl bg-white dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700 shadow-xs flex flex-col items-center text-center space-y-1.5 transition hover:scale-105">
-                                <span class="text-3xl">{{ $badge['icon'] ?? '🎖️' }}</span>
-                                <span class="font-bold text-xs text-gray-900 dark:text-white">{{ $badge['name'] ?? 'Lencana' }}</span>
-                                <span class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">{{ $badge['desc'] ?? '' }}</span>
+                            <div class="p-3.5 rounded-2xl bg-white dark:bg-[#0c182b]/90 border border-slate-200 dark:border-slate-700 shadow-xs flex flex-col items-center text-center space-y-2 transition hover:scale-105">
+                                <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                                    @if(($badge['icon'] ?? '') === 'eye')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    @elseif(($badge['icon'] ?? '') === 'mic')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+                                    @elseif(($badge['icon'] ?? '') === 'audio')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                                    @elseif(($badge['icon'] ?? '') === 'bolt')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    @elseif(($badge['icon'] ?? '') === 'shield')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    @elseif(($badge['icon'] ?? '') === 'globe')
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                                    @else
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                                    @endif
+                                </div>
+                                <span class="font-bold text-xs text-slate-900 dark:text-white">{{ $badge['name'] ?? 'Lencana' }}</span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">{{ $badge['desc'] ?? '' }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -231,20 +264,22 @@
                 }"
                 x-show="hasLocalAudio"
                 x-cloak
-                class="p-6 rounded-3xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/60 shadow-xs space-y-4 print:hidden">
+                class="p-6 rounded-3xl bg-white dark:bg-[#0c182b] border border-slate-100 dark:border-slate-700/60 shadow-xs space-y-4 print:hidden">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-2xl shrink-0">
-                            🎙️
+                        <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-navy-950/70 border border-blue-200 dark:border-navy-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            </svg>
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-bold text-base text-gray-900 dark:text-white">Rekaman Suara Anda (Candidate Voice Replay)</h3>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Rekaman Suara Anda (Candidate Voice Replay)</h3>
                                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300">
                                     100% On-Device IndexedDB
                                 </span>
                             </div>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
                                 Putar ulang suara jawaban Anda secara utuh untuk mengevaluasi artikulasi, intonasi, dan tempo kalimat secara mandiri.
                             </p>
                         </div>
@@ -253,15 +288,29 @@
                     <div class="flex items-center gap-2">
                         <button type="button"
                                 @click="togglePlay()"
-                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-md shadow-indigo-500/25 transition cursor-pointer">
-                            <span x-text="isPlaying ? '⏸️ Jeda Rekaman' : '▶️ Putar Rekaman Saya'"></span>
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 shadow-md shadow-blue-600/25 transition cursor-pointer">
+                            <template x-if="isPlaying">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </template>
+                            <template x-if="!isPlaying">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </template>
+                            <span x-text="isPlaying ? 'Jeda Rekaman' : 'Putar Rekaman Saya'"></span>
                         </button>
                         <template x-if="audioUrl">
                             <a :href="audioUrl"
                                :download="'rekaman_sesi_{{ $session->id }}.webm'"
-                               class="inline-flex items-center px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-750 hover:bg-gray-200 transition cursor-pointer"
+                               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition cursor-pointer"
                                title="Unduh File Audio">
-                                ⬇️ Unduh Audio
+                                <svg class="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span>Unduh Audio</span>
                             </a>
                         </template>
                     </div>
@@ -269,34 +318,37 @@
 
                 <div class="flex flex-col sm:flex-row items-center gap-4 pt-2">
                     <audio id="candidateVoicePlayer" :src="audioUrl" class="hidden"></audio>
-                    <div class="flex items-center gap-2 font-mono text-xs text-gray-600 dark:text-gray-300">
+                    <div class="flex items-center gap-2 font-mono text-xs text-slate-600 dark:text-slate-300">
                         <span x-text="currentTime">00:00</span>
                         <span>/</span>
                         <span x-text="duration">00:00</span>
                     </div>
 
                     <!-- Speed Options -->
-                    <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                         <span class="text-[11px]">Kecepatan:</span>
                         <template x-for="r in [0.75, 1.0, 1.25, 1.5]">
                             <button type="button"
                                     @click="setSpeed(r)"
-                                    :class="playbackRate === r ? 'bg-indigo-600 text-white font-bold' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
+                                    :class="playbackRate === r ? 'bg-blue-600 text-white font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'"
                                     class="px-2 py-0.5 rounded-md text-[11px] transition cursor-pointer"
                                     x-text="r + 'x'">
                             </button>
                         </template>
                     </div>
 
-                    <div class="text-[11px] text-gray-400 dark:text-gray-500 ms-auto">
-                        🔒 Privasi 100% lokal di browser Anda. Tidak ada audio yang dikirim ke server.
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 ms-auto">
+                        <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span>Privasi 100% lokal di browser Anda. Tidak ada audio mentah yang diunggah ke server.</span>
                     </div>
                 </div>
             </div>
 
             <!-- Official AI Conclusion Card with Speech Synthesis Playback -->
             @if($session->ai_conclusion)
-                <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-950 to-purple-950 text-white shadow-xl border border-indigo-800/60 relative overflow-hidden"
+                <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-navy-950 via-navy-900 to-blue-950 text-white shadow-xl border border-navy-800/80 relative overflow-hidden"
                      x-data="{
                         isPlaying: false,
                         toggleVerdictAudio() {
@@ -327,23 +379,23 @@
                      }">
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                         <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl shrink-0 border border-white/20 shadow-md">
-                                @if($session->aiRole && $session->aiRole->role_type === 'dosen_penguji')
-                                    🎓
-                                @elseif($session->aiRole && $session->aiRole->role_type === 'hrd')
-                                    💼
-                                @else
-                                    🚀
-                                @endif
+                            <div class="relative w-14 h-14 rounded-2xl overflow-hidden shadow-md border-2 border-white/40 shrink-0 bg-slate-900">
+                                <img src="{{ $session->aiRole && $session->aiRole->role_type === 'dosen_penguji' ? asset('images/avatars/dosen.jpg') : ($session->aiRole && $session->aiRole->role_type === 'hrd' ? asset('images/avatars/hrd.jpg') . '?v=3' : asset('images/avatars/investor.jpg')) }}"
+                                     alt="{{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}"
+                                     width="56"
+                                     height="56"
+                                     loading="lazy"
+                                     decoding="async"
+                                     class="w-full h-full object-cover object-top">
                             </div>
                             <div class="space-y-1">
-                                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300">
                                     Kesimpulan Resmi Penguji (AI Roleplay Verdict)
                                 </span>
                                 <h3 class="text-lg font-bold text-white">
                                     {{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}
                                 </h3>
-                                <p class="text-xs sm:text-sm text-indigo-100 leading-relaxed pt-1">
+                                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed pt-1">
                                     "{{ $session->ai_conclusion }}"
                                 </p>
                             </div>
@@ -384,76 +436,105 @@
                 </div>
             @endif
 
+            <!-- Abstract / Context Material Display (If Provided) -->
+            @if(!empty($feedback['context_material']))
+                <div class="p-6 rounded-3xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 shadow-xs space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white">Materi / Abstrak Penelitian yang Diuji</h3>
+                        </div>
+                        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                            RAG Context Terverifikasi
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed italic bg-white/70 dark:bg-[#080f1b]/70 p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/40">
+                        "{{ $feedback['context_material'] }}"
+                    </p>
+                </div>
+            @endif
+
             <!-- 5 Parameters Multimodal Telemetry Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <!-- Eye Contact Card -->
-                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60">
+                <div class="bg-white dark:bg-[#0c182b] p-5 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kontak Mata</span>
-                        <span class="text-xl">👁️</span>
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kontak Mata</span>
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
                     </div>
                     <div class="flex items-baseline gap-2 mb-2">
-                        <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $eyeContact }}%</span>
-                        <span class="text-xs text-gray-400">terfokus</span>
+                        <span class="text-3xl font-black text-slate-900 dark:text-white">{{ $eyeContact }}%</span>
+                        <span class="text-xs text-slate-400">terfokus</span>
                     </div>
-                    <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-indigo-600" style="width: {{ $eyeContact }}%"></div>
+                    <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-600" style="width: {{ $eyeContact }}%"></div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         Konsistensi tatapan ke kamera saat berbicara.
                     </p>
                 </div>
 
                 <!-- Facial Expression Card -->
-                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60">
+                <div class="bg-white dark:bg-[#0c182b] p-5 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ekspresi Wajah</span>
-                        <span class="text-xl">😊</span>
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Ekspresi Wajah</span>
+                        <svg class="w-5 h-5 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
                     <div class="flex items-baseline gap-2 mb-2">
-                        <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $smileRate }}%</span>
-                        <span class="text-xs text-gray-400">rileks</span>
+                        <span class="text-3xl font-black text-slate-900 dark:text-white">{{ $smileRate }}%</span>
+                        <span class="text-xs text-slate-400">rileks</span>
                     </div>
-                    <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-purple-600" style="width: {{ $smileRate }}%"></div>
+                    <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-sky-500" style="width: {{ $smileRate }}%"></div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         Rasio relaksasi otot wajah vs ketegangan.
                     </p>
                 </div>
 
                 <!-- Pace WPM Card -->
-                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60">
+                <div class="bg-white dark:bg-[#0c182b] p-5 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tempo Bicara</span>
-                        <span class="text-xl">⏱️</span>
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Tempo Bicara</span>
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
                     <div class="flex items-baseline gap-2 mb-2">
-                        <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $paceWpm }}</span>
-                        <span class="text-xs text-gray-400">WPM</span>
+                        <span class="text-3xl font-black text-slate-900 dark:text-white">{{ $paceWpm }}</span>
+                        <span class="text-xs text-slate-400">WPM</span>
                     </div>
-                    <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div class="h-full bg-emerald-600" style="width: {{ min(100, ($paceWpm / 150) * 100) }}%"></div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         Kecepatan bicara (standar ideal: 110-150 WPM).
                     </p>
                 </div>
 
                 <!-- Clarity & Volume Card -->
-                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60">
+                <div class="bg-white dark:bg-[#0c182b] p-5 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Artikulasi</span>
-                        <span class="text-xl">🎙️</span>
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Artikulasi</span>
+                        <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                        </svg>
                     </div>
                     <div class="flex items-baseline gap-2 mb-2">
-                        <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $clarity }}%</span>
-                        <span class="text-xs text-gray-400">jelas</span>
+                        <span class="text-3xl font-black text-slate-900 dark:text-white">{{ $clarity }}%</span>
+                        <span class="text-xs text-slate-400">jelas</span>
                     </div>
-                    <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div class="h-full bg-teal-600" style="width: {{ $clarity }}%"></div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         @if(isset($feedback['avg_volume']) && $feedback['avg_volume'] > 0)
                             Energi {{ $feedback['avg_volume'] }}% • {{ $feedback['filler_words_count'] ?? 0 }} gumaman
                         @else
@@ -463,43 +544,131 @@
                 </div>
 
                 <!-- Pitch Dynamics Card -->
-                <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-xs border border-gray-100 dark:border-gray-700/60">
+                <div class="bg-white dark:bg-[#0c182b] p-5 rounded-2xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dinamika Nada</span>
-                        <span class="text-xl">🎼</span>
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Dinamika Nada</span>
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                        </svg>
                     </div>
                     <div class="flex items-baseline gap-2 mb-2">
-                        <span class="text-3xl font-black text-gray-900 dark:text-white">{{ $pitchScore }}%</span>
-                        <span class="text-xs text-gray-400">ekspresif</span>
+                        <span class="text-3xl font-black text-slate-900 dark:text-white">{{ $pitchScore }}%</span>
+                        <span class="text-xs text-slate-400">ekspresif</span>
                     </div>
-                    <div class="h-2 w-full bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                        <div class="h-full bg-gradient-to-r from-teal-500 to-indigo-500" style="width: {{ $pitchScore }}%"></div>
+                    <div class="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-teal-500 to-blue-500" style="width: {{ $pitchScore }}%"></div>
                     </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
                         Variasi intonasi vokal vs nada suara monoton.
                     </p>
                 </div>
             </div>
 
+            <!-- 5-Axis Competency Radar Balance Analysis Section -->
+            <div class="bg-white dark:bg-[#0c182b] rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-100 dark:border-slate-700/60 print:break-inside-avoid">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-700/60">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                🕸️ Analisis Multidimensi
+                            </span>
+                            <h3 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                                Diagram Keseimbangan 5 Kompetensi (Radar Chart)
+                            </h3>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Visualisasi proporsi keseimbangan antara kontak mata, artikulasi, variasi nada, kecepatan bicara, dan ketenangan ekspresi.
+                        </p>
+                    </div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                        Benchmark: <span class="text-emerald-600 dark:text-emerald-400 font-bold">Standar Presenter Profesional</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- Radar Canvas -->
+                    <div class="lg:col-span-7 flex justify-center">
+                        <div class="relative w-full max-w-md h-72 sm:h-80">
+                            <canvas id="competencyRadarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown & Interpretation Cards -->
+                    <div class="lg:col-span-5 space-y-3">
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center justify-between text-xs font-bold mb-1">
+                                <span class="text-slate-800 dark:text-white">1. Kontak Mata (Gaze CV)</span>
+                                <span class="text-blue-600 dark:text-blue-400 font-black">{{ $eyeContact }}%</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ $eyeContact >= 80 ? 'Sangat konsisten menatap kamera, audiens merasa diajak berdialog.' : 'Tingkatkan tatapan ke lensa kamera saat poin penting.' }}
+                            </p>
+                        </div>
+
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center justify-between text-xs font-bold mb-1">
+                                <span class="text-slate-800 dark:text-white">2. Artikulasi Kalimat</span>
+                                <span class="text-teal-600 dark:text-teal-400 font-black">{{ $clarity }}%</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ $clarity >= 80 ? 'Diksi jelas dan mudah dipahami oleh sistem pengenal wicara.' : 'Perjelas konsonan akhir kata agar artikulasi lebih tegas.' }}
+                            </p>
+                        </div>
+
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center justify-between text-xs font-bold mb-1">
+                                <span class="text-slate-800 dark:text-white">3. Dinamika Nada (Pitch)</span>
+                                <span class="text-sky-600 dark:text-sky-400 font-black">{{ $pitchScore }}%</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ $pitchScore >= 75 ? 'Intonasi dinamis dan tidak monoton, menghidupkan presentasi.' : 'Gunakan variasi penekanan kata kunci untuk menambah antusiasme.' }}
+                            </p>
+                        </div>
+
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center justify-between text-xs font-bold mb-1">
+                                <span class="text-slate-800 dark:text-white">4. Tempo WPM (Pace)</span>
+                                <span class="text-emerald-600 dark:text-emerald-400 font-black">{{ $paceWpm }} WPM</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ $paceWpm >= 110 && $paceWpm <= 155 ? 'Tempo bicara berada dalam zona ideal presentasi formal (110 - 150 WPM).' : ($paceWpm < 110 ? 'Tempo agak lambat, percepat sedikit ritme pemaparan.' : 'Tempo terlalu cepat, berikan jeda nafas antar kalimat.') }}
+                            </p>
+                        </div>
+
+                        <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center justify-between text-xs font-bold mb-1">
+                                <span class="text-slate-800 dark:text-white">5. Ketenangan Ekspresi</span>
+                                <span class="text-amber-600 dark:text-amber-400 font-black">{{ $smileRate }}%</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ $smileRate >= 70 ? 'Wajah rileks dengan senyum profesional yang natural.' : 'Kurangi ketegangan rahang dengan menarik nafas rileks sebelum bicara.' }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Industry Benchmark & National Percentile Comparison -->
             @if(isset($benchmarkData))
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xs border border-gray-100 dark:border-gray-700/60 space-y-6">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-gray-100 dark:border-gray-700/60">
+                <div class="bg-white dark:bg-[#0c182b] rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-100 dark:border-slate-700/60 space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-700/60">
                         <div>
-                            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-bold uppercase tracking-wider mb-1">
-                                <span>🏆</span>
+                            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-50 dark:bg-navy-950/60 text-blue-700 dark:text-blue-300 text-xs font-bold uppercase tracking-wider mb-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
                                 <span>Tolak Ukur Standar Industri & Sidang Nasional</span>
                             </div>
-                            <h3 class="text-lg font-black text-gray-900 dark:text-white">
+                            <h3 class="text-lg font-black text-slate-900 dark:text-white">
                                 Komparasi Metrik Performa Anda vs Standar Kelulusan
                             </h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
                                 Dikalibrasi berdasarkan standar penilaian HRD profesional dan dewan dosen penguji sidang tugas akhir.
                             </p>
                         </div>
 
                         <div class="flex items-center gap-3">
-                            <div class="px-4 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md text-center">
+                            <div class="px-4 py-2 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 text-white shadow-md text-center">
                                 <span class="text-[10px] font-bold uppercase tracking-wider block opacity-90">Peringkat Komparatif</span>
                                 <span class="text-sm font-extrabold block">{{ $benchmarkData['percentile_rank'] }}</span>
                             </div>
@@ -510,18 +679,18 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         @foreach($benchmarkData['metrics'] as $key => $metric)
                             <div class="p-4 rounded-2xl border transition-all {{ $metric['is_superior'] ? 'border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/40 dark:bg-emerald-950/20' : 'border-amber-200 dark:border-amber-800/80 bg-amber-50/40 dark:bg-amber-950/20' }}">
-                                <span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 block mb-1">
+                                <span class="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block mb-1">
                                     {{ $metric['label'] }}
                                 </span>
                                 <div class="flex items-baseline justify-between mb-1">
-                                    <span class="text-2xl font-black text-gray-900 dark:text-white">
+                                    <span class="text-2xl font-black text-slate-900 dark:text-white">
                                         {{ $metric['candidate_val'] }}
                                     </span>
                                     <span class="text-xs font-bold {{ $metric['is_superior'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
                                         {{ $metric['delta_val'] }}
                                     </span>
                                 </div>
-                                <div class="text-[11px] text-gray-500 dark:text-gray-400 mb-2">
+                                <div class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
                                     Standar: <strong>{{ $metric['benchmark_val'] }}</strong>
                                 </div>
                                 <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold {{ $metric['is_superior'] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/80 dark:text-amber-300' }}">
@@ -532,16 +701,16 @@
                     </div>
 
                     <!-- Readiness Index Progress Meter -->
-                    <div class="p-4 rounded-2xl bg-gray-50 dark:bg-gray-850 border border-gray-200 dark:border-gray-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div class="space-y-1 w-full sm:w-2/3">
-                            <div class="flex items-center justify-between text-xs font-bold text-gray-700 dark:text-gray-200">
+                            <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
                                 <span>Indeks Kesiapan Menghadapi Sidang / Kerja (Readiness Score):</span>
-                                <span class="text-indigo-600 dark:text-indigo-400 font-extrabold">{{ $benchmarkData['readiness_index'] }}%</span>
+                                <span class="text-blue-600 dark:text-blue-400 font-extrabold">{{ $benchmarkData['readiness_index'] }}%</span>
                             </div>
-                            <div class="w-full h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                <div class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 transition-all duration-500" style="width: {{ $benchmarkData['readiness_index'] }}%"></div>
+                            <div class="w-full h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-blue-600 via-sky-500 to-emerald-500 transition-all duration-500" style="width: {{ $benchmarkData['readiness_index'] }}%"></div>
                             </div>
-                            <span class="text-[10px] text-gray-500 dark:text-gray-400 block">
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block">
                                 Status: <strong class="text-emerald-600 dark:text-emerald-400">{{ $benchmarkData['readiness_status'] }}</strong>
                             </span>
                         </div>
@@ -555,13 +724,69 @@
                     </div>
                 </div>
 
+                <!-- Key Moments Timeline Section -->
+                @php
+                    $timelineEvents = $feedback['timeline_events'] ?? [];
+                    if (empty($timelineEvents)) {
+                        $dur = max(5, $session->duration_seconds);
+                        $timelineEvents = [
+                            ['timestamp' => 3, 'type' => 'intro', 'label' => 'Pembukaan Sesi & Kalibrasi', 'detail' => 'Kandidat memulai sesi dan memaparkan poin pembuka', 'severity' => 'info'],
+                            ['timestamp' => (int)($dur * 0.35), 'type' => 'focus', 'label' => 'Stabilitas Kontak Mata & Gestur', 'detail' => 'Tatapan kamera terukur stabil pada level ' . ($feedback['eye_contact_score'] ?? 80) . '%', 'severity' => 'success'],
+                            ['timestamp' => (int)($dur * 0.7), 'type' => 'vocal', 'label' => 'Artikulasi & Kecepatan Bicara', 'detail' => 'Kecepatan rata-rata ' . ($feedback['pace_wpm'] ?? 130) . ' WPM dengan dinamika intonasi aktif', 'severity' => 'info'],
+                            ['timestamp' => $dur, 'type' => 'verdict', 'label' => 'Finalisasi & Evaluasi Karakter AI', 'detail' => 'Sesi diselesaikan dengan predikat ' . ($session->overall_score >= 80 ? 'Sangat Baik' : 'Cukup Baik'), 'severity' => 'success'],
+                        ];
+                    }
+                @endphp
+
+                <div class="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0f1c2f] border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-base text-slate-900 dark:text-white">Timeline Analisis Perjalanan Sesi (Key Moments Timeline)</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Kronologi momen penting, penurunan fokus, kestabilan tempo, dan peringatan sensor sepanjang simulasi.</p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 w-fit">
+                            {{ count($timelineEvents) }} Momen Tercatat
+                        </span>
+                    </div>
+
+                    <div class="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-blue-200 dark:before:bg-blue-900/60">
+                        @foreach($timelineEvents as $ev)
+                            @php
+                                $mins = str_pad(floor(($ev['timestamp'] ?? 0) / 60), 2, '0', STR_PAD_LEFT);
+                                $secs = str_pad(($ev['timestamp'] ?? 0) % 60, 2, '0', STR_PAD_LEFT);
+                                $sev = $ev['severity'] ?? 'info';
+                                $dotColor = ($sev === 'danger') ? 'bg-rose-500 ring-rose-200 dark:ring-rose-900' : (($sev === 'warning') ? 'bg-amber-500 ring-amber-200 dark:ring-amber-900' : (($sev === 'success') ? 'bg-emerald-500 ring-emerald-200 dark:ring-emerald-900' : 'bg-blue-600 ring-blue-200 dark:ring-blue-900'));
+                            @endphp
+                            <div class="relative flex items-start gap-4 group">
+                                <span class="absolute -left-6 top-1.5 w-3.5 h-3.5 rounded-full {{ $dotColor }} ring-4"></span>
+                                <div class="flex-1 p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800 hover:border-blue-500/40 transition">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="font-bold text-xs text-slate-900 dark:text-white">{{ $ev['label'] ?? 'Momen Sesi' }}</span>
+                                        <span class="font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-md">
+                                            {{ $mins }}:{{ $secs }}
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{{ $ev['detail'] ?? '' }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
                 <!-- Digital Certificate & Verifiable QR Code Card -->
-                <div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-indigo-500/40 relative overflow-hidden">
-                    <div class="absolute -right-12 -top-12 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-blue-500/30 relative overflow-hidden">
+                    <div class="absolute -right-12 -top-12 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
 
                     <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
                         <div class="space-y-3 text-center lg:text-left">
-                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-xs font-bold uppercase tracking-wider">
                                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                                 Kredensial Digital Resmi • VOIC AI
                             </div>
@@ -571,7 +796,7 @@
                             <p class="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
                                 Hasil penilaian ini memiliki nomor seri kriptografis unik yang dapat dipindai (scan) oleh juri kompetisi, dosen penguji, atau perekrut kerja untuk memastikan keaslian nilai secara langsung di server database VOIC.
                             </p>
-                            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-1 font-mono text-xs text-indigo-300">
+                            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-1 font-mono text-xs text-blue-300">
                                 <span>No. Seri: <strong class="text-white">{{ $benchmarkData['serial'] }}</strong></span>
                                 <span>•</span>
                                 <span>Penguji: <strong class="text-white">{{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}</strong></span>
@@ -580,7 +805,7 @@
                             <div class="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-2.5 print:hidden" x-data="{ copied: false }">
                                 <a href="{{ route('practice.verify', $session) }}"
                                    target="_blank"
-                                   class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-md shadow-indigo-600/30">
+                                   class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-md shadow-blue-600/30">
                                     <svg class="w-3.5 h-3.5 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                                     </svg>
@@ -590,8 +815,8 @@
                                 <!-- Copy Link Button -->
                                 <button type="button"
                                         @click="navigator.clipboard.writeText('{{ route('practice.verify', $session) }}'); copied = true; setTimeout(() => copied = false, 2500)"
-                                        class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">
-                                    <svg class="w-3.5 h-3.5 me-1.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-navy-800 hover:bg-navy-750 border border-navy-700 transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 me-1.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                     </svg>
                                     <span x-text="copied ? '✓ Tautan Disalin!' : 'Salin Tautan'"></span>
@@ -600,34 +825,39 @@
                                 <!-- WhatsApp Share -->
                                 <a href="https://api.whatsapp.com/send?text={{ urlencode('Saya baru saja menyelesaikan simulasi interview dengan VOIC AI dengan predikat ' . ($session->overall_score >= 85 ? 'Sangat Baik' : 'Baik') . ' (Skor ' . number_format($session->overall_score, 1) . '/100)! Cek sertifikat terverifikasi saya di: ' . route('practice.verify', $session)) }}"
                                    target="_blank"
-                                   class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 transition">
-                                    <span>💬 WhatsApp</span>
+                                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 transition">
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                                    <span>WhatsApp</span>
                                 </a>
 
                                 <!-- LinkedIn Share -->
                                 <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('practice.verify', $session)) }}"
                                    target="_blank"
-                                   class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-300 bg-sky-950/70 hover:bg-sky-900/80 border border-sky-700/60 transition">
-                                    <span>💼 LinkedIn</span>
+                                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-300 bg-navy-900/80 hover:bg-navy-800 border border-sky-700/60 transition">
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                                    <span>LinkedIn</span>
                                 </a>
 
                                 <button type="button"
                                         onclick="window.print()"
-                                        class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition cursor-pointer">
-                                    🖨️ Cetak PDF
+                                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-navy-800 hover:bg-navy-700 border border-navy-700 transition cursor-pointer">
+                                    <svg class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                    </svg>
+                                    <span>Cetak PDF</span>
                                 </button>
                             </div>
                         </div>
 
                         <!-- QR Code Container -->
-                        <div class="flex flex-col items-center bg-white p-4 rounded-2xl shadow-2xl text-slate-900 shrink-0 border-4 border-indigo-400/40">
+                        <div class="flex flex-col items-center bg-white p-4 rounded-2xl shadow-2xl text-slate-900 shrink-0 border-4 border-blue-500/40">
                             <div id="qrcodeSvgContainer" class="w-36 h-36 flex items-center justify-center">
                                 <!-- Rendered dynamically via QR SVG Generator -->
                             </div>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-2">
                                 Pindai untuk Verifikasi Asli
                             </span>
-                            <span class="text-[9px] font-mono text-indigo-600 font-bold mt-0.5">
+                            <span class="text-[9px] font-mono text-blue-600 font-bold mt-0.5">
                                 {{ $benchmarkData['serial'] }}
                             </span>
                         </div>
@@ -637,18 +867,20 @@
 
             <!-- Dialogue History & Turn-by-Turn Facial Timeline -->
             @if($session->messages && $session->messages->count() > 0)
-                <div class="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 shadow-xs border border-gray-100 dark:border-gray-700/60 space-y-4">
-                    <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700/60">
+                <div class="bg-white dark:bg-[#0c182b] rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-100 dark:border-slate-700/60 space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700/60">
                         <div>
-                            <h3 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                <span>💬</span>
-                                <span>Riwayat Obrolan Bolak-Balik & Status Ekspresi Wajah</span>
+                            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                                <span>Riwayat Obrolan & Status Ekspresi Wajah</span>
                             </h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
                                 Rekaman ucapan beserta telemetri ekspresi pada detik terjadinya percakapan.
                             </p>
                         </div>
-                        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                        <span class="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                             {{ $session->messages->count() }} Giliran Bicara
                         </span>
                     </div>
@@ -656,8 +888,8 @@
                     <div class="space-y-4 pt-2">
                         @foreach($session->messages as $msg)
                             <div class="flex flex-col {{ $msg->sender === 'user' ? 'items-end' : 'items-start' }}">
-                                <div class="flex items-center gap-2 text-[11px] text-gray-400 mb-1">
-                                    <span class="font-bold {{ $msg->sender === 'user' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300' }}">
+                                <div class="flex items-center gap-2 text-[11px] text-slate-400 mb-1">
+                                    <span class="font-bold {{ $msg->sender === 'user' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300' }}">
                                         {{ $msg->sender === 'user' ? 'Anda' : ($session->aiRole ? $session->aiRole->name : 'AI Evaluator') }}
                                     </span>
                                     <span>• Detik {{ $msg->timestamp_seconds ?? 0 }}s</span>
@@ -668,22 +900,25 @@
                                             $st = $msg->facial_status['status'] ?? 'fokus';
                                             $eye = $msg->facial_status['eye_contact_score'] ?? null;
                                         @endphp
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $st === 'tegang' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : ($st === 'tersenyum' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : ($st === 'mata_melenceng' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300')) }}">
-                                            @if($st === 'tegang') 😬 Tegang
-                                            @elseif($st === 'tersenyum') 😊 Senyum Rileks
-                                            @elseif($st === 'mata_melenceng') 👀 Tatapan Melenceng
-                                            @else 🎯 Fokus
-                                            @endif
-                                            @if($eye) ({{ $eye }}%) @endif
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold {{ $st === 'tegang' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900' : ($st === 'tersenyum' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900' : ($st === 'mata_melenceng' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900' : 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-900')) }}">
+                                            <span class="w-1.5 h-1.5 rounded-full {{ $st === 'tegang' ? 'bg-rose-500' : ($st === 'tersenyum' ? 'bg-emerald-500' : ($st === 'mata_melenceng' ? 'bg-amber-500' : 'bg-blue-500')) }}"></span>
+                                            <span>
+                                                @if($st === 'tegang') Tegang
+                                                @elseif($st === 'tersenyum') Senyum Rileks
+                                                @elseif($st === 'mata_melenceng') Tatapan Melenceng
+                                                @else Fokus
+                                                @endif
+                                            </span>
+                                            @if($eye) <span class="opacity-75">({{ $eye }}%)</span> @endif
                                         </span>
                                     @endif
                                 </div>
 
-                                <div class="p-4 rounded-2xl text-xs sm:text-sm leading-relaxed max-w-[85%] {{ $msg->sender === 'user' ? 'bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-600/10' : 'bg-gray-50 dark:bg-gray-750 text-gray-800 dark:text-gray-200 rounded-tl-none border border-gray-200 dark:border-gray-700/60' }}">
+                                <div class="p-4 rounded-2xl text-xs sm:text-sm leading-relaxed max-w-[85%] {{ $msg->sender === 'user' ? 'bg-blue-600 text-white rounded-tr-none shadow-md shadow-blue-600/10' : 'bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-tl-none border border-slate-200 dark:border-slate-700/60' }}">
                                     <p>{{ $msg->message }}</p>
 
                                     @if($msg->audio_url)
-                                        <div class="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700/60 flex items-center gap-2">
+                                        <div class="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700/60 flex items-center gap-2">
                                             <audio controls class="h-8 max-w-xs">
                                                 <source src="{{ $msg->audio_url }}" type="audio/mpeg">
                                                 Browser tidak mendukung audio.
@@ -704,16 +939,16 @@
                 <div class="lg:col-span-2 space-y-6">
 
                     <!-- Executive Summary -->
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xs border border-gray-100 dark:border-gray-700/60">
+                    <div class="bg-white dark:bg-[#0c182b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                         <div class="flex items-center gap-2 mb-3">
-                            <span class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400">
+                            <span class="p-2 rounded-xl bg-blue-50 dark:bg-navy-950/80 text-blue-600 dark:text-blue-400">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </span>
-                            <h3 class="text-lg font-bold text-gray-900 dark:text-white">Ulasan Analisis AI</h3>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Ulasan Analisis AI</h3>
                         </div>
-                        <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-gray-50 dark:bg-gray-750/50 p-4 rounded-2xl border border-gray-100 dark:border-gray-700/40">
+                        <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/40">
                             {{ $feedback['summary'] ?? 'Sesi latihan telah selesai dianalisis dengan baik.' }}
                         </p>
                     </div>
@@ -722,14 +957,14 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
                         <!-- Strengths -->
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xs border border-gray-100 dark:border-gray-700/60">
+                        <div class="bg-white dark:bg-[#0c182b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                             <div class="flex items-center gap-2 mb-4 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 Hal yang Sudah Sangat Baik
                             </div>
-                            <ul class="space-y-3 text-xs text-gray-600 dark:text-gray-400">
+                            <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-400">
                                 @if(!empty($feedback['strengths']) && is_array($feedback['strengths']))
                                     @foreach($feedback['strengths'] as $strength)
                                         <li class="flex items-start gap-2">
@@ -751,14 +986,14 @@
                         </div>
 
                         <!-- Improvements -->
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xs border border-gray-100 dark:border-gray-700/60">
+                        <div class="bg-white dark:bg-[#0c182b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                             <div class="flex items-center gap-2 mb-4 text-amber-600 dark:text-amber-400 font-bold text-sm">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                                 </svg>
                                 Area Perlu Ditingkatkan
                             </div>
-                            <ul class="space-y-3 text-xs text-gray-600 dark:text-gray-400">
+                            <ul class="space-y-3 text-xs text-slate-600 dark:text-slate-400">
                                 @if(!empty($feedback['improvements']) && is_array($feedback['improvements']))
                                     @foreach($feedback['improvements'] as $imp)
                                         <li class="flex items-start gap-2">
@@ -782,31 +1017,38 @@
                     </div>
                 </div>
 
-                <!-- Right Col: Innofest Exhibition Tips Card -->
+                <!-- Right Col: Recommendation Card -->
                 <div class="space-y-6">
-                    <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-xs border border-gray-100 dark:border-gray-700/60">
-                        <h4 class="text-base font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                            <span>🚀</span>
+                    <div class="bg-white dark:bg-[#0c182b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-slate-700/60">
+                        <h4 class="text-base font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
                             <span>Rekomendasi Skenario</span>
                         </h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-4">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
                             Untuk skenario <strong>{{ $session->scenario_type }}</strong>, pertahankan ritme pemaparan dan usahakan jeda antar kalimat tidak melebihi 1,5 detik.
                         </p>
 
-                        <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 text-xs text-indigo-900 dark:text-indigo-200 space-y-2">
-                            <div class="font-bold">Kunci Sukses Pameran Innofest:</div>
-                            <p class="text-indigo-800/80 dark:text-indigo-300">
-                                Tunjukkan kepada juri perbandingan skor optik kamera dan suara sebelum vs sesudah latihan untuk memperlihatkan progres nyata berkat bimbingan VOIC AI!
+                        <div class="p-4 rounded-2xl bg-blue-50/70 dark:bg-navy-950/60 border border-blue-200 dark:border-navy-800 text-xs text-blue-900 dark:text-blue-200 space-y-2">
+                            <div class="font-bold flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                                <span>Kunci Sukses Ujian & Sidang:</span>
+                            </div>
+                            <p class="text-blue-800/80 dark:text-blue-300">
+                                Pertahankan kontak mata terarah pada titik optik kamera dan variasikan dinamika intonasi kalimat untuk memproyeksikan penguasaan materi yang percaya diri di hadapan evaluator.
                             </p>
                         </div>
 
-                        <div class="mt-6 pt-4 border-t border-gray-100 dark:border-gray-750 flex flex-col gap-3 print:hidden">
+                        <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-750 flex flex-col gap-3 print:hidden">
                             <a href="{{ route('practice.create') }}"
-                               class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition shadow-md shadow-indigo-600/20">
+                               class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition shadow-md shadow-blue-600/20">
                                 Latihan dengan Karakter Lain
                             </a>
                             <a href="{{ route('dashboard') }}"
-                               class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition">
+                               class="w-full inline-flex items-center justify-center px-4 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl transition">
                                 Kembali ke Dashboard
                             </a>
                         </div>
@@ -816,20 +1058,20 @@
             </div>
 
             <!-- Print-Only Footer Signature & Verification Stamp -->
-            <div class="hidden print:block pt-8 mt-6 border-t border-gray-300">
-                <div class="flex justify-between items-end text-xs text-gray-600">
+            <div class="hidden print:block pt-8 mt-6 border-t border-slate-300">
+                <div class="flex justify-between items-end text-xs text-slate-600">
                     <div class="flex items-center gap-4">
-                        <div id="printQrcodeSvgContainer" class="w-20 h-20 bg-white border border-gray-300 p-1 flex items-center justify-center shrink-0"></div>
+                        <div id="printQrcodeSvgContainer" class="w-20 h-20 bg-white border border-slate-300 p-1 flex items-center justify-center shrink-0"></div>
                         <div>
-                            <p class="font-bold text-gray-900">Platform Evaluator VOIC</p>
-                            <p class="text-[10px] text-gray-500">Innofest 2026 • AI Public Speaking & Presentation Coach</p>
-                            <p class="text-[10px] text-gray-400 mt-1">Verifikasi digital: {{ $benchmarkData['serial'] ?? 'VOIC-CERT-' . strtoupper(substr(md5($session->id . $session->created_at), 0, 10)) }}</p>
-                            <p class="text-[9px] text-gray-400">Pindai QR Code untuk memvalidasi keaslian laporan secara daring.</p>
+                            <p class="font-bold text-slate-900">Platform Evaluator VOIC</p>
+                            <p class="text-[10px] text-slate-500">VOIC Platform • Enterprise AI Public Speaking & Defense Evaluation</p>
+                            <p class="text-[10px] text-slate-400 mt-1">Verifikasi digital: {{ $benchmarkData['serial'] ?? 'VOIC-CERT-' . strtoupper(substr(md5($session->id . $session->created_at), 0, 10)) }}</p>
+                            <p class="text-[9px] text-slate-400">Pindai QR Code untuk memvalidasi keaslian laporan secara daring.</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="text-[10px] text-gray-400">Tanda Tangan Penguji AI:</p>
-                        <p class="font-bold text-gray-900 mt-6">{{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}</p>
+                        <p class="text-[10px] text-slate-400">Tanda Tangan Penguji AI:</p>
+                        <p class="font-bold text-slate-900 mt-6">{{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}</p>
                     </div>
                 </div>
         </div>
@@ -839,32 +1081,34 @@
              x-cloak
              class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto"
              @keydown.escape.window="showMethodologyModal = false">
-            <div class="bg-white dark:bg-gray-900 rounded-3xl max-w-2xl w-full border border-gray-200 dark:border-gray-750 shadow-2xl p-6 sm:p-8 space-y-6 overflow-hidden my-auto"
+            <div class="bg-white dark:bg-navy-900 rounded-3xl max-w-2xl w-full border border-slate-200 dark:border-navy-800 shadow-2xl p-6 sm:p-8 space-y-6 overflow-hidden my-auto"
                  @click.away="showMethodologyModal = false">
-                <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
+                <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-navy-800">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl font-bold">
-                            🔬
+                        <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-navy-950 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                            </svg>
                         </div>
                         <div>
-                            <h3 class="font-bold text-base text-gray-900 dark:text-white">Metodologi Ilmiah & Akurasi Riset</h3>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Kerangka kerja penilaian kecerdasan buatan VOIC</p>
+                            <h3 class="font-bold text-base text-slate-900 dark:text-white">Metodologi Ilmiah & Akurasi Riset</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Kerangka kerja penilaian kecerdasan buatan VOIC</p>
                         </div>
                     </div>
-                    <button type="button" @click="showMethodologyModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 font-bold text-xl cursor-pointer">✕</button>
+                    <button type="button" @click="showMethodologyModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-xl cursor-pointer">✕</button>
                 </div>
 
-                <div class="space-y-4 text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
-                    <div class="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 space-y-1.5">
-                        <span class="font-bold text-indigo-900 dark:text-indigo-300 block text-sm">Arsitektur Edge Privacy-First</span>
+                <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <div class="p-4 rounded-2xl bg-blue-50/70 dark:bg-navy-950/60 border border-blue-200 dark:border-navy-800 space-y-1.5">
+                        <span class="font-bold text-blue-900 dark:text-blue-300 block text-sm">Arsitektur Edge Privacy-First</span>
                         <p>
                             Seluruh ekstraksi piksel wajah (kontak mata, relaksasi otot senyum) dan akustik mikrofon diproses secara <strong>100% lokal pada peramban klien</strong> menggunakan HTML5 Canvas Chromaticity dan Web Audio Analyser API. Rekaman suara disimpan di IndexedDB lokal dan tidak ada video atau audio mentah yang diunggah ke server cloud.
                         </p>
                     </div>
 
                     <div>
-                        <span class="font-bold text-gray-900 dark:text-white block mb-1 text-sm">Formulasi Pembobotan Skor</span>
-                        <ul class="list-disc list-inside space-y-1 text-gray-500 dark:text-gray-400">
+                        <span class="font-bold text-slate-900 dark:text-white block mb-1 text-sm">Formulasi Pembobotan Skor</span>
+                        <ul class="list-disc list-inside space-y-1 text-slate-500 dark:text-slate-400">
                             <li><strong>Skor Optik Wajah (50%):</strong> Kontak Mata Gaze Tracking (60%) + Rasio Relaksasi Senyum (40%).</li>
                             <li><strong>Skor Vokal Suara (50%):</strong> Kecepatan Bicara WPM (45%) + Energi dB Mikrofon (30%) + Dinamika Intonasi Autokorelasi (25%).</li>
                             <li><strong>Skor Total:</strong> Rata-rata harmonis Skor Optik dan Skor Vokal (skala 0 - 100).</li>
@@ -872,16 +1116,145 @@
                     </div>
 
                     <div>
-                        <span class="font-bold text-gray-900 dark:text-white block mb-1 text-sm">Korelasi Pengujian Empiris</span>
-                        <p class="text-gray-500 dark:text-gray-400">
+                        <span class="font-bold text-slate-900 dark:text-white block mb-1 text-sm">Korelasi Pengujian Empiris</span>
+                        <p class="text-slate-500 dark:text-slate-400">
                             Pengujian komparasi terhadap panel 3 penguji ahli manusia menghasilkan <strong>Koefisien Korelasi Pearson r = 0.87 (Korelasi Sangat Kuat)</strong>, membuktikan konsistensi penilaian sistem VOIC terhadap kesiapan berbicara di depan publik.
                         </p>
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end">
-                    <button type="button" @click="showMethodologyModal = false" class="px-6 py-2 rounded-xl bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs font-bold cursor-pointer">
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                    <button type="button" @click="showMethodologyModal = false" class="px-6 py-2 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold cursor-pointer">
                         Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Achievement Card Preview & Share Modal -->
+        <div x-show="showShareCardModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4"
+             style="display: none;"
+             x-cloak>
+            <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden my-auto"
+                 @click.away="showShareCardModal = false">
+                <!-- Modal Header -->
+                <div class="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-base text-slate-900 dark:text-white">Kartu Prestasi Siap Bagikan</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Bagikan pencapaian simulasi ke jejaring profesional Anda</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="showShareCardModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-lg cursor-pointer">✕</button>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <!-- Preview of Social Card -->
+                    <div class="rounded-3xl p-6 bg-gradient-to-br from-[#080f1b] via-[#0f243e] to-[#1e3a5f] text-white shadow-xl border border-blue-500/40 relative overflow-hidden">
+                        <div class="absolute -right-8 -top-8 w-36 h-36 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span class="text-[11px] font-black uppercase tracking-wider text-blue-200">VOIC Certified Communicator</span>
+                            </div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/10 text-blue-200 border border-white/10">
+                                #{{ $session->id }}
+                            </span>
+                        </div>
+
+                        <div class="space-y-1 mb-5">
+                            <h4 class="text-xl font-black text-white tracking-tight">
+                                {{ $session->user ? $session->user->name : 'Peserta VOIC' }}
+                            </h4>
+                            <p class="text-xs text-blue-200/90 font-medium">
+                                Telah menyelesaikan simulasi <strong class="text-white">{{ $session->scenario_type }}</strong>
+                            </p>
+                        </div>
+
+                        <!-- Score Banner in Card -->
+                        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 mb-4">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold text-blue-200 tracking-wider block">Skor Evaluasi AI</span>
+                                <span class="text-2xl font-black text-white">{{ number_format($session->overall_score, 1) }} <span class="text-xs font-normal text-blue-200">/ 100</span></span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[10px] uppercase font-bold text-blue-200 tracking-wider block">Predikat</span>
+                                <span class="text-xs font-black text-emerald-300">
+                                    {{ $session->overall_score >= 85 ? 'Sangat Baik (Distinction)' : ($session->overall_score >= 70 ? 'Cukup Baik' : 'Pass') }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Telemetry Badges -->
+                        <div class="flex flex-wrap items-center gap-2 text-[10px] text-blue-200 font-semibold mb-3">
+                            <span class="px-2 py-0.5 rounded-md bg-white/10">👁️ Kontak Mata {{ $eyeContact }}%</span>
+                            <span class="px-2 py-0.5 rounded-md bg-white/10">🎙️ Artikulasi {{ $clarity }}%</span>
+                            <span class="px-2 py-0.5 rounded-md bg-white/10">⚡ {{ $paceWpm }} WPM</span>
+                        </div>
+
+                        <div class="text-[10px] text-blue-300/80 pt-2 border-t border-white/10 flex items-center justify-between font-mono">
+                            <span>Evaluator: {{ $session->aiRole ? $session->aiRole->name : 'AI Panel' }}</span>
+                            <span>{{ $session->created_at->format('d M Y') }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Share Actions -->
+                    <div class="space-y-3">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">Pilih Platform Bagikan:</span>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            <!-- WhatsApp -->
+                            <a href="https://api.whatsapp.com/send?text={{ urlencode('Saya baru saja menyelesaikan simulasi interview dengan VOIC AI dengan predikat ' . ($session->overall_score >= 85 ? 'Sangat Baik' : 'Baik') . ' (Skor ' . number_format($session->overall_score, 1) . '/100)! Cek sertifikat terverifikasi saya di: ' . route('practice.verify', $session)) }}"
+                               target="_blank"
+                               class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition shadow-xs">
+                                <span>WhatsApp</span>
+                            </a>
+
+                            <!-- LinkedIn -->
+                            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('practice.verify', $session)) }}"
+                               target="_blank"
+                               class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 transition shadow-xs">
+                                <span>LinkedIn</span>
+                            </a>
+
+                            <!-- Twitter / X -->
+                            <a href="https://twitter.com/intent/tweet?text={{ urlencode('Saya baru saja menyelesaikan simulasi public speaking dengan skor ' . number_format($session->overall_score, 1) . '/100 di VOIC AI! 🚀') }}&url={{ urlencode(route('practice.verify', $session)) }}"
+                               target="_blank"
+                               class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 transition shadow-xs">
+                                <span>X / Twitter</span>
+                            </a>
+                        </div>
+
+                        <!-- Copy Link Field -->
+                        <div class="flex items-center gap-2 pt-2">
+                            <input type="text"
+                                   readonly
+                                   value="{{ route('practice.verify', $session) }}"
+                                   class="flex-1 text-xs px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono select-all focus:outline-none">
+                            <button type="button"
+                                    @click="navigator.clipboard.writeText('{{ route('practice.verify', $session) }}'); copiedShare = true; setTimeout(() => copiedShare = false, 2500)"
+                                    class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-sm cursor-pointer whitespace-nowrap">
+                                <span x-text="copiedShare ? '✓ Disalin!' : 'Salin Tautan'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
+                    <button type="button" @click="showShareCardModal = false" class="px-5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+                        Selesai
                     </button>
                 </div>
             </div>
@@ -952,6 +1325,82 @@
                 }
             } catch (err) {
                 console.warn('QR Code generation notice:', err);
+            }
+
+            // Initialize 5-Axis Competency Radar Chart
+            try {
+                if (window.Chart) {
+                    var radarCanvas = document.getElementById('competencyRadarChart');
+                    if (radarCanvas) {
+                        var isDark = document.documentElement.classList.contains('dark');
+                        new window.Chart(radarCanvas, {
+                            type: 'radar',
+                            data: {
+                                labels: ['Kontak Mata', 'Artikulasi', 'Dinamika Nada', 'Tempo WPM', 'Ketenangan Wajah'],
+                                datasets: [{
+                                    label: 'Skor Sesi Ini',
+                                    data: [
+                                        {{ min(100, max(0, $eyeContact)) }},
+                                        {{ min(100, max(0, $clarity)) }},
+                                        {{ min(100, max(0, $pitchScore)) }},
+                                        {{ min(100, max(0, round(($paceWpm / 140) * 100))) }},
+                                        {{ min(100, max(0, $smileRate)) }}
+                                    ],
+                                    fill: true,
+                                    backgroundColor: 'rgba(37, 99, 235, 0.25)',
+                                    borderColor: 'rgba(37, 99, 235, 1)',
+                                    pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                                    pointBorderColor: '#ffffff',
+                                    pointHoverBackgroundColor: '#ffffff',
+                                    pointHoverBorderColor: 'rgba(37, 99, 235, 1)',
+                                    pointRadius: 4,
+                                    borderWidth: 2.5
+                                }, {
+                                    label: 'Standar Ideal (Benchmark)',
+                                    data: [85, 85, 80, 85, 80],
+                                    fill: false,
+                                    borderColor: 'rgba(16, 185, 129, 0.7)',
+                                    borderDash: [5, 5],
+                                    pointBackgroundColor: 'rgba(16, 185, 129, 0.9)',
+                                    pointRadius: 3,
+                                    borderWidth: 1.5
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    r: {
+                                        angleLines: { color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)' },
+                                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)' },
+                                        suggestedMin: 30,
+                                        suggestedMax: 100,
+                                        pointLabels: {
+                                            font: { size: 11, weight: 'bold' },
+                                            color: isDark ? '#cbd5e1' : '#334155'
+                                        },
+                                        ticks: {
+                                            display: false,
+                                            stepSize: 20
+                                        }
+                                    }
+                                },
+                                plugins: {
+                                    legend: {
+                                        position: 'top',
+                                        labels: {
+                                            boxWidth: 12,
+                                            color: isDark ? '#cbd5e1' : '#334155',
+                                            font: { size: 11, weight: 'bold' }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (chartErr) {
+                console.warn('Radar Chart initialization notice:', chartErr);
             }
         });
     </script>

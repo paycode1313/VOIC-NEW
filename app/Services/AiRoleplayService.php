@@ -8,6 +8,7 @@ use App\Models\SessionMessage;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AiRoleplayService
 {
@@ -35,12 +36,20 @@ class AiRoleplayService
      *
      * @return array{message: string, audio_url: ?string}
      */
-    public function getInitialGreeting(AiRole $role, ?string $topic = null, string $language = 'id'): array
+    public function getInitialGreeting(AiRole $role, ?string $topic = null, string $language = 'id', ?string $contextMaterial = null): array
     {
         $hasCustomTopic = ! empty($topic) && $topic !== $role->name;
+        $hasContext = ! empty($contextMaterial);
+        $shortSnippet = $hasContext ? Str::limit(trim($contextMaterial), 120) : null;
 
         if ($language === 'en') {
-            if ($hasCustomTopic) {
+            if ($hasContext) {
+                $greetings = [
+                    'dosen_penguji' => "Welcome to your thesis defense examination. I have received your research abstract: '{$shortSnippet}'. Please sit upright, look directly into the camera, and explain the core justification of your methodology.",
+                    'hrd' => "Hello! Glad to meet you. I noted your profile summary: '{$shortSnippet}'. Take a calm breath and walk me through your key achievements and motivations.",
+                    'investor' => "Pitch time is live. I reviewed your teaser premise: '{$shortSnippet}'. Cut straight to the point: explain your unit economics and customer validation in 60 seconds.",
+                ];
+            } elseif ($hasCustomTopic) {
                 $greetings = [
                     'dosen_penguji' => "Welcome to your thesis defense examination focusing on '{$topic}'. Please sit upright, maintain direct eye contact with the camera, and present your core research problem along with your primary methodology.",
                     'hrd' => "Hello! Glad to connect with you for this interview regarding the '{$topic}' position. Take a deep breath and stay confident. Could you walk me through your background and key motivations for this role?",
@@ -55,7 +64,13 @@ class AiRoleplayService
             }
             $defaultMsg = "Hello, I am {$role->name}. Let us begin today's session. Please present your opening remarks.";
         } else {
-            if ($hasCustomTopic) {
+            if ($hasContext) {
+                $greetings = [
+                    'dosen_penguji' => "Selamat datang di ruang sidang tugas akhir. Saya telah menelaah abstrak penelitian Anda: '{$shortSnippet}'. Silakan atur posisi duduk tegak, tatap kamera, dan jelaskan rumusan masalah serta validasi metode penelitian Anda.",
+                    'hrd' => "Halo! Senang bisa bertemu dengan Anda. Saya telah membaca ringkasan profil Anda: '{$shortSnippet}'. Tarik napas santai dan ceritakan bagaimana pengalaman Anda relevan untuk posisi ini.",
+                    'investor' => "Halo, salam kenal. Waktu pitching berjalan. Saya mencatat premis bisnis Anda: '{$shortSnippet}'. Langsung ke intinya: jelaskan dalam 1 menit problem riil pasar dan model monetisasi solusi Anda.",
+                ];
+            } elseif ($hasCustomTopic) {
                 $greetings = [
                     'dosen_penguji' => "Selamat datang di ruang sidang tugas akhir dengan topik '{$topic}'. Silakan atur posisi duduk tegak dan tatap kamera dengan tenang. Silakan perkenalkan diri Anda dan jelaskan rumusan masalah serta metode utama penelitian Anda.",
                     'hrd' => "Halo! Senang bisa bertemu dengan Anda di sesi wawancara untuk posisi '{$topic}'. Tarik napas santai dan tetap percaya diri. Bisakah Anda menceritakan latar belakang Anda dan motivasi terbesar melamar di posisi ini?",
@@ -133,12 +148,14 @@ class AiRoleplayService
         $facialCritique = null;
 
         try {
+            $contextMaterial = $session->feedback_notes['context_material'] ?? null;
             $response = Http::timeout($this->timeout)->post("{$this->aiServiceUrl}/chat", [
                 'role_name' => $roleName,
                 'role_type' => $roleType,
                 'system_prompt' => $systemPrompt,
                 'user_message' => $userMessage,
                 'language' => $lang,
+                'context_material' => $contextMaterial,
                 'facial_status' => [
                     'emotion' => $facialStatus['status'] ?? null,
                     'eye_contact_ratio' => isset($facialStatus['eye_contact_score']) ? (float) $facialStatus['eye_contact_score'] : null,

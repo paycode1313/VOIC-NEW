@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PracticeSession;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
     /**
-     * Display the user dashboard with practice analytics.
+     * Display the user dashboard with practice analytics, badge showcase, and leaderboard.
      */
     public function __invoke(Request $request): View
     {
@@ -49,6 +50,91 @@ class DashboardController extends Controller
 
         $chartScores = $chartSessions->pluck('overall_score');
 
+        // Leaderboard: Top 10 Practice Sessions across all participants
+        $leaderboardSessions = PracticeSession::with(['user', 'aiRole'])
+            ->where('overall_score', '>', 0)
+            ->orderByDesc('overall_score')
+            ->take(10)
+            ->get();
+
+        // Master Badge Showcase definitions
+        $masterBadges = [
+            'tatapan_elang' => [
+                'id' => 'tatapan_elang',
+                'name' => 'Tatapan Elang',
+                'icon' => 'eye',
+                'desc' => 'Kontak mata fokus kamera ≥ 80%',
+                'tag' => 'Fokus Visual',
+            ],
+            'artikulasi_emas' => [
+                'id' => 'artikulasi_emas',
+                'name' => 'Artikulasi Emas',
+                'icon' => 'mic',
+                'desc' => 'Bicara lugas tanpa jeda gumaman',
+                'tag' => 'Kelancaran',
+            ],
+            'vokal_dinamis' => [
+                'id' => 'vokal_dinamis',
+                'name' => 'Vokal Dinamis',
+                'icon' => 'audio',
+                'desc' => 'Intonasi ekspresif & tidak monoton',
+                'tag' => 'Intonasi',
+            ],
+            'sprint_warrior' => [
+                'id' => 'sprint_warrior',
+                'name' => 'Sprint Warrior',
+                'icon' => 'bolt',
+                'desc' => 'Menyelesaikan simulasi cepat 60-90s',
+                'tag' => 'Kecepatan',
+            ],
+            'duta_karisma' => [
+                'id' => 'duta_karisma',
+                'name' => 'Duta Karisma',
+                'icon' => 'shield',
+                'desc' => 'Kombinasi tatapan mantap & senyum ramah',
+                'tag' => 'Karisma',
+            ],
+            'high_achiever' => [
+                'id' => 'high_achiever',
+                'name' => 'High Achiever',
+                'icon' => 'trophy',
+                'desc' => 'Meraih skor keseluruhan istimewa ≥ 85',
+                'tag' => 'Prestasi',
+            ],
+            'global_communicator' => [
+                'id' => 'global_communicator',
+                'name' => 'Global Communicator',
+                'icon' => 'globe',
+                'desc' => 'Menyelesaikan simulasi dalam Bahasa Inggris',
+                'tag' => 'Bahasa',
+            ],
+        ];
+
+        // Calculate unlocked badges for current user
+        $unlockedBadgesCount = [];
+        foreach ($user->practiceSessions as $session) {
+            $notes = is_array($session->feedback_notes) ? $session->feedback_notes : [];
+            $badges = $notes['badges'] ?? [];
+            if (is_array($badges)) {
+                foreach ($badges as $badgeKey) {
+                    $unlockedBadgesCount[$badgeKey] = ($unlockedBadgesCount[$badgeKey] ?? 0) + 1;
+                }
+            }
+        }
+
+        $badgeShowcase = [];
+        $unlockedTotal = 0;
+        foreach ($masterBadges as $key => $meta) {
+            $isUnlocked = isset($unlockedBadgesCount[$key]);
+            if ($isUnlocked) {
+                $unlockedTotal++;
+            }
+            $badgeShowcase[] = array_merge($meta, [
+                'unlocked' => $isUnlocked,
+                'count' => $unlockedBadgesCount[$key] ?? 0,
+            ]);
+        }
+
         return view('dashboard', [
             'recentSessions' => $recentSessions,
             'totalSessions' => $totalSessions,
@@ -59,6 +145,10 @@ class DashboardController extends Controller
             'totalDurationSeconds' => $totalDurationSeconds,
             'chartLabels' => $chartLabels,
             'chartScores' => $chartScores,
+            'leaderboardSessions' => $leaderboardSessions,
+            'badgeShowcase' => $badgeShowcase,
+            'unlockedTotal' => $unlockedTotal,
+            'totalMasterBadges' => count($masterBadges),
         ]);
     }
 }

@@ -7,19 +7,28 @@ echo    VOIC - Voice ^& Optics Intelligent Coach (Innofest 2026)
 echo ================================================================
 echo.
 echo [1/4] Memeriksa status mesin AI Ollama...
-tasklist /FI "IMAGENAME eq ollama.exe" 2>NUL | find /I /N "ollama.exe">NUL
+netstat -ano | findstr /R ":11434 " >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
-    echo   [OK] Ollama sudah aktif di latar belakang.
+    echo   [OK] Ollama sudah aktif dan siap melayani di port 11434.
 ) else (
-    echo   [..] Menjalankan Ollama Serve di port 11434...
-    start "Ollama Engine" /min cmd /c "ollama serve"
+    tasklist /FI "IMAGENAME eq ollama.exe" 2>NUL | find /I /N "ollama.exe">NUL
+    if "%ERRORLEVEL%"=="0" (
+        echo   [OK] Ollama sudah aktif di latar belakang.
+    ) else (
+        echo   [..] Menjalankan Ollama Serve di port 11434...
+        start "Ollama Engine" /min cmd /c "ollama serve"
+    )
 )
 
 echo.
 echo [2/4] Menjalankan AI Service Python (FastAPI + Qwen 2.5 + TTS)...
-tasklist /FI "WINDOWTITLE eq VOIC_AI_SERVICE*" 2>NUL | find /I /N "cmd.exe">NUL
-start "VOIC_AI_SERVICE" /min cmd /c "python ai_service\ai_service.py"
-echo   [OK] AI Service aktif di http://127.0.0.1:8001
+netstat -ano | findstr /R ":8001 " >nul 2>&1
+if "%ERRORLEVEL%"=="0" (
+    echo   [OK] AI Service Python sudah aktif di http://127.0.0.1:8001.
+) else (
+    start "VOIC_AI_SERVICE" /min cmd /c "python ai_service\ai_service.py"
+    echo   [OK] Menjalankan AI Service di http://127.0.0.1:8001
+)
 
 echo.
 echo [3/4] Menjalankan Server Web Laravel (Port 8000)...

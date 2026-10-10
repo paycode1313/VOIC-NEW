@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PracticeSessionController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/practice/{practiceSession}/finish', [PracticeSessionController::class, 'finish'])->name('practice.finish');
     Route::get('/practice/{practiceSession}', [PracticeSessionController::class, 'show'])->name('practice.show');
     Route::get('/practice-export-csv', [PracticeSessionController::class, 'exportCsv'])->name('practice.export');
+
+    Route::post('/onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
+    Route::post('/onboarding/reset', [OnboardingController::class, 'reset'])->name('onboarding.reset');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

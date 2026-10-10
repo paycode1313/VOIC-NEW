@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+    <defs>
+        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0f172a"/>
+            <stop offset="60%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#334155"/>
+        </linearGradient>
+        <linearGradient id="suitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+        </linearGradient>
+        <linearGradient id="lapelGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#334155"/>
+            <stop offset="100%" stop-color="#1e293b"/>
+        </linearGradient>
+        <linearGradient id="skinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#ffd5b8"/>
+            <stop offset="100%" stop-color="#e8a882"/>
+        </linearGradient>
+        <linearGradient id="tieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="50%" stop-color="#2563eb"/>
+            <stop offset="100%" stop-color="#1d4ed8"/>
+        </linearGradient>
+        <linearGradient id="goldClipGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="50%" stop-color="#eab308"/>
+            <stop offset="100%" stop-color="#ca8a04"/>
+        </linearGradient>
+        <linearGradient id="hairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#2d3748"/>
+            <stop offset="100%" stop-color="#1a202c"/>
+        </linearGradient>
+    </defs>
+
+    <!-- Studio Background -->
+    <rect width="400" height="400" fill="url(#bgGrad)"/>
+    <circle cx="200" cy="130" r="120" fill="#38bdf8" opacity="0.08"/>
+
+    <!-- TORSO & EXECUTIVE ATTIRE (SUIT & TIE) -->
+    <!-- Shoulders / Torso Base -->
+    <path d="M 30 400 Q 55 315 130 295 L 270 295 Q 345 315 370 400 Z" fill="url(#suitGrad)"/>
+
+    <!-- Crisp White Dress Shirt V-Chest -->
+    <path d="M 160 250 L 240 250 L 225 380 L 175 380 Z" fill="#f8fafc"/>
+    <path d="M 200 270 L 200 380" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+    <!-- THE EXECUTIVE TIE (DASI HRD) -->
+    <!-- Tie Knot -->
+    <path d="M 191 258 L 209 258 L 205 275 L 195 275 Z" fill="url(#tieGrad)"/>
+    <path d="M 195 275 L 205 275 L 200 279 Z" fill="#1e40af"/>
+
+    <!-- Tie Body -->
+    <path d="M 194 275 L 206 275 L 214 390 L 200 402 L 186 390 Z" fill="url(#tieGrad)"/>
+    <!-- Diagonal Satin Stripes -->
+    <path d="M 194 290 L 207 302" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
+    <path d="M 193 320 L 209 334" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
+    <path d="M 191 350 L 211 366" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
+    <path d="M 189 380 L 212 398" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- Gold Tie Bar Clip -->
+    <rect x="189" y="328" width="22" height="4.5" rx="2" fill="url(#goldClipGrad)"/>
+
+    <!-- Tailored Suit Lapels -->
+    <path d="M 125 295 L 168 255 L 182 345 L 138 385 Z" fill="url(#lapelGrad)"/>
+    <path d="M 275 295 L 232 255 L 218 345 L 262 385 Z" fill="url(#lapelGrad)"/>
+    <path d="M 125 295 L 168 255" stroke="#475569" stroke-width="1.5"/>
+    <path d="M 275 295 L 232 255" stroke="#475569" stroke-width="1.5"/>
+
+    <!-- HR Lanyard ID Badge (Left Chest) -->
+    <g transform="translate(95, 335)">
+        <path d="M 45 -45 L 20 0" stroke="#3b82f6" stroke-width="2.5" opacity="0.8"/>
+        <rect x="5" y="0" width="34" height="46" rx="4" fill="#ffffff"/>
+        <rect x="5" y="0" width="34" height="10" rx="2" fill="#2563eb"/>
+        <text x="22" y="7.5" font-size="5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">HR TALENT</text>
+        <circle cx="22" cy="21" r="6.5" fill="#cbd5e1"/>
+        <rect x="11" y="31" width="22" height="2.5" rx="1" fill="#94a3b8"/>
+        <rect x="14" y="36" width="16" height="2" rx="1" fill="#cbd5e1"/>
+    </g>
+
+    <!-- HEAD & NECK -->
+    <!-- Neck -->
+    <path d="M 178 205 L 222 205 L 226 260 L 174 260 Z" fill="url(#skinGrad)"/>
+    <path d="M 178 205 Q 200 220 222 205 Q 200 228 178 205 Z" fill="#cf8660" opacity="0.5"/>
+
+    <!-- Shirt Collar Wings -->
+    <path d="M 166 255 L 192 258 L 180 285 Z" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+    <path d="M 234 255 L 208 258 L 220 285 Z" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
+
+    <!-- Ears -->
+    <path d="M 132 165 C 122 165 120 185 132 195 Z" fill="url(#skinGrad)"/>
+    <path d="M 268 165 C 278 165 280 185 268 195 Z" fill="url(#skinGrad)"/>
+    <path d="M 129 172 C 125 176 125 184 130 186" stroke="#cf8660" stroke-width="1.5" fill="none"/>
+    <path d="M 271 172 C 275 176 275 184 270 186" stroke="#cf8660" stroke-width="1.5" fill="none"/>
+
+    <!-- Head Contour / Jaw -->
+    <path d="M 132 155 C 132 95 268 95 268 155 C 268 195 235 222 200 222 C 165 222 132 195 132 155 Z" fill="url(#skinGrad)"/>
+
+    <!-- Hair -->
+    <path d="M 128 145 C 128 85 160 60 200 60 C 245 60 272 85 272 145 C 272 152 268 155 264 140 C 255 100 240 90 200 92 C 160 90 145 105 136 140 C 132 155 128 152 128 145 Z" fill="url(#hairGrad)"/>
+    <path d="M 134 130 C 145 95 175 82 215 85 C 250 87 268 105 268 130 C 260 108 245 98 215 98 C 175 98 148 112 134 130 Z" fill="#3b465c"/>
+
+    <!-- Eyebrows -->
+    <path d="M 154 142 Q 170 136 182 142" stroke="#1e2433" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M 218 142 Q 230 136 246 142" stroke="#1e2433" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+    <!-- Eyes (Warm & Confident HR Eyes) -->
+    <g>
+        <ellipse cx="168" cy="156" rx="9" ry="6" fill="#ffffff"/>
+        <circle cx="168" cy="156" r="4.6" fill="#1e293b"/>
+        <circle cx="170" cy="154" r="1.5" fill="#ffffff"/>
+        <path d="M 158 153 Q 168 148 178 153" stroke="#1e2433" stroke-width="1.8" fill="none"/>
+
+        <ellipse cx="232" cy="156" rx="9" ry="6" fill="#ffffff"/>
+        <circle cx="232" cy="156" r="4.6" fill="#1e293b"/>
+        <circle cx="234" cy="154" r="1.5" fill="#ffffff"/>
+        <path d="M 222 153 Q 232 148 242 153" stroke="#1e2433" stroke-width="1.8" fill="none"/>
+    </g>
+
+    <!-- Nose -->
+    <path d="M 197 158 Q 200 176 195 178 Q 200 180 205 178" stroke="#cf8660" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+    <!-- Warm Professional HR Smile -->
+    <path d="M 183 195 Q 200 208 217 195" stroke="#99473b" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <path d="M 186 196 Q 200 203 214 196 Q 200 205 186 196 Z" fill="#ffffff" opacity="0.8"/>
+    <circle cx="180" cy="194" r="1.5" fill="#cf8660" opacity="0.6"/>
+    <circle cx="220" cy="194" r="1.5" fill="#cf8660" opacity="0.6"/>
+</svg>
