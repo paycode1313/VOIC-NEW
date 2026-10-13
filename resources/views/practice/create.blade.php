@@ -2,25 +2,48 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full glass-pill border border-blue-200/80 dark:border-blue-900/60 text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Simulasi Sidang & Wawancara Tatap Muka
-                </div>
-                <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                    {{ __('Ruang Simulasi Tatap Muka Profesional') }}
-                </h2>
-                <p class="text-sm text-slate-500 dark:text-slate-400">
-                    Pilih dewan penguji atau rekruter, nyalakan kamera, dan latih kesiapan berbicara dengan evaluasi tatap muka langsung.
-                </p>
+                @if($isDemo ?? false)
+                    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full glass-pill border border-emerald-300 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        🎪 Mode Booth Pameran Innofest 2026 • Simulasi Tamu
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                        {{ __('Simulasi Cepat AI Booth Innofest 2026') }}
+                    </h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        Coba simulasi interaktif tatap muka langsung bersama AI penguji tanpa perlu registrasi atau login.
+                    </p>
+                @else
+                    <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full glass-pill border border-blue-200/80 dark:border-blue-900/60 text-xs font-semibold text-blue-700 dark:text-blue-300 mb-1">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Simulasi Sidang & Wawancara Tatap Muka
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                        {{ __('Ruang Simulasi Tatap Muka Profesional') }}
+                    </h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        Pilih dewan penguji atau rekruter, nyalakan kamera, dan latih kesiapan berbicara dengan evaluasi tatap muka langsung.
+                    </p>
+                @endif
             </div>
 
-            <a href="{{ route('dashboard') }}"
-               class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 glass-subcard hover:bg-white dark:hover:bg-slate-800 rounded-xl transition shadow-xs w-fit">
-                <svg class="w-4 h-4 me-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                </svg>
-                Kembali ke Dashboard
-            </a>
+            @if($isDemo ?? false)
+                <a href="{{ url('/') }}"
+                   class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 glass-subcard hover:bg-white dark:hover:bg-slate-800 rounded-xl transition shadow-xs w-fit">
+                    <svg class="w-4 h-4 me-2 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Kembali ke Beranda
+                </a>
+            @else
+                <a href="{{ route('dashboard') }}"
+                   class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 glass-subcard hover:bg-white dark:hover:bg-slate-800 rounded-xl transition shadow-xs w-fit">
+                    <svg class="w-4 h-4 me-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Kembali ke Dashboard
+                </a>
+            @endif
         </div>
     </x-slot>
 
@@ -115,22 +138,35 @@
             50% { transform: rotate(-2deg) translateY(-1.5px); }
         }
 
-        .vector-talking-head,
-        .vector-listening-head,
-        .vector-thinking-head,
+        .vector-talking-head {
+            transform-box: fill-box;
+            transform-origin: 200px 220px;
+            animation: vector-head-tilt 2.4s ease-in-out infinite;
+        }
+        .vector-listening-head {
+            transform-box: fill-box;
+            transform-origin: 200px 220px;
+            animation: vector-listening-tilt 3.2s ease-in-out infinite;
+        }
+        .vector-thinking-head {
+            transform-box: fill-box;
+            transform-origin: 200px 220px;
+            animation: vector-thinking-tilt 2.8s ease-in-out infinite;
+        }
         .vector-breathe-head {
-            transform: none !important;
-            animation: none !important;
+            transform-box: fill-box;
+            transform-origin: 200px 220px;
+            animation: vector-breathe 4.2s ease-in-out infinite;
         }
         .vector-blink-eye {
             transform-box: fill-box;
             transform-origin: center center;
-            animation: vector-eye-blink 4.5s infinite;
+            animation: vector-eye-blink 4.2s infinite;
         }
         .smooth-mouth-talk {
             transform-box: fill-box;
-            transform-origin: 50% 12%;
-            animation: smooth-vector-talk 0.52s ease-in-out infinite;
+            transform-origin: center center;
+            animation: smooth-vector-talk 0.38s ease-in-out infinite;
         }
         .halo-spin { animation: neural-halo-spin 7s linear infinite; }
 
@@ -226,6 +262,15 @@
             return {
                 aiRoles: @json($aiRoles),
                 selectedRole: @json($defaultRole),
+                userLearningProfile: @json($userLearningProfile ?? []),
+                isDemo: {{ ($isDemo ?? false) ? 'true' : 'false' }},
+                guestName: '{{ addslashes($defaultGuestName ?? 'Pengunjung Booth') }}',
+                guestInstitution: '{{ addslashes($defaultGuestInstitution ?? '') }}',
+
+                // Deep Learning & Semantic Grounding Telemetry
+                liveCoherenceScore: 88,
+                liveCoherenceCategory: 'Relevan & Nyambung',
+                detectedSalientEntities: [],
 
                 sessionState: 'selection', // 'selection' | 'room'
                 currentSessionId: null,
@@ -313,6 +358,8 @@
                 audioContext: null,
                 analyser: null,
                 dataArray: null,
+                pitchTimeDomainBuffer: null,
+                activeAiEngine: 'ollama_neural', // 'ollama_neural' | 'persona_fallback'
 
                 // Real Computer Vision & Audio Telemetry
                 faceDetected: false,
@@ -331,6 +378,49 @@
                 eyeContactSamples: [],
                 smileSamples: [],
                 volumeSamples: [],
+
+                // MediaPipe Iris-Level Landmarker State & Engine Flag
+                faceLandmarker: null,
+                faceLandmarkerReady: false,
+                eyeTrackingEngine: 'canvas_gaze', // 'mediapipe_iris' | 'canvas_gaze'
+
+                // Acoustic Hesitation Detector State (Layer 2 for 'uhhh...', 'ehhmmm...')
+                audioHesitationCount: 0,
+                consecutiveVoicedFrames: 0,
+                voicedPitchBuffer: [],
+                isCurrentlyInHesitationDrone: false,
+
+                // Scenario Milestone Stages
+                currentStage: 'opening', // 'opening' | 'core' | 'pressure_test' | 'closing'
+                stageMilestones: [
+                    { id: 'opening', step: 1, label: 'Pembukaan', badge: 'Hook & Profil' },
+                    { id: 'core', step: 2, label: 'Tanya Jawab Inti', badge: 'Metodologi & Solusi' },
+                    { id: 'pressure_test', step: 3, label: 'Uji Tekanan', badge: 'Skenario Kritis' },
+                    { id: 'closing', step: 4, label: 'Kesimpulan', badge: 'Pernyataan Akhir' }
+                ],
+
+                // Conversational Dynamism & Barge-In Interruption State
+                currentTurnSeconds: 0,
+                turnTimerInterval: null,
+                hasInterruptedThisTurn: false,
+                turnHesitationCount: 0,
+                showInterruptionAlert: false,
+                interruptionTitle: '',
+                interruptionText: '',
+                interruptionTimer: null,
+
+                // Advanced Acoustic Diagnostics
+                lastAiSpeechEndedAt: null,
+                userStartedSpeakingAt: null,
+                awkwardPausesCount: 0,
+                detectedUptalkingCount: 0,
+                recentTurnPitchSamples: [],
+                timelineBookmarks: [],
+
+                // Procedural Room Ambience (Web Audio API)
+                isAmbienceActive: false,
+                ambienceMasterGain: null,
+                ambienceNodes: [],
 
                 // Avatar Stage & Conversational State
                 avatarViewMode: 'photo', // 'photo' | 'vector' | 'orb'
@@ -354,12 +444,16 @@
                 blinkTimeout: null,
                 liveHeadTransform: 'translateY(0px) rotate(0deg)',
                 vocalSpectrumBars: [12, 12, 12, 12, 12, 12, 12, 12],
-                hrAvatarMode: 'photo', // 'photo' | 'animated'
+                avatarStageMode: 'animated', // 'animated' (default: dynamic talking character with lip-sync) | 'photo' (realistic portrait)
+                get hrAvatarMode() { return this.avatarStageMode; },
+                set hrAvatarMode(v) { this.avatarStageMode = v; },
+                previewVoiceRole: null,
+                previewAudioObj: null,
 
                 // Speech Recognition & Silence Detection
                 recognition: null,
                 silenceTimer: null,
-                silenceDelayMs: 2400, // 2.4 seconds natural silence detection
+                silenceDelayMs: 3500, // 3.5 seconds natural silence detection
                 accumulatedSpokenText: '',
 
                 // Timers
@@ -586,47 +680,95 @@
                 },
 
                 calculatePitchAutoCorrelation(buf, sampleRate) {
-                    let SIZE = buf.length;
+                    if (!buf || !sampleRate || buf.length < 256) return -1;
+                    const SIZE = buf.length;
+
+                    // 1. Pre-emphasis filter: boost high frequency harmonics & eliminate DC bias (y[n] = x[n] - 0.95 * x[n-1])
+                    const filtered = new Float32Array(SIZE);
+                    filtered[0] = buf[0];
+                    for (let i = 1; i < SIZE; i++) {
+                        filtered[i] = buf[i] - 0.95 * buf[i - 1];
+                    }
+
+                    // 2. Windowing (Hann Window) + Zero-Crossing Rate (ZCR) & RMS Energy
                     let rms = 0;
+                    let zeroCrossings = 0;
+                    const windowed = new Float32Array(SIZE);
                     for (let i = 0; i < SIZE; i++) {
-                        rms += buf[i] * buf[i];
+                        // Hann window: 0.5 * (1 - cos(2*pi*i / (SIZE-1)))
+                        const w = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (SIZE - 1)));
+                        const val = filtered[i] * w;
+                        windowed[i] = val;
+                        rms += val * val;
+                        if (i > 0 && ((filtered[i] >= 0 && filtered[i - 1] < 0) || (filtered[i] < 0 && filtered[i - 1] >= 0))) {
+                            zeroCrossings++;
+                        }
                     }
                     rms = Math.sqrt(rms / SIZE);
-                    if (rms < 0.015) return -1;
 
-                    let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-                    for (let i = 0; i < SIZE / 2; i++) {
-                        if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+                    // RMS Noise Gate: ignore silence or breath hiss
+                    if (isNaN(rms) || !isFinite(rms) || rms < 0.012) return -1;
+
+                    // Voiced vs Unvoiced probability check:
+                    // Unvoiced fricatives ("s", "t", "f", "p") have high ZCR (> 0.28) and lack harmonic pitch
+                    const zcrRatio = zeroCrossings / SIZE;
+                    if (zcrRatio > 0.28) return -1;
+
+                    // 3. Vocal fundamental frequency search window: 80 Hz - 500 Hz (Male & Female ranges)
+                    const minPeriod = Math.max(4, Math.floor(sampleRate / 500));
+                    const maxPeriod = Math.min(SIZE - 2, Math.floor(sampleRate / 80));
+                    if (minPeriod >= maxPeriod) return -1;
+
+                    // 4. Normalized autocorrelation
+                    let bestCorrelation = -1;
+                    let bestPeriod = -1;
+                    let energy0 = 0;
+                    for (let i = 0; i < SIZE - maxPeriod; i++) {
+                        energy0 += windowed[i] * windowed[i];
                     }
-                    for (let i = 1; i < SIZE / 2; i++) {
-                        if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-                    }
+                    if (energy0 < 0.0001) return -1;
 
-                    const trimmed = buf.slice(r1, r2);
-                    const tLen = trimmed.length;
-                    if (tLen === 0) return -1;
-
-                    const c = new Float32Array(tLen);
-                    for (let i = 0; i < tLen; i++) {
+                    for (let lag = minPeriod; lag <= maxPeriod; lag++) {
                         let sum = 0;
-                        for (let j = 0; j < tLen - i; j++) {
-                            sum += trimmed[j] * trimmed[j + i];
+                        let energyLag = 0;
+                        for (let i = 0; i < SIZE - maxPeriod; i++) {
+                            sum += windowed[i] * windowed[i + lag];
+                            energyLag += windowed[i + lag] * windowed[i + lag];
                         }
-                        c[i] = sum;
+                        const normFactor = Math.sqrt(energy0 * energyLag);
+                        const corr = normFactor > 0 ? (sum / normFactor) : 0;
+                        if (corr > bestCorrelation) {
+                            bestCorrelation = corr;
+                            bestPeriod = lag;
+                        }
                     }
 
-                    let d = 0;
-                    while (c[d] > c[d + 1] && d < tLen - 1) d++;
-                    let maxval = -1, maxpos = -1;
-                    for (let i = d; i < tLen; i++) {
-                        if (c[i] > maxval) {
-                            maxval = c[i];
-                            maxpos = i;
+                    // Require correlation peak >= 0.40 to confirm periodic voiced speech
+                    if (bestPeriod === -1 || bestCorrelation < 0.40) return -1;
+
+                    // 5. Parabolic interpolation around peak
+                    let refinedPeriod = bestPeriod;
+                    if (bestPeriod > minPeriod && bestPeriod < maxPeriod) {
+                        let s0 = 0, s1 = 0, s2 = 0;
+                        for (let i = 0; i < SIZE - maxPeriod; i++) {
+                            s0 += windowed[i] * windowed[i + bestPeriod - 1];
+                            s1 += windowed[i] * windowed[i + bestPeriod];
+                            s2 += windowed[i] * windowed[i + bestPeriod + 1];
+                        }
+                        const denom = (2 * s1 - s0 - s2);
+                        if (Math.abs(denom) > 0.0001) {
+                            const delta = 0.5 * (s0 - s2) / denom;
+                            if (Math.abs(delta) < 1) {
+                                refinedPeriod = bestPeriod + delta;
+                            }
                         }
                     }
-                    let T0 = maxpos;
-                    if (T0 === -1 || c[0] === 0 || (maxval / c[0]) < 0.35) return -1;
-                    return sampleRate / T0;
+
+                    const pitch = sampleRate / refinedPeriod;
+                    if (isNaN(pitch) || !isFinite(pitch) || pitch < 75 || pitch > 500) {
+                        return -1;
+                    }
+                    return pitch;
                 },
 
                 saveAudioToIndexedDb(sessionId, blob) {
@@ -643,7 +785,8 @@
                                 const db = e.target.result;
                                 const tx = db.transaction('recordings', 'readwrite');
                                 const store = tx.objectStore('recordings');
-                                store.put({ sessionId: String(sessionId), blob: blob, timestamp: Date.now() });
+                                store.put({ sessionId: String(sessionId), blob: blob, audioBlob: blob, timestamp: Date.now() });
+                                store.put({ sessionId: 'session_' + sessionId, blob: blob, audioBlob: blob, timestamp: Date.now() });
                                 tx.oncomplete = () => resolve(true);
                                 tx.onerror = () => reject(tx.error);
                             };
@@ -652,6 +795,162 @@
                             reject(err);
                         }
                     });
+                },
+
+                recordTimelineBookmark(sec, type, label, note) {
+                    const cleanSec = Math.max(0, Math.round(sec));
+                    if (this.timelineBookmarks.some(b => b.type === type && Math.abs(b.second - cleanSec) < 4)) return;
+                    this.timelineBookmarks.push({
+                        second: cleanSec,
+                        type: type, // 'filler' | 'uptalk' | 'silence' | 'interruption' | 'hesitation'
+                        label: label,
+                        note: note
+                    });
+                },
+
+                triggerInterruption(title, text) {
+                    if (this.hasInterruptedThisTurn) return;
+                    this.hasInterruptedThisTurn = true;
+                    this.showInterruptionAlert = true;
+                    this.interruptionTitle = title;
+                    this.interruptionText = text;
+                    this.playSfx('filler');
+
+                    if (this.interruptionTimer) clearTimeout(this.interruptionTimer);
+                    this.interruptionTimer = setTimeout(() => {
+                        this.showInterruptionAlert = false;
+                    }, 6500);
+                },
+
+                startCandidateTurnTimer() {
+                    this.currentTurnSeconds = 0;
+                    this.hasInterruptedThisTurn = false;
+                    this.turnHesitationCount = 0;
+                    this.userStartedSpeakingAt = null;
+                    this.recentTurnPitchSamples = [];
+                    if (this.turnTimerInterval) clearInterval(this.turnTimerInterval);
+
+                    this.turnTimerInterval = setInterval(() => {
+                        if (this.orbState === 'ai_speaking' || this.orbState === 'thinking') return;
+                        this.currentTurnSeconds++;
+
+                        const roleType = this.selectedRole?.role_type || 'dosen_penguji';
+
+                        // Dosen Killer Interruption Logic:
+                        if (roleType === 'dosen_penguji' && !this.hasInterruptedThisTurn) {
+                            if (this.currentTurnSeconds >= 24) {
+                                this.triggerInterruption('Interupsi Dosen Penguji:', 'Saudara mahasiswa, tolong langsung ke poin utama metodologinya. Jangan berputar-putar!');
+                                this.recordTimelineBookmark(this.secondsElapsed, 'interruption', 'Interupsi Dosen Penguji', 'Jawaban melebihi batas waktu toleransi 24 detik');
+                            } else if (this.turnHesitationCount >= 2) {
+                                this.triggerInterruption('Dosen Penguji Memotong:', 'Jelaskan argumen Anda dengan lugas, kurangi nada ragu.');
+                                this.recordTimelineBookmark(this.secondsElapsed, 'interruption', 'Teguran Intonasi Ragu', 'Terdeteksi lebih dari 2 kali jeda nada datar berturut-turut');
+                            }
+                        }
+
+                        // Investor Fast-Paced Pitch Budget Countdown Warning:
+                        if (roleType === 'investor' && !this.hasInterruptedThisTurn) {
+                            if (this.currentTurnSeconds >= 40) {
+                                this.triggerInterruption('Peringatan Budget Waktu Investor:', 'Waktu elevator pitch Anda hampir habis! Sampaikan traction dan nilai investasi Anda sekarang!');
+                                this.recordTimelineBookmark(this.secondsElapsed, 'interruption', 'Peringatan Pitch Budget', 'Waktu tersisa 5 detik dari alokasi 45s');
+                            }
+                        }
+                    }, 1000);
+                },
+
+                stopCandidateTurnTimer() {
+                    if (this.turnTimerInterval) {
+                        clearInterval(this.turnTimerInterval);
+                        this.turnTimerInterval = null;
+                    }
+                    this.currentTurnSeconds = 0;
+                },
+
+                checkUptalking(finalText) {
+                    if (!finalText || finalText.endsWith('?')) return;
+                    if (this.recentTurnPitchSamples.length >= 5) {
+                        const tail = this.recentTurnPitchSamples.slice(-5);
+                        const pStart = (tail[0] + tail[1]) / 2;
+                        const pEnd = (tail[tail.length - 2] + tail[tail.length - 1]) / 2;
+                        const deltaHz = pEnd - pStart;
+                        if (deltaHz >= 22) {
+                            this.detectedUptalkingCount++;
+                            this.recordTimelineBookmark(
+                                this.secondsElapsed,
+                                'uptalk',
+                                'Uptalking Terdeteksi',
+                                'Intonasi menanjak (+ ' + Math.round(deltaHz) + ' Hz) di akhir ujaran deklaratif (terdengar ragu)'
+                            );
+                        }
+                    }
+                },
+
+                startRoomAmbience() {
+                    try {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioCtx) return;
+                        if (!this.audioContext || this.audioContext.state === 'closed') {
+                            this.audioContext = new AudioCtx();
+                        }
+                        if (this.audioContext.state === 'suspended') {
+                            this.audioContext.resume();
+                        }
+
+                        const ctx = this.audioContext;
+                        const masterGain = ctx.createGain();
+                        masterGain.gain.setValueAtTime(0.025, ctx.currentTime);
+                        masterGain.connect(ctx.destination);
+                        this.ambienceMasterGain = masterGain;
+
+                        // Procedural warm room hum 55Hz & 110Hz + lowpass filter
+                        const osc1 = ctx.createOscillator();
+                        osc1.type = 'sine';
+                        osc1.frequency.setValueAtTime(55, ctx.currentTime);
+                        const gain1 = ctx.createGain();
+                        gain1.gain.setValueAtTime(0.6, ctx.currentTime);
+                        osc1.connect(gain1);
+                        gain1.connect(masterGain);
+                        osc1.start();
+
+                        const osc2 = ctx.createOscillator();
+                        osc2.type = 'triangle';
+                        osc2.frequency.setValueAtTime(110, ctx.currentTime);
+                        const filter2 = ctx.createBiquadFilter();
+                        filter2.type = 'lowpass';
+                        filter2.frequency.setValueAtTime(180, ctx.currentTime);
+                        const gain2 = ctx.createGain();
+                        gain2.gain.setValueAtTime(0.25, ctx.currentTime);
+                        osc2.connect(filter2);
+                        filter2.connect(gain2);
+                        gain2.connect(masterGain);
+                        osc2.start();
+
+                        this.ambienceNodes = [osc1, osc2, masterGain];
+                        this.isAmbienceActive = true;
+                    } catch (e) {
+                        console.warn('Room ambience notice:', e);
+                    }
+                },
+
+                stopRoomAmbience() {
+                    try {
+                        if (this.ambienceNodes) {
+                            this.ambienceNodes.forEach(node => {
+                                if (node.stop) node.stop();
+                                if (node.disconnect) node.disconnect();
+                            });
+                        }
+                        this.ambienceNodes = [];
+                        this.ambienceMasterGain = null;
+                        this.isAmbienceActive = false;
+                    } catch (e) {}
+                },
+
+                toggleAmbience() {
+                    if (this.isAmbienceActive) {
+                        this.stopRoomAmbience();
+                    } else {
+                        this.startRoomAmbience();
+                    }
                 },
 
                 playSfx(type) {
@@ -750,7 +1049,7 @@
                     if (!this.selectedRole) return 'Panelis Penguji';
                     if ((this.selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji') return 'Prof. Dr. Ir. Hendra Kusuma, M.Kom';
                     if ((this.selectedRole?.role_type || 'dosen_penguji') === 'hrd') {
-                        return 'Arya Pratama, S.Psi., CHRP';
+                        return 'Nadia Putri, S.Psi., CHRP';
                     }
                     if ((this.selectedRole?.role_type || 'dosen_penguji') === 'investor') return 'Raymond Chandra (Managing Partner)';
                     return (this.selectedRole?.name || 'Panelis Penguji');
@@ -834,16 +1133,158 @@
                     return 'Menunggu jawaban atau pemaparan selanjutnya dari Anda.';
                 },
 
-                testVoiceAndMouth() {
+                async testVoiceAndMouth() {
                     if (this.orbState === 'ai_speaking') return;
-                    const testLines = {
-                        dosen_penguji: "Saudara mahasiswa, tolong jelaskan metodologi dan kebaruan penelitian Anda secara terstruktur.",
-                        hrd: "Halo! Senang bertemu dengan kamu. Ceritakan pengalaman kerja terbaik dan apa motivasi terbesarmu.",
-                        investor: "Waktu pitching Anda dimulai sekarang. Jelaskan secara singkat daya tarik pasar dan monetisasi startup Anda."
-                    };
                     const roleType = this.selectedRole ? (this.selectedRole?.role_type || 'dosen_penguji') : 'dosen_penguji';
-                    const sample = testLines[roleType] || "Halo, saya sedang berbicara dan menguji sistem simulasi ini.";
+                    const isEn = this.simulationLanguage === 'en';
+                    const testLines = {
+                        dosen_penguji: isEn
+                            ? "Candidate, please sit upright and defend your empirical research methodology and validation."
+                            : "Saudara mahasiswa, tolong jelaskan metodologi dan kebaruan penelitian Anda secara terstruktur.",
+                        hrd: isEn
+                            ? "Hello! Great to connect with you. Relax, stay confident, and walk me through your key career achievements."
+                            : "Halo! Senang bertemu dengan kamu. Tarik napas santai dan ceritakan pengalaman kerja terbaik serta motivasimu.",
+                        investor: isEn
+                            ? "Pitch time starts now. Cut straight to the chase: what are your unit economics and defensible moat?"
+                            : "Waktu pitching Anda dimulai sekarang. Langsung ke intinya: jelaskan daya tarik pasar dan monetisasi startup Anda dalam 60 detik."
+                    };
+                    const sample = testLines[roleType] || (isEn ? "Hello, I am testing the simulation voice." : "Halo, saya sedang berbicara dan menguji sistem simulasi ini.");
+
+                    // Coba Edge-TTS neural audio dari AI service lokal
+                    try {
+                        const res = await fetch('http://127.0.0.1:8001/tts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                text: sample,
+                                role_type: roleType,
+                                language: this.simulationLanguage
+                            })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.audio_url) {
+                                this.playAiSpeech(sample, 'http://127.0.0.1:8001' + data.audio_url);
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        // Fallback ke browser speech synthesis
+                    }
+
                     this.playAiSpeech(sample, null);
+                },
+
+                async previewRoleVoice(roleType) {
+                    if (this.previewVoiceRole === roleType) {
+                        if (this.previewAudioObj) {
+                            this.previewAudioObj.pause();
+                            this.previewAudioObj = null;
+                        }
+                        if (window.speechSynthesis) window.speechSynthesis.cancel();
+                        this.previewVoiceRole = null;
+                        return;
+                    }
+
+                    if (this.previewAudioObj) {
+                        this.previewAudioObj.pause();
+                        this.previewAudioObj = null;
+                    }
+                    if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+                    this.previewVoiceRole = roleType;
+                    const isEn = this.simulationLanguage === 'en';
+                    const sampleLines = {
+                        dosen_penguji: isEn
+                            ? "Candidate, please explain your research methodology and data validation."
+                            : "Saudara mahasiswa, tolong jelaskan metodologi dan kebaruan penelitian Anda secara terstruktur.",
+                        hrd: isEn
+                            ? "Hello! Great to connect with you. Walk me through your key career achievements."
+                            : "Halo! Senang bertemu dengan kamu. Tarik napas santai dan ceritakan pengalaman terbaikmu.",
+                        investor: isEn
+                            ? "Pitch time is live. Cut straight to the chase: what are your unit economics and defensible moat?"
+                            : "Waktu pitching Anda dimulai sekarang. Langsung ke intinya: jelaskan daya tarik pasar dan monetisasi startup Anda dalam 60 detik."
+                    };
+                    const sample = sampleLines[roleType] || sampleLines.dosen_penguji;
+
+                    // 1. Coba Edge-TTS studio-grade dari microservice AI lokal
+                    try {
+                        const res = await fetch('http://127.0.0.1:8001/tts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                text: sample,
+                                role_type: roleType,
+                                language: this.simulationLanguage
+                            })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.audio_url) {
+                                const audio = new Audio('http://127.0.0.1:8001' + data.audio_url);
+                                this.previewAudioObj = audio;
+                                audio.onended = () => { this.previewVoiceRole = null; };
+                                audio.onerror = () => { this.playBrowserUtterance(sample, roleType); };
+                                await audio.play();
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        // AI service offline, lanjut ke browser synthesis
+                    }
+
+                    this.playBrowserUtterance(sample, roleType);
+                },
+
+                playBrowserUtterance(sample, roleType) {
+                    if (!window.speechSynthesis) {
+                        this.previewVoiceRole = null;
+                        return;
+                    }
+                    window.speechSynthesis.cancel();
+                    const ut = new SpeechSynthesisUtterance(sample);
+                    ut.lang = this.simulationLanguage === 'en' ? 'en-US' : 'id-ID';
+
+                    if (roleType === 'dosen_penguji') {
+                        ut.pitch = 0.80; // Bariton berat Dosen Killer
+                        ut.rate = 0.88;  // Tempo terukur & berwibawa
+                    } else if (roleType === 'hrd') {
+                        ut.pitch = 1.12; // Nada ramah & hangat HRD
+                        ut.rate = 1.02;  // Tempo santun mengalir
+                    } else { // investor
+                        ut.pitch = 0.96; // Nada tegas percaya diri
+                        ut.rate = 1.16;  // Tempo cepat pitch bisnis
+                    }
+
+                    const voices = window.speechSynthesis.getVoices();
+                    const isEn = this.simulationLanguage === 'en';
+                    const targetVoices = voices.filter(v => isEn ? (v.lang.includes('en-US') || v.lang.includes('en-GB') || v.lang.includes('en')) : (v.lang.includes('id') || v.lang.includes('ID')));
+
+                    if (targetVoices.length > 0) {
+                        if (roleType === 'hrd') {
+                            const female = targetVoices.find(v => {
+                                const n = (v.name || '').toLowerCase();
+                                return n.includes('gadis') || n.includes('zira') || n.includes('jenny') || n.includes('aria') || n.includes('female') || n.includes('wanita') || n.includes('siti');
+                            });
+                            ut.voice = female || targetVoices[0];
+                        } else if (roleType === 'dosen_penguji') {
+                            const male = targetVoices.find(v => {
+                                const n = (v.name || '').toLowerCase();
+                                return n.includes('ardi') || n.includes('david') || n.includes('guy') || n.includes('davis') || n.includes('male') || n.includes('pria');
+                            });
+                            ut.voice = male || targetVoices[0];
+                        } else {
+                            const crisp = targetVoices.find(v => {
+                                const n = (v.name || '').toLowerCase();
+                                return n.includes('ardi') || n.includes('brian') || n.includes('christopher') || n.includes('male');
+                            });
+                            ut.voice = crisp || targetVoices[0];
+                        }
+                    }
+
+                    ut.onend = () => { this.previewVoiceRole = null; };
+                    ut.onerror = () => { this.previewVoiceRole = null; };
+                    window.speechSynthesis.speak(ut);
                 },
 
                 async enterInterviewRoom() {
@@ -852,7 +1293,8 @@
 
                     try {
                         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        const res = await fetch("{{ route('practice.start') }}", {
+                        const startUrl = this.isDemo ? "{{ route('demo.start') }}" : "{{ route('practice.start') }}";
+                        const res = await fetch(startUrl, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -863,7 +1305,9 @@
                                 ai_role_id: this.selectedRole.id,
                                 scenario_type: this.customTopic.trim() || (this.selectedRole?.name || 'Panelis Penguji'),
                                 language: this.simulationLanguage,
-                                context_material: this.contextMaterial ? this.contextMaterial.trim() : null
+                                context_material: this.contextMaterial ? this.contextMaterial.trim() : null,
+                                guest_name: this.isDemo ? this.guestName : null,
+                                guest_institution: this.isDemo ? this.guestInstitution : null
                             })
                         });
 
@@ -883,6 +1327,8 @@
                         await this.initHardware();
 
                         this.sessionState = 'room';
+                        this.currentStage = 'opening';
+                        this.recordTimelineBookmark(0, 'intro', 'Pembukaan Sesi', 'AI Panelis memulai simulasi dan menyampaikan pembuka');
                         this.playSfx('start');
                         this.startSessionTimer();
                         this.startTelemetrySampler();
@@ -914,6 +1360,7 @@
 
                         this.setupAudioAnalyser(stream);
                         this.setupSpeechRecognition();
+                        this.initMediaPipeIrisTracker();
 
                         // Local Candidate Audio Recording (MediaRecorder)
                         try {
@@ -936,15 +1383,43 @@
                     }
                 },
 
+                async initMediaPipeIrisTracker() {
+                    try {
+                        const visionModule = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_bundle.mjs").catch(() => null)
+                            || await import("https://esm.sh/@mediapipe/tasks-vision@0.10.14").catch(() => null);
+
+                        if (visionModule && visionModule.FilesetResolver && visionModule.FaceLandmarker) {
+                            const vision = await visionModule.FilesetResolver.forVisionTasks(
+                                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+                            );
+                            this.faceLandmarker = await visionModule.FaceLandmarker.createFromOptions(vision, {
+                                baseOptions: {
+                                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+                                    delegate: "GPU"
+                                },
+                                runningMode: "VIDEO",
+                                numFaces: 1
+                            });
+                            this.faceLandmarkerReady = true;
+                            this.eyeTrackingEngine = 'mediapipe_iris';
+                        }
+                    } catch (e) {
+                        // Smoothly fallback to high-speed canvas gaze tracker
+                        this.faceLandmarkerReady = false;
+                        this.eyeTrackingEngine = 'canvas_gaze';
+                    }
+                },
+
                 setupAudioAnalyser(stream) {
                     try {
                         const AudioContext = window.AudioContext || window.webkitAudioContext;
                         this.audioContext = new AudioContext();
                         const source = this.audioContext.createMediaStreamSource(stream);
                         this.analyser = this.audioContext.createAnalyser();
-                        this.analyser.fftSize = 256;
+                        this.analyser.fftSize = 2048;
                         source.connect(this.analyser);
                         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                        this.pitchTimeDomainBuffer = new Float32Array(this.analyser.fftSize);
                         this.startAudioWaveformVisualizer();
                     } catch (e) {
                         console.warn('Web Audio Analyser not supported:', e);
@@ -1055,46 +1530,77 @@
 
                         this.liveInterimTranscript = (this.accumulatedSpokenText + ' ' + interim).trim();
 
-                        // 1. Calculate live word count & real-time WPM
+                        // 1. Calculate live word count & real-time WPM (Normalized by Language)
                         const currentWords = this.liveInterimTranscript ? this.liveInterimTranscript.split(/\s+/).filter(Boolean) : [];
                         this.liveWordCount = currentWords.length;
                         const activeMins = Math.max(0.08, this.secondsElapsed / 60);
-                        this.liveWpm = Math.round(this.liveWordCount / activeMins);
 
-                        // 2. Real-time filler word detection (Bilingual)
-                        const idFiller = /\b(ehm|eh|em|umm|um|uh|anu|ngg|ngga|kayak|apa namanya)\b/i;
-                        const enFiller = /\b(uh|um|uhm|like|you know|so yeah|actually|basically|i mean)\b/i;
+                        // Bilingual character-based speech rate normalization (5.0 chars/word EN vs 6.2 chars/word ID)
+                        const totalChars = (this.liveInterimTranscript || '').replace(/\s+/g, '').length;
+                        const standardWordLen = this.simulationLanguage === 'en' ? 5.0 : 6.2;
+                        const normalizedWordUnits = Math.round(totalChars / standardWordLen);
+                        this.liveWpm = Math.max(0, Math.round((normalizedWordUnits || this.liveWordCount) / activeMins));
+
+                        // 2. Real-time multi-tier filler word detection (Bilingual with tolerance)
+                        const idFiller = /\b(ehm|eh|em|umm|um|uh|anu|ngg|ngga|kayak|apa namanya|apa ya|gimana ya|maksudnya|istilahnya|kira-kira|ya kan|gitu|macam)\b/i;
+                        const enFiller = /\b(uh|um|uhm|like|you know|so yeah|actually|basically|i mean|sort of|kind of|you see|right)\b/i;
+                        const repetitionFiller = /\b(saya saya|ini ini|dan dan|untuk untuk|we we|the the|and and|i i)\b/i;
                         const fillerRegex = this.simulationLanguage === 'en' ? enFiller : idFiller;
-                        const fillerMatch = (finalTurn || interim).match(fillerRegex);
+                        const fillerMatch = (finalTurn || interim).match(fillerRegex) || (finalTurn || interim).match(repetitionFiller);
                         if (fillerMatch) {
                             if (!this.fillerWordAlert) {
                                 this.playSfx('filler');
                             }
                             this.fillerWordAlert = fillerMatch[0].toLowerCase();
-                            this.recordTimelineEvent('filler_word', 'Kata Gumaman Terdeteksi', 'Peserta mengucapkan: "' + this.fillerWordAlert + '"', 'danger');
+                            this.recordTimelineEvent('filler_word', 'Kata Jeda / Gumaman Terdeteksi', 'Peserta mengucapkan: "' + this.fillerWordAlert + '"', 'danger');
+                            this.recordTimelineBookmark(this.secondsElapsed, 'filler', 'Kata Jeda / Gumaman (' + this.fillerWordAlert + ')', 'Terdeteksi kata jeda dalam tuturan verbal');
                             clearTimeout(this.fillerAlertTimer);
                             this.fillerAlertTimer = setTimeout(() => {
                                 this.fillerWordAlert = null;
                             }, 2200);
                         }
 
-                        if (this.liveWpm > 165 && this.liveWordCount > 15) {
-                            this.recordTimelineEvent('fast_pace', 'Tempo Bicara Sangat Cepat', 'Kecepatan bicara Anda mencapai ' + this.liveWpm + ' WPM', 'warning');
+                        const maxPace = this.simulationLanguage === 'en' ? 165 : 148;
+                        if (this.liveWpm > maxPace && this.liveWordCount > 12) {
+                            this.recordTimelineEvent('fast_pace', 'Tempo Bicara Cepat', 'Kecepatan bicara Anda mencapai ' + this.liveWpm + ' WPM (ideal: ' + (this.simulationLanguage === 'en' ? '120-155' : '100-135') + ' WPM)', 'warning');
                         }
 
                         if (this.liveInterimTranscript.length > 0) {
                             this.orbState = 'user_speaking';
 
+                            // Check Awkward Silence Latency (delay between AI stop and user start)
+                            if (this.lastAiSpeechEndedAt && !this.userStartedSpeakingAt) {
+                                this.userStartedSpeakingAt = Date.now();
+                                const latencyMs = this.userStartedSpeakingAt - this.lastAiSpeechEndedAt;
+                                if (latencyMs > 5500) {
+                                    this.awkwardPausesCount++;
+                                    this.recordTimelineBookmark(
+                                        this.secondsElapsed,
+                                        'silence',
+                                        'Jeda Hening Canggung (' + (latencyMs / 1000).toFixed(1) + 's)',
+                                        'Kandidat terdiam melebihi batas 5.5 detik sebelum merespons penguji'
+                                    );
+                                }
+                            }
+
                             // Clear any prior silence timer
                             clearTimeout(this.silenceTimer);
 
-                            // Trigger turn submission after 1.5 seconds of silence
+                            // Trigger turn submission after natural silence threshold
                             this.silenceTimer = setTimeout(() => {
                                 const sentenceToSend = this.liveInterimTranscript.trim();
-                                if (sentenceToSend.length >= 3 && this.orbState !== 'thinking') {
-                                    this.sendTurn(sentenceToSend);
-                                    this.liveInterimTranscript = '';
-                                    this.accumulatedSpokenText = '';
+                                if (sentenceToSend.length >= 3 && this.orbState !== 'thinking' && this.orbState !== 'ai_speaking') {
+                                    const cleanCheck = sentenceToSend.replace(/[.,?!]/g, '').trim().toLowerCase();
+                                    const isLoneFiller = /^(ehm|eh|em|umm|um|uh|anu|ngg|ngga|ha|tes|cek)$/i.test(cleanCheck);
+                                    const endsWithConjunction = /\b(dan|karena|sehingga|tetapi|tapi|namun|yaitu|misalnya|lalu|kemudian|so|because|and|but|that|which|also)\s*$/i.test(cleanCheck);
+                                    const words = cleanCheck.split(/\s+/).filter(Boolean);
+
+                                    // Ensure user actually completed a real sentence/phrase without hanging conjunction
+                                    if (!isLoneFiller && !endsWithConjunction && (words.length >= 2 || sentenceToSend.length >= 8)) {
+                                        this.sendTurn(sentenceToSend);
+                                        this.liveInterimTranscript = '';
+                                        this.accumulatedSpokenText = '';
+                                    }
                                 }
                             }, this.silenceDelayMs);
                         }
@@ -1145,23 +1651,56 @@
                             this.volumeSamples.push(this.liveVolume);
 
                             // Real-time Pitch Frequency & Expressiveness Intonation Score
-                            if (this.liveVolume > 15) {
-                                const pitch = this.calculatePitchAutoCorrelation();
-                                if (pitch >= 75 && pitch <= 350) {
-                                    this.livePitchHz = Math.round(pitch);
-                                    this.pitchSamples.push(this.livePitchHz);
+                            if (this.liveVolume > 15 && this.pitchTimeDomainBuffer && this.audioContext) {
+                                this.analyser.getFloatTimeDomainData(this.pitchTimeDomainBuffer);
+                                const sampleRate = (this.audioContext && this.audioContext.sampleRate) ? this.audioContext.sampleRate : 44100;
+                                const pitch = this.calculatePitchAutoCorrelation(this.pitchTimeDomainBuffer, sampleRate);
+                                    if (pitch >= 75 && pitch <= 500 && isFinite(pitch)) {
+                                        this.livePitchHz = Math.round(pitch);
+                                        this.pitchSamples.push(this.livePitchHz);
+                                        this.recentTurnPitchSamples.push(this.livePitchHz);
+                                        if (this.recentTurnPitchSamples.length > 30) this.recentTurnPitchSamples.shift();
 
-                                    if (this.pitchSamples.length >= 8) {
-                                        const recentPitches = this.pitchSamples.slice(-20);
-                                        const mean = recentPitches.reduce((a, b) => a + b, 0) / recentPitches.length;
-                                        const variance = recentPitches.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / recentPitches.length;
-                                        const stdDev = Math.sqrt(variance);
-                                        // Standard deviation of 15 - 40 Hz represents dynamic natural speech
-                                        this.livePitchDynamicsScore = Math.min(98, Math.max(45, Math.round(52 + (stdDev * 1.5))));
+                                        // Layer 2 Hesitation Drone Detector: Continuous vocalization >= 500ms with low variance ("uhhh...", "ehhmmm...")
+                                        this.consecutiveVoicedFrames = (this.consecutiveVoicedFrames || 0) + 1;
+                                        this.voicedPitchBuffer = (this.voicedPitchBuffer || []);
+                                        this.voicedPitchBuffer.push(this.livePitchHz);
+
+                                        if (this.consecutiveVoicedFrames >= 3 && this.voicedPitchBuffer.length >= 3) {
+                                            const sliceP = this.voicedPitchBuffer.slice(-3);
+                                            const meanP = sliceP.reduce((a, b) => a + b, 0) / sliceP.length;
+                                            const varP = sliceP.reduce((a, b) => a + Math.pow(b - meanP, 2), 0) / sliceP.length;
+
+                                            // Low variance (< 5.0 Hz) across 750ms indicates flat monotone hesitation drone
+                                            if (varP < 5.0 && !this.isCurrentlyInHesitationDrone) {
+                                                this.isCurrentlyInHesitationDrone = true;
+                                                this.audioHesitationCount = (this.audioHesitationCount || 0) + 1;
+                                                this.turnHesitationCount = (this.turnHesitationCount || 0) + 1;
+                                                this.recordTimelineBookmark(this.secondsElapsed, 'hesitation', 'Jeda Nada Datar (Uhhh...)', 'Vokalisasi datar kontinu terdeteksi >750ms');
+                                                this.playSfx('filler');
+                                            }
+                                        }
+
+                                        if (this.pitchSamples.length >= 6) {
+                                            const recentPitches = this.pitchSamples.slice(-20);
+                                            const valid = recentPitches.filter(p => typeof p === 'number' && isFinite(p) && p > 0);
+                                            if (valid.length >= 4) {
+                                                const mean = valid.reduce((a, b) => a + b, 0) / valid.length;
+                                                const variance = valid.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / valid.length;
+                                                const stdDev = Math.sqrt(variance);
+                                                if (isFinite(stdDev)) {
+                                                    // Standard deviation of 12 - 40 Hz represents dynamic natural speech
+                                                    this.livePitchDynamicsScore = Math.min(98, Math.max(45, Math.round(52 + (stdDev * 1.5))));
+                                                }
+                                            }
+                                        }
                                     }
+                                } else {
+                                    this.consecutiveVoicedFrames = 0;
+                                    this.voicedPitchBuffer = [];
+                                    this.isCurrentlyInHesitationDrone = false;
                                 }
                             }
-                        }
 
                         // 2. REAL Computer Vision on Webcam Canvas
                         this.analyzeWebcamPixels();
@@ -1265,13 +1804,92 @@
                         height: Math.min(90, Math.round((faceH / h) * 100)),
                     };
 
-                    // REAL Eye Contact Gaze: Deviation from camera center (w/2, h*0.45)
-                    const devX = Math.abs(centerX - (w / 2)) / (w / 2);
-                    const devY = Math.abs(centerY - (h * 0.45)) / (h * 0.45);
-                    const gazePenalty = (devX * 55) + (devY * 45);
-                    const eyeScore = Math.max(15, Math.min(98, Math.round(98 - gazePenalty)));
-                    this.liveEyeContactScore = eyeScore;
-                    this.eyeContactSamples.push(eyeScore);
+                    // 1. ATTEMPT HIGH-PRECISION MEDIAPIPE IRIS-LEVEL TRACKING (85-90% ACCURACY)
+                    let irisEngineProcessed = false;
+                    if (this.faceLandmarkerReady && this.faceLandmarker && video.readyState >= 2) {
+                        try {
+                            const results = this.faceLandmarker.detectForVideo(video, performance.now());
+                            if (results && results.faceLandmarks && results.faceLandmarks.length > 0) {
+                                const lm = results.faceLandmarks[0];
+                                const irisLeft = lm[468];
+                                const irisRight = lm[473];
+                                const leftEyeInner = lm[133];
+                                const leftEyeOuter = lm[33];
+                                const rightEyeInner = lm[362];
+                                const rightEyeOuter = lm[263];
+
+                                if (irisLeft && irisRight && leftEyeInner && leftEyeOuter && rightEyeInner && rightEyeOuter) {
+                                    const leftWidth = Math.max(0.001, Math.abs(leftEyeInner.x - leftEyeOuter.x));
+                                    const leftRatio = (irisLeft.x - Math.min(leftEyeInner.x, leftEyeOuter.x)) / leftWidth;
+                                    const rightWidth = Math.max(0.001, Math.abs(rightEyeInner.x - rightEyeOuter.x));
+                                    const rightRatio = (irisRight.x - Math.min(rightEyeInner.x, rightEyeOuter.x)) / rightWidth;
+
+                                    const avgIrisRatio = (leftRatio + rightRatio) / 2;
+                                    // Deadband around center (0.42 to 0.58 corresponds to direct camera / avatar gaze)
+                                    const irisDev = Math.abs(avgIrisRatio - 0.50);
+                                    const effectiveIrisDev = Math.max(0, irisDev - 0.08) / 0.42;
+
+                                    const rawIrisScore = Math.max(25, Math.min(99, Math.round(99 - (effectiveIrisDev * 85))));
+                                    this.liveEyeContactScore = (this.liveEyeContactScore > 0)
+                                        ? Math.round((this.liveEyeContactScore * 0.70) + (rawIrisScore * 0.30))
+                                        : rawIrisScore;
+                                    this.eyeTrackingEngine = 'mediapipe_iris';
+                                    this.eyeContactSamples.push(this.liveEyeContactScore);
+                                    irisEngineProcessed = true;
+                                }
+                            }
+                        } catch (irisErr) {
+                            // Silently continue to canvas fallback
+                        }
+                    }
+
+                    if (!irisEngineProcessed) {
+                        this.eyeTrackingEngine = 'canvas_gaze';
+                        // REAL Eye Contact & Head Pose Gaze Tracking with horizontal yaw symmetry and screen tolerance
+                        // Calculate horizontal symmetry in ocular-nasal band (20% to 55% of face height)
+                        const ocularTop = minY + (faceH * 0.20);
+                    const ocularBottom = minY + (faceH * 0.55);
+                    let leftHalfSkin = 0;
+                    let rightHalfSkin = 0;
+
+                    for (let y = ocularTop; y <= ocularBottom; y += 4) {
+                        for (let x = minX; x <= maxX; x += 4) {
+                            const idx = (Math.floor(y) * w + Math.floor(x)) * 4;
+                            const r = data[idx];
+                            const g = data[idx + 1];
+                            const b = data[idx + 2];
+                            if (r > 60 && g > 40 && b > 20 && r > g && (r - g) > 15) {
+                                if (x < centerX) leftHalfSkin++;
+                                else rightHalfSkin++;
+                            }
+                        }
+                    }
+
+                    // Yaw symmetry ratio (detects sideways head turning)
+                    const totalOcular = leftHalfSkin + rightHalfSkin;
+                    const yawAsymmetry = totalOcular > 20 ? (Math.abs(leftHalfSkin - rightHalfSkin) / totalOcular) : 0;
+
+                    // Screen Gaze Compensation Deadbands:
+                    // Horizontal center deadband: within +-18% of frame center has zero penalty
+                    const normDevX = Math.abs(centerX - (w / 2)) / (w / 2);
+                    const effectiveDevX = Math.max(0, normDevX - 0.18) / 0.82;
+
+                    // Vertical screen deadband: looking slightly below lens towards screen avatar (35% to 65% height) is normal
+                    const normDevY = (centerY - (h * 0.48)) / (h * 0.48);
+                    const effectiveDevY = (normDevY > 0)
+                        ? Math.max(0, normDevY - 0.22) / 0.78
+                        : Math.max(0, Math.abs(normDevY) - 0.15) / 0.85;
+
+                    const gazePenalty = (effectiveDevX * 45) + (effectiveDevY * 35) + (yawAsymmetry * 35);
+                    const rawEyeScore = Math.max(20, Math.min(98, Math.round(98 - gazePenalty)));
+
+                    // Exponential Moving Average (EMA) smoothing for stability (prevents jitter from blinking/gestures)
+                    const smoothedEye = (this.liveEyeContactScore > 0)
+                        ? Math.round((this.liveEyeContactScore * 0.65) + (rawEyeScore * 0.35))
+                        : rawEyeScore;
+
+                    this.liveEyeContactScore = smoothedEye;
+                    this.eyeContactSamples.push(smoothedEye);
 
                     // REAL Mouth / Smile Detection in bottom 35% of face region
                     const mouthYStart = Math.round(minY + (faceH * 0.65));
@@ -1305,11 +1923,11 @@
                     this.liveSmileRate = smileScore;
                     this.smileSamples.push(smileScore);
 
-                    // Real Status Classification
-                    if (eyeScore < 65) {
+                    // Real Status Classification with honest and calibrated labels
+                    if (smoothedEye < 55) {
                         this.currentFaceStatus = 'mata_melenceng';
                         this.currentFaceIcon = '';
-                        this.currentFaceText = 'Tatapan Melenceng';
+                        this.currentFaceText = 'Tatapan / Hadap Melenceng';
                     } else if (smileScore >= 72) {
                         this.currentFaceStatus = 'tersenyum';
                         this.currentFaceIcon = '';
@@ -1321,16 +1939,25 @@
                     } else {
                         this.currentFaceStatus = 'fokus';
                         this.currentFaceIcon = '';
-                        this.currentFaceText = 'Fokus & Tenang';
+                        this.currentFaceText = 'Fokus Menatap Kamera / Layar';
                     }
-                },
+                }
+            },
 
                 async sendTurn(userText) {
                     if (!userText || !this.currentSessionId) return;
 
+                    this.stopCandidateTurnTimer();
+                    this.checkUptalking(userText);
+                    this.showInterruptionAlert = false;
                     this.playSfx('blip');
                     this.orbState = 'thinking';
                     clearTimeout(this.silenceTimer);
+
+                    // Pause speech recognition while AI processes to prevent capturing background noise
+                    if (this.recognition) {
+                        try { this.recognition.stop(); } catch(e) {}
+                    }
 
                     // Snapshot of current facial status
                     const facialTelemetry = {
@@ -1351,7 +1978,7 @@
 
                     try {
                         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        const url = `/practice/${this.currentSessionId}/message`;
+                        const url = (this.isDemo ? '/demo/' : '/practice/') + this.currentSessionId + '/message';
 
                         const res = await fetch(url, {
                             method: 'POST',
@@ -1363,25 +1990,47 @@
                             body: JSON.stringify({
                                 message: userText,
                                 facial_status: facialTelemetry,
-                                timestamp_seconds: this.secondsElapsed
+                                timestamp_seconds: this.secondsElapsed,
+                                language: this.simulationLanguage
                             })
                         });
 
                         const data = await res.json();
                         if (data.success && data.ai_message) {
+                            if (data.ai_engine) {
+                                this.activeAiEngine = data.ai_engine;
+                            }
+                            if (data.stage) {
+                                this.currentStage = data.stage;
+                            }
                             this.messages.push(data.ai_message);
                             this.scrollToBottom();
 
                             if (data.facial_critique) {
                                 this.liveReprimandNotice = data.facial_critique;
                             }
+                            if (data.coherence_score) {
+                                this.liveCoherenceScore = Math.round(data.coherence_score);
+                                this.liveCoherenceCategory = data.coherence_category || 'Relevan & Nyambung';
+                            }
+                            if (data.salient_entities && data.salient_entities.length > 0) {
+                                this.detectedSalientEntities = data.salient_entities;
+                            }
 
                             // AI Speaks back
                             this.playAiSpeech(data.response_text, data.audio_url);
+                        } else {
+                            this.orbState = 'idle';
+                            if (this.recognition) {
+                                try { this.recognition.start(); } catch(e) {}
+                            }
                         }
                     } catch (e) {
                         console.error('Error sending turn to AI:', e);
                         this.orbState = 'idle';
+                        if (this.recognition) {
+                            try { this.recognition.start(); } catch(e) {}
+                        }
                     }
                 },
 
@@ -1670,6 +2319,8 @@
                         audio.onended = () => {
                             this.orbState = 'idle';
                             this.stopLipSync();
+                            this.lastAiSpeechEndedAt = Date.now();
+                            this.startCandidateTurnTimer();
                             if (this.recognition) {
                                 try { this.recognition.start(); } catch(e) {}
                             }
@@ -1694,6 +2345,8 @@
                         setTimeout(() => {
                             this.orbState = 'idle';
                             this.stopLipSync();
+                            this.lastAiSpeechEndedAt = Date.now();
+                            this.startCandidateTurnTimer();
                             if (this.recognition) {
                                 try { this.recognition.start(); } catch(e) {}
                             }
@@ -1704,18 +2357,47 @@
                     window.speechSynthesis.cancel();
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = this.simulationLanguage === 'en' ? 'en-US' : 'id-ID';
-                    utterance.rate = 1.0;
 
-                    // Choose voice matching language
-                    const voices = window.speechSynthesis.getVoices();
-                    let selectedVoice = null;
-                    if (this.simulationLanguage === 'en') {
-                        selectedVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en-GB') || v.lang.includes('en'));
+                    const roleType = this.selectedRole?.role_type || 'dosen_penguji';
+                    if (roleType === 'dosen_penguji') {
+                        // Dosen Penguji: bariton berat akademis, berwibawa, tempo terukur
+                        utterance.pitch = 0.68;
+                        utterance.rate = 0.88;
+                    } else if (roleType === 'hrd') {
+                        // Suara HRD Ramah (Nadia): nada hangat, sopan & empatik, tempo natural
+                        utterance.pitch = 1.15;
+                        utterance.rate = 1.02;
                     } else {
-                        selectedVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+                        // Suara Investor (Raymond): tegas, dinamis, to-the-point, energetik
+                        utterance.pitch = 0.80;
+                        utterance.rate = 1.12;
                     }
-                    if (selectedVoice) {
-                        utterance.voice = selectedVoice;
+
+                    // Choose voice matching language and role gender/persona
+                    const voices = window.speechSynthesis.getVoices();
+                    const isEn = this.simulationLanguage === 'en';
+                    const targetVoices = voices.filter(v => isEn ? (v.lang.includes('en-US') || v.lang.includes('en-GB') || v.lang.includes('en')) : (v.lang.includes('id') || v.lang.includes('ID')));
+
+                    if (targetVoices.length > 0) {
+                        if (roleType === 'hrd') {
+                            const female = targetVoices.find(v => {
+                                const n = (v.name || '').toLowerCase();
+                                return n.includes('gadis') || n.includes('zira') || n.includes('jenny') || n.includes('aria') || n.includes('female') || n.includes('wanita') || n.includes('siti');
+                            });
+                            utterance.voice = female || targetVoices[0];
+                        } else if (roleType === 'dosen_penguji') {
+                            const male = targetVoices.find(v => {
+                                const n = (v.name || '').toLowerCase();
+                                return n.includes('ardi') || n.includes('david') || n.includes('guy') || n.includes('davis') || n.includes('male') || n.includes('pria');
+                            });
+                            utterance.voice = male || targetVoices[0];
+                        } else {
+                            const crisp = targetVoices.find(v => {
+                                const n = (v.name || '').toLowerCase();
+                                return n.includes('ardi') || n.includes('brian') || n.includes('christopher') || n.includes('male');
+                            });
+                            utterance.voice = crisp || targetVoices[0];
+                        }
                     }
 
                     let hasBoundaryEvents = false;
@@ -1748,6 +2430,8 @@
                     utterance.onend = () => {
                         this.orbState = 'idle';
                         this.stopLipSync();
+                        this.lastAiSpeechEndedAt = Date.now();
+                        this.startCandidateTurnTimer();
                         if (this.recognition) {
                             try { this.recognition.start(); } catch(e) {}
                         }
@@ -1756,6 +2440,8 @@
                     utterance.onerror = () => {
                         this.orbState = 'idle';
                         this.stopLipSync();
+                        this.lastAiSpeechEndedAt = Date.now();
+                        this.startCandidateTurnTimer();
                         if (this.recognition) {
                             try { this.recognition.start(); } catch(e) {}
                         }
@@ -1780,6 +2466,8 @@
                     }
 
                     this.isFinishing = true;
+                    this.stopRoomAmbience();
+                    this.stopCandidateTurnTimer();
                     clearInterval(this.sessionTimerInterval);
                     clearInterval(this.telemetrySamplerInterval);
                     clearTimeout(this.silenceTimer);
@@ -1828,24 +2516,37 @@
                         ? parseFloat(((avgEye * 0.6) + (avgSmile * 0.4)).toFixed(1))
                         : 0;
 
-                    // 2. DATA METRIK UCAPAN ASLI PENGGUNA (Kata, WPM, & Deteksi Filler Words)
+                    // 2. DATA METRIK UCAPAN ASLI PENGGUNA (Syllable-Normalized SPM / WPM & Hybrid Filler Words)
                     const userMessages = this.messages.filter(m => m.sender === 'user');
                     const totalSpokenWords = userMessages.reduce((sum, m) => {
                         const words = (m.message || '').trim().split(/\s+/).filter(Boolean);
                         return sum + words.length;
                     }, 0);
-                    const durationMinutes = Math.max(0.08, this.secondsElapsed / 60);
-                    const realPaceWpm = Math.round(totalSpokenWords / durationMinutes);
 
-                    // Deteksi kata jeda/gumaman bilingual
-                    const idFillerRegex = /\b(ehm|eh|em|umm|um|uh|anu|ngg|ngga|kayak|apa namanya)\b/gi;
-                    const enFillerRegex = /\b(uh|um|uhm|like|you know|so yeah|actually|basically|i mean)\b/gi;
-                    const fillerRegex = this.simulationLanguage === 'en' ? enFillerRegex : idFillerRegex;
+                    // Estimasi Suku Kata berbasis klaster vokal (Syllables Cluster Estimation)
+                    const totalSyllables = userMessages.reduce((sum, m) => {
+                        const vowelClusters = (m.message || '').match(/[aiueoAIUEO]+/g) || [];
+                        return sum + vowelClusters.length;
+                    }, 0);
+
+                    const durationMinutes = Math.max(0.08, this.secondsElapsed / 60);
+                    const isEnglish = (this.simulationLanguage === 'en');
+                    const spm = totalSyllables / durationMinutes;
+                    // Normalisasi rasio suku kata per kata: Bahasa Indonesia ~2.2 suku kata/kata vs Inggris ~1.4 suku kata/kata
+                    const syllablesPerWord = isEnglish ? 1.4 : 2.2;
+                    const realPaceWpm = Math.round(spm / syllablesPerWord) || Math.round(totalSpokenWords / durationMinutes);
+
+                    // Lapis 1: Deteksi kata jeda/gumaman bilingual berbasis STT Regex
+                    const idFillerRegex = /\b(ehm|eh|em|umm|um|uh|anu|ngg|ngga|kayak|apa namanya|apa ya|gimana ya|maksudnya|istilahnya|kira-kira|ya kan|gitu|macam)\b/gi;
+                    const enFillerRegex = /\b(uh|um|uhm|like|you know|so yeah|actually|basically|i mean|sort of|kind of|you see|right)\b/gi;
+                    const repetitionFiller = /\b(saya saya|ini ini|dan dan|untuk untuk|we we|the the|and and|i i)\b/gi;
+                    const fillerRegex = isEnglish ? enFillerRegex : idFillerRegex;
 
                     let totalFillerWords = 0;
                     const detectedFillers = [];
                     userMessages.forEach(m => {
-                        const matches = (m.message || '').match(fillerRegex);
+                        const text = m.message || '';
+                        const matches = text.match(fillerRegex);
                         if (matches) {
                             totalFillerWords += matches.length;
                             matches.forEach(w => {
@@ -1855,7 +2556,24 @@
                                 }
                             });
                         }
+                        const repMatches = text.match(repetitionFiller);
+                        if (repMatches) {
+                            totalFillerWords += repMatches.length;
+                            repMatches.forEach(w => {
+                                const lower = w.toLowerCase();
+                                if (!detectedFillers.includes(lower)) {
+                                    detectedFillers.push(lower);
+                                }
+                            });
+                        }
                     });
+
+                    // Lapis 2: Gabungkan Audio-Based Hesitation Detector (Jeda nada datar kontinu "uhhh...")
+                    const audioHesitations = this.audioHesitationCount || 0;
+                    if (audioHesitations > 0) {
+                        totalFillerWords += audioHesitations;
+                        detectedFillers.push(`${audioHesitations}x jeda hening/nada datar akustik`);
+                    }
 
                     // 3. DATA TELEMETRI AUDIO ASLI MIKROFON (Web Audio Analyser)
                     const validVolSamples = this.volumeSamples.filter(v => v > 0);
@@ -1863,20 +2581,24 @@
                         ? Math.round(validVolSamples.reduce((a, b) => a + b, 0) / validVolSamples.length)
                         : 0;
 
-                    // Pacing Score: Kecepatan bicara ideal presentasi adalah 110 - 150 WPM
+                    // Pacing Score: Kecepatan bicara ideal terkalibrasi per bahasa
+                    // Bahasa Indonesia: 100 - 135 WPM | Bahasa Inggris: 120 - 155 WPM
                     let paceScore = 80;
+                    const minIdealWpm = isEnglish ? 120 : 100;
+                    const maxIdealWpm = isEnglish ? 155 : 135;
+
                     if (totalSpokenWords === 0) {
                         paceScore = 40;
-                    } else if (realPaceWpm >= 110 && realPaceWpm <= 150) {
+                    } else if (realPaceWpm >= minIdealWpm && realPaceWpm <= maxIdealWpm) {
                         paceScore = 95;
-                    } else if (realPaceWpm >= 90 && realPaceWpm < 110) {
+                    } else if (realPaceWpm >= (minIdealWpm - 15) && realPaceWpm < minIdealWpm) {
+                        paceScore = 88;
+                    } else if (realPaceWpm > maxIdealWpm && realPaceWpm <= (maxIdealWpm + 20)) {
                         paceScore = 86;
-                    } else if (realPaceWpm > 150 && realPaceWpm <= 175) {
-                        paceScore = 82;
-                    } else if (realPaceWpm > 175) {
-                        paceScore = Math.max(45, Math.round(90 - ((realPaceWpm - 175) * 0.8)));
+                    } else if (realPaceWpm > (maxIdealWpm + 20)) {
+                        paceScore = Math.max(45, Math.round(88 - ((realPaceWpm - (maxIdealWpm + 20)) * 0.8)));
                     } else {
-                        paceScore = Math.max(40, Math.round((realPaceWpm / 90) * 85));
+                        paceScore = Math.max(40, Math.round((realPaceWpm / minIdealWpm) * 85));
                     }
 
                     // Volume Adequacy Score
@@ -1989,20 +2711,22 @@
                         improvements.push(`Intonasi suara cenderung agak datar (skor ${pitchScore}%). Berikan variasi penekanan nada pada poin-poin krusial.`);
                     }
 
-                    // Evaluasi Pacing & Artikulasi WPM
-                    if (realPaceWpm >= 110 && realPaceWpm <= 150) {
-                        strengths.push(`Tempo berbicara sangat ideal (${realPaceWpm} kata/menit), pesan tersampaikan secara artikulatif.`);
-                    } else if (realPaceWpm > 150) {
-                        improvements.push(`Tempo berbicara terukur cepat (${realPaceWpm} WPM). Berikan jeda sejenak (pausing) pada poin-poin utama.`);
-                    } else if (realPaceWpm > 0 && realPaceWpm < 110) {
-                        improvements.push(`Tempo bicara relatif lambat (${realPaceWpm} WPM). Tingkatkan kelancaran dan kesinambungan kalimat.`);
+                    // Evaluasi Pacing & Artikulasi WPM Terkalibrasi
+                    if (realPaceWpm >= minIdealWpm && realPaceWpm <= maxIdealWpm) {
+                        strengths.push(`Tempo berbicara sangat ideal (${realPaceWpm} WPM terkalibrasi ${isEnglish ? 'EN' : 'ID'}), pesan tersampaikan secara artikulatif dan runtut.`);
+                    } else if (realPaceWpm > maxIdealWpm) {
+                        improvements.push(`Tempo berbicara terukur agak cepat (${realPaceWpm} WPM, acuan ideal ${minIdealWpm}-${maxIdealWpm} WPM). Berikan jeda sejenak (power pause) pada poin-poin utama.`);
+                    } else if (realPaceWpm > 0 && realPaceWpm < minIdealWpm) {
+                        improvements.push(`Tempo bicara relatif lambat (${realPaceWpm} WPM, acuan ideal ${minIdealWpm}-${maxIdealWpm} WPM). Tingkatkan kelancaran dan kesinambungan kalimat.`);
                     } else {
                         improvements.push('Belum terdeteksi kalimat verbal dari Anda. Coba suarakan jawaban secara aktif melalui mikrofon.');
                     }
 
-                    // Evaluasi Filler Words (Kata Jeda / Gumaman)
-                    if (totalFillerWords > 2) {
-                        improvements.push(`Terdeteksi ${totalFillerWords} kali kata jeda/gumaman (${detectedFillers.join(', ')}). Gunakan jeda hening sejenak (pausing) daripada mengisi jeda dengan gumaman.`);
+                    // Evaluasi Filler Words dengan Toleransi Alami
+                    if (totalFillerWords > 3) {
+                        improvements.push(`Terdeteksi ${totalFillerWords} kali kata jeda/gumaman (${detectedFillers.join(', ')}). Gunakan jeda hening sejenak (power pause) daripada mengisi jeda dengan gumaman.`);
+                    } else if (totalFillerWords >= 1 && totalFillerWords <= 3) {
+                        strengths.push(`Pengendalian kata jeda sangat baik dan masih dalam batas toleransi wajar komunikasi alami (${totalFillerWords} kali: ${detectedFillers.join(', ')}).`);
                     } else if (totalFillerWords === 0 && totalSpokenWords >= 15) {
                         strengths.push('Artikulasi sangat bersih tanpa jeda gumaman (0 filler words), penyampaian ide terdengar terstruktur.');
                     }
@@ -2044,6 +2768,10 @@
                             language: this.simulationLanguage,
                             context_material: this.contextMaterial ? this.contextMaterial.trim() : null,
                             timeline_events: this.timelineEvents,
+                            detected_uptalking: this.detectedUptalkingCount,
+                            awkward_pauses: this.awkwardPausesCount,
+                            current_stage: this.currentStage,
+                            timeline_bookmarks: this.timelineBookmarks,
                             badges: badges,
                             strengths: strengths,
                             improvements: improvements
@@ -2052,7 +2780,8 @@
 
                     try {
                         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        const res = await fetch(`/practice/${this.currentSessionId}/finish`, {
+                        const finishUrl = (this.isDemo ? '/demo/' : '/practice/') + this.currentSessionId + '/finish';
+                        const res = await fetch(finishUrl, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -2195,20 +2924,48 @@
                                         </div>
                                     </div>
 
+                                    @if($role->role_type === 'dosen_penguji')
+                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-50/80 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60 mb-2.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                                            <span>🎙️ Suara Dosen Killer (Bariton, Tegas & Berbobot)</span>
+                                        </div>
+                                    @elseif($role->role_type === 'hrd')
+                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-50/80 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 mb-2.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
+                                            <span>🎙️ Suara HRD Ramah (Hangat, Empatik & Komunikatif)</span>
+                                        </div>
+                                    @else
+                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-purple-50/80 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60 mb-2.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
+                                            <span>🎙️ Suara Pitch Bisnis (Cepat, Dinamis & To-The-Point)</span>
+                                        </div>
+                                    @endif
+
                                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
                                         {{ $role->description }}
                                     </p>
                                 </div>
 
-                                <div class="pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                <div class="pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between gap-2">
                                     <span class="text-xs font-semibold"
                                           :class="selectedRole?.id === {{ $role->id }} ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400'">
                                         <span x-show="selectedRole?.id === {{ $role->id }}">✓ Terpilih</span>
                                         <span x-show="selectedRole?.id !== {{ $role->id }}">Pilih Ini</span>
                                     </span>
-                                    <span class="text-[11px] text-slate-400">
-                                        Tingkat: {{ $role->difficulty_level }}
-                                    </span>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button"
+                                                @click.stop="previewRoleVoice('{{ $role->role_type }}')"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer shadow-2xs"
+                                                :class="previewVoiceRole === '{{ $role->role_type }}' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'">
+                                            <svg class="w-3.5 h-3.5" :class="previewVoiceRole === '{{ $role->role_type }}' ? 'animate-pulse' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                                            </svg>
+                                            <span x-text="previewVoiceRole === '{{ $role->role_type }}' ? 'Memutar...' : 'Dengar Suara'"></span>
+                                        </button>
+                                        <span class="text-[11px] text-slate-400 hidden sm:inline">
+                                            {{ $role->difficulty_level }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         @empty
@@ -2221,6 +2978,46 @@
                             @endforeach
                         @endforelse
                     </div>
+
+                    <!-- Innofest Visitor Information Card (Only in Demo Mode) -->
+                    <template x-if="isDemo">
+                        <div class="mt-6 p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-blue-500/10 border border-emerald-500/30 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <h4 class="text-sm font-bold text-emerald-900 dark:text-emerald-300">
+                                        Identitas Pengunjung Booth Innofest 2026
+                                    </h4>
+                                </div>
+                                <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                                    Sertifikat Langsung Terbit
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                        Nama Anda (Untuk Sertifikat Digital):
+                                    </label>
+                                    <input type="text"
+                                           x-model="guestName"
+                                           placeholder="misal: Budi Santoso / Dewan Juri"
+                                           class="w-full text-xs sm:text-sm rounded-xl glass-input text-slate-900 dark:text-white px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                        Instansi / Asal Kampus (Opsional):
+                                    </label>
+                                    <input type="text"
+                                           x-model="guestInstitution"
+                                           placeholder="misal: Universitas Brawijaya / Umum"
+                                           class="w-full text-xs sm:text-sm rounded-xl glass-input text-slate-900 dark:text-white px-3.5 py-2.5 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                </div>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                💡 Setelah simulasi, Anda dapat langsung scan QR Code dengan smartphone untuk membawa pulang sertifikat hasil evaluasi resmi.
+                            </p>
+                        </div>
+                    </template>
 
                     <!-- Clean Topic Input -->
                     <div class="mt-6 pt-6 border-t border-slate-200/70 dark:border-slate-700/60 space-y-3">
@@ -2582,7 +3379,29 @@
                         </div>
                     </div>
 
-                    <!-- Right Controls: Sprint timer, Fullscreen & Finish -->
+                    <!-- Deep Learning Memory, Semantic Telemetry & Active AI Engine -->
+                    <div class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50/80 dark:bg-navy-950/80 border border-blue-200/80 dark:border-navy-800 text-slate-700 dark:text-slate-300 text-xs shadow-xs">
+                        <span class="flex h-2 w-2 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                        </span>
+                        <span class="font-semibold text-blue-700 dark:text-blue-300">Deep Learning Memory:</span>
+                        <span class="font-bold text-slate-900 dark:text-white" x-text="'Lvl ' + (userLearningProfile?.learning_level || 1)"></span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <span>Koherensi: <strong class="font-mono text-emerald-600 dark:text-emerald-400" x-text="liveCoherenceScore + '%'"></strong></span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <span class="inline-flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full" :class="activeAiEngine === 'ollama_neural' ? 'bg-indigo-500' : 'bg-emerald-500'"></span>
+                            <span class="font-medium text-[11px]" x-text="activeAiEngine === 'ollama_neural' ? 'Ollama Neural' : 'Fast Persona Fallback'"></span>
+                        </span>
+                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                        <span class="inline-flex items-center gap-1.5" :title="eyeTrackingEngine === 'mediapipe_iris' ? 'MediaPipe 478 Landmark 3D Iris-Level' : 'Canvas Gaze Orientation'">
+                            <span class="w-1.5 h-1.5 rounded-full" :class="eyeTrackingEngine === 'mediapipe_iris' ? 'bg-sky-400' : 'bg-slate-400'"></span>
+                            <span class="font-medium text-[11px]" x-text="eyeTrackingEngine === 'mediapipe_iris' ? 'Iris 3D (WASM)' : 'Gaze Canvas'"></span>
+                        </span>
+                    </div>
+
+                    <!-- Right Controls: Ambience, Sprint timer, Fullscreen & Finish -->
                     <div class="flex items-center gap-2">
                         <template x-if="simulationMode === 'sprint'">
                             <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-600 dark:text-amber-300 text-xs font-mono font-bold animate-pulse">
@@ -2590,6 +3409,18 @@
                                 <span x-text="sprintRemaining + 's'">60s</span>
                             </div>
                         </template>
+
+                        <!-- Ambience Sound Toggle (Procedural Web Audio Room Presence) -->
+                        <button type="button"
+                                @click="toggleAmbience()"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold glass-pill transition cursor-pointer"
+                                :class="isAmbienceActive ? 'text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/80 border border-blue-300 dark:border-blue-800' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'"
+                                :title="isAmbienceActive ? 'Matikan Suara Ambience Ruangan' : 'Aktifkan Suara Alami Ruangan (Ambience)'">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                            </svg>
+                            <span class="hidden md:inline text-[11px]" x-text="isAmbienceActive ? 'Ambience: On' : 'Ambience: Off'"></span>
+                        </button>
 
                         <button type="button"
                                 @click="toggleFullscreen()"
@@ -2612,15 +3443,102 @@
                     </div>
                 </div>
 
+                <!-- 4-Stage Scenario Milestone Progress Stepper -->
+                <div class="glass-panel px-4 py-2.5 rounded-2xl shadow-xs border border-slate-200/80 dark:border-slate-800">
+                    <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+                        <template x-for="stage in stageMilestones" :key="stage.id">
+                            <div class="flex items-center gap-2 shrink-0">
+                                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300"
+                                     :class="{
+                                         'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 scale-[1.02]': currentStage === stage.id,
+                                         'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300': currentStage !== stage.id && stageMilestones.findIndex(s => s.id === currentStage) > stageMilestones.findIndex(s => s.id === stage.id),
+                                         'text-slate-400 dark:text-slate-500 opacity-60': currentStage !== stage.id && stageMilestones.findIndex(s => s.id === currentStage) < stageMilestones.findIndex(s => s.id === stage.id)
+                                     }">
+                                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
+                                          :class="{
+                                              'bg-white text-blue-700': currentStage === stage.id,
+                                              'bg-emerald-500 text-white': currentStage !== stage.id && stageMilestones.findIndex(s => s.id === currentStage) > stageMilestones.findIndex(s => s.id === stage.id),
+                                              'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400': currentStage !== stage.id && stageMilestones.findIndex(s => s.id === currentStage) < stageMilestones.findIndex(s => s.id === stage.id)
+                                          }">
+                                        <template x-if="stageMilestones.findIndex(s => s.id === currentStage) > stageMilestones.findIndex(s => s.id === stage.id)">
+                                            <span>✓</span>
+                                        </template>
+                                        <template x-if="stageMilestones.findIndex(s => s.id === currentStage) <= stageMilestones.findIndex(s => s.id === stage.id)">
+                                            <span x-text="stage.step"></span>
+                                        </template>
+                                    </span>
+                                    <div class="text-left">
+                                        <div class="text-[11px] font-bold tracking-tight leading-none" x-text="stage.label"></div>
+                                        <div class="text-[9px] opacity-80 mt-0.5 leading-none" x-text="stage.badge"></div>
+                                    </div>
+                                    <template x-if="currentStage === stage.id && stage.id === 'pressure_test'">
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500 text-white animate-pulse">
+                                            🔥 STRESS TEST
+                                        </span>
+                                    </template>
+                                </div>
+                                <template x-if="stage.step < 4">
+                                    <svg class="w-3.5 h-3.5 text-slate-300 dark:text-slate-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
                 <!-- Main Video Call Stage with Reactive Speaker Glow -->
                 <div class="relative bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border aspect-16/10 sm:aspect-16/9 flex items-center justify-center transition-all duration-500"
                      :class="orbState === 'ai_speaking' ? 'border-blue-500/80 ring-4 ring-blue-500/50 glow-active-ai shadow-blue-500/20' : 'border-slate-800'">
 
-                    <!-- Ambient Blurred Studio Backdrop -->
-                    <template x-if="hrAvatarMode === 'animated' && (selectedRole?.role_type || 'dosen_penguji') === 'hrd'">
+                    <!-- Conversational Barge-In Interruption Alert Banner -->
+                    <div x-show="showInterruptionAlert"
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 -translate-y-4 scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                         x-transition:leave="transition ease-in duration-200"
+                         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                         x-transition:leave-end="opacity-0 -translate-y-4 scale-95"
+                         class="absolute top-4 inset-x-3 sm:inset-x-8 z-40 p-3 sm:p-4 rounded-2xl bg-rose-950/90 border border-rose-500/80 backdrop-blur-md shadow-2xl flex items-center justify-between gap-3 text-white ring-2 ring-rose-500/40"
+                         x-cloak>
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-rose-600 flex items-center justify-center shrink-0 animate-bounce">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-xs font-black uppercase tracking-wider text-rose-300 flex items-center gap-1.5" x-text="interruptionTitle"></div>
+                                <p class="text-xs sm:text-sm font-semibold text-white/95 mt-0.5" x-text="interruptionText"></p>
+                            </div>
+                        </div>
+                        <button type="button"
+                                @click="showInterruptionAlert = false"
+                                class="text-xs font-bold px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 transition cursor-pointer shrink-0">
+                            Tutup
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Turn Duration & Budget Alert Badge -->
+                    <template x-if="orbState !== 'ai_speaking' && orbState !== 'thinking'">
+                        <div class="absolute bottom-4 left-4 z-30 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border text-xs font-mono font-bold shadow-lg"
+                             :class="currentTurnSeconds >= 20 ? 'border-amber-500 text-amber-300 animate-pulse' : 'border-slate-700 text-slate-200'">
+                            <span class="w-2 h-2 rounded-full" :class="currentTurnSeconds >= 20 ? 'bg-amber-400' : 'bg-blue-400 animate-ping'"></span>
+                            <span>Durasi Bicara: <span x-text="currentTurnSeconds + 's'"></span></span>
+                            <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'investor'">
+                                <span class="text-[10px] text-slate-400 font-normal">/ 45s alokasi</span>
+                            </template>
+                            <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji'">
+                                <span class="text-[10px] text-slate-400 font-normal">/ 24s batas</span>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Ambient Studio Backdrop -->
+                    <template x-if="avatarStageMode === 'animated'">
                         <div class="absolute inset-0 bg-gradient-to-b from-blue-950/40 via-slate-950/80 to-slate-950 pointer-events-none"></div>
                     </template>
-                    <template x-if="hrAvatarMode !== 'animated' || (selectedRole?.role_type || 'dosen_penguji') !== 'hrd'">
+                    <template x-if="avatarStageMode !== 'animated'">
                         <img :src="avatarImageUrl"
                              alt=""
                              aria-hidden="true"
@@ -2634,8 +3552,8 @@
                         <div class="absolute w-96 sm:w-[500px] h-96 sm:h-[500px] rounded-full bg-blue-500/20 blur-3xl"></div>
                     </div>
 
-                    <!-- 1. PURE PHOTOGRAPHIC PORTRAIT (Default for all roles: Full-Stage Immersive Video Call) -->
-                    <template x-if="hrAvatarMode !== 'animated' || (selectedRole?.role_type || 'dosen_penguji') !== 'hrd'">
+                    <!-- 1. PURE PHOTOGRAPHIC PORTRAIT (When user explicitly toggles to Photo Mode) -->
+                    <template x-if="avatarStageMode === 'photo'">
                         <div class="relative z-10 w-full h-full flex items-center justify-center pointer-events-none select-none overflow-hidden">
                             <img :src="avatarImageUrl"
                                  :alt="avatarPersonaName"
@@ -2644,147 +3562,394 @@
                         </div>
                     </template>
 
-                    <!-- 2. ANIMATED EXECUTIVE HR CHARACTER (SUIT & TIE) (Only when user explicitly selects Animated Mode) -->
-                    <template x-if="hrAvatarMode === 'animated' && (selectedRole?.role_type || 'dosen_penguji') === 'hrd'">
-                        <div class="relative z-10 h-full max-h-[320px] sm:max-h-[440px] aspect-4/3 flex items-center justify-center p-2 sm:p-4">
+                    <!-- 2. ANIMATED 2D TALKING CHARACTERS (DEFAULT FOR ALL ROLES: LIVING AVATAR WITH MOVING MOUTH & LIP-SYNC) -->
+                    <template x-if="avatarStageMode === 'animated'">
+                        <div class="relative z-10 h-full max-h-[340px] sm:max-h-[460px] aspect-4/3 flex items-center justify-center p-2 sm:p-4">
                             <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 select-none flex items-center justify-center bg-slate-950 transition-all duration-300">
-                                <svg viewBox="0 0 400 420" class="w-full h-full object-contain select-none" xmlns="http://www.w3.org/2000/svg">
-                                    <defs>
-                                        <linearGradient id="hrStudioBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" stop-color="#0a101f"/>
-                                            <stop offset="50%" stop-color="#111827"/>
-                                            <stop offset="100%" stop-color="#1e293b"/>
-                                        </linearGradient>
-                                        <linearGradient id="hrSuitJacket" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" stop-color="#1e293b"/>
-                                            <stop offset="100%" stop-color="#0f172a"/>
-                                        </linearGradient>
-                                        <linearGradient id="hrSuitLapel" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stop-color="#334155"/>
-                                            <stop offset="100%" stop-color="#1e293b"/>
-                                        </linearGradient>
-                                        <linearGradient id="hrSkinGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                            <stop offset="0%" stop-color="#ffd5b8"/>
-                                            <stop offset="100%" stop-color="#e8a882"/>
-                                        </linearGradient>
-                                        <linearGradient id="hrTieGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" stop-color="#3b82f6"/>
-                                            <stop offset="50%" stop-color="#2563eb"/>
-                                            <stop offset="100%" stop-color="#1d4ed8"/>
-                                        </linearGradient>
-                                        <linearGradient id="hrGoldClip" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stop-color="#fef08a"/>
-                                            <stop offset="50%" stop-color="#eab308"/>
-                                            <stop offset="100%" stop-color="#ca8a04"/>
-                                        </linearGradient>
-                                        <linearGradient id="hrHairGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" stop-color="#2d3748"/>
-                                            <stop offset="100%" stop-color="#1a202c"/>
-                                        </linearGradient>
-                                    </defs>
 
-                                    <!-- Studio Backdrop -->
-                                    <rect width="400" height="420" fill="url(#hrStudioBg)"/>
-                                    <circle cx="200" cy="140" r="130" fill="#38bdf8" opacity="0.08" filter="blur(20px)"/>
-                                    <path d="M 0 320 L 400 320" stroke="#334155" stroke-width="1" opacity="0.25"/>
+                                <!-- ROLE A: DOSEN PENGUJI (Prof. Dr. Ir. Hendra Kusuma, M.Kom) -->
+                                <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji'">
+                                    <svg viewBox="0 0 400 420" class="w-full h-full object-contain select-none" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <linearGradient id="dosenStudioBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#070c17"/>
+                                                <stop offset="50%" stop-color="#0f172a"/>
+                                                <stop offset="100%" stop-color="#1e293b"/>
+                                            </linearGradient>
+                                            <linearGradient id="dosenSuitJacket" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#1e2433"/>
+                                                <stop offset="100%" stop-color="#0b0f17"/>
+                                            </linearGradient>
+                                            <linearGradient id="dosenSuitLapel" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#334155"/>
+                                                <stop offset="100%" stop-color="#1e293b"/>
+                                            </linearGradient>
+                                            <linearGradient id="dosenSkinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="#f5cfb5"/>
+                                                <stop offset="100%" stop-color="#db9f7c"/>
+                                            </linearGradient>
+                                            <linearGradient id="dosenTieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#991b1b"/>
+                                                <stop offset="50%" stop-color="#7f1d1d"/>
+                                                <stop offset="100%" stop-color="#450a0a"/>
+                                            </linearGradient>
+                                            <linearGradient id="dosenHairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#334155"/>
+                                                <stop offset="50%" stop-color="#1e293b"/>
+                                                <stop offset="100%" stop-color="#0f172a"/>
+                                            </linearGradient>
+                                        </defs>
 
-                                    <!-- TORSO & EXECUTIVE ATTIRE (SUIT & TIE) -->
-                                    <path d="M 40 420 Q 60 330 130 310 L 270 310 Q 340 330 360 420 Z" fill="url(#hrSuitJacket)"/>
-                                    <path d="M 160 260 L 240 260 L 225 385 L 175 385 Z" fill="#f8fafc"/>
-                                    <path d="M 200 280 L 200 385" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4,4"/>
+                                        <!-- Studio Backdrop -->
+                                        <rect width="400" height="420" fill="url(#dosenStudioBg)"/>
+                                        <circle cx="200" cy="140" r="140" fill="#3b82f6" opacity="0.07" filter="blur(25px)"/>
+                                        <path d="M 0 320 L 400 320" stroke="#334155" stroke-width="1" opacity="0.3"/>
 
-                                    <!-- THE EXECUTIVE TIE (DASI HRD) -->
-                                    <path d="M 191 268 L 209 268 L 205 285 L 195 285 Z" fill="url(#hrTieGradient)"/>
-                                    <path d="M 195 285 L 205 285 L 200 289 Z" fill="#1e40af"/>
-                                    <path d="M 194 285 L 206 285 L 213 400 L 200 415 L 187 400 Z" fill="url(#hrTieGradient)"/>
-                                    <path d="M 194 300 L 207 312" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
-                                    <path d="M 193 330 L 209 344" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
-                                    <path d="M 191 360 L 211 376" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
-                                    <path d="M 189 390 L 212 408" stroke="#60a5fa" stroke-width="1.5" opacity="0.6"/>
+                                        <!-- Torso & Academic Suit -->
+                                        <path d="M 30 420 Q 55 325 125 305 L 275 305 Q 345 325 370 420 Z" fill="url(#dosenSuitJacket)"/>
+                                        <path d="M 155 255 L 245 255 L 230 385 L 170 385 Z" fill="#f8fafc"/>
+                                        <path d="M 200 275 L 200 385" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4,4"/>
 
-                                    <!-- Gold Tie Bar Clip -->
-                                    <rect x="190" y="338" width="22" height="4.5" rx="2" fill="url(#hrGoldClip)"/>
+                                        <!-- Professor Burgundy Tie with Gold Accent -->
+                                        <path d="M 191 264 L 209 264 L 205 282 L 195 282 Z" fill="url(#dosenTieGrad)"/>
+                                        <path d="M 195 282 L 205 282 L 200 286 Z" fill="#450a0a"/>
+                                        <path d="M 194 282 L 206 282 L 213 398 L 200 412 L 187 398 Z" fill="url(#dosenTieGrad)"/>
+                                        <path d="M 193 298 L 207 310" stroke="#f59e0b" stroke-width="1.2" opacity="0.7"/>
+                                        <path d="M 192 328 L 209 342" stroke="#f59e0b" stroke-width="1.2" opacity="0.7"/>
+                                        <path d="M 190 358 L 211 374" stroke="#f59e0b" stroke-width="1.2" opacity="0.7"/>
+                                        <rect x="190" y="336" width="22" height="4.5" rx="2" fill="#fbbf24"/>
 
-                                    <!-- Tailored Suit Lapels -->
-                                    <path d="M 125 310 L 168 268 L 182 355 L 138 395 Z" fill="url(#hrSuitLapel)"/>
-                                    <path d="M 275 310 L 232 268 L 218 355 L 262 395 Z" fill="url(#hrSuitLapel)"/>
-                                    <path d="M 125 310 L 168 268" stroke="#475569" stroke-width="1.5"/>
-                                    <path d="M 275 310 L 232 268" stroke="#475569" stroke-width="1.5"/>
+                                        <!-- Suit Lapels -->
+                                        <path d="M 120 305 L 164 262 L 180 350 L 132 390 Z" fill="url(#dosenSuitLapel)"/>
+                                        <path d="M 280 305 L 236 262 L 220 350 L 268 390 Z" fill="url(#dosenSuitLapel)"/>
+                                        <path d="M 120 305 L 164 262" stroke="#475569" stroke-width="1.5"/>
+                                        <path d="M 280 305 L 236 262" stroke="#475569" stroke-width="1.5"/>
 
-                                    <!-- HR Lanyard ID Badge (Left Chest) -->
-                                    <g transform="translate(100, 345)">
-                                        <path d="M 45 -45 L 20 0" stroke="#3b82f6" stroke-width="3" opacity="0.8"/>
-                                        <rect x="5" y="0" width="36" height="48" rx="4" fill="#ffffff"/>
-                                        <rect x="5" y="0" width="36" height="10" rx="2" fill="#2563eb"/>
-                                        <text x="23" y="7.5" font-size="5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">HR TALENT</text>
-                                        <circle cx="23" cy="22" r="7" fill="#cbd5e1"/>
-                                        <rect x="11" y="32" width="24" height="2.5" rx="1" fill="#94a3b8"/>
-                                        <rect x="14" y="37" width="18" height="2" rx="1" fill="#cbd5e1"/>
-                                    </g>
-
-                                    <!-- HEAD & FACE GROUP (STABLE POSITION) -->
-                                    <g id="hrHeadAndFace">
-
-                                        <!-- Neck -->
-                                        <path d="M 178 215 L 222 215 L 226 270 L 174 270 Z" fill="url(#hrSkinGradient)"/>
-                                        <path d="M 178 215 Q 200 230 222 215 Q 200 238 178 215 Z" fill="#cf8660" opacity="0.6"/>
-
-                                        <!-- Crisp White Shirt Collar Wings -->
-                                        <path d="M 166 265 L 192 268 L 180 295 Z" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
-                                        <path d="M 234 265 L 208 268 L 220 295 Z" fill="#ffffff" stroke="#e2e8f0" stroke-width="1"/>
-
-                                        <!-- Ears -->
-                                        <path d="M 132 175 C 122 175 120 195 132 205 Z" fill="url(#hrSkinGradient)"/>
-                                        <path d="M 268 175 C 278 175 280 195 268 205 Z" fill="url(#hrSkinGradient)"/>
-                                        <path d="M 129 182 C 125 186 125 194 130 196" stroke="#cf8660" stroke-width="1.5" fill="none"/>
-                                        <path d="M 271 182 C 275 186 275 194 270 196" stroke="#cf8660" stroke-width="1.5" fill="none"/>
-
-                                        <!-- Head Contour / Jaw -->
-                                        <path d="M 132 165 C 132 105 268 105 268 165 C 268 205 235 232 200 232 C 165 232 132 205 132 165 Z" fill="url(#hrSkinGradient)"/>
-
-                                        <!-- Professional Hair Style -->
-                                        <path d="M 128 155 C 128 95 160 70 200 70 C 245 70 272 95 272 155 C 272 162 268 165 264 150 C 255 110 240 100 200 102 C 160 100 145 115 136 150 C 132 165 128 162 128 155 Z" fill="url(#hrHairGradient)"/>
-                                        <path d="M 134 140 C 145 105 175 92 215 95 C 250 97 268 115 268 140 C 260 118 245 108 215 108 C 175 108 148 122 134 140 Z" fill="#3b465c"/>
-
-                                        <!-- Eyebrows -->
-                                        <path d="M 154 152 Q 170 146 182 152" stroke="#1e2433" stroke-width="3" stroke-linecap="round" fill="none"/>
-                                        <path d="M 218 152 Q 230 146 246 152" stroke="#1e2433" stroke-width="3" stroke-linecap="round" fill="none"/>
-
-                                        <!-- EYES (WITH NATURAL VECTOR BLINK ANIMATION) -->
-                                        <g class="vector-blink-eye">
-                                            <ellipse cx="168" cy="166" rx="9.5" ry="6.5" fill="#ffffff"/>
-                                            <circle cx="168" cy="166" r="4.8" fill="#1e293b"/>
-                                            <circle cx="170" cy="164" r="1.6" fill="#ffffff"/>
-                                            <path d="M 158 163 Q 168 158 178 163" stroke="#1e2433" stroke-width="1.8" fill="none"/>
-
-                                            <ellipse cx="232" cy="166" rx="9.5" ry="6.5" fill="#ffffff"/>
-                                            <circle cx="232" cy="166" r="4.8" fill="#1e293b"/>
-                                            <circle cx="234" cy="164" r="1.6" fill="#ffffff"/>
-                                            <path d="M 222 163 Q 232 158 242 163" stroke="#1e2433" stroke-width="1.8" fill="none"/>
+                                        <!-- Examiner Lapel Seal (Left Chest) -->
+                                        <g transform="translate(106, 335)">
+                                            <circle cx="16" cy="16" r="14" fill="#1e293b" stroke="#eab308" stroke-width="2"/>
+                                            <circle cx="16" cy="16" r="10" fill="#ca8a04"/>
+                                            <text x="16" y="19" font-size="6.5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">SIDANG</text>
                                         </g>
 
-                                        <!-- Nose -->
-                                        <path d="M 197 168 Q 200 186 195 188 Q 200 190 205 188" stroke="#cf8660" stroke-width="2" stroke-linecap="round" fill="none"/>
+                                        <!-- Head & Face Group (Reactive Posture & Breathing) -->
+                                        <g :class="orbState === 'ai_speaking' ? 'vector-talking-head' : (orbState === 'user_speaking' ? 'vector-listening-head' : (orbState === 'thinking' ? 'vector-thinking-head' : 'vector-breathe-head'))">
+                                            <!-- Neck -->
+                                            <path d="M 176 210 L 224 210 L 228 266 L 172 266 Z" fill="url(#dosenSkinGrad)"/>
+                                            <path d="M 176 210 Q 200 225 224 210 Q 200 234 176 210 Z" fill="#b97858" opacity="0.6"/>
 
-                                        <!-- DYNAMIC MOUTH (SWITCHES BETWEEN WARM HR SMILE AND ANIMATED TALKING MOUTH) -->
-                                        <!-- 1. Silent Resting State: Warm Confident HR Smile -->
-                                        <g x-show="orbState !== 'ai_speaking'">
-                                            <path d="M 183 205 Q 200 218 217 205" stroke="#99473b" stroke-width="3" stroke-linecap="round" fill="none"/>
-                                            <path d="M 186 206 Q 200 213 214 206 Q 200 215 186 206 Z" fill="#ffffff" opacity="0.75"/>
-                                            <circle cx="180" cy="204" r="1.5" fill="#cf8660" opacity="0.6"/>
-                                            <circle cx="220" cy="204" r="1.5" fill="#cf8660" opacity="0.6"/>
+                                            <!-- Shirt Collar Wings -->
+                                            <path d="M 164 260 L 192 264 L 178 290 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+                                            <path d="M 236 260 L 208 264 L 222 290 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+
+                                            <!-- Ears -->
+                                            <path d="M 130 172 C 120 172 118 194 130 204 Z" fill="url(#dosenSkinGrad)"/>
+                                            <path d="M 270 172 C 280 172 282 194 270 204 Z" fill="url(#dosenSkinGrad)"/>
+                                            <path d="M 127 180 C 123 184 123 192 128 195" stroke="#b97858" stroke-width="1.5" fill="none"/>
+                                            <path d="M 273 180 C 277 184 277 192 272 195" stroke="#b97858" stroke-width="1.5" fill="none"/>
+
+                                            <!-- Jaw & Head -->
+                                            <path d="M 130 162 C 130 100 270 100 270 162 C 270 205 236 230 200 230 C 164 230 130 205 130 162 Z" fill="url(#dosenSkinGrad)"/>
+
+                                            <!-- Distinguished Academic Hair with Silver Highlights -->
+                                            <path d="M 126 155 C 126 90 158 65 200 65 C 245 65 274 90 274 155 C 274 162 270 165 265 148 C 256 108 240 96 200 98 C 160 96 144 110 135 148 C 130 165 126 162 126 155 Z" fill="url(#dosenHairGrad)"/>
+                                            <path d="M 130 148 C 140 115 170 92 210 94 C 248 96 268 114 270 146 C 262 124 246 108 212 108 C 172 108 144 124 130 148 Z" fill="#475569"/>
+                                            <path d="M 128 152 C 132 136 138 126 146 118" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+                                            <path d="M 272 152 C 268 136 262 126 254 118" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+
+                                            <!-- Eyebrows -->
+                                            <path d="M 152 148 Q 170 142 184 148" stroke="#1e2433" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+                                            <path d="M 216 148 Q 230 142 248 148" stroke="#1e2433" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+
+                                            <!-- Eyes with Natural Blinking -->
+                                            <g class="vector-blink-eye">
+                                                <ellipse cx="168" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
+                                                <circle cx="168" cy="164" r="4.8" fill="#1e293b"/>
+                                                <circle cx="170" cy="162" r="1.6" fill="#ffffff"/>
+                                                <path d="M 158 161 Q 168 156 178 161" stroke="#1e2433" stroke-width="1.8" fill="none"/>
+
+                                                <ellipse cx="232" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
+                                                <circle cx="232" cy="164" r="4.8" fill="#1e293b"/>
+                                                <circle cx="234" cy="162" r="1.6" fill="#ffffff"/>
+                                                <path d="M 222 161 Q 232 156 242 161" stroke="#1e2433" stroke-width="1.8" fill="none"/>
+                                            </g>
+
+                                            <!-- Academic Glasses -->
+                                            <rect x="154" y="153" width="28" height="20" rx="3.5" fill="rgba(56, 189, 248, 0.08)" stroke="#38bdf8" stroke-width="1.8"/>
+                                            <rect x="218" y="153" width="28" height="20" rx="3.5" fill="rgba(56, 189, 248, 0.08)" stroke="#38bdf8" stroke-width="1.8"/>
+                                            <path d="M 182 161 Q 200 159 218 161" stroke="#38bdf8" stroke-width="2" fill="none"/>
+                                            <path d="M 154 162 L 132 166" stroke="#38bdf8" stroke-width="1.8"/>
+                                            <path d="M 246 162 L 268 166" stroke="#38bdf8" stroke-width="1.8"/>
+                                            <path d="M 158 156 L 168 156" stroke="#ffffff" stroke-width="1.2" opacity="0.6"/>
+                                            <path d="M 222 156 L 232 156" stroke="#ffffff" stroke-width="1.2" opacity="0.6"/>
+
+                                            <!-- Nose -->
+                                            <path d="M 197 166 Q 200 185 195 188 Q 200 190 205 188" stroke="#b97858" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+                                            <!-- Dynamic Mouth: Resting vs Active Talking -->
+                                            <!-- Resting Composed State -->
+                                            <g x-show="orbState !== 'ai_speaking'">
+                                                <path d="M 184 206 Q 200 204 216 206" stroke="#783528" stroke-width="3" stroke-linecap="round" fill="none"/>
+                                                <path d="M 188 206 Q 200 209 212 206" stroke="#b97858" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+                                            </g>
+
+                                            <!-- Active Speaking State (Mouth Opens, Articulates & Closes with Speech) -->
+                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk" style="transform-origin: 200px 208px;">
+                                                <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d14"/>
+                                                <path d="M 187 202 Q 200 205 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
+                                                <ellipse cx="200" cy="214" rx="10" ry="4" fill="#a83c48" opacity="0.85"/>
+                                                <path d="M 182 201 Q 200 197 218 201" stroke="#783528" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                                                <path d="M 185 216 Q 200 223 215 216" stroke="#783528" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                                            </g>
+                                        </g>
+                                    </svg>
+                                </template>
+
+                                <!-- ROLE B: HRD TALENT ACQUISITION (Nadia Putri, S.Psi., CHRP) -->
+                                <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'hrd'">
+                                    <svg viewBox="0 0 400 420" class="w-full h-full object-contain select-none" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <linearGradient id="nadiaStudioBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#090d20"/>
+                                                <stop offset="50%" stop-color="#131b38"/>
+                                                <stop offset="100%" stop-color="#1e294f"/>
+                                            </linearGradient>
+                                            <linearGradient id="nadiaBlazer" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#1e1b4b"/>
+                                                <stop offset="100%" stop-color="#0f172a"/>
+                                            </linearGradient>
+                                            <linearGradient id="nadiaBlazerLapel" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#312e81"/>
+                                                <stop offset="100%" stop-color="#1e1b4b"/>
+                                            </linearGradient>
+                                            <linearGradient id="nadiaSkinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="#ffe2d1"/>
+                                                <stop offset="100%" stop-color="#f2ad99"/>
+                                            </linearGradient>
+                                            <linearGradient id="nadiaHairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#262626"/>
+                                                <stop offset="50%" stop-color="#171717"/>
+                                                <stop offset="100%" stop-color="#0a0a0a"/>
+                                            </linearGradient>
+                                        </defs>
+
+                                        <!-- Studio Backdrop -->
+                                        <rect width="400" height="420" fill="url(#nadiaStudioBg)"/>
+                                        <circle cx="200" cy="140" r="140" fill="#818cf8" opacity="0.09" filter="blur(25px)"/>
+                                        <circle cx="200" cy="170" r="110" fill="#f43f5e" opacity="0.04" filter="blur(20px)"/>
+                                        <path d="M 0 320 L 400 320" stroke="#334155" stroke-width="1" opacity="0.3"/>
+
+                                        <!-- Torso & Corporate Blazer with Inner Blouse -->
+                                        <path d="M 40 420 Q 65 325 130 305 L 270 305 Q 335 325 360 420 Z" fill="url(#nadiaBlazer)"/>
+                                        <path d="M 162 258 L 238 258 L 222 385 L 178 385 Z" fill="#fff1f2"/>
+                                        <path d="M 200 270 L 200 385" stroke="#fbcfe8" stroke-width="1.2" stroke-dasharray="3,3"/>
+
+                                        <!-- Tailored Blazer Lapels -->
+                                        <path d="M 125 305 L 170 262 L 184 358 L 138 395 Z" fill="url(#nadiaBlazerLapel)"/>
+                                        <path d="M 275 305 L 230 262 L 216 358 L 262 395 Z" fill="url(#nadiaBlazerLapel)"/>
+                                        <path d="M 125 305 L 170 262" stroke="#4338ca" stroke-width="1.5"/>
+                                        <path d="M 275 305 L 230 262" stroke="#4338ca" stroke-width="1.5"/>
+
+                                        <!-- HR Lanyard ID Badge (Left Chest) - NADIA -->
+                                        <g transform="translate(98, 340)">
+                                            <path d="M 46 -48 L 22 0" stroke="#3b82f6" stroke-width="3" opacity="0.85"/>
+                                            <rect x="6" y="0" width="38" height="50" rx="4" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"/>
+                                            <rect x="6" y="0" width="38" height="11" rx="2" fill="#2563eb"/>
+                                            <text x="25" y="8" font-size="5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">HR TALENT</text>
+                                            <circle cx="25" cy="23" r="7" fill="#fbcfe8"/>
+                                            <text x="25" y="36" font-size="5" font-weight="bold" fill="#1e293b" text-anchor="middle" font-family="sans-serif">NADIA</text>
+                                            <rect x="14" y="40" width="22" height="2" rx="1" fill="#94a3b8"/>
                                         </g>
 
-                                        <!-- 2. Active Speaking State: Fully Animated Speech-Synchronized Talking Mouth -->
-                                        <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk" style="transform-origin: 200px 208px;">
-                                            <ellipse cx="200" cy="208" rx="17" ry="11" fill="#2d0d12"/>
-                                            <path d="M 187 202 Q 200 206 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
-                                            <ellipse cx="200" cy="214" rx="10" ry="4" fill="#a83c48" opacity="0.8"/>
-                                            <path d="M 182 201 Q 200 197 218 201" stroke="#a34a3e" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                                            <path d="M 185 216 Q 200 223 215 216" stroke="#a34a3e" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                                        <!-- Hair Silhouette Behind Shoulders -->
+                                        <path d="M 124 165 C 115 220 118 290 145 320 L 160 320 C 135 270 134 220 138 175 Z" fill="#171717"/>
+                                        <path d="M 276 165 C 285 220 282 290 255 320 L 240 320 C 265 270 266 220 262 175 Z" fill="#171717"/>
+
+                                        <!-- Head & Face Group (Reactive Posture & Breathing) -->
+                                        <g :class="orbState === 'ai_speaking' ? 'vector-talking-head' : (orbState === 'user_speaking' ? 'vector-listening-head' : (orbState === 'thinking' ? 'vector-thinking-head' : 'vector-breathe-head'))">
+                                            <!-- Neck -->
+                                            <path d="M 180 210 L 220 210 L 224 266 L 176 266 Z" fill="url(#nadiaSkinGrad)"/>
+                                            <path d="M 180 210 Q 200 224 220 210 Q 200 232 180 210 Z" fill="#e0907c" opacity="0.6"/>
+
+                                            <!-- Delicate Necklace -->
+                                            <path d="M 184 252 Q 200 262 216 252" stroke="#fbbf24" stroke-width="1.2" fill="none"/>
+                                            <circle cx="200" cy="258" r="2.2" fill="#fbbf24"/>
+
+                                            <!-- Ears with Pearl Earrings -->
+                                            <path d="M 132 174 C 124 174 122 194 132 202 Z" fill="url(#nadiaSkinGrad)"/>
+                                            <path d="M 268 174 C 276 174 278 194 268 202 Z" fill="url(#nadiaSkinGrad)"/>
+                                            <circle cx="127" cy="190" r="2.8" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.8"/>
+                                            <circle cx="273" cy="190" r="2.8" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.8"/>
+
+                                            <!-- Soft Feminine Jaw & Face -->
+                                            <path d="M 134 162 C 134 104 266 104 266 162 C 266 202 234 228 200 228 C 166 228 134 202 134 162 Z" fill="url(#nadiaSkinGrad)"/>
+
+                                            <!-- Soft Rosy Blush Cheeks -->
+                                            <ellipse cx="152" cy="182" rx="9" ry="5.5" fill="#f43f5e" opacity="0.22"/>
+                                            <ellipse cx="248" cy="182" rx="9" ry="5.5" fill="#f43f5e" opacity="0.22"/>
+
+                                            <!-- Elegant Hair Styling -->
+                                            <path d="M 126 155 C 126 88 158 64 200 64 C 246 64 274 88 274 155 C 274 162 270 166 264 148 C 255 106 240 94 200 96 C 160 94 144 108 136 148 C 131 166 126 162 126 155 Z" fill="url(#nadiaHairGrad)"/>
+                                            <path d="M 134 146 C 146 106 176 86 218 88 C 252 90 270 108 270 138 C 262 116 244 102 216 102 C 174 102 148 118 134 146 Z" fill="#262626"/>
+                                            <path d="M 150 96 Q 190 82 232 94" stroke="#525252" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+                                            <!-- Soft Arched Eyebrows -->
+                                            <path d="M 152 148 Q 170 140 184 146" stroke="#1f2937" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+                                            <path d="M 216 146 Q 230 140 248 148" stroke="#1f2937" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+
+                                            <!-- Expressive Eyes with Eyelashes & Natural Blinking -->
+                                            <g class="vector-blink-eye">
+                                                <ellipse cx="168" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
+                                                <circle cx="168" cy="164" r="4.8" fill="#1e293b"/>
+                                                <circle cx="170" cy="162" r="1.6" fill="#ffffff"/>
+                                                <path d="M 156 162 Q 168 156 180 161" stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+                                                <path d="M 178 159 L 182 157" stroke="#0f172a" stroke-width="1.8" stroke-linecap="round"/>
+
+                                                <ellipse cx="232" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
+                                                <circle cx="232" cy="164" r="4.8" fill="#1e293b"/>
+                                                <circle cx="234" cy="162" r="1.6" fill="#ffffff"/>
+                                                <path d="M 220 161 Q 232 156 244 162" stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+                                                <path d="M 242 159 L 246 157" stroke="#0f172a" stroke-width="1.8" stroke-linecap="round"/>
+                                            </g>
+
+                                            <!-- Delicate Nose -->
+                                            <path d="M 197 167 Q 200 184 196 186 Q 200 188 204 186" stroke="#d58673" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+
+                                            <!-- Dynamic Mouth: Warm HR Smile vs Active Articulated Talking Mouth -->
+                                            <!-- 1. Silent Resting State: Warm Empathetic HR Smile -->
+                                            <g x-show="orbState !== 'ai_speaking'">
+                                                <path d="M 183 204 Q 200 218 217 204" stroke="#be123c" stroke-width="3" stroke-linecap="round" fill="none"/>
+                                                <path d="M 186 205 Q 200 213 214 205 Q 200 215 186 205 Z" fill="#ffffff" opacity="0.85"/>
+                                                <circle cx="180" cy="203" r="1.6" fill="#f43f5e" opacity="0.7"/>
+                                                <circle cx="220" cy="203" r="1.6" fill="#f43f5e" opacity="0.7"/>
+                                            </g>
+
+                                            <!-- 2. Active Speaking State: Speech-Synchronized Talking Mouth -->
+                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk" style="transform-origin: 200px 208px;">
+                                                <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d18"/>
+                                                <path d="M 187 202 Q 200 206 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
+                                                <ellipse cx="200" cy="214" rx="10" ry="4" fill="#f43f5e" opacity="0.85"/>
+                                                <path d="M 182 201 Q 200 197 218 201" stroke="#be123c" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                                                <path d="M 185 216 Q 200 223 215 216" stroke="#be123c" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                                            </g>
                                         </g>
-                                    </g>
-                                </svg>
+                                    </svg>
+                                </template>
+
+                                <!-- ROLE C: INVESTOR & VENTURE CAPITALIST (Raymond Chandra, B.Eng., MBA) -->
+                                <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'investor'">
+                                    <svg viewBox="0 0 400 420" class="w-full h-full object-contain select-none" xmlns="http://www.w3.org/2000/svg">
+                                        <defs>
+                                            <linearGradient id="invStudioBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#050811"/>
+                                                <stop offset="50%" stop-color="#0c1322"/>
+                                                <stop offset="100%" stop-color="#192438"/>
+                                            </linearGradient>
+                                            <linearGradient id="invJacket" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#1e293b"/>
+                                                <stop offset="100%" stop-color="#0b111e"/>
+                                            </linearGradient>
+                                            <linearGradient id="invLapel" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#334155"/>
+                                                <stop offset="100%" stop-color="#1e293b"/>
+                                            </linearGradient>
+                                            <linearGradient id="invSkinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="#f8d4bb"/>
+                                                <stop offset="100%" stop-color="#e09e79"/>
+                                            </linearGradient>
+                                            <linearGradient id="invHairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#1e293b"/>
+                                                <stop offset="100%" stop-color="#0f172a"/>
+                                            </linearGradient>
+                                        </defs>
+
+                                        <!-- Studio Backdrop (Modern Tech High-Rise Skyline) -->
+                                        <rect width="400" height="420" fill="url(#invStudioBg)"/>
+                                        <path d="M 60 0 L 140 420" stroke="#334155" stroke-width="0.8" opacity="0.25"/>
+                                        <path d="M 340 0 L 260 420" stroke="#334155" stroke-width="0.8" opacity="0.25"/>
+                                        <circle cx="200" cy="140" r="140" fill="#0ea5e9" opacity="0.08" filter="blur(25px)"/>
+                                        <path d="M 0 320 L 400 320" stroke="#334155" stroke-width="1" opacity="0.3"/>
+
+                                        <!-- Torso & Modern Tech VC Attire (Open Collar Oxford & Navy Blazer) -->
+                                        <path d="M 35 420 Q 60 325 125 305 L 275 305 Q 340 325 365 420 Z" fill="url(#invJacket)"/>
+                                        <path d="M 158 256 L 242 256 L 226 385 L 174 385 Z" fill="#e0f2fe"/>
+                                        <path d="M 200 278 L 200 385" stroke="#bae6fd" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+                                        <!-- Open Collar Shirt Wings (No Tie - Modern VC Style) -->
+                                        <path d="M 166 260 L 190 268 L 174 294 Z" fill="#ffffff" stroke="#bae6fd" stroke-width="1"/>
+                                        <path d="M 234 260 L 210 268 L 226 294 Z" fill="#ffffff" stroke="#bae6fd" stroke-width="1"/>
+
+                                        <!-- Slim Modern Lapels -->
+                                        <path d="M 122 305 L 168 260 L 180 355 L 134 395 Z" fill="url(#invLapel)"/>
+                                        <path d="M 278 305 L 232 260 L 220 355 L 266 395 Z" fill="url(#invLapel)"/>
+                                        <path d="M 122 305 L 168 260" stroke="#475569" stroke-width="1.5"/>
+                                        <path d="M 278 305 L 232 260" stroke="#475569" stroke-width="1.5"/>
+
+                                        <!-- Geometric Gold Venture Fund Lapel Pin -->
+                                        <g transform="translate(138, 332)">
+                                            <polygon points="12,4 20,18 4,18" fill="#eab308" stroke="#ca8a04" stroke-width="1"/>
+                                            <circle cx="12" cy="14" r="2.5" fill="#ffffff"/>
+                                        </g>
+
+                                        <!-- Head & Face Group (Reactive Posture & Breathing) -->
+                                        <g :class="orbState === 'ai_speaking' ? 'vector-talking-head' : (orbState === 'user_speaking' ? 'vector-listening-head' : (orbState === 'thinking' ? 'vector-thinking-head' : 'vector-breathe-head'))">
+                                            <!-- Neck -->
+                                            <path d="M 176 210 L 224 210 L 228 266 L 172 266 Z" fill="url(#invSkinGrad)"/>
+                                            <path d="M 176 210 Q 200 226 224 210 Q 200 234 176 210 Z" fill="#b87858" opacity="0.6"/>
+
+                                            <!-- Ears -->
+                                            <path d="M 130 172 C 120 172 118 194 130 204 Z" fill="url(#invSkinGrad)"/>
+                                            <path d="M 270 172 C 280 172 282 194 270 204 Z" fill="url(#invSkinGrad)"/>
+                                            <path d="M 127 180 C 123 184 123 192 128 195" stroke="#b87858" stroke-width="1.5" fill="none"/>
+                                            <path d="M 273 180 C 277 184 277 192 272 195" stroke="#b87858" stroke-width="1.5" fill="none"/>
+
+                                            <!-- Sharp Modern Jawline -->
+                                            <path d="M 130 162 C 130 102 270 102 270 162 C 270 204 236 230 200 230 C 164 230 130 204 130 162 Z" fill="url(#invSkinGrad)"/>
+
+                                            <!-- Modern Styled Fade Hair -->
+                                            <path d="M 126 155 C 126 90 156 66 200 66 C 244 66 274 90 274 155 C 274 162 270 165 265 148 C 256 108 240 96 200 98 C 160 96 144 110 135 148 C 130 165 126 162 126 155 Z" fill="url(#invHairGrad)"/>
+                                            <path d="M 132 144 C 144 108 174 88 214 90 C 248 92 268 110 268 138 C 260 118 244 104 214 104 C 174 104 146 120 132 144 Z" fill="#334155"/>
+                                            <path d="M 170 82 Q 200 72 230 84" stroke="#475569" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+                                            <!-- Sharp Confident Eyebrows -->
+                                            <path d="M 152 148 Q 170 142 184 148" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+                                            <path d="M 216 148 Q 230 142 248 148" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round" fill="none"/>
+
+                                            <!-- Confident Eyes with Natural Blinking -->
+                                            <g class="vector-blink-eye">
+                                                <ellipse cx="168" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
+                                                <circle cx="168" cy="164" r="4.8" fill="#0f172a"/>
+                                                <circle cx="170" cy="162" r="1.6" fill="#ffffff"/>
+                                                <path d="M 158 160 Q 168 156 178 160" stroke="#0f172a" stroke-width="1.8" fill="none"/>
+
+                                                <ellipse cx="232" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
+                                                <circle cx="232" cy="164" r="4.8" fill="#0f172a"/>
+                                                <circle cx="234" cy="162" r="1.6" fill="#ffffff"/>
+                                                <path d="M 222 160 Q 232 156 242 160" stroke="#0f172a" stroke-width="1.8" fill="none"/>
+                                            </g>
+
+                                            <!-- Nose -->
+                                            <path d="M 197 166 Q 200 185 195 188 Q 200 190 205 188" stroke="#b87858" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+                                            <!-- Dynamic Mouth: Confident Rest vs Active Talking -->
+                                            <!-- 1. Silent Resting State: Confident Sharp Investor Smirk -->
+                                            <g x-show="orbState !== 'ai_speaking'">
+                                                <path d="M 184 205 Q 200 210 216 205" stroke="#7c2d12" stroke-width="3" stroke-linecap="round" fill="none"/>
+                                                <path d="M 187 206 Q 200 212 213 206" stroke="#b87858" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
+                                            </g>
+
+                                            <!-- 2. Active Speaking State: Speech-Synchronized Talking Mouth -->
+                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk" style="transform-origin: 200px 208px;">
+                                                <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d14"/>
+                                                <path d="M 187 202 Q 200 205 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
+                                                <ellipse cx="200" cy="214" rx="10" ry="4" fill="#a83c48" opacity="0.85"/>
+                                                <path d="M 182 201 Q 200 197 218 201" stroke="#7c2d12" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                                                <path d="M 185 216 Q 200 223 215 216" stroke="#7c2d12" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                                            </g>
+                                        </g>
+                                    </svg>
+                                </template>
+
                             </div>
                         </div>
                     </template>
@@ -2817,18 +3982,16 @@
                         </div>
                     </div>
 
-                    <!-- Bottom Right: Examiner Persona Watermark Badge & HR Toggle -->
-                    <div class="absolute bottom-4 right-4 z-20 flex flex-col items-end gap-1.5 hidden sm:flex">
-                        <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'hrd'">
-                            <button type="button"
-                                    @click="hrAvatarMode = (hrAvatarMode === 'animated' ? 'photo' : 'animated')"
-                                    class="pointer-events-auto px-2.5 py-1 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/20 text-white text-[10px] font-semibold flex items-center gap-1.5 hover:bg-slate-800 transition cursor-pointer shadow-lg"
-                                    title="Ganti Tampilan Karakter HRD">
-                                <span x-text="hrAvatarMode === 'photo' ? '📷 Mode: Foto HD Realistis' : '👔 Mode: Animasi 2D'"></span>
-                                <span class="text-blue-400 text-[9px] font-bold">⇄ Ganti</span>
-                            </button>
-                        </template>
-                        <div class="pointer-events-none px-3 py-1.5 rounded-xl bg-slate-900/75 backdrop-blur-md border border-white/10 text-right shadow-lg">
+                    <!-- Bottom Right: Examiner Persona Watermark Badge & Mode Switcher Button -->
+                    <div class="absolute bottom-4 right-4 z-20 flex flex-col items-end gap-1.5">
+                        <button type="button"
+                                @click="avatarStageMode = (avatarStageMode === 'animated' ? 'photo' : 'animated')"
+                                class="pointer-events-auto px-2.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-1.5 hover:bg-slate-800 transition cursor-pointer shadow-lg active:scale-95"
+                                title="Ganti Mode Tampilan Karakter (Animasi Berbicara / Foto HD)">
+                            <span x-text="avatarStageMode === 'animated' ? '🎭 Mode: Karakter Animasi (Bicara)' : '📷 Mode: Foto Studio HD'"></span>
+                            <span class="text-blue-400 text-[10px] font-bold">⇄ Ganti</span>
+                        </button>
+                        <div class="pointer-events-none px-3 py-1.5 rounded-xl bg-slate-900/75 backdrop-blur-md border border-white/10 text-right shadow-lg hidden sm:block">
                             <div class="text-[11px] font-bold text-white tracking-wide" x-text="avatarPersonaName"></div>
                             <div class="text-[9px] text-blue-400 font-medium" x-text="avatarPersonaRole"></div>
                         </div>
@@ -2925,8 +4088,27 @@
                             @click="submitCurrentTurn()"
                             :disabled="!liveInterimTranscript.trim()"
                             class="shrink-0 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer disabled:opacity-40">
-                        Kirim Jawaban
+                        Kirim Jawaban ⏎
                     </button>
+                </div>
+
+                <!-- CONVERSATIONAL GROUNDING & COHERENCE STRIP -->
+                <div x-show="detectedSalientEntities.length > 0 || liveCoherenceScore > 0"
+                     class="px-4 py-2 rounded-2xl bg-slate-50 dark:bg-navy-950/60 border border-slate-200/80 dark:border-navy-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span>Koherensi Dialog:</span>
+                        </span>
+                        <span class="font-mono font-bold text-blue-600 dark:text-blue-400" x-text="liveCoherenceScore + '%'"></span>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300" x-text="liveCoherenceCategory"></span>
+                    </div>
+                    <div x-show="detectedSalientEntities.length > 0" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
+                        <span>Topik Terkait:</span>
+                        <template x-for="ent in detectedSalientEntities" :key="ent">
+                            <span class="px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold" x-text="ent"></span>
+                        </template>
+                    </div>
                 </div>
 
                 <!-- SIMPLE FLOATING CONTROL DOCK (Kontrol Utama Bawah) -->

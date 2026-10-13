@@ -4,7 +4,7 @@
   "start_url": "/",
   "display": "standalone",
   "background_color": "#020617",
-  "theme_color": "#4f46e5",
+  "theme_color": "#1d62c9",
   "description": "AI Multimodal Public Speaking & Interview Coach dengan Edge Computer Vision & Web Audio Analyser.",
   "orientation": "any",
   "icons": [

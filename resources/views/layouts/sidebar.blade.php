@@ -17,23 +17,8 @@
 
     <!-- Sidebar Header: Brand Logo & Mobile Close -->
     <div class="h-16 flex items-center justify-between px-5 border-b border-slate-200/80 dark:border-slate-800/80 shrink-0">
-        <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-3 group">
-            <div class="h-10 w-10 rounded-2xl bg-gradient-to-tr from-blue-700 via-blue-600 to-sky-400 flex items-center justify-center text-white shadow-lg shadow-blue-600/25 ring-2 ring-blue-500/20 group-hover:scale-105 transition-all">
-                <span class="font-black text-base tracking-tighter">V</span>
-            </div>
-            <div class="flex flex-col">
-                <div class="flex items-center gap-1.5">
-                    <span class="text-base font-black tracking-tight text-slate-900 dark:text-white leading-none">
-                        VOIC
-                    </span>
-                    <span class="px-1.5 py-0.2 rounded-md bg-blue-500/15 text-blue-600 dark:text-blue-400 font-extrabold text-[10px] border border-blue-500/30">
-                        AI
-                    </span>
-                </div>
-                <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-1">
-                    Multimodal Coach
-                </span>
-            </div>
+        <a href="{{ route('dashboard') }}" class="inline-flex items-center group">
+            <x-application-logo variant="horizontal" class="h-9 w-auto group-hover:scale-[1.02] transition-transform" />
         </a>
 
         <!-- Mobile Close Button -->

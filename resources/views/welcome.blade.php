@@ -47,14 +47,8 @@
          x-data="{ mobileNavOpen: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 sm:h-20">
-                <a href="/" class="flex items-center gap-3 group">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#0b192c] via-blue-800 to-blue-600 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-900/30 group-hover:scale-105 transition-transform">
-                        V
-                    </div>
-                    <div>
-                        <span class="font-black text-lg tracking-tight text-slate-900 dark:text-white block">VOIC AI</span>
-                        <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase tracking-widest block -mt-1">Multimodal Coach</span>
-                    </div>
+                <a href="/" class="flex items-center group">
+                    <x-application-logo variant="horizontal" class="h-10 sm:h-11 w-auto group-hover:scale-[1.02] transition-transform" />
                 </a>
 
                 <!-- Nav Menu Desktop -->
@@ -92,11 +86,11 @@
                             </svg>
                         </a>
                     @else
-                        <!-- 1-Click Guest Evaluation Login Button -->
-                        <a href="{{ route('demo.login') }}"
+                        <!-- Innofest Expo Booth Quick Demo Button -->
+                        <a href="{{ route('demo.create') }}"
                            class="hidden sm:inline-flex items-center px-3.5 py-2 text-xs font-bold rounded-xl text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition shadow-xs">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse me-1.5"></span>
-                            Mode Tamu Evaluasi
+                            Demo Booth Innofest
                         </a>
 
                         <a href="{{ route('login') }}"
@@ -145,8 +139,8 @@
 
             <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2">
                 @guest
-                    <a href="{{ route('demo.login') }}" class="w-full text-center px-4 py-2.5 rounded-xl font-bold text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60">
-                        ⚡ Coba Mode Tamu Evaluasi (1-Klik)
+                    <a href="{{ route('demo.create') }}" class="w-full text-center px-4 py-2.5 rounded-xl font-bold text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60">
+                        🎪 Coba Mode Booth Tamu (Tanpa Login)
                     </a>
                     <a href="{{ route('register') }}" class="w-full text-center px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 shadow-md">
                         Daftar Akun Baru
@@ -191,12 +185,10 @@
                             </svg>
                         </a>
                     @else
-                        <a href="{{ route('demo.login') }}"
-                           class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base font-extrabold rounded-2xl text-white bg-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-600/30 transition transform hover:-translate-y-0.5">
-                            <svg class="w-5 h-5 me-2 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                            Coba Mode Tamu Evaluasi (1-Klik)
+                        <a href="{{ route('demo.create') }}"
+                           class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base font-extrabold rounded-2xl text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 shadow-xl shadow-emerald-600/30 transition transform hover:-translate-y-0.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-white animate-pulse me-2.5"></span>
+                            Coba Demo Booth Tamu (Tanpa Login)
                         </a>
                         <a href="{{ route('register') }}"
                            class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-2xl text-slate-800 dark:text-slate-200 bg-white dark:bg-[#0f1c2f] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs">
@@ -380,7 +372,7 @@
                         </span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <a href="{{ auth()->check() ? route('practice.create') : route('demo.login') }}"
+                        <a href="{{ auth()->check() ? route('practice.create') : route('demo.create') }}"
                            class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-sm transition transform hover:-translate-y-0.5">
                             Coba Langsung Simulasi di Browser Anda →
                         </a>
@@ -395,33 +387,97 @@
     <section id="karakter-ai" class="py-16 sm:py-24 border-t border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-[#0b1329]/50"
              x-data="{
                 activePlayingVoice: null,
-                playVoiceSample(roleKey, text) {
+                activeAudioObj: null,
+                async playVoiceSample(roleKey, text) {
                     if (this.activePlayingVoice === roleKey) {
+                        if (this.activeAudioObj) {
+                            this.activeAudioObj.pause();
+                            this.activeAudioObj = null;
+                        }
                         if (window.speechSynthesis) window.speechSynthesis.cancel();
                         this.activePlayingVoice = null;
                         return;
                     }
+                    if (this.activeAudioObj) {
+                        this.activeAudioObj.pause();
+                        this.activeAudioObj = null;
+                    }
+                    if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+                    this.activePlayingVoice = roleKey;
+                    const roleType = roleKey === 'dosen' ? 'dosen_penguji' : (roleKey === 'hrd' ? 'hrd' : 'investor');
+
+                    // 1. Coba Edge-TTS studio-grade dari microservice AI lokal
+                    try {
+                        const res = await fetch('http://127.0.0.1:8001/tts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                text: text,
+                                role_type: roleType,
+                                language: 'id'
+                            })
+                        });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.success && data.audio_url) {
+                                const audio = new Audio('http://127.0.0.1:8001' + data.audio_url);
+                                this.activeAudioObj = audio;
+                                audio.onended = () => { this.activePlayingVoice = null; };
+                                audio.onerror = () => { this.playBrowserVoice(roleKey, text); };
+                                await audio.play();
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        // Fallback ke browser synthesis
+                    }
+
+                    this.playBrowserVoice(roleKey, text);
+                },
+
+                playBrowserVoice(roleKey, text) {
                     if (!window.speechSynthesis) {
                         alert('Peramban Anda belum mendukung Speech Synthesis.');
+                        this.activePlayingVoice = null;
                         return;
                     }
                     window.speechSynthesis.cancel();
-                    this.activePlayingVoice = roleKey;
                     const ut = new SpeechSynthesisUtterance(text);
                     ut.lang = 'id-ID';
+
                     if (roleKey === 'dosen') {
-                        ut.pitch = 0.88;
-                        ut.rate = 0.95;
+                        ut.pitch = 0.80; // Bariton berat Dosen Killer
+                        ut.rate = 0.88;  // Tempo terukur & berwibawa
                     } else if (roleKey === 'hrd') {
-                        ut.pitch = 1.15;
-                        ut.rate = 1.02;
+                        ut.pitch = 1.12; // Nada ramah & hangat HRD
+                        ut.rate = 1.02;  // Tempo natural percakapan
                     } else {
-                        ut.pitch = 0.98;
-                        ut.rate = 1.05;
+                        ut.pitch = 0.96; // Nada tegas percaya diri
+                        ut.rate = 1.16;  // Tempo cepat pitch bisnis
                     }
+
                     const voices = window.speechSynthesis.getVoices();
-                    const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
-                    if (idVoice) ut.voice = idVoice;
+                    const idVoices = voices.filter(v => v.lang.includes('id') || v.lang.includes('ID'));
+
+                    if (idVoices.length > 0) {
+                        if (roleKey === 'hrd') {
+                            const female = idVoices.find(v => {
+                                const n = (v.name || '').toLowerCase();
+                                return n.includes('gadis') || n.includes('female') || n.includes('wanita') || n.includes('siti');
+                            });
+                            ut.voice = female || idVoices[0];
+                        } else if (roleKey === 'dosen') {
+                            const male = idVoices.find(v => {
+                                const n = (v.name || '').toLowerCase();
+                                return n.includes('ardi') || n.includes('male') || n.includes('pria') || n.includes('david');
+                            });
+                            ut.voice = male || idVoices[0];
+                        } else {
+                            ut.voice = idVoices[0];
+                        }
+                    }
+
                     ut.onend = () => { this.activePlayingVoice = null; };
                     ut.onerror = () => { this.activePlayingVoice = null; };
                     window.speechSynthesis.speak(ut);
@@ -517,7 +573,7 @@
                         </div>
 
                         <div class="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800">
-                            <a href="{{ auth()->check() ? route('practice.create', ['role' => 'dosen_penguji']) : route('demo.login') }}"
+                            <a href="{{ auth()->check() ? route('practice.create', ['role' => 'dosen_penguji']) : route('demo.create', ['role' => 'dosen_penguji']) }}"
                                class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-md shadow-blue-600/20">
                                 Latih Sidang Skripsi Sekarang →
                             </a>
@@ -525,7 +581,7 @@
                     </div>
                 </div>
 
-                <!-- Role 2: Arya Pratama (HRD Recruiter) -->
+                <!-- Role 2: Nadia Putri (HRD Recruiter) -->
                 <div class="rounded-3xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 shadow-xl hover:border-sky-500/50 transition flex flex-col justify-between group overflow-hidden">
                     <!-- Compact Proportionate Header -->
                     <div class="p-5 sm:p-6 pb-4 border-b border-slate-100 dark:border-slate-800/80 bg-gradient-to-b from-sky-50/60 to-transparent dark:from-sky-950/30 dark:to-transparent">
@@ -539,10 +595,10 @@
                         </div>
                         <div class="flex items-center gap-3.5">
                             <div class="relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden shadow-md border-2 border-white dark:border-slate-700 shrink-0 bg-slate-900 group-hover:scale-105 transition-transform duration-300">
-                                <img src="{{ asset('images/avatars/hrd.jpg') }}?v=3" alt="Arya Pratama, S.Psi., CHRP" width="80" height="80" loading="lazy" decoding="async" class="w-full h-full object-cover object-top">
+                                <img src="{{ asset('images/avatars/hrd.jpg') }}?v=4" alt="Nadia Putri, S.Psi., CHRP" width="80" height="80" loading="lazy" decoding="async" class="w-full h-full object-cover object-top">
                             </div>
                             <div class="min-w-0">
-                                <h3 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate">Arya Pratama, S.Psi., CHRP</h3>
+                                <h3 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white truncate">Nadia Putri, S.Psi., CHRP</h3>
                                 <p class="text-xs text-sky-600 dark:text-sky-400 font-semibold truncate">Senior HR Recruiter & Talent Lead</p>
                                 <span class="inline-flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -598,7 +654,7 @@
                         </div>
 
                         <div class="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800">
-                            <a href="{{ auth()->check() ? route('practice.create', ['role' => 'hrd']) : route('demo.login') }}"
+                            <a href="{{ auth()->check() ? route('practice.create', ['role' => 'hrd']) : route('demo.create', ['role' => 'hrd']) }}"
                                class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-sky-600 hover:bg-sky-500 transition shadow-md shadow-sky-600/20">
                                 Latih Wawancara HRD Sekarang →
                             </a>
@@ -679,7 +735,7 @@
                         </div>
 
                         <div class="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800">
-                            <a href="{{ auth()->check() ? route('practice.create', ['role' => 'investor']) : route('demo.login') }}"
+                            <a href="{{ auth()->check() ? route('practice.create', ['role' => 'investor']) : route('demo.create', ['role' => 'investor']) }}"
                                class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#0f243e] hover:bg-[#1b3a63] border border-blue-900/60 transition shadow-md">
                                 Latih Pitching Investor Sekarang →
                             </a>
@@ -1106,7 +1162,7 @@
                 </p>
 
                 <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <a href="{{ auth()->check() ? route('practice.create') : route('demo.login') }}"
+                    <a href="{{ auth()->check() ? route('practice.create') : route('demo.create') }}"
                        class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 text-sm font-bold text-slate-900 bg-white hover:bg-slate-100 rounded-xl shadow-lg transition transform hover:-translate-y-0.5">
                         Mulai Latihan Sekarang
                     </a>
@@ -1123,9 +1179,7 @@
     <footer class="border-t border-slate-200 dark:border-slate-800 py-10 bg-white dark:bg-[#080f1b] text-xs text-slate-500">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <div class="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white text-xs">
-                    V
-                </div>
+                <x-application-logo variant="mark" class="w-6 h-6" />
                 <span>&copy; {{ date('Y') }} Tim VOIC (Voice & Optics Intelligent Coach). Seluruh hak cipta dilindungi.</span>
             </div>
             <div>

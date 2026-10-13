@@ -6,18 +6,18 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'VOIC AI') }}</title>
-        <meta name="theme-color" content="#0b1329">
+        <meta name="theme-color" content="#070b14">
         <link rel="manifest" href="/manifest.json">
         <link rel="icon" type="image/svg+xml" href="/icon.svg">
 
-        <!-- Theme Initialization (Default to Professional Light Theme) -->
+        <!-- Theme Initialization Script -->
         <script>
             (function() {
                 const savedTheme = localStorage.getItem('voic_theme');
-                if (savedTheme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                } else {
+                if (savedTheme === 'light') {
                     document.documentElement.classList.remove('dark');
+                } else {
+                    document.documentElement.classList.add('dark');
                 }
             })();
         </script>
@@ -41,39 +41,30 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-slate-50 dark:bg-[#070d19] text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white relative overflow-x-hidden"
-          x-data="{ sidebarOpen: false }">
-        <!-- Ambient Mesh Background Orbs -->
+    <body class="font-sans antialiased bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white relative overflow-x-hidden min-h-screen flex flex-col transition-colors duration-200">
+        <!-- Ambient Background Orbs -->
         <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10" aria-hidden="true">
-            <div class="absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full bg-blue-500/10 dark:bg-blue-600/15 blur-3xl"></div>
-            <div class="absolute top-1/3 -right-32 w-[500px] h-[500px] rounded-full bg-sky-500/8 dark:bg-sky-500/10 blur-3xl"></div>
-            <div class="absolute -bottom-32 left-1/3 w-[600px] h-[450px] rounded-full bg-indigo-500/8 dark:bg-indigo-600/12 blur-3xl"></div>
+            <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[750px] h-[450px] rounded-full bg-blue-500/10 dark:bg-blue-500/10 blur-[130px]"></div>
+            <div class="absolute top-1/3 -right-40 w-[450px] h-[450px] rounded-full bg-indigo-500/5 dark:bg-indigo-600/8 blur-[100px]"></div>
+            <div class="absolute -bottom-32 left-1/4 w-[600px] h-[450px] rounded-full bg-sky-500/5 dark:bg-sky-600/6 blur-[120px]"></div>
         </div>
 
-        <div class="min-h-screen transition-colors duration-200">
-            <!-- Sidebar Navigation (Fixed on Desktop + Mobile Drawer) -->
-            @include('layouts.sidebar')
+        <!-- Full-Width Top Navigation Bar -->
+        @include('layouts.navigation')
 
-            <!-- Main Content Area (Offset by sidebar width on lg: screens) -->
-            <div class="lg:pl-64 print:pl-0 flex flex-col min-h-screen transition-all duration-300">
-                <!-- Topbar Header -->
-                @include('layouts.topbar')
+        <!-- Optional Page Header -->
+        @isset($header)
+            <header class="bg-white/80 dark:bg-[#0b121e]/70 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 print:hidden transition-colors">
+                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+                    {{ $header }}
+                </div>
+            </header>
+        @endisset
 
-                <!-- Page Heading -->
-                @isset($header)
-                    <header class="bg-white/80 dark:bg-[#0b1424]/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs print:hidden">
-                        <div class="max-w-7xl mx-auto py-4 sm:py-5 px-4 sm:px-6 lg:px-8">
-                            {{ $header }}
-                        </div>
-                    </header>
-                @endisset
-
-                <!-- Page Content -->
-                <main class="flex-1">
-                    {{ $slot }}
-                </main>
-            </div>
-        </div>
+        <!-- Main Page Content -->
+        <main class="flex-1 w-full">
+            {{ $slot }}
+        </main>
 
         <!-- Onboarding & Tutorial Guide Modal -->
         <x-onboarding-wizard />

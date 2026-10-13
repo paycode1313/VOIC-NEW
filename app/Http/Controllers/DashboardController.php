@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PracticeSession;
+use App\Services\AiRoleplayService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
@@ -11,9 +12,10 @@ class DashboardController extends Controller
     /**
      * Display the user dashboard with practice analytics, badge showcase, and leaderboard.
      */
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request, AiRoleplayService $aiService): View
     {
         $user = $request->user();
+        $deepLearningStats = $aiService->getDeepLearningTelemetry($user);
 
         $recentSessions = $user->practiceSessions()
             ->with('aiRole')
@@ -149,6 +151,7 @@ class DashboardController extends Controller
             'badgeShowcase' => $badgeShowcase,
             'unlockedTotal' => $unlockedTotal,
             'totalMasterBadges' => count($masterBadges),
+            'deepLearningStats' => $deepLearningStats,
         ]);
     }
 }

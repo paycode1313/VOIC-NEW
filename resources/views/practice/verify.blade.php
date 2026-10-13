@@ -17,9 +17,7 @@
     <header class="border-b border-navy-800/80 bg-navy-900/80 backdrop-blur-md sticky top-0 z-30">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-blue-500 flex items-center justify-center font-black text-white text-lg shadow-lg shadow-blue-600/30">
-                    V
-                </div>
+                <x-application-logo variant="mark" class="w-9 h-9" />
                 <div>
                     <span class="font-extrabold text-base tracking-tight text-white block">VOIC AI</span>
                     <span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold block">Official Credential Registry</span>
@@ -100,6 +98,9 @@
             $badges = $feedback['badges'] ?? [];
             $pitchScore = $feedback['pitch_dynamics_score'] ?? 80;
             $simLanguage = $feedback['language'] ?? 'id';
+            $detectedUptalking = (int) ($feedback['detected_uptalking'] ?? 0);
+            $awkwardPauses = (int) ($feedback['awkward_pauses'] ?? 0);
+            $currentStage = (int) ($feedback['current_stage'] ?? 4);
         @endphp
 
         <div class="bg-navy-900/90 rounded-3xl p-6 sm:p-8 border border-navy-800 shadow-xl space-y-6">
@@ -115,10 +116,10 @@
                         </span>
                     </div>
                     <h2 class="text-2xl font-extrabold text-white mt-0.5">
-                        {{ $user ? $user->name : 'Peserta Uji Terkalibrasi' }}
+                        {{ $session->getParticipantName() }}
                     </h2>
                     <p class="text-xs text-slate-400">
-                        Email: {{ $user ? $user->email : 'Akun Tamu Demo' }}
+                        {{ $session->getParticipantInstitution() ? 'Afiliasi: ' . $session->getParticipantInstitution() : ($user ? 'Email: ' . $user->email : 'Status: Pengunjung Booth Innofest 2026') }}
                     </p>
                 </div>
 
@@ -233,7 +234,7 @@
                 </div>
             @endif
 
-            <!-- National Benchmark Ranking Badge -->
+            <!-- Calibrated Prototype Benchmark Ranking Badge -->
             <div class="p-4 rounded-2xl bg-navy-950/80 border border-navy-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 shrink-0">
@@ -242,7 +243,7 @@
                         </svg>
                     </div>
                     <div>
-                        <span class="text-xs text-slate-400 block">Peringkat Tolak Ukur Nasional:</span>
+                        <span class="text-xs text-slate-400 block">Tolak Ukur Acuan Kalibrasi Internal:</span>
                         <span class="text-sm font-extrabold text-white">{{ $benchmarkData['percentile_rank'] }}</span>
                     </div>
                 </div>
@@ -266,6 +267,40 @@
                     </p>
                 </div>
             @endif
+
+            <!-- 4-Stage Completion & Acoustic Diagnostic Badges -->
+            <div class="p-4 rounded-2xl bg-navy-950/60 border border-navy-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Penyelesaian Skenario</span>
+                        <span class="font-bold text-white">
+                            Tahap {{ $currentStage }}/4
+                            @if($currentStage >= 3)
+                                <span class="text-[10px] text-emerald-400 font-semibold">• Lolos Stress Test</span>
+                            @endif
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full {{ $detectedUptalking > 0 ? 'bg-amber-400' : 'bg-emerald-400' }}"></span>
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Stabilitas Intonasi Nada</span>
+                        <span class="font-bold {{ $detectedUptalking > 0 ? 'text-amber-300' : 'text-emerald-300' }}">
+                            {{ $detectedUptalking }}x Uptalking {{ $detectedUptalking === 0 ? '(Nada Konfiden)' : '(Perlu Penegasan)' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full {{ $awkwardPauses > 0 ? 'bg-amber-400' : 'bg-emerald-400' }}"></span>
+                    <div>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold block">Responsivitas Jawaban</span>
+                        <span class="font-bold {{ $awkwardPauses > 0 ? 'text-amber-300' : 'text-emerald-300' }}">
+                            {{ $awkwardPauses }}x Jeda Canggung {{ $awkwardPauses === 0 ? '(Tempo Tangkas)' : '(Ada Latensi)' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
 
             <!-- Metadata Details Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-navy-800 text-xs text-slate-400">

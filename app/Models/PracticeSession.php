@@ -70,4 +70,36 @@ class PracticeSession extends Model
     {
         return $this->hasMany(SessionMessage::class);
     }
+
+    /**
+     * Determine if this session is a guest/demo session without an authenticated user.
+     */
+    public function isGuest(): bool
+    {
+        return $this->user_id === null;
+    }
+
+    /**
+     * Get the display name of the participant (user name or guest name).
+     */
+    public function getParticipantName(): string
+    {
+        if ($this->user) {
+            return $this->user->name;
+        }
+
+        $notes = $this->feedback_notes ?? [];
+
+        return $notes['guest_name'] ?? 'Pengunjung Booth';
+    }
+
+    /**
+     * Get the institution/affiliation of the participant if specified.
+     */
+    public function getParticipantInstitution(): ?string
+    {
+        $notes = $this->feedback_notes ?? [];
+
+        return $notes['guest_institution'] ?? null;
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PracticeSession;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -45,6 +46,12 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        if ($pendingSessionId = $request->session()->pull('pending_claim_session_id')) {
+            PracticeSession::where('id', $pendingSessionId)
+                ->whereNull('user_id')
+                ->update(['user_id' => $user->id]);
+        }
 
         return redirect(route('dashboard', absolute: false));
     }

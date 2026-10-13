@@ -13,12 +13,9 @@
         </button>
 
         <!-- Mobile Brand Logo (Visible only on mobile/tablet) -->
-        <div class="flex lg:hidden items-center gap-2">
-            <div class="h-8 w-8 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-sky-500 flex items-center justify-center text-white shadow-xs">
-                <span class="font-black text-sm">V</span>
-            </div>
-            <span class="font-black text-sm tracking-tight text-slate-900 dark:text-white">VOIC</span>
-        </div>
+        <a href="{{ route('dashboard') }}" class="flex lg:hidden items-center">
+            <x-application-logo variant="horizontal" class="h-7 w-auto" />
+        </a>
 
         <!-- Desktop Context Indicator / Breadcrumb -->
         <div class="hidden sm:flex items-center gap-2 text-xs">

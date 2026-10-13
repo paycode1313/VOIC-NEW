@@ -1,11 +1,11 @@
 @props([
-    'showOnInit' => request()->routeIs('dashboard') && ! Auth::user()->has_completed_onboarding,
+    'showOnInit' => request()->routeIs('dashboard') && Auth::check() && ! (Auth::user()?->has_completed_onboarding ?? false),
 ])
 
 <div x-data="onboardingWizard({
         initialOpen: @js($showOnInit),
-        initialGoal: @js(Auth::user()->onboarding_goal ?: 'sidang_skripsi'),
-        initialExperience: @js(Auth::user()->onboarding_experience ?: 'pemula')
+        initialGoal: @js(Auth::user()?->onboarding_goal ?: 'sidang_skripsi'),
+        initialExperience: @js(Auth::user()?->onboarding_experience ?: 'pemula')
      })"
      @open-onboarding.window="openModal()"
      x-cloak>
@@ -169,7 +169,7 @@
                             </div>
                             <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2">
                                 <span class="text-[10px] font-semibold text-slate-400">Interviewer:</span>
-                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Arya Pratama, S.Psi., CHRP</span>
+                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Nadia Putri, S.Psi., CHRP</span>
                             </div>
                         </div>
 
@@ -587,7 +587,7 @@
                 },
                 wawancara_kerja: {
                     roleKey: 'hrd',
-                    name: 'Arya Pratama, S.Psi., CHRP',
+                    name: 'Nadia Putri, S.Psi., CHRP',
                     title: 'Senior HR Recruiter & Talent Lead',
                     avatar: '/images/avatars/hrd.jpg?v=3',
                     scenario: 'Simulasi Wawancara Kerja',

@@ -87,6 +87,7 @@ class PracticeSessionController extends Controller
             'aiRoles' => $aiRoles,
             'defaultRole' => $defaultRole,
             'scenarios' => $scenarios,
+            'userLearningProfile' => $request->user()?->getAiLearningProfile(),
         ]);
     }
 
@@ -191,6 +192,11 @@ class PracticeSessionController extends Controller
             'response_text' => $result['response_text'],
             'audio_url' => $result['audio_url'],
             'facial_critique' => $result['facial_critique'],
+            'coherence_score' => $result['coherence_score'] ?? 86.0,
+            'coherence_category' => $result['coherence_category'] ?? 'Relevan & Nyambung',
+            'salient_entities' => $result['salient_entities'] ?? [],
+            'ai_engine' => $result['ai_engine'] ?? 'persona_fallback',
+            'stage' => $result['stage'] ?? 'core',
         ]);
     }
 
@@ -227,6 +233,14 @@ class PracticeSessionController extends Controller
             'feedback_notes.strengths.*' => ['nullable', 'string', 'max:500'],
             'feedback_notes.improvements' => ['nullable', 'array'],
             'feedback_notes.improvements.*' => ['nullable', 'string', 'max:500'],
+            'feedback_notes.detected_uptalking' => ['nullable', 'integer', 'min:0'],
+            'feedback_notes.awkward_pauses' => ['nullable', 'integer', 'min:0'],
+            'feedback_notes.current_stage' => ['nullable', 'string', 'max:50'],
+            'feedback_notes.timeline_bookmarks' => ['nullable', 'array'],
+            'feedback_notes.timeline_bookmarks.*.second' => ['nullable', 'numeric'],
+            'feedback_notes.timeline_bookmarks.*.type' => ['nullable', 'string', 'max:50'],
+            'feedback_notes.timeline_bookmarks.*.label' => ['nullable', 'string', 'max:150'],
+            'feedback_notes.timeline_bookmarks.*.note' => ['nullable', 'string', 'max:300'],
         ]);
 
         $faceScore = (float) $validated['face_score'];
@@ -277,6 +291,67 @@ class PracticeSessionController extends Controller
             'session_id' => $session->id,
             'redirect_url' => route('practice.show', $session),
         ], 201);
+    }
+
+    /**
+     * Display paginated history of all practice sessions with search and filter.
+     */
+    public function index(Request $request): View
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $query = $user->practiceSessions()->with('aiRole')->latest();
+
+        // Filter by AI role type
+        if ($request->filled('role')) {
+            $query->whereHas('aiRole', function ($q) use ($request) {
+                $q->where('role_type', $request->input('role'));
+            });
+        }
+
+        // Search by scenario type or AI conclusion
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('scenario_type', 'like', "%{$search}%")
+                    ->orWhere('ai_conclusion', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by score range
+        if ($request->filled('min_score')) {
+            $query->where('overall_score', '>=', (float) $request->input('min_score'));
+        }
+
+        $sessions = $query->paginate(15)->withQueryString();
+
+        $roleOptions = AiRole::where('is_active', true)
+            ->orderBy('id')
+            ->get(['id', 'name', 'role_type']);
+
+        return view('practice.history', [
+            'sessions' => $sessions,
+            'roleOptions' => $roleOptions,
+            'currentRole' => $request->input('role'),
+            'currentSearch' => $request->input('search'),
+            'currentMinScore' => $request->input('min_score'),
+        ]);
+    }
+
+    /**
+     * Delete a practice session and all associated messages.
+     */
+    public function destroy(PracticeSession $practiceSession): JsonResponse
+    {
+        Gate::authorize('delete', $practiceSession);
+
+        $practiceSession->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sesi latihan berhasil dihapus.',
+        ]);
     }
 
     /**

@@ -1,16 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4f46e5"/>
-      <stop offset="50%" stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#db2777"/>
+    <linearGradient id="iconBgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#081224"/>
+      <stop offset="100%" stop-color="#0d1d3a"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.4"/>
+    <linearGradient id="voicGradIcon" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#256fe6"/>
+      <stop offset="100%" stop-color="#0f3a74"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#1d62c9" flood-opacity="0.35"/>
     </filter>
   </defs>
-  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
-  <circle cx="256" cy="256" r="210" fill="none" stroke="#ffffff" stroke-opacity="0.15" stroke-width="8"/>
-  <path d="M140 160 L256 380 L372 160" fill="none" stroke="#ffffff" stroke-width="52" stroke-linecap="round" stroke-linejoin="round" filter="url(#shadow)"/>
-  <circle cx="256" cy="180" r="28" fill="#38bdf8"/>
+  <rect width="512" height="512" rx="118" fill="url(#iconBgGrad)"/>
+  <rect x="2" y="2" width="508" height="508" rx="116" fill="none" stroke="#38bdf8" stroke-opacity="0.15" stroke-width="4"/>
+  <g transform="translate(81, 81) scale(3.5)" filter="url(#glow)">
+    <path d="M 86.0 46.5 A 4.5 4.5 0 0 0 81.5 42.0 L 81.5 33.0 A 5.0 5.0 0 0 0 71.5 33.0 L 71.5 42.0 A 4.5 4.5 0 0 0 67.0 46.5 L 59.75 46.5 A 4.5 4.5 0 0 0 55.25 42.0 L 55.25 25.75 A 5.25 5.25 0 0 0 44.75 25.75 L 44.75 42.0 A 4.5 4.5 0 0 0 40.25 46.5 L 33.0 46.5 A 4.5 4.5 0 0 0 28.5 42.0 L 28.5 37.5 A 5.0 5.0 0 0 0 18.5 37.5 L 18.5 62.5 A 5.0 5.0 0 0 0 28.5 62.5 L 28.5 58.0 A 4.5 4.5 0 0 0 33.0 53.5 L 40.25 53.5 A 4.5 4.5 0 0 0 44.75 58.0 L 44.75 74.25 A 5.25 5.25 0 0 0 55.25 74.25 L 55.25 58.0 A 4.5 4.5 0 0 0 59.75 53.5 L 67.0 53.5 A 4.5 4.5 0 0 0 71.5 58.0 L 71.5 67.0 A 5.0 5.0 0 0 0 81.5 67.0 L 81.5 58.0 A 4.5 4.5 0 0 0 86.0 53.5 Q 92.0 53.5 97.4 57.5 A 48.0 48.0 0 1 1 97.4 42.5 Q 92.0 46.5 86.0 46.5 Z" fill="url(#voicGradIcon)"/>
+  </g>
 </svg>

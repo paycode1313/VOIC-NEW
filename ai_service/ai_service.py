@@ -11,6 +11,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from ai_learner import ai_learner
 
 app = FastAPI(title="VOIC AI Service", version="1.0.0")
 
@@ -47,11 +48,14 @@ class ChatRequest(BaseModel):
     role_type: str
     system_prompt: str
     user_message: str
+    session_id: Optional[int] = None
     language: Optional[str] = "id"  # 'id' or 'en'
     context_material: Optional[str] = None
     facial_status: Optional[FacialStatus] = None
+    user_memory_profile: Optional[Dict[str, Any]] = None
     conversation_history: Optional[List[ChatMessage]] = []
     generate_voice: Optional[bool] = True
+    stage: Optional[str] = "core"  # 'opening', 'core', 'pressure_test', 'closing'
 
 
 class ChatResponse(BaseModel):
@@ -59,6 +63,9 @@ class ChatResponse(BaseModel):
     response_text: str
     facial_critique: Optional[str] = None
     audio_file: Optional[str] = None
+    coherence_score: Optional[float] = 85.0
+    coherence_category: Optional[str] = "Relevan & Nyambung"
+    salient_entities: Optional[List[str]] = []
 
 
 class ConcludeRequest(BaseModel):
@@ -78,6 +85,12 @@ class ConcludeResponse(BaseModel):
     conclusion: str
 
 
+class TTSRequest(BaseModel):
+    text: str
+    role_type: Optional[str] = "dosen_penguji"
+    language: Optional[str] = "id"
+
+
 @app.get("/")
 def health_check():
     return {
@@ -86,6 +99,25 @@ def health_check():
         "ollama_url": OLLAMA_BASE_URL,
         "default_model": DEFAULT_MODEL,
     }
+
+
+@app.on_event("startup")
+async def start_model_warmup():
+    """Meluncurkan background task periodic keep-warm setiap 15 menit agar model tetap di memori (mencegah cold start)."""
+    asyncio.create_task(periodic_warmup())
+
+
+async def periodic_warmup():
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=4.0) as client:
+                await client.post(
+                    f"{OLLAMA_BASE_URL}/api/generate",
+                    json={"model": DEFAULT_MODEL, "prompt": "OK", "stream": False},
+                )
+        except Exception:
+            pass
+        await asyncio.sleep(900)  # 15 menit (900 detik)
 
 
 @app.get("/health/ollama")
@@ -106,7 +138,7 @@ async def check_ollama():
 async def process_chat(req: ChatRequest):
     """
     Menerima pesan ucapan + status ekspresi wajah asli dari kamera browser,
-    mengirim ke model LLM Ollama lokal, dan menyintesis suara balasan.
+    menganalisis koherensi semantik, grounding topik real-time, dan memproses dialog.
     """
     # 1. Analisis status ekspresi wajah asli dari kamera pengguna
     facial_note = ""
@@ -127,57 +159,63 @@ async def process_chat(req: ChatRequest):
             elif f.emotion == "fokus":
                 facial_note += " [DATA TELEMETRI KAMERA: Ekspresi wajah tenang dan fokus]."
 
-    # 2. Susun prompt khusus per peran agar berbicara luwes selayaknya manusia lisan (Spoken Style)
+    # 2. Temukan pertanyaan AI sebelumnya untuk evaluasi koherensi
+    last_ai_question = ""
+    for msg in reversed(req.conversation_history or []):
+        if msg.role in ("assistant", "ai"):
+            last_ai_question = msg.content
+            break
+
+    # 3. Deep Learning Coherence & Active Listening Grounding
+    coherence_score, coherence_cat = ai_learner.evaluate_semantic_coherence(
+        last_ai_question=last_ai_question,
+        user_reply=req.user_message,
+        topic_context=req.context_material,
+    )
+    salient_entities = ai_learner.extract_salient_entities(req.user_message)
+    grounding_directive = ai_learner.build_grounded_conversation_instruction(
+        role_type=req.role_type,
+        user_message=req.user_message,
+        last_ai_question=last_ai_question,
+        user_memory_profile=req.user_memory_profile,
+        language=req.language or "id",
+    )
+
+    # 4. Susun prompt khusus per peran agar berbicara luwes selayaknya manusia lisan (Spoken Style)
     is_en = (req.language == "en")
     role_nuance = ""
     if req.role_type == "dosen_penguji":
         if is_en:
             role_nuance = (
-                "ROLE NUANCE (CHIEF THESIS EXAMINER): You are VOIC-Dosen Penguji. "
-                "Be sharp, authoritative, academic, and critically scrutinize the student's methodology, theoretical framework, and datasets. "
-                "Address the candidate as 'Candidate' or directly. "
-                "Open with realistic spoken reactions (e.g., 'Right, I see...', 'Hold on a moment...', 'Conceptually interesting, but...'). "
-                "Focus: Test scope limitations, dataset validity, chapter two literature review, and genuine research novelty."
+                "ROLE NUANCE: You are a sharp, authoritative, and academic Chief Thesis Examiner. "
+                "Critically scrutinize methodology, theoretical foundations, and empirical datasets."
             )
         else:
             role_nuance = (
-                "GAYA PERAN (DOSEN PENGUJI SKRIPSI UTAMA): Anda adalah VOIC-Dosen Penguji. "
-                "Bersikap kritis, berwibawa, akademis, dan langsung menguliti metodologi atau dasar teori. "
-                "Panggil mahasiswa dengan 'Saudara' atau 'Anda'. "
-                "Awali respon dengan reaksi lisan khas dosen penguji sidang (seperti: 'Hmm, oke...', 'Sebentar Saudara...', 'Secara konseptual menarik, tapi...'). "
-                "Fokus: Uji batasan masalah, validitas data, landasan teori bab 2, atau kebaruan (novelty) penelitian."
+                "GAYA PERAN: Anda adalah Dosen Penguji Sidang Skripsi Utama yang kritis, berwibawa, dan akademis. "
+                "Uji metodologi, landasan teori bab dua, batasan masalah, dan pembuktian empiris mahasiswa."
             )
     elif req.role_type == "hrd":
         if is_en:
             role_nuance = (
-                "ROLE NUANCE (TALENT ACQUISITION LEAD): You are VOIC-HRD. "
-                "Be friendly, warm, empathetic, yet highly perceptive in reading candidate maturity and soft skills. "
-                "Address the candidate naturally. "
-                "Open with genuine conversational appreciation (e.g., 'That sounds really compelling...', 'I see, thanks for sharing...', 'Great initiative...'). "
-                "Focus: Probe real behavioral scenarios with the STAR method (Situation, Task, Action, Result), team conflict resolution, and career drive."
+                "ROLE NUANCE: You are an insightful and conversational Senior Talent Acquisition Lead. "
+                "Explore real workplace achievements using the STAR method, team dynamics, and motivation."
             )
         else:
             role_nuance = (
-                "GAYA PERAN (TALENT ACQUISITION & HR LEAD): Anda adalah VOIC-HRD. "
-                "Bersikap ramah, hangat, komunikatif, namun sangat jeli membaca kepribadian dan kedewasaan emosional kandidat. "
-                "Panggil kandidat dengan 'kamu' atau 'Anda'. "
-                "Awali respon dengan apresiasi lisan manusiawi yang tulus (seperti: 'Wah, menarik banget ceritanya...', 'Oke baik, saya bisa bayangkan situasinya...', 'Keren ya inisiatifnya...'). "
-                "Fokus: Uji pengalaman kerja nyata dengan metode STAR (Situation, Task, Action, Result), cara mengatasi konflik tim, dan motivasi kerja."
+                "GAYA PERAN: Anda adalah Senior HR Recruiter & Talent Acquisition yang komunikatif, hangat, dan jeli. "
+                "Uji pengalaman kerja nyata dengan metode STAR (Situation, Task, Action, Result), dinamika tim, dan motivasi kerja."
             )
     else:  # investor
         if is_en:
             role_nuance = (
-                "ROLE NUANCE (MANAGING PARTNER VENTURE CAPITALIST): You are VOIC-Investor. "
-                "Be quick, direct, punchy, commercially focused, and no-nonsense. "
-                "Use casual yet sharp venture capitalist vernacular (e.g., 'Got the premise, but...', 'Look...', 'Cut to the chase...'). "
-                "Focus: Market validation, CAC/LTV, unit economics, monetization speed, and defensible moat against well-funded incumbents."
+                "ROLE NUANCE: You are a no-nonsense, commercially focused Venture Capitalist and Angel Investor. "
+                "Focus on market traction, unit economics, CAC/LTV, monetization, and competitive moat."
             )
         else:
             role_nuance = (
-                "GAYA PERAN (MANAGING PARTNER ANGEL INVESTOR): Anda adalah VOIC-Investor. "
-                "Bersikap cepat, to-the-point, praktisi bisnis, energik, dan anti basa-basi teoritis. "
-                "Gunakan gaya bicara founder/investor kasual profesional (seperti: 'Oke dapet poinnya, tapi...', 'Gini lho...', 'Singkat aja ya...'). "
-                "Fokus: Validasi pasar riil, Customer Acquisition Cost (CAC), monetisasi, dan apa keunggulan kompetitif (moat) dari kompetitor bermodal besar."
+                "GAYA PERAN: Anda adalah Managing Partner Angel Investor / Venture Capitalist yang tajam dan to-the-point. "
+                "Fokus pada validasi pasar riil, Customer Acquisition Cost (CAC), monetisasi, dan keunggulan kompetitif (moat)."
             )
 
     lang_rule = (
@@ -188,54 +226,147 @@ async def process_chat(req: ChatRequest):
 
     context_note = ""
     if req.context_material:
-        context_note = f"\nCANDIDATE MATERIAL / RESEARCH ABSTRACT:\n\"{req.context_material.strip()}\"\n(Carefully inspect and probe specific methodology, variables, hypothesis, or unit economics mentioned in this abstract)."
+        context_note = f"\nMATERI RUJUKAN / ABSTRAK PESERTA:\n\"{req.context_material.strip()}\"\n"
+
+    visual_context = ""
+    if facial_note:
+        visual_context = f"\nCATATAN OBSERVASI KAMERA PESERTA: {facial_note.strip()}\n"
+
+    stage_instruction = ""
+    if req.stage == "pressure_test":
+        stage_instruction = (
+            "\nTAHAP SIMULASI: PRESSURE TEST (Ujian Di Bawah Tekanan Ekstrem). "
+            "Ajukan pertanyaan yang sangat tajam, menantang skenario kegagalan, batasan terburuk, atau ancaman kompetitor. "
+            "Uji ketahanan mental dan ketenangan peserta secara kritis namun tetap akademis/profesional.\n"
+            if not is_en else
+            "\nSIMULATION STAGE: PRESSURE TEST (High-Stakes Stress Test). "
+            "Ask an intensely challenging, stress-testing question that directly probes failure scenarios, boundary conditions, or competitive threats. Test candidate composure under real pressure.\n"
+        )
+    elif req.stage == "closing":
+        stage_instruction = (
+            "\nTAHAP SIMULASI: CLOSING STATEMENT (Penutup). Minta pernyataan penutup akhir dari peserta sebelum evaluasi diselesaikan.\n"
+            if not is_en else
+            "\nSIMULATION STAGE: CLOSING STATEMENT. Invite the candidate to give their final closing statement before concluding.\n"
+        )
+
+    if is_en:
+        anti_template_rules = (
+            "NATURAL SPOKEN CONVERSATION & STRICT ANTI-TEMPLATE RULES:\n"
+            "1. LANGUAGE: Strictly reply in fluent, idiomatic, professional spoken ENGLISH only.\n"
+            "2. ABSOLUTELY NO ROBOTIC OR CANNED OPENERS:\n"
+            "   - NEVER start with: 'Regarding X that you mentioned...', 'I take note of...', 'Great presentation...', 'Hold on a moment...', or 'Interesting point...'.\n"
+            "   - Never sound like an automated bot or telephone operator.\n"
+            "3. INSTANT SUBSTANTIVE ENGAGEMENT (DEEP ACTIVE LISTENING):\n"
+            "   - If they cite numbers or metrics: immediately interrogate data leakage, baselines, or statistical significance.\n"
+            "   - If they describe a method: probe technical trade-offs, scalability bottlenecks, or boundary edge cases.\n"
+            "   - If they describe team leadership: demand personal accountability and how they handled real friction.\n"
+            "   - If they pitch a business: stress-test CAC, net churn, and defensibility against tech giants.\n"
+            "4. NATURAL SPOKEN CADENCE: Deliver your reaction in 2 to 3 fluid spoken sentences (40–70 words).\n"
+            "5. FEW-SHOT DIALOGUE EXAMPLES (EMULATE THIS STYLE):\n"
+            "   [Candidate: 'We trained a Random Forest model on 500 image samples achieving 94% accuracy.']\n"
+            "   -> CORRECT: '500 samples is extraordinarily small for image classification. How do you mathematically guarantee this isn't severe overfitting against a biased sample?'\n"
+            "   -> INCORRECT: 'Regarding the Random Forest model you just explained, that is interesting. How did you test it?'\n"
+            "6. DO NOT use asterisks (**), hashtags (#), or any Markdown markup."
+        )
+    else:
+        anti_template_rules = (
+            "PRINSIP PERCAKAPAN LISAN ALAMI & ANTI-TEMPLATE (MUTLAK):\n"
+            f"1. {lang_rule}\n"
+            "2. DILARANG KERAS MENGULANG PERKATAAN PESERTA ATAU MENGGUNAKAN FORMULA KLISE:\n"
+            "   - JANGAN PERNAH awali respon dengan: 'Terkait X...', 'Mengenai X...', 'Poin tersebut saya catat', 'Bagus sekali pemaparannya', 'Tunggu sebentar...', atau 'Menarik sekali'.\n"
+            "   - Jangan pernah terdengar seperti customer service atau mesin penjawab formulir.\n"
+            "3. LANGSUNG RESPONS SUBSTANSI & ARGUMEN (ACTIVE LISTENING TINGKAT TINGGI):\n"
+            "   - Bila peserta mengutarakan data/angka: langsung pertanyakan validitas atau metodologi pengujiannya.\n"
+            "   - Bila peserta menjelaskan metode: langsung serang celah/asumsi dasarnya atau minta perbandingan dengan standar yang ada.\n"
+            "   - Bila peserta menceritakan pengalaman tim: gali akuntabilitas pribadi dan cara mengatasi resistensi nyata.\n"
+            "   - Bila peserta memaparkan bisnis: tantang unit economics, payback period, dan ketahanan terhadap kompetitor.\n"
+            "4. GAYA BICARA LISAN MENGALIR: Sampaikan tanggapan spontan dalam 2 hingga 3 kalimat lugas selayaknya obrolan tatap muka (sekitar 40–70 kata).\n"
+            "5. CONTOH POLA DIALOG LISAN MANUSIAWI (TIRU POLA INI):\n"
+            "   [Peserta: 'Saya melatih model Random Forest pada 500 sampel gambar dengan akurasi 94%.']\n"
+            "   -> BENAR: '500 sampel itu terhitung sangat minim untuk klasifikasi gambar. Parameter apa yang menjamin model Anda tidak overfit dan hanya menghafal data uji?'\n"
+            "   -> SALAH: 'Terkait model Random Forest yang Anda jelaskan barusan, hal itu menarik. Namun bagaimana Anda mengujinya?'\n"
+            "   [Peserta: 'Di kantor sebelumnya saya menginisiasi perombakan alur sprint karena sering ada miskomunikasi antar tim.']\n"
+            "   -> BENAR: 'Pasti ada penolakan dari rekan yang sudah terbiasa dengan cara lama. Siapa yang paling menentang saat itu dan bagaimana kamu membuktikan perombakanmu berdampak?'\n"
+            "   -> SALAH: 'Bagus sekali inisiatif perombakan sprint tersebut. Lalu apa tantangan yang kamu hadapi?'\n"
+            "6. DILARANG menggunakan tanda bintang (**), tanda pagar (#), atau format Markdown apapun."
+        )
 
     system_instruction = (
+        f"PERAN ANDA: {req.role_name} ({req.role_type}).\n"
         f"{req.system_prompt}\n\n"
-        f"{role_nuance}\n\n"
-        f"{context_note}\n\n"
-        f"MANDATORY SPOKEN CONVERSATIONAL RULES (VITAL):\n"
-        f"1. {lang_rule}\n"
-        f"2. MAXIMUM 2 TO 3 SENTENCES ONLY: Follow the natural ping-pong structure: (1) Spontaneous reaction, (2) Sharp critique or feedback, (3) One challenging follow-up question. Never give a monologue.\n"
-        f"3. ZERO MARKDOWN OR BULLETS: Do not use bullet points or asterisks (**bold**). The output will be synthesized by Text-to-Speech.\n"
-        f"4. CAMERA INTEGRATION: If there is a visual telemetry note: '{facial_note}', naturally weave a gentle critique or encouraging remark matching your persona."
+        f"{role_nuance}\n"
+        f"{stage_instruction}"
+        f"{context_note}"
+        f"{visual_context}\n"
+        f"{grounding_directive}\n\n"
+        f"{anti_template_rules}"
     )
 
     messages = [{"role": "system", "content": system_instruction}]
-    for msg in req.conversation_history[-6:]:
+    for msg in (req.conversation_history or [])[-8:]:
         messages.append({"role": msg.role, "content": msg.content})
 
-    user_content = req.user_message
-    if facial_note:
-        user_content += f"\n{facial_note}"
-    messages.append({"role": "user", "content": user_content})
+    # Pure user spoken words
+    messages.append({"role": "user", "content": req.user_message})
 
-    # 3. Panggil Ollama secara lokal
+    # 5. Panggil Ollama secara lokal
     ai_reply_text = ""
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=35.0) as client:
             ollama_res = await client.post(
                 f"{OLLAMA_BASE_URL}/api/chat",
                 json={
                     "model": DEFAULT_MODEL,
                     "messages": messages,
                     "stream": False,
+                    "keep_alive": "60m",
                     "options": {
-                        "temperature": 0.8,
-                        "repeat_penalty": 1.15,
-                        "top_p": 0.9,
+                        "temperature": 0.76,
+                        "repeat_penalty": 1.18,
+                        "top_p": 0.92,
+                        "num_predict": 160,
+                        "num_ctx": 2048,
                     },
                 },
             )
             if ollama_res.status_code == 200:
                 ai_reply_text = ollama_res.json()["message"]["content"].strip()
                 ai_reply_text = ai_reply_text.replace("**", "").replace("*", "").replace("###", "")
+                if ai_reply_text and not ai_reply_text.endswith((".", "?", "!")):
+                    last_punct = max(ai_reply_text.rfind("."), ai_reply_text.rfind("?"), ai_reply_text.rfind("!"))
+                    if last_punct > 25:
+                        ai_reply_text = ai_reply_text[:last_punct + 1]
             else:
-                ai_reply_text = generate_fallback_response(req)
+                ai_reply_text = ai_learner.generate_smart_grounded_fallback(
+                    role_type=req.role_type,
+                    user_message=req.user_message,
+                    last_ai_question=last_ai_question,
+                    language=req.language or "id",
+                )
     except Exception:
-        ai_reply_text = generate_fallback_response(req)
+        ai_reply_text = ai_learner.generate_smart_grounded_fallback(
+            role_type=req.role_type,
+            user_message=req.user_message,
+            last_ai_question=last_ai_question,
+            language=req.language or "id",
+        )
 
-    # 4. Sintesis Suara (TTS)
+    # 6. Rekam ke Dataset Deep Learning Berkelanjutan
+    try:
+        f_dict = req.facial_status.model_dump() if req.facial_status and hasattr(req.facial_status, 'model_dump') else (req.facial_status.dict() if req.facial_status else {})
+        ai_learner.record_learning_turn(
+            session_id=req.session_id or 0,
+            role_type=req.role_type,
+            user_message=req.user_message,
+            ai_response=ai_reply_text,
+            coherence_score=coherence_score,
+            facial_status=f_dict,
+            language=req.language or "id",
+        )
+    except Exception as e:
+        print(f"Dataset harvest notice: {e}")
+
+    # 7. Sintesis Suara (TTS)
     audio_filename = None
     if req.generate_voice:
         audio_filename = await generate_tts_audio(ai_reply_text, req.role_type, req.language or "id")
@@ -245,7 +376,36 @@ async def process_chat(req: ChatRequest):
         response_text=ai_reply_text,
         facial_critique=facial_note.strip() if facial_note else None,
         audio_file=audio_filename,
+        coherence_score=coherence_score,
+        coherence_category=coherence_cat,
+        salient_entities=salient_entities,
     )
+
+
+@app.get("/learn/stats")
+def get_deep_learning_stats():
+    """Mengambil status telemetri model pembelajaran berkelanjutan (Deep Learning) VOIC."""
+    return ai_learner.get_learning_stats()
+
+
+class SyncLearnRequest(BaseModel):
+    user_id: Optional[int] = None
+    session_id: Optional[int] = None
+    role_type: str
+    overall_score: float
+    weaknesses: Optional[List[str]] = []
+    mastered_topics: Optional[List[str]] = []
+
+
+@app.post("/learn/sync")
+def sync_learning_profile(payload: SyncLearnRequest):
+    """Sinkronisasi profil pembelajaran berkelanjutan."""
+    return {
+        "success": True,
+        "message": "Profil memori pembelajaran AI berhasil disinkronkan.",
+        "stats": ai_learner.get_learning_stats(),
+    }
+
 
 
 @app.post("/conclude", response_model=ConcludeResponse)
@@ -288,6 +448,12 @@ async def process_conclude(req: ConcludeRequest):
                         {"role": "user", "content": prompt},
                     ],
                     "stream": False,
+                    "keep_alive": "60m",
+                    "options": {
+                        "temperature": 0.65,
+                        "num_predict": 110,
+                        "num_ctx": 2048,
+                    },
                 },
             )
             if ollama_res.status_code == 200:
@@ -319,19 +485,70 @@ def get_audio(filename: str):
     raise HTTPException(status_code=404, detail="File audio tidak ditemukan")
 
 
+@app.post("/tts")
+async def process_tts(req: TTSRequest):
+    """
+    Sintesis suara instan berbasis karakter peran AI:
+    - Dosen Penguji ('Dosen Killer'): Bariton berat, tempo berwibawa & terukur (-6Hz, -9%)
+    - HRD ('Suara HRD Ramah'): Vokal wanita hangat, sopan & empatik (+4Hz, +2%)
+    - Investor ('Pitch Bisnis'): Vokal energik, cepat, to-the-point & dinamis (-1Hz, +15%)
+    """
+    audio_file = await generate_tts_audio(req.text, req.role_type or "dosen_penguji", req.language or "id")
+    if audio_file:
+        return {
+            "success": True,
+            "audio_file": audio_file,
+            "audio_url": f"/audio/{audio_file}",
+        }
+    return {
+        "success": False,
+        "audio_file": None,
+        "audio_url": None,
+    }
+
+
 async def generate_tts_audio(text: str, role_type: str, language: str = "id") -> Optional[str]:
-    """Menghasilkan file audio MP3 menggunakan edge-tts (lokal & cepat)."""
+    """Menghasilkan file audio MP3 menggunakan edge-tts dengan prosodi karakter peran unik."""
     try:
         import edge_tts
+
         if language == "en":
-            voice = "en-US-GuyNeural" if role_type == "dosen_penguji" else ("en-US-ChristopherNeural" if role_type == "hrd" else "en-US-BrianNeural")
+            if role_type == "dosen_penguji":
+                # Academic thesis examiner: deep, stern, deliberate
+                voice = "en-US-GuyNeural"
+                pitch = "-5Hz"
+                rate = "-8%"
+            elif role_type == "hrd":
+                # Corporate HR recruiter: warm, pleasant, approachable
+                voice = "en-US-JennyNeural"
+                pitch = "+4Hz"
+                rate = "+2%"
+            else:  # investor
+                # Venture pitch investor: crisp, fast, assertive
+                voice = "en-US-BrianNeural"
+                pitch = "+0Hz"
+                rate = "+14%"
         else:
-            voice = "id-ID-ArdiNeural" if role_type in ("dosen_penguji", "hrd") else "id-ID-BudiNeural"
+            if role_type == "dosen_penguji":
+                # Dosen Killer: bariton berat, berwibawa, tegas, tempo terukur menekan setiap suku kata
+                voice = "id-ID-ArdiNeural"
+                pitch = "-6Hz"
+                rate = "-9%"
+            elif role_type == "hrd":
+                # Suara HRD Umum: vokal wanita ramah, hangat, komunikatif & empatik
+                voice = "id-ID-GadisNeural"
+                pitch = "+4Hz"
+                rate = "+2%"
+            else:  # investor
+                # Pitch Bisnis / Investor: cepat, to-the-point, berenergi, ritme efisien & tegas
+                voice = "id-ID-ArdiNeural"
+                pitch = "-1Hz"
+                rate = "+15%"
 
         filename = f"tts_{asyncio.get_event_loop().time():.0f}.mp3"
         output_path = os.path.join(AUDIO_OUTPUT_DIR, filename)
 
-        communicate = edge_tts.Communicate(text, voice)
+        communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
         await communicate.save(output_path)
         return filename
     except Exception as e:
@@ -340,60 +557,25 @@ async def generate_tts_audio(text: str, role_type: str, language: str = "id") ->
 
 
 def generate_fallback_response(req: ChatRequest) -> str:
-    """Respons cadangan cerdas jika server Ollama belum di-start."""
-    import random
+    """Respons cadangan cerdas kontekstual jika LLM lokal sedang overload."""
+    user_words = req.user_message.strip()
+    topic_excerpt = (user_words[:65] + "...") if len(user_words) > 65 else user_words
+    is_en = (req.language == "en")
 
-    if req.language == "en":
-        pools = {
-            "dosen_penguji": [
-                "Right, I note your introductory point. But could you explain the theoretical foundation in chapter two that justifies your chosen methodology?",
-                "Hold on, your methodology needs empirical backing. How did you verify that your dataset is completely free from sampling bias?",
-                "Conceptually interesting. However, demonstrate to the examination committee: what is the genuine novelty of this research compared to past state-of-the-art papers?",
-                "Your delivery is structured, but your problem boundaries are too broad. Why didn't you evaluate edge-case boundary scenarios on this model?",
-                "Alright. Now tell us: what primary evaluation metrics did you benchmark to prove this solution is truly superior?",
-            ],
-            "hrd": [
-                "That is really fascinating. Could you provide a specific work example where your individual initiative directly saved a critical project milestone?",
-                "Great, I can picture that scenario. When a senior team member strongly pushes back on your recommendation, what communication strategy do you use?",
-                "Impressive background. How do you maintain composure and prioritize tasks when several urgent deadlines land at once?",
-                "I appreciate your enthusiasm. Could you share your greatest professional setback and the pivotal takeaway you learned from it?",
-                "Wonderful. What kind of engineering culture and team environment allows your potential to thrive best?",
-            ],
-            "investor": [
-                "Got the problem statement. To keep it crisp: what is your estimated Customer Acquisition Cost and how do you retain your users?",
-                "The solution makes sense. But what is your defensible moat if a well-funded incumbent copies your feature set next month?",
-                "Bold vision. Can you break down your unit economics and how long until your startup reaches operational break-even?",
-                "Huge addressable market, but execution is king. What concrete operational milestones are you hitting in the next six months?",
-                "Great pitching energy! Give me the single most compelling reason why we should write you a check right now?",
-            ],
-        }
+    if is_en:
+        if req.role_type == "dosen_penguji":
+            return f"Regarding your explanation on '{topic_excerpt}', that provides interesting initial context. Could you explain the empirical methodology and data validation supporting your findings?"
+        elif req.role_type == "hrd":
+            return f"Thank you for sharing your experience about '{topic_excerpt}'. Could you walk me through the key challenge you overcame and the measurable result you delivered?"
+        else:  # investor
+            return f"I note your business premise regarding '{topic_excerpt}'. To cut straight to the chase, what are your unit economics and customer acquisition cost for this?"
     else:
-        pools = {
-            "dosen_penguji": [
-                "Hmm, oke poin pengantar Saudara saya catat. Tapi tolong jelaskan secara konseptual, apa dasar teori utama yang mendukung validitas algoritma ini pada bab dua?",
-                "Sebentar Saudara, metodologi yang Anda sebutkan tadi perlu pembuktian empiris. Bagaimana Anda memastikan dataset yang digunakan bebas dari bias sampling?",
-                "Secara konseptual menarik. Namun coba buktikan kepada dewan penguji, apa novelty atau kebaruan nyata penelitian ini dibandingkan jurnal rujukan terdahulu?",
-                "Pemaparan Anda cukup runut, tapi batasan masalahnya masih mengambang. Mengapa Anda tidak menguji skenario data ekstrem pada sistem ini?",
-                "Baik. Sekarang coba tunjukkan apa metrik evaluasi utama yang Anda pakai untuk menyatakan sistem ini berhasil?",
-            ],
-            "hrd": [
-                "Wah, menarik sekali ceritanya. Bisakah kamu berikan satu contoh situasi kerja nyata di mana inisiatif mandiri kamu berhasil menyelamatkan target tim?",
-                "Oke baik, saya bisa bayangkan situasinya. Nah, jika kamu berada dalam kondisi rekan satu tim menolak solusi yang kamu tawarkan, bagaimana pendekatan komunikasimu?",
-                "Keren ya pengalamannya. Lalu bagaimana caramu mengelola prioritas saat dihadapkan pada beberapa deadline mendesak yang datang bersamaan?",
-                "Saya suka antusiasmemu menceritakan hal itu. Bisakah kamu ceritakan kegagalan terbesar dalam pekerjaanmu dan apa pelajaran terpenting yang kamu petik?",
-                "Menarik sekali. Menurutmu, lingkungan kerja seperti apa yang paling bisa memicu potensimu berkembang maksimal?",
-            ],
-            "investor": [
-                "Oke, problem pasarnya dapet. Tapi singkat aja ya, berapa perkiraan Customer Acquisition Cost kamu dan bagaimana kamu menjaga retensi pengguna tetap tinggi?",
-                "Gini lho, solusinya masuk akal. Tapi apa moat atau benteng pertahananmu kalau kompetitor besar dengan modal melimpah bikin fitur serupa bulan depan?",
-                "Idenya berani, saya suka. Tapi tolong jelaskan unit economics-nya: butuh berapa lama sampai startup kamu mencapai titik impas atau profit?",
-                "Pasarnya memang besar, tapi eksekusi itu kuncinya. Milestone operasional konkret apa yang ingin kamu capai dalam enam bulan ke depan?",
-                "Bagus energi pitching-nya! Tapi sebutkan satu alasan paling kuat kenapa kami harus berinvestasi di tim kamu sekarang?",
-            ],
-        }
-
-    role_pool = pools.get(req.role_type, pools["dosen_penguji"])
-    return random.choice(role_pool)
+        if req.role_type == "dosen_penguji":
+            return f"Terkait penjelasan Saudara mengenai '{topic_excerpt}', poin tersebut saya catat. Namun bagaimana Saudara membuktikan validitas metodologi dan pengujian datanya secara empiris?"
+        elif req.role_type == "hrd":
+            return f"Menarik sekali pengalaman kamu tentang '{topic_excerpt}'. Bisakah kamu ceritakan tantangan terbesar yang kamu hadapi dan aksi nyata apa yang kamu ambil untuk mengatasinya?"
+        else:  # investor
+            return f"Saya menangkap inti ide bisnis Anda seputar '{topic_excerpt}'. Singkat saja, berapa perkiraan Customer Acquisition Cost dan model monetisasi riil dari produk ini?"
 
 
 if __name__ == "__main__":

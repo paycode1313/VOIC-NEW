@@ -10,7 +10,7 @@ class PracticeSessionPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }
@@ -18,15 +18,19 @@ class PracticeSessionPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, PracticeSession $practiceSession): bool
+    public function view(?User $user, PracticeSession $practiceSession): bool
     {
-        return $practiceSession->user_id === $user->id;
+        if ($practiceSession->isGuest()) {
+            return true;
+        }
+
+        return $user !== null && $practiceSession->user_id === $user->id;
     }
 
     /**
      * Determine whether the user can create models.
      */
-    public function create(User $user): bool
+    public function create(?User $user): bool
     {
         return true;
     }
@@ -34,9 +38,17 @@ class PracticeSessionPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, PracticeSession $practiceSession): bool
+    public function update(?User $user, PracticeSession $practiceSession): bool
     {
-        return $practiceSession->user_id === $user->id;
+        if ($practiceSession->isGuest()) {
+            $guestToken = session('guest_session_token');
+            $activeGuestId = session('active_guest_session_id');
+
+            return ($guestToken && ($practiceSession->feedback_notes['guest_token'] ?? null) === $guestToken)
+                || ($activeGuestId && (int) $activeGuestId === (int) $practiceSession->id);
+        }
+
+        return $user !== null && $practiceSession->user_id === $user->id;
     }
 
     /**

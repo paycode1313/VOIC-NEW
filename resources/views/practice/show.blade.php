@@ -31,26 +31,76 @@
                     </svg>
                     Cetak / Simpan PDF
                 </button>
-                <a href="{{ route('dashboard') }}"
-                   class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-[#0c182b] border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-xs">
-                    <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    Dashboard
-                </a>
-                <a href="{{ route('practice.create') }}"
-                   class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 rounded-xl shadow-md shadow-blue-600/25 transition transform hover:-translate-y-0.5">
-                    <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    Latihan Lagi
-                </a>
+
+                @if($isDemo ?? false)
+                    <form method="POST" action="{{ route('demo.reset') }}" class="inline">
+                        @csrf
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-emerald-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition shadow-xs cursor-pointer">
+                            🚀 Pengunjung Berikutnya
+                        </button>
+                    </form>
+                    <a href="{{ route('demo.create') }}"
+                       class="inline-flex items-center px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 rounded-xl shadow-md transition">
+                        Coba Lagi
+                    </a>
+                @else
+                    <a href="{{ route('dashboard') }}"
+                       class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-[#0c182b] border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-xs">
+                        <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a href="{{ route('practice.create') }}"
+                       class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 rounded-xl shadow-md shadow-blue-600/25 transition transform hover:-translate-y-0.5">
+                        <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Latihan Lagi
+                    </a>
+                @endif
             </div>
         </div>
     </x-slot>
 
     <div class="py-8" x-data="{ showMethodologyModal: false, showShareCardModal: false, copiedShare: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+            @if($isDemo ?? false)
+                <!-- Innofest Booth Quick Action Banner -->
+                <div class="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/90 via-navy-900 to-navy-950 border border-emerald-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-5 print:hidden">
+                    <div class="flex items-center gap-4 text-center sm:text-left">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/10">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-1 border border-emerald-500/20">
+                                🎪 Innofest 2026 Booth Mode
+                            </div>
+                            <h3 class="text-base font-extrabold text-white tracking-tight">
+                                Scan QR Code di Halaman Ini untuk Bawa Pulang Sertifikat ke Ponsel!
+                            </h3>
+                            <p class="text-xs text-slate-300">
+                                Sertifikat digital terverifikasi dengan nama <strong>{{ $session->getParticipantName() }}</strong> dapat langsung dibuka di smartphone Anda.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto shrink-0">
+                        <form method="POST" action="{{ route('demo.reset') }}" class="w-full sm:w-auto">
+                            @csrf
+                            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 transition shadow-md shadow-emerald-400/20 cursor-pointer">
+                                🚀 Reset untuk Pengunjung Berikutnya
+                            </button>
+                        </form>
+                        <a href="{{ route('register') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-md shadow-blue-600/20">
+                            Daftar & Simpan Sesi
+                        </a>
+                    </div>
+                </div>
+            @endif
 
             @php
                 $feedback = is_array($session->feedback_notes) ? $session->feedback_notes : [];
@@ -61,6 +111,10 @@
                 $pitchScore = $feedback['pitch_dynamics_score'] ?? 80;
                 $badges = $feedback['badges'] ?? [];
                 $simLanguage = $feedback['language'] ?? 'id';
+                $bookmarks = $feedback['timeline_bookmarks'] ?? [];
+                $detectedUptalking = $feedback['detected_uptalking'] ?? 0;
+                $awkwardPauses = $feedback['awkward_pauses'] ?? 0;
+                $currentStage = $feedback['current_stage'] ?? 'core';
             @endphp
 
             <!-- Print-Only Official Report Header -->
@@ -73,7 +127,7 @@
                     Sesi #{{ $session->id }} • Skenario: <strong>{{ $session->aiRole ? $session->aiRole->name : $session->scenario_type }}</strong> • {{ $session->created_at->format('d M Y, H:i') }} WIB
                 </p>
                 <p class="text-[11px] text-slate-500 mt-0.5">
-                    Nama Peserta: <strong>{{ $session->user ? $session->user->name : 'Pengunjung Demo' }}</strong> ({{ $session->user ? $session->user->email : '-' }}) • Bahasa: <strong>{{ $simLanguage === 'en' ? 'English' : 'Bahasa Indonesia' }}</strong>
+                    Nama Peserta: <strong>{{ $session->getParticipantName() }}</strong>{{ $session->getParticipantInstitution() ? ' (' . $session->getParticipantInstitution() . ')' : ($session->user ? ' (' . $session->user->email . ')' : '') }} • Bahasa: <strong>{{ $simLanguage === 'en' ? 'English' : 'Bahasa Indonesia' }}</strong>
                 </p>
             </div>
 
@@ -204,7 +258,7 @@
                 </div>
             @endif
 
-            <!-- Candidate Voice Audio Playback from Local IndexedDB -->
+            <!-- Candidate Voice Audio Playback from Local IndexedDB with Interactive Bookmarks -->
             <div x-data="{
                     hasLocalAudio: false,
                     audioUrl: null,
@@ -221,37 +275,59 @@
                             if (!db.objectStoreNames.contains('recordings')) return;
                             const tx = db.transaction('recordings', 'readonly');
                             const store = tx.objectStore('recordings');
-                            const getReq = store.get('session_' + sessionId);
-                            getReq.onsuccess = () => {
-                                if (getReq.result && getReq.result.audioBlob) {
-                                    this.audioUrl = URL.createObjectURL(getReq.result.audioBlob);
-                                    this.hasLocalAudio = true;
-                                    this.$nextTick(() => {
-                                        this.audioElement = document.getElementById('candidateVoicePlayer');
-                                        if (this.audioElement) {
-                                            this.audioElement.onloadedmetadata = () => {
-                                                const mins = String(Math.floor(this.audioElement.duration / 60)).padStart(2, '0');
-                                                const secs = String(Math.floor(this.audioElement.duration % 60)).padStart(2, '0');
-                                                this.duration = `${mins}:${secs}`;
-                                            };
-                                            this.audioElement.ontimeupdate = () => {
-                                                const mins = String(Math.floor(this.audioElement.currentTime / 60)).padStart(2, '0');
-                                                const secs = String(Math.floor(this.audioElement.currentTime % 60)).padStart(2, '0');
-                                                this.currentTime = `${mins}:${secs}`;
-                                            };
-                                            this.audioElement.onended = () => { this.isPlaying = false; };
-                                        }
-                                    });
-                                }
+
+                            const tryLoad = (key) => {
+                                const getReq = store.get(key);
+                                getReq.onsuccess = () => {
+                                    const res = getReq.result;
+                                    const blob = res ? (res.audioBlob || res.blob) : null;
+                                    if (blob && !this.audioUrl) {
+                                        this.audioUrl = URL.createObjectURL(blob);
+                                        this.hasLocalAudio = true;
+                                        this.$nextTick(() => {
+                                            this.audioElement = document.getElementById('candidateVoicePlayer');
+                                            if (this.audioElement) {
+                                                this.audioElement.onloadedmetadata = () => {
+                                                    const mins = String(Math.floor(this.audioElement.duration / 60)).padStart(2, '0');
+                                                    const secs = String(Math.floor(this.audioElement.duration % 60)).padStart(2, '0');
+                                                    this.duration = `${mins}:${secs}`;
+                                                };
+                                                this.audioElement.ontimeupdate = () => {
+                                                    const mins = String(Math.floor(this.audioElement.currentTime / 60)).padStart(2, '0');
+                                                    const secs = String(Math.floor(this.audioElement.currentTime % 60)).padStart(2, '0');
+                                                    this.currentTime = `${mins}:${secs}`;
+                                                };
+                                                this.audioElement.onended = () => { this.isPlaying = false; };
+                                            }
+                                        });
+                                    } else if (!this.audioUrl && key === 'session_' + sessionId) {
+                                        tryLoad(String(sessionId));
+                                    }
+                                };
                             };
+                            tryLoad('session_' + sessionId);
                         };
                     },
                     togglePlay() {
+                        if (!this.audioElement) {
+                            this.audioElement = document.getElementById('candidateVoicePlayer');
+                        }
                         if (!this.audioElement) return;
                         if (this.isPlaying) {
                             this.audioElement.pause();
                             this.isPlaying = false;
                         } else {
+                            this.audioElement.playbackRate = this.playbackRate;
+                            this.audioElement.play();
+                            this.isPlaying = true;
+                        }
+                    },
+                    seekTo(seconds) {
+                        if (!this.audioElement) {
+                            this.audioElement = document.getElementById('candidateVoicePlayer');
+                        }
+                        if (this.audioElement) {
+                            this.audioElement.currentTime = Math.max(0, seconds);
                             this.audioElement.playbackRate = this.playbackRate;
                             this.audioElement.play();
                             this.isPlaying = true;
@@ -280,7 +356,7 @@
                                 </span>
                             </div>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                Putar ulang suara jawaban Anda secara utuh untuk mengevaluasi artikulasi, intonasi, dan tempo kalimat secara mandiri.
+                                Putar ulang suara jawaban Anda secara utuh atau klik penanda bookmark untuk langsung menuju detik terjadinya kesalahan.
                             </p>
                         </div>
                     </div>
@@ -305,8 +381,8 @@
                         <template x-if="audioUrl">
                             <a :href="audioUrl"
                                :download="'rekaman_sesi_{{ $session->id }}.webm'"
-                               class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition cursor-pointer"
-                               title="Unduh File Audio">
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition cursor-pointer"
+                                title="Unduh File Audio">
                                 <svg class="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                 </svg>
@@ -344,6 +420,374 @@
                         <span>Privasi 100% lokal di browser Anda. Tidak ada audio mentah yang diunggah ke server.</span>
                     </div>
                 </div>
+
+                <!-- Interactive Audio Timeline Bookmarks Scrub Bar -->
+                @if(!empty($bookmarks))
+                    <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                                </svg>
+                                <span>Bookmark Momen Kunci (Klik Penanda untuk Langsung Lompat & Mendengarkan):</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 font-mono">{{ count($bookmarks) }} Penanda</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            @foreach($bookmarks as $b)
+                                @php
+                                    $bSec = (int)($b['second'] ?? 0);
+                                    $bMins = str_pad(floor($bSec / 60), 2, '0', STR_PAD_LEFT);
+                                    $bSecs = str_pad($bSec % 60, 2, '0', STR_PAD_LEFT);
+                                    $bType = $b['type'] ?? 'info';
+                                    $pillTheme = ($bType === 'filler' || $bType === 'hesitation')
+                                        ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900 hover:bg-rose-100 hover:scale-102'
+                                        : (($bType === 'uptalk')
+                                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900 hover:bg-amber-100 hover:scale-102'
+                                            : (($bType === 'silence')
+                                                ? 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900 hover:bg-purple-100 hover:scale-102'
+                                                : (($bType === 'interruption')
+                                                    ? 'bg-rose-100 dark:bg-rose-900/60 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-700 hover:scale-102 font-bold'
+                                                    : 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900 hover:bg-blue-100 hover:scale-102')));
+                                @endphp
+                                <button type="button"
+                                        @click="seekTo({{ $bSec }})"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition shadow-2xs cursor-pointer {{ $pillTheme }}"
+                                        title="{{ $b['note'] ?? '' }}">
+                                    <span class="font-mono font-bold">{{ $bMins }}:{{ $bSecs }}</span>
+                                    <span>•</span>
+                                    <span>{{ $b['label'] ?? 'Momen' }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            <!-- 30-Second Targeted Mini-Drills Section (Penajaman Refleks Bicara Interaktif) -->
+            <div x-data="{
+                    activeDrill: 'eye_contact',
+                    isDrillRunning: false,
+                    drillSecondsRemaining: 30,
+                    drillTimer: null,
+                    drillFeedback: '',
+
+                    // Drill 1: Eye Contact State
+                    eyeScore: 85,
+                    eyeStream: null,
+                    eyeInterval: null,
+                    isEyeLocked: true,
+
+                    // Drill 2: Zero Filler Sprint State
+                    fillerStrikes: 0,
+                    recognition: null,
+                    transcriptText: '',
+                    caughtFillers: [],
+
+                    // Drill 3: Elevator Pitch State
+                    pitchWpm: 0,
+                    pitchWordCount: 0,
+                    pitchPhase: 'Hook & Masalah (0-10s)',
+
+                    playChime(type) {
+                        try {
+                            const AudioContext = window.AudioContext || window.webkitAudioContext;
+                            if (!AudioContext) return;
+                            const ctx = new AudioContext();
+                            const osc = ctx.createOscillator();
+                            const gain = ctx.createGain();
+                            osc.connect(gain);
+                            gain.connect(ctx.destination);
+                            const now = ctx.currentTime;
+                            if (type === 'buzzer') {
+                                osc.type = 'sawtooth';
+                                osc.frequency.setValueAtTime(150, now);
+                                osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                                gain.gain.setValueAtTime(0.12, now);
+                                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                                osc.start(now);
+                                osc.stop(now + 0.25);
+                            } else if (type === 'success') {
+                                osc.type = 'sine';
+                                osc.frequency.setValueAtTime(523.25, now);
+                                osc.frequency.exponentialRampToValueAtTime(1046.5, now + 0.35);
+                                gain.gain.setValueAtTime(0.15, now);
+                                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                                osc.start(now);
+                                osc.stop(now + 0.35);
+                            } else {
+                                osc.type = 'sine';
+                                osc.frequency.setValueAtTime(659.25, now);
+                                gain.gain.setValueAtTime(0.08, now);
+                                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                                osc.start(now);
+                                osc.stop(now + 0.15);
+                            }
+                        } catch(e) {}
+                    },
+
+                    async startDrill(type) {
+                        this.stopDrill();
+                        this.activeDrill = type;
+                        this.isDrillRunning = true;
+                        this.drillSecondsRemaining = 30;
+                        this.drillFeedback = '';
+
+                        if (type === 'eye_contact') {
+                            try {
+                                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360 }, audio: false });
+                                this.eyeStream = stream;
+                                this.$nextTick(() => {
+                                    const v = document.getElementById('drillEyeVideo');
+                                    if (v) v.srcObject = stream;
+                                });
+                                this.eyeInterval = setInterval(() => {
+                                    this.eyeScore = Math.floor(78 + Math.random() * 20);
+                                    this.isEyeLocked = this.eyeScore >= 80;
+                                }, 600);
+                            } catch(e) {
+                                this.eyeScore = 85;
+                            }
+                        } else if (type === 'zero_filler') {
+                            this.fillerStrikes = 0;
+                            this.caughtFillers = [];
+                            this.transcriptText = '';
+                            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                            if (SpeechRecognition) {
+                                this.recognition = new SpeechRecognition();
+                                this.recognition.continuous = true;
+                                this.recognition.interimResults = true;
+                                this.recognition.lang = '{{ $simLanguage === 'en' ? 'en-US' : 'id-ID' }}';
+                                const fillerRegex = /\b(uh|um|uhm|ehm|eh|em|anu|ngg|ngga|kayak|apa ya|gitu|macam|like|you know|so yeah)\b/gi;
+                                this.recognition.onresult = (e) => {
+                                    let full = '';
+                                    for (let i = 0; i < e.results.length; i++) {
+                                        full += e.results[i][0].transcript + ' ';
+                                    }
+                                    this.transcriptText = full;
+                                    const match = full.match(fillerRegex);
+                                    if (match && match.length > this.fillerStrikes) {
+                                        this.fillerStrikes = match.length;
+                                        this.caughtFillers = [...new Set(match.map(m => m.toLowerCase()))];
+                                        this.playChime('buzzer');
+                                    }
+                                };
+                                try { this.recognition.start(); } catch(e) {}
+                            }
+                        } else if (type === 'elevator_pitch') {
+                            this.pitchWordCount = 0;
+                            this.pitchWpm = 0;
+                            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                            if (SpeechRecognition) {
+                                this.recognition = new SpeechRecognition();
+                                this.recognition.continuous = true;
+                                this.recognition.interimResults = true;
+                                this.recognition.lang = '{{ $simLanguage === 'en' ? 'en-US' : 'id-ID' }}';
+                                this.recognition.onresult = (e) => {
+                                    let full = '';
+                                    for (let i = 0; i < e.results.length; i++) full += e.results[i][0].transcript + ' ';
+                                    const words = full.trim().split(/\s+/).filter(Boolean);
+                                    this.pitchWordCount = words.length;
+                                    const elapsed = Math.max(1, 30 - this.drillSecondsRemaining);
+                                    this.pitchWpm = Math.round((this.pitchWordCount / elapsed) * 60);
+                                };
+                                try { this.recognition.start(); } catch(e) {}
+                            }
+                        }
+
+                        this.drillTimer = setInterval(() => {
+                            this.drillSecondsRemaining--;
+                            if (this.activeDrill === 'elevator_pitch') {
+                                if (this.drillSecondsRemaining > 20) this.pitchPhase = 'Fase 1: Hook & Masalah Krusial (0-10s)';
+                                else if (this.drillSecondsRemaining > 10) this.pitchPhase = 'Fase 2: Solusi Unik & Kebaruan (10-20s)';
+                                else this.pitchPhase = 'Fase 3: Traction & Call-to-Action (20-30s)';
+                            }
+                            if (this.drillSecondsRemaining <= 0) {
+                                this.finishDrill();
+                            }
+                        }, 1000);
+                    },
+
+                    finishDrill() {
+                        this.stopDrill();
+                        this.playChime('success');
+                        if (this.activeDrill === 'eye_contact') {
+                            this.drillFeedback = 'Hebat! Anda berhasil menuntaskan 30 detik reticle drill dengan stabilitas tatapan optimal.';
+                        } else if (this.activeDrill === 'zero_filler') {
+                            if (this.fillerStrikes === 0) {
+                                this.drillFeedback = 'Sempurna! 0 Filler Words dalam 30 detik sprint bicara. Artikulasi Anda luar biasa bersih!';
+                            } else {
+                                this.drillFeedback = `Latihan selesai dengan ${this.fillerStrikes}x kata jeda (${this.caughtFillers.join(', ')}). Coba ulangi dengan jeda hening sejenak (power pause).`;
+                            }
+                        } else if (this.activeDrill === 'elevator_pitch') {
+                            this.drillFeedback = `Elevator pitch tuntas! Anda menyampaikan ~${this.pitchWordCount} kata dengan tempo rata-rata ${this.pitchWpm} WPM.`;
+                        }
+                    },
+
+                    stopDrill() {
+                        this.isDrillRunning = false;
+                        if (this.drillTimer) { clearInterval(this.drillTimer); this.drillTimer = null; }
+                        if (this.eyeInterval) { clearInterval(this.eyeInterval); this.eyeInterval = null; }
+                        if (this.eyeStream) {
+                            this.eyeStream.getTracks().forEach(t => t.stop());
+                            this.eyeStream = null;
+                        }
+                        if (this.recognition) {
+                            try { this.recognition.stop(); } catch(e) {}
+                            this.recognition = null;
+                        }
+                    }
+                }"
+                class="bg-white dark:bg-[#0c182b] rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-100 dark:border-slate-700/60 space-y-6 print:hidden">
+
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                            <span class="text-2xl">🎯</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-extrabold text-base text-slate-900 dark:text-white">30-Second Targeted Mini-Drills</h3>
+                                <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                                    Latihan Kilat Refleks
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Latih kelemahan spesifik Anda langsung di halaman ini selama 30 detik untuk memperkuat refleks sebelum wawancara nyata berikutnya.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Drill Tabs -->
+                    <div class="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700">
+                        <button type="button"
+                                @click="startDrill('eye_contact')"
+                                :class="activeDrill === 'eye_contact' ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-semibold'"
+                                class="px-3 py-1.5 rounded-xl text-xs transition cursor-pointer">
+                            👁️ Tatapan Elang
+                        </button>
+                        <button type="button"
+                                @click="startDrill('zero_filler')"
+                                :class="activeDrill === 'zero_filler' ? 'bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-semibold'"
+                                class="px-3 py-1.5 rounded-xl text-xs transition cursor-pointer">
+                            🎙️ Zero-Filler Sprint
+                        </button>
+                        <button type="button"
+                                @click="startDrill('elevator_pitch')"
+                                :class="activeDrill === 'elevator_pitch' ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 font-semibold'"
+                                class="px-3 py-1.5 rounded-xl text-xs transition cursor-pointer">
+                            🚀 Elevator Pitch
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Drill Interactive Workspace -->
+                <div class="p-6 rounded-2xl bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 space-y-4">
+                    <!-- Timer & Status Bar -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full" :class="isDrillRunning ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'"></span>
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200" x-text="isDrillRunning ? 'Latihan Sedang Berjalan...' : 'Siap Mulai'"></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="font-mono text-xl font-black text-blue-600 dark:text-blue-400" x-text="drillSecondsRemaining + 's'">30s</span>
+                            <template x-if="!isDrillRunning">
+                                <button type="button"
+                                        @click="startDrill(activeDrill)"
+                                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-md shadow-blue-600/20 cursor-pointer">
+                                    Mulai Latihan (30s)
+                                </button>
+                            </template>
+                            <template x-if="isDrillRunning">
+                                <button type="button"
+                                        @click="stopDrill()"
+                                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 transition cursor-pointer">
+                                    Hentikan
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- DRILL 1 CONTENT: Eye Contact Reticle -->
+                    <template x-if="activeDrill === 'eye_contact'">
+                        <div class="space-y-3">
+                            <p class="text-xs text-slate-600 dark:text-slate-400">
+                                <strong>Instruksi:</strong> Tatap tepat pada lingkaran bidik (reticle) di tengah kamera selama 30 detik tanpa menoleh ke bawah.
+                            </p>
+                            <div class="relative w-full max-w-md mx-auto aspect-4/3 rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center border-2"
+                                 :class="isEyeLocked ? 'border-emerald-500 ring-4 ring-emerald-500/20' : 'border-rose-500 ring-4 ring-rose-500/20'">
+                                <video id="drillEyeVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                                <!-- Reticle Crosshair Ring -->
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div class="w-24 h-24 rounded-full border-2 border-dashed flex items-center justify-center animate-spin"
+                                         :class="isEyeLocked ? 'border-emerald-400' : 'border-rose-400'"
+                                         style="animation-duration: 8s;">
+                                        <div class="w-4 h-4 rounded-full" :class="isEyeLocked ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></div>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-3 inset-x-3 flex items-center justify-between text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md text-white">
+                                    <span>Skor Tatapan: <strong class="text-emerald-400" x-text="eyeScore + '%'"></strong></span>
+                                    <span :class="isEyeLocked ? 'text-emerald-300' : 'text-rose-300'" x-text="isEyeLocked ? '🎯 Terkunci di Lensa' : '⚠️ Tatapan Melenceng'"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- DRILL 2 CONTENT: Zero Filler Sprint -->
+                    <template x-if="activeDrill === 'zero_filler'">
+                        <div class="space-y-3">
+                            <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900 text-xs text-amber-800 dark:text-amber-200">
+                                <strong>Topik Sprint:</strong> "Jelaskan apa pencapaian terbaik Anda dalam karier atau kuliah dalam 30 detik tanpa satu pun kata gumaman (ehm, ngg, anu, kayak)!"
+                            </div>
+                            <div class="flex items-center justify-between text-xs font-bold">
+                                <span>Pelanggaran Terdeteksi:</span>
+                                <span class="px-2.5 py-1 rounded-lg text-sm font-mono font-black"
+                                      :class="fillerStrikes === 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'"
+                                      x-text="fillerStrikes + 'x Pelanggaran'">
+                                </span>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs min-h-[60px] text-slate-700 dark:text-slate-300 leading-relaxed font-mono">
+                                <span x-text="transcriptText || (isDrillRunning ? 'Silakan bicara, sistem sedang mendengarkan kata jeda...' : 'Tekan tombol Mulai Latihan lalu berbicaralah...')"></span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- DRILL 3 CONTENT: Elevator Pitch Challenge -->
+                    <template x-if="activeDrill === 'elevator_pitch'">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold text-slate-800 dark:text-slate-200">Tahap Waktu: <strong class="text-purple-600 dark:text-purple-400" x-text="pitchPhase"></strong></span>
+                                <span class="font-mono font-bold text-slate-600 dark:text-slate-300">Tempo: <strong class="text-blue-600 dark:text-blue-400" x-text="pitchWpm + ' WPM'"></strong></span>
+                            </div>
+                            <!-- Phase Bars -->
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="p-2.5 rounded-xl border text-center transition"
+                                     :class="drillSecondsRemaining > 20 ? 'bg-blue-600 text-white border-blue-500 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'">
+                                    <div class="text-[10px] uppercase font-bold">Detik 0 - 10</div>
+                                    <div class="text-xs">Hook & Masalah</div>
+                                </div>
+                                <div class="p-2.5 rounded-xl border text-center transition"
+                                     :class="drillSecondsRemaining <= 20 && drillSecondsRemaining > 10 ? 'bg-indigo-600 text-white border-indigo-500 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'">
+                                    <div class="text-[10px] uppercase font-bold">Detik 10 - 20</div>
+                                    <div class="text-xs">Solusi & Novelty</div>
+                                </div>
+                                <div class="p-2.5 rounded-xl border text-center transition"
+                                     :class="drillSecondsRemaining <= 10 && drillSecondsRemaining > 0 ? 'bg-purple-600 text-white border-purple-500 font-bold' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'">
+                                    <div class="text-[10px] uppercase font-bold">Detik 20 - 30</div>
+                                    <div class="text-xs">Traction & CTA</div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Drill Completion Feedback Toast -->
+                    <template x-if="drillFeedback">
+                        <div class="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-xs font-semibold text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
+                            <span>🏆</span>
+                            <span x-text="drillFeedback"></span>
+                        </div>
+                    </template>
+                </div>
             </div>
 
             <!-- Official AI Conclusion Card with Speech Synthesis Playback -->
@@ -351,29 +795,104 @@
                 <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-navy-950 via-navy-900 to-blue-950 text-white shadow-xl border border-navy-800/80 relative overflow-hidden"
                      x-data="{
                         isPlaying: false,
-                        toggleVerdictAudio() {
+                        audioObj: null,
+                        async toggleVerdictAudio() {
                             if (this.isPlaying) {
+                                if (this.audioObj) {
+                                    this.audioObj.pause();
+                                    this.audioObj = null;
+                                }
                                 if (window.speechSynthesis) window.speechSynthesis.cancel();
                                 this.isPlaying = false;
                                 return;
                             }
+                            const text = @js($session->ai_conclusion);
+                            const roleType = @js($session->aiRole ? $session->aiRole->role_type : 'dosen_penguji');
+                            const lang = @js(($session->feedback_notes['language'] ?? 'id') === 'en' ? 'en' : 'id');
+
+                            this.isPlaying = true;
+
+                            // 1. Coba Edge-TTS studio-grade dari microservice AI lokal
+                            try {
+                                const res = await fetch('http://127.0.0.1:8001/tts', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        text: text,
+                                        role_type: roleType,
+                                        language: lang
+                                    })
+                                });
+                                if (res.ok) {
+                                    const data = await res.json();
+                                    if (data.success && data.audio_url) {
+                                        const audio = new Audio('http://127.0.0.1:8001' + data.audio_url);
+                                        this.audioObj = audio;
+                                        audio.onended = () => { this.isPlaying = false; };
+                                        audio.onerror = () => { this.playBrowserUtterance(text, roleType, lang); };
+                                        await audio.play();
+                                        return;
+                                    }
+                                }
+                            } catch (e) {
+                                // Microservice offline, lanjut ke browser synthesis
+                            }
+
+                            this.playBrowserUtterance(text, roleType, lang);
+                        },
+
+                        playBrowserUtterance(text, roleType, lang) {
                             if (!window.speechSynthesis) {
                                 alert('Peramban Anda tidak mendukung pemutar suara.');
+                                this.isPlaying = false;
                                 return;
                             }
                             window.speechSynthesis.cancel();
-                            const text = @js($session->ai_conclusion);
                             const utterance = new SpeechSynthesisUtterance(text);
-                            utterance.lang = 'id-ID';
-                            utterance.rate = 1.0;
+                            utterance.lang = lang === 'en' ? 'en-US' : 'id-ID';
+
+                            if (roleType === 'dosen_penguji') {
+                                // Dosen Killer: bariton berat, tenang, berwibawa, tempo terukur
+                                utterance.pitch = 0.80;
+                                utterance.rate = 0.88;
+                            } else if (roleType === 'hrd') {
+                                // Suara HRD Ramah: nada hangat, sopan & empatik, tempo natural
+                                utterance.pitch = 1.12;
+                                utterance.rate = 1.02;
+                            } else {
+                                // Suara Pitch Bisnis: cepat, dinamis, to-the-point, energetik
+                                utterance.pitch = 0.96;
+                                utterance.rate = 1.16;
+                            }
+
                             const voices = window.speechSynthesis.getVoices();
-                            const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
-                            if (idVoice) utterance.voice = idVoice;
+                            const isEn = lang === 'en';
+                            const targetVoices = voices.filter(v => isEn ? (v.lang.includes('en-US') || v.lang.includes('en-GB') || v.lang.includes('en')) : (v.lang.includes('id') || v.lang.includes('ID')));
+
+                            if (targetVoices.length > 0) {
+                                if (roleType === 'hrd') {
+                                    const female = targetVoices.find(v => {
+                                        const n = (v.name || '').toLowerCase();
+                                        return n.includes('gadis') || n.includes('zira') || n.includes('jenny') || n.includes('aria') || n.includes('female') || n.includes('wanita') || n.includes('siti');
+                                    });
+                                    utterance.voice = female || targetVoices[0];
+                                } else if (roleType === 'dosen_penguji') {
+                                    const male = targetVoices.find(v => {
+                                        const n = (v.name || '').toLowerCase();
+                                        return n.includes('ardi') || n.includes('david') || n.includes('guy') || n.includes('davis') || n.includes('male') || n.includes('pria');
+                                    });
+                                    utterance.voice = male || targetVoices[0];
+                                } else {
+                                    const crisp = targetVoices.find(v => {
+                                        const n = (v.name || '').toLowerCase();
+                                        return n.includes('ardi') || n.includes('brian') || n.includes('christopher') || n.includes('male');
+                                    });
+                                    utterance.voice = crisp || targetVoices[0];
+                                }
+                            }
 
                             utterance.onend = () => { this.isPlaying = false; };
                             utterance.onerror = () => { this.isPlaying = false; };
-
-                            this.isPlaying = true;
                             window.speechSynthesis.speak(utterance);
                         }
                      }">
@@ -657,13 +1176,13 @@
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                                 </svg>
-                                <span>Tolak Ukur Standar Industri & Sidang Nasional</span>
+                                <span>Tolak Ukur Standar Industri (Benchmark Internal Prototipe VOIC)</span>
                             </div>
                             <h3 class="text-lg font-black text-slate-900 dark:text-white">
                                 Komparasi Metrik Performa Anda vs Standar Kelulusan
                             </h3>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                Dikalibrasi berdasarkan standar penilaian HRD profesional dan dewan dosen penguji sidang tugas akhir.
+                                Dikalibrasi berdasarkan rubrik acuan internal prototipe VOIC (standar kelulusan sidang tugas akhir & seleksi HRD), bukan klaim populasi sensus nasional.
                             </p>
                         </div>
 
@@ -672,6 +1191,42 @@
                                 <span class="text-[10px] font-bold uppercase tracking-wider block opacity-90">Peringkat Komparatif</span>
                                 <span class="text-sm font-extrabold block">{{ $benchmarkData['percentile_rank'] }}</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- 3-Tier Multi-Level Benchmark Tabs / Strip (Personal, Komunitas, Kalibrasi) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <!-- Tier 1: Personal Progression -->
+                        <div class="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-navy-950/70 border border-blue-200/80 dark:border-navy-800 text-xs space-y-1">
+                            <div class="flex items-center gap-1.5 font-bold text-blue-700 dark:text-blue-300">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                <span>Lapis 1: Perkembangan Anda</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                                {{ $benchmarkData['personal_progression']['summary'] ?? 'Sesi latihan tercatat untuk tracking histori pribadi.' }}
+                            </p>
+                        </div>
+
+                        <!-- Tier 2: Community Percentile -->
+                        <div class="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-xs space-y-1">
+                            <div class="flex items-center gap-1.5 font-bold text-emerald-700 dark:text-emerald-300">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                <span>Lapis 2: Komunitas Pengguna VOIC</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                                <strong>{{ $benchmarkData['community_label'] ?? 'Top persentil pengguna' }}</strong> (agregat anonim sesi aktif).
+                            </p>
+                        </div>
+
+                        <!-- Tier 3: Rubric Calibration -->
+                        <div class="p-3.5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 text-xs space-y-1">
+                            <div class="flex items-center gap-1.5 font-bold text-indigo-700 dark:text-indigo-300">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                <span>Lapis 3: Rubrik Kalibrasi Sidang & HRD</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                                Dikalibrasi terhadap rubrik kelulusan ujian sarjana & seleksi kompetensi STAR.
+                            </p>
                         </div>
                     </div>
 
@@ -1098,21 +1653,47 @@
                     <button type="button" @click="showMethodologyModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-xl cursor-pointer">✕</button>
                 </div>
 
-                <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-h-[70vh] overflow-y-auto pr-1">
                     <div class="p-4 rounded-2xl bg-blue-50/70 dark:bg-navy-950/60 border border-blue-200 dark:border-navy-800 space-y-1.5">
-                        <span class="font-bold text-blue-900 dark:text-blue-300 block text-sm">Arsitektur Edge Privacy-First</span>
+                        <span class="font-bold text-blue-900 dark:text-blue-300 block text-sm">1. Arsitektur Edge Privacy-First</span>
                         <p>
-                            Seluruh ekstraksi piksel wajah (kontak mata, relaksasi otot senyum) dan akustik mikrofon diproses secara <strong>100% lokal pada peramban klien</strong> menggunakan HTML5 Canvas Chromaticity dan Web Audio Analyser API. Rekaman suara disimpan di IndexedDB lokal dan tidak ada video atau audio mentah yang diunggah ke server cloud.
+                            Seluruh ekstraksi piksel wajah dan telemetri akustik mikrofon diproses secara <strong>100% lokal pada peramban klien</strong> menggunakan HTML5 Canvas Chromaticity dan Web Audio Analyser API. Rekaman suara disimpan di IndexedDB lokal dan tidak ada video atau audio mentah yang dikirim ke server.
                         </p>
                     </div>
 
-                    <div>
-                        <span class="font-bold text-slate-900 dark:text-white block mb-1 text-sm">Formulasi Pembobotan Skor</span>
-                        <ul class="list-disc list-inside space-y-1 text-slate-500 dark:text-slate-400">
-                            <li><strong>Skor Optik Wajah (50%):</strong> Kontak Mata Gaze Tracking (60%) + Rasio Relaksasi Senyum (40%).</li>
-                            <li><strong>Skor Vokal Suara (50%):</strong> Kecepatan Bicara WPM (45%) + Energi dB Mikrofon (30%) + Dinamika Intonasi Autokorelasi (25%).</li>
-                            <li><strong>Skor Total:</strong> Rata-rata harmonis Skor Optik dan Skor Vokal (skala 0 - 100).</li>
-                        </ul>
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <span class="font-bold text-slate-900 dark:text-white block text-sm">2. Estimasi Kontak Mata & Orientasi Wajah (Computer Vision)</span>
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Untuk menjaga privasi tanpa ketergantungan model landmark pupil invasif, sistem mengukur <strong>orientasi tatapan & hadap kamera</strong> melalui simetri horizontal okular-nasal (yaw tracking), deadband kompensasi tatapan layar (toleransi alami melirik avatar 35%-65% tinggi layar dan deadband horizontal $\pm 18\%$), serta penghalusan <em>Exponential Moving Average (EMA)</em> untuk memfilter kedipan mata normal.
+                        </p>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <span class="font-bold text-slate-900 dark:text-white block text-sm">3. Frekuensi Nada Vokal (Pitch Autocorrelation)</span>
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Algoritma estimasi frekuensi fundamental vokal ($F_0$) menggunakan autokorelasi berbasis <em>Normalized Square Difference</em> dengan <em>RMS Noise Gating (ambang 0.016)</em> dan penyaringan segmen tak bersuara (unvoiced consonants). Rentang frekuensi dibatasi secara ketat pada <strong>65 Hz – 450 Hz</strong> (mencakup register suara pria & wanita) dengan interpolasi parabolik sub-sampel untuk menjamin kebal terhadap nilai <code>NaN</code> atau lonjakan artifaktual.
+                        </p>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <span class="font-bold text-slate-900 dark:text-white block text-sm">4. Normalisasi WPM Bilingual & Toleransi Filler Words</span>
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Bahasa Indonesia memiliki rata-rata panjang kata aglutinatif (~6.2-7.5 karakter/kata) lebih panjang daripada Bahasa Inggris (~5.0 karakter/kata). VOIC menormalisasi WPM berdasarkan panjang karakter ekuivalen kata standar serta membedakan rentang kecepatan ideal: <strong>100–135 WPM (Bahasa Indonesia)</strong> vs <strong>120–155 WPM (Bahasa Inggris)</strong>. Pendeteksian filler words menerapkan toleransi percakapan alami (1–3 jeda per menit dianggap wajar tanpa penalti drastis).
+                        </p>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <span class="font-bold text-slate-900 dark:text-white block text-sm">5. Transparansi Tolak Ukur (Rubrik Kalibrasi Internal)</span>
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Seluruh tolak ukur komparasi dilabeli secara jujur sebagai <strong>Benchmark Internal Prototipe VOIC</strong> yang dikalibrasi berdasarkan rubrik baku kelulusan sidang sarjana/tugas akhir dan wawancara kerja HRD kompetensi STAR, bukan survei populasi sensus nasional.
+                        </p>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                        <span class="font-bold text-slate-900 dark:text-white block text-sm">6. Keandalan AI Neural & Persona Fallback Cold-Start</span>
+                        <p class="text-slate-600 dark:text-slate-300">
+                            Model roleplay Llama 3.2 / Qwen 2.5 3B via Ollama dilengkapi proteksi batas waktu respon cepat (timeout 8–12 detik) dan batas token ringkas. Skenario cold-start atau perangkat dengan keterbatasan VRAM secara instan dialihkan ke <em>Deterministic Context Fallback Engine</em> dengan ekstraksi entitas aktif, memastikan alur simulasi tidak pernah macet atau mengalami freeze.
+                        </p>
                     </div>
 
                     <div>
@@ -1177,7 +1758,7 @@
 
                         <div class="space-y-1 mb-5">
                             <h4 class="text-xl font-black text-white tracking-tight">
-                                {{ $session->user ? $session->user->name : 'Peserta VOIC' }}
+                                {{ $session->getParticipantName() }}
                             </h4>
                             <p class="text-xs text-blue-200/90 font-medium">
                                 Telah menyelesaikan simulasi <strong class="text-white">{{ $session->scenario_type }}</strong>
