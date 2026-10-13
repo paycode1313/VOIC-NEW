@@ -9,9 +9,14 @@ echo "=== 2. BUILDING FRONTEND ASSETS WITH VITE ==="
 npm install --no-audit --no-fund
 npm run build
 
-echo "=== 3. PREPARING SQLITE DATABASE ==="
-mkdir -p database
-touch database/database.sqlite
+echo "=== 3. PREPARING DATABASE ==="
+if [ "${DB_CONNECTION}" = "sqlite" ] || [ -z "${DB_CONNECTION}" ]; then
+    echo "Using SQLite database..."
+    mkdir -p database
+    touch database/database.sqlite
+else
+    echo "Connecting to external database (${DB_CONNECTION})..."
+fi
 
 echo "=== 4. RUNNING DATABASE MIGRATIONS & SEEDING ==="
 php artisan migrate --force --no-interaction
