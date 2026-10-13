@@ -5,7 +5,7 @@
             <!-- Left: Brand Logo Wordmark -->
             <div class="flex items-center gap-8">
                 <a href="{{ auth()->check() ? route('dashboard') : url('/') }}" class="flex items-center group">
-                    <x-application-logo variant="horizontal" class="h-8 w-auto group-hover:scale-[1.03] transition-transform" />
+                    <x-application-logo variant="horizontal" class="h-7 sm:h-8 w-auto max-w-[125px] sm:max-w-none group-hover:scale-[1.03] transition-transform" />
                 </a>
 
                 <!-- Desktop Nav Links -->

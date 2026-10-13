@@ -25,11 +25,11 @@
             <!-- Center Search / Quick Launcher Bar -->
             <div class="mt-8 max-w-xl mx-auto">
                 <div class="p-1.5 sm:p-2 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-xl flex items-center justify-between shadow-lg dark:shadow-2xl transition-colors">
-                    <div class="flex items-center gap-2.5 px-3 text-slate-400 text-xs sm:text-sm">
+                    <div class="flex items-center gap-2 px-2.5 sm:px-3 text-slate-400 text-xs sm:text-sm min-w-0">
                         <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
-                        <span class="text-slate-700 dark:text-slate-300 font-medium">Pilih peran atau mulai simulasi baru...</span>
+                        <span class="text-slate-700 dark:text-slate-300 font-medium truncate">Pilih peran atau mulai simulasi baru...</span>
                     </div>
                     <a href="{{ route('practice.create') }}"
                        class="inline-flex items-center justify-center px-4 sm:px-5 py-2 text-xs font-bold text-white dark:text-slate-900 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 rounded-xl transition shadow-md shrink-0">

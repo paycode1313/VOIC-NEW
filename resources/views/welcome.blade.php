@@ -48,7 +48,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 sm:h-20">
                 <a href="/" class="flex items-center group">
-                    <x-application-logo variant="horizontal" class="h-10 sm:h-11 w-auto group-hover:scale-[1.02] transition-transform" />
+                    <x-application-logo variant="horizontal" class="h-7 sm:h-11 w-auto max-w-[130px] sm:max-w-none group-hover:scale-[1.02] transition-transform" />
                 </a>
 
                 <!-- Nav Menu Desktop -->
@@ -159,61 +159,61 @@
             <!-- Header Text & Hero Headline -->
             <div class="text-center max-w-4xl mx-auto space-y-5">
                 <!-- Competition / Award Status Badge -->
-                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-300 shadow-xs">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Platform Evaluasi Mandiri • AI Multimodal Public Speaking & Defense Coach</span>
+                <div class="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 text-[11px] sm:text-sm font-bold text-blue-700 dark:text-blue-300 shadow-xs max-w-full text-center">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                    <span class="leading-tight">AI Multimodal Public Speaking & Defense Coach</span>
                 </div>
 
                 <!-- Main Headline -->
-                <h1 class="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.1]">
+                <h1 class="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.15] sm:leading-[1.1] break-words">
                     Kuasai Panggung Sidang & Wawancara Bersama <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-blue-800 dark:from-blue-400 dark:via-sky-300 dark:to-white bg-clip-text text-transparent">VOIC AI</span>
                 </h1>
 
                 <!-- Subheadline -->
-                <p class="text-base sm:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
+                <p class="text-sm sm:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
                     Sparring partner AI interaktif pertama yang menggabungkan <strong>telemetri tatapan kamera (Gaze Tracking)</strong>, <strong>spektrum akustik suara</strong>, dan <strong>roleplay kontekstual</strong> untuk persiapan sidang skripsi, wawancara kerja, dan pitching startup.
                 </p>
 
                 <!-- CTA Action Buttons -->
-                <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
                     @auth
                         <a href="{{ route('practice.create') }}"
-                           class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base font-extrabold rounded-2xl text-white bg-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-600/30 transition transform hover:-translate-y-0.5">
+                           class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-extrabold rounded-2xl text-white bg-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-600/30 transition transform hover:-translate-y-0.5 text-center">
                             Mulai Ruang Simulasi Interaktif
-                            <svg class="w-5 h-5 ms-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 ms-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                             </svg>
                         </a>
                     @else
                         <a href="{{ route('demo.create') }}"
-                           class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base font-extrabold rounded-2xl text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 shadow-xl shadow-emerald-600/30 transition transform hover:-translate-y-0.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-white animate-pulse me-2.5"></span>
+                           class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-extrabold rounded-2xl text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 shadow-xl shadow-emerald-600/30 transition transform hover:-translate-y-0.5 text-center">
+                            <span class="w-2.5 h-2.5 rounded-full bg-white animate-pulse me-2 shrink-0"></span>
                             Coba Demo Booth Tamu (Tanpa Login)
                         </a>
                         <a href="{{ route('register') }}"
-                           class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-2xl text-slate-800 dark:text-slate-200 bg-white dark:bg-[#0f1c2f] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs">
+                           class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold rounded-2xl text-slate-800 dark:text-slate-200 bg-white dark:bg-[#0f1c2f] border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs text-center">
                             Daftar Akun Baru
                         </a>
                     @endauth
                 </div>
 
                 <!-- Trust Badges -->
-                <div class="pt-4 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-emerald-500/40 transition">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span class="text-[11px] sm:text-xs tracking-tight">EDGE CV TATAPAN (30 FPS)</span>
+                <div class="pt-3 sm:pt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
+                    <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-emerald-500/40 transition">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                        <span class="text-[10px] sm:text-xs tracking-tight">EDGE CV TATAPAN (30 FPS)</span>
                     </div>
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-blue-500/40 transition">
-                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                        <span class="text-[11px] sm:text-xs tracking-tight">100% ZERO-CLOUD VIDEO (PRIVAT)</span>
+                    <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-blue-500/40 transition">
+                        <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                        <span class="text-[10px] sm:text-xs tracking-tight">100% ZERO-CLOUD (PRIVAT)</span>
                     </div>
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-sky-500/40 transition">
-                        <span class="w-2 h-2 rounded-full bg-sky-500"></span>
-                        <span class="text-[11px] sm:text-xs tracking-tight">SPEKTRUM AKUSTIK 32-BAND FFT</span>
+                    <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-sky-500/40 transition">
+                        <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
+                        <span class="text-[10px] sm:text-xs tracking-tight">SPEKTRUM AKUSTIK 32-BAND</span>
                     </div>
-                    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-indigo-500/40 transition">
-                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                        <span class="text-[11px] sm:text-xs tracking-tight">VALIDASI KORELASI r = 0.87</span>
+                    <div class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-slate-100/90 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-2xs hover:border-indigo-500/40 transition">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
+                        <span class="text-[10px] sm:text-xs tracking-tight">VALIDASI RISET r = 0.87</span>
                     </div>
                 </div>
             </div>
@@ -238,19 +238,19 @@
                     </div>
                 </div>
 
-                <div class="rounded-3xl p-3 sm:p-5 bg-gradient-to-b from-slate-200/50 via-slate-100/40 to-slate-200/50 dark:from-slate-800/60 dark:via-[#0c182b] dark:to-[#08101d] border border-slate-300/70 dark:border-blue-900/40 shadow-2xl backdrop-blur-2xl">
+                <div class="rounded-3xl p-2.5 sm:p-5 bg-gradient-to-b from-slate-200/50 via-slate-100/40 to-slate-200/50 dark:from-slate-800/60 dark:via-[#0c182b] dark:to-[#08101d] border border-slate-300/70 dark:border-blue-900/40 shadow-2xl backdrop-blur-2xl">
                 <!-- Window Titlebar -->
-                <div class="px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-[#0b1424]/95 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between mb-3 text-xs shadow-xs">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-rose-500/90 inline-block shadow-2xs"></span>
-                        <span class="w-3 h-3 rounded-full bg-amber-500/90 inline-block shadow-2xs"></span>
-                        <span class="w-3 h-3 rounded-full bg-emerald-500/90 inline-block shadow-2xs"></span>
-                        <span class="ms-2 font-mono text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                            VOIC Multimodal Telemetry Room • Live Session #DEFENSE-2026
+                <div class="px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-white/95 dark:bg-[#0b1424]/95 border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between mb-3 text-xs shadow-xs gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-rose-500/90 inline-block shadow-2xs shrink-0"></span>
+                        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500/90 inline-block shadow-2xs shrink-0"></span>
+                        <span class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500/90 inline-block shadow-2xs shrink-0"></span>
+                        <span class="ms-1 sm:ms-2 font-mono text-[10px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">
+                            VOIC Telemetry Room <span class="hidden sm:inline">• Live Session #DEFENSE-2026</span>
                         </span>
                     </div>
-                    <div class="flex items-center gap-3 font-mono text-[10px] text-slate-500 dark:text-slate-400">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800">
+                    <div class="flex items-center gap-2 sm:gap-3 font-mono text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
+                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-300 dark:border-emerald-800 text-[9px] sm:text-[10px]">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
                             LIVE 30 FPS
                         </span>
@@ -262,7 +262,7 @@
                 <!-- Main Stage: Examiner Panel vs Candidate Telemetry -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                     <!-- Pane 1: AI Panelist Examiner View -->
-                    <div class="relative rounded-2xl overflow-hidden bg-slate-900 aspect-video sm:aspect-4/3 flex flex-col justify-between p-4 border border-slate-800 shadow-inner group">
+                    <div class="relative rounded-2xl overflow-hidden bg-slate-900 min-h-[300px] sm:min-h-0 sm:aspect-4/3 flex flex-col justify-between p-3.5 sm:p-4 border border-slate-800 shadow-inner group">
                         <!-- Ambient Blurred Backdrop -->
                         <img src="{{ asset('images/avatars/dosen.jpg') }}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-20 scale-125 pointer-events-none select-none">
                         <!-- Naturally Framed Examiner Portrait -->
@@ -273,12 +273,12 @@
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-slate-950/60 pointer-events-none"></div>
 
                         <!-- Top Overlay: Active Speaking Status & Waveform Equalizer -->
-                        <div class="relative z-10 flex items-center justify-between">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
-                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <div class="relative z-10 flex items-center justify-between gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[9px] sm:text-[10px] font-bold text-white border border-white/10">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
                                 Sedang Berbicara (Live Voice)
                             </span>
-                            <div class="flex items-end gap-1 h-5 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10" title="Audio Equalizer">
+                            <div class="flex items-end gap-1 h-5 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/10 shrink-0" title="Audio Equalizer">
                                 <span class="w-1 h-2 bg-blue-400 rounded-full animate-bounce"></span>
                                 <span class="w-1 h-4 bg-sky-400 rounded-full animate-bounce [animation-delay:0.15s]"></span>
                                 <span class="w-1 h-2.5 bg-blue-300 rounded-full animate-bounce [animation-delay:0.3s]"></span>
@@ -288,92 +288,92 @@
 
                         <!-- Bottom Overlay: Subtitle Speech Bubble & Examiner Credentials -->
                         <div class="relative z-10 space-y-2">
-                            <div class="p-3 rounded-xl bg-slate-950/85 backdrop-blur-md border border-white/15 text-left shadow-lg">
+                            <div class="p-2.5 sm:p-3 rounded-xl bg-slate-950/85 backdrop-blur-md border border-white/15 text-left shadow-lg">
                                 <p class="text-[11px] sm:text-xs text-blue-100 font-medium leading-relaxed">
                                     "Saudara mahasiswa, coba jelaskan kebaruan metodologi penelitian Anda dan bagaimana mengantisipasi risiko overfitting pada model?"
                                 </p>
                             </div>
-                            <div class="flex items-center justify-between text-white text-xs">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-extrabold text-xs text-white">Dr. Ir. Hendra Gunawan, M.Sc.</span>
-                                    <span class="text-[10px] text-blue-300 font-semibold px-2 py-0.5 rounded bg-blue-900/60 border border-blue-400/20">Dosen Penguji Utama</span>
+                            <div class="flex flex-wrap items-center justify-between text-white text-xs gap-1.5">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="font-extrabold text-[11px] sm:text-xs text-white">Dr. Ir. Hendra Gunawan, M.Sc.</span>
+                                    <span class="text-[9px] sm:text-[10px] text-blue-300 font-semibold px-1.5 py-0.5 rounded bg-blue-900/60 border border-blue-400/20">Dosen Penguji Utama</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Pane 2: Candidate Realtime Computer Vision Telemetry View -->
-                    <div class="relative rounded-2xl overflow-hidden bg-slate-950 aspect-video sm:aspect-4/3 flex flex-col justify-between p-4 border border-blue-500/50 shadow-inner group">
+                    <div class="relative rounded-2xl overflow-hidden bg-slate-950 min-h-[300px] sm:min-h-0 sm:aspect-4/3 flex flex-col justify-between p-3.5 sm:p-4 border border-blue-500/50 shadow-inner group">
                         <!-- High Tech Grid Matrix Background -->
                         <div class="absolute inset-0 bg-[radial-gradient(#1e3a8a_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
                         <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-slate-950/80 pointer-events-none"></div>
 
                         <!-- Computer Vision Reticle Overlay (Candidate Face HUD) -->
-                        <div class="absolute inset-x-8 inset-y-6 sm:inset-x-16 sm:inset-y-10 border border-cyan-400/30 rounded-2xl pointer-events-none flex flex-col justify-between p-2.5">
+                        <div class="absolute inset-x-3 inset-y-8 sm:inset-x-12 sm:inset-y-10 border border-cyan-400/30 rounded-2xl pointer-events-none flex flex-col justify-between p-2">
                             <div class="flex justify-between items-start">
-                                <div class="w-4 h-4 border-t-2 border-l-2 border-cyan-400"></div>
-                                <span class="font-mono text-[9px] font-bold text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">TATAPAN: 94.6% OPTIMAL</span>
-                                <div class="w-4 h-4 border-t-2 border-r-2 border-cyan-400"></div>
+                                <div class="w-3.5 h-3.5 border-t-2 border-l-2 border-cyan-400"></div>
+                                <span class="font-mono text-[8px] sm:text-[9px] font-bold text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/30">TATAPAN: 94.6% OPTIMAL</span>
+                                <div class="w-3.5 h-3.5 border-t-2 border-r-2 border-cyan-400"></div>
                             </div>
-                            <div class="text-center font-mono text-[9px] text-cyan-400/80 tracking-widest uppercase">
+                            <div class="text-center font-mono text-[8px] sm:text-[9px] text-cyan-400/80 tracking-widest uppercase">
                                 [ FACE RETICLE LOCKED • 30 FPS ]
                             </div>
                             <div class="flex justify-between items-end">
-                                <div class="w-4 h-4 border-b-2 border-l-2 border-cyan-400"></div>
-                                <span class="font-mono text-[9px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">PITCH: 142 Hz (STABIL)</span>
-                                <div class="w-4 h-4 border-b-2 border-r-2 border-cyan-400"></div>
+                                <div class="w-3.5 h-3.5 border-b-2 border-l-2 border-cyan-400"></div>
+                                <span class="font-mono text-[8px] sm:text-[9px] font-bold text-emerald-300 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/30">PITCH: 142 Hz (STABIL)</span>
+                                <div class="w-3.5 h-3.5 border-b-2 border-r-2 border-cyan-400"></div>
                             </div>
                         </div>
 
                         <!-- Top Overlay: Telemetry Metrics Ribbons -->
-                        <div class="relative z-10 flex items-center justify-between">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
-                                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                        <div class="relative z-10 flex items-center justify-between gap-2">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[9px] sm:text-[10px] font-bold text-white border border-white/10">
+                                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
                                 Kamera Kandidat (Anda)
                             </span>
-                            <div class="flex items-center gap-1.5 font-mono text-[10px]">
-                                <span class="px-2 py-0.5 rounded bg-emerald-900/70 text-emerald-300 border border-emerald-400/30 font-bold">Filler: 0</span>
-                                <span class="px-2 py-0.5 rounded bg-blue-900/70 text-blue-300 border border-blue-400/30 font-bold">128 WPM</span>
+                            <div class="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] shrink-0">
+                                <span class="px-1.5 sm:px-2 py-0.5 rounded bg-emerald-900/70 text-emerald-300 border border-emerald-400/30 font-bold">Filler: 0</span>
+                                <span class="px-1.5 sm:px-2 py-0.5 rounded bg-blue-900/70 text-blue-300 border border-blue-400/30 font-bold">128 WPM</span>
                             </div>
                         </div>
 
                         <!-- Bottom Overlay: Realtime Speech Transcription Transcript & Score -->
                         <div class="relative z-10 space-y-2">
-                            <div class="p-3 rounded-xl bg-slate-950/85 backdrop-blur-md border border-cyan-500/30 text-left shadow-lg">
-                                <div class="flex items-center gap-1 text-[9px] font-mono text-cyan-400 mb-1">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+                            <div class="p-2.5 sm:p-3 rounded-xl bg-slate-950/85 backdrop-blur-md border border-cyan-500/30 text-left shadow-lg">
+                                <div class="flex items-center gap-1 text-[8px] sm:text-[9px] font-mono text-cyan-400 mb-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
                                     TRANSRIPSI AKUSTIK LANGSUNG:
                                 </div>
                                 <p class="text-[11px] sm:text-xs text-white font-medium leading-relaxed">
                                     "Baik Prof Hendra, untuk mencegah overfitting kami menerapkan teknik Data Augmentation serta Dropout 0.3..."
                                 </p>
                             </div>
-                            <div class="flex items-center justify-between text-white text-xs">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-xs">Peserta Ujian</span>
-                                    <span class="text-[10px] text-emerald-300 font-semibold px-2 py-0.5 rounded bg-emerald-900/60 border border-emerald-400/20">Kontak Mata: Prima</span>
+                            <div class="flex items-center justify-between text-white text-xs gap-1.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-bold text-[11px] sm:text-xs">Peserta Ujian</span>
+                                    <span class="text-[9px] sm:text-[10px] text-emerald-300 font-semibold px-1.5 py-0.5 rounded bg-emerald-900/60 border border-emerald-400/20">Kontak Mata: Prima</span>
                                 </div>
-                                <span class="font-mono text-[10px] text-slate-400">Audio FFT: 32-Band DSP</span>
+                                <span class="font-mono text-[9px] sm:text-[10px] text-slate-400">32-Band DSP</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Conference Action Dock -->
-                <div class="mt-3 px-4 py-2.5 rounded-2xl bg-white/95 dark:bg-[#0c1829]/95 border border-slate-200/80 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs">
-                    <div class="flex items-center gap-3">
+                <div class="mt-3 p-3 sm:px-4 sm:py-2.5 rounded-2xl bg-white/95 dark:bg-[#0c1829]/95 border border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs shadow-xs">
+                    <div class="flex flex-wrap items-center justify-around sm:justify-start gap-2.5 sm:gap-4 text-[11px] sm:text-xs">
                         <span class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                            Mikrofon Aktif (Web Audio API)
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                            Mikrofon (Web Audio)
                         </span>
                         <span class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                             Kamera On-Device 30 FPS
                         </span>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center">
                         <a href="{{ auth()->check() ? route('practice.create') : route('demo.create') }}"
-                           class="inline-flex items-center px-4 py-1.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-sm transition transform hover:-translate-y-0.5">
+                           class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 sm:py-1.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-sm transition transform hover:-translate-y-0.5 text-center">
                             Coba Langsung Simulasi di Browser Anda →
                         </a>
                     </div>
@@ -841,6 +841,13 @@
 
             <!-- Comparison Table Card -->
             <div class="rounded-3xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+                <div class="sm:hidden px-4 py-2.5 bg-blue-50/70 dark:bg-blue-950/40 text-[11px] text-blue-600 dark:text-blue-300 font-medium flex items-center justify-between border-b border-slate-200 dark:border-slate-800">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-4 h-4 shrink-0 text-blue-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        Geser tabel ke samping untuk melihat detail
+                    </span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-blue-500">Tabel Komparasi</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs sm:text-sm">
                         <thead class="bg-slate-50 dark:bg-[#0c1728] border-b border-slate-200 dark:border-slate-800">
@@ -1004,26 +1011,26 @@
             </div>
 
             <!-- Scientific Credentials & Research Rigor Ribbon -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-                <div class="p-5 rounded-2xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 text-center space-y-1">
-                    <span class="text-3xl font-black text-blue-600 dark:text-blue-400">r = 0.87</span>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 pt-2">
+                <div class="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 text-center space-y-1">
+                    <span class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400">r = 0.87</span>
                     <span class="block text-xs font-bold text-slate-900 dark:text-white">Korelasi Pearson</span>
-                    <span class="block text-[11px] text-slate-500 dark:text-slate-400">Tingkat kesesuaian nilai dengan asesor senior</span>
+                    <span class="block text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 leading-tight">Tingkat kesesuaian nilai dengan asesor</span>
                 </div>
-                <div class="p-5 rounded-2xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 text-center space-y-1">
-                    <span class="text-3xl font-black text-sky-600 dark:text-sky-400">30 FPS</span>
+                <div class="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 text-center space-y-1">
+                    <span class="text-2xl sm:text-3xl font-black text-sky-600 dark:text-sky-400">30 FPS</span>
                     <span class="block text-xs font-bold text-slate-900 dark:text-white">Edge Computer Vision</span>
-                    <span class="block text-[11px] text-slate-500 dark:text-slate-400">Pelacakan pupil & wajah real-time tanpa lag</span>
+                    <span class="block text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 leading-tight">Pelacakan pupil & wajah real-time tanpa lag</span>
                 </div>
-                <div class="p-5 rounded-2xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 text-center space-y-1">
-                    <span class="text-3xl font-black text-emerald-600 dark:text-emerald-400">0 KB</span>
+                <div class="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 text-center space-y-1">
+                    <span class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">0 KB</span>
                     <span class="block text-xs font-bold text-slate-900 dark:text-white">Video Cloud Upload</span>
-                    <span class="block text-[11px] text-slate-500 dark:text-slate-400">Kamera diproses 100% lokal di browser pengguna</span>
+                    <span class="block text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 leading-tight">Kamera diproses 100% lokal di browser</span>
                 </div>
-                <div class="p-5 rounded-2xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 text-center space-y-1">
-                    <span class="text-3xl font-black text-indigo-600 dark:text-indigo-400">32-Band</span>
+                <div class="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-[#0f1c2f] border border-slate-200 dark:border-slate-800 text-center space-y-1">
+                    <span class="text-2xl sm:text-3xl font-black text-indigo-600 dark:text-indigo-400">32-Band</span>
                     <span class="block text-xs font-bold text-slate-900 dark:text-white">Web Audio DSP</span>
-                    <span class="block text-[11px] text-slate-500 dark:text-slate-400">Analisis stabilitas desibel, pitch, dan tempo</span>
+                    <span class="block text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 leading-tight">Analisis stabilitas desibel & dinamika nada</span>
                 </div>
             </div>
         </div>

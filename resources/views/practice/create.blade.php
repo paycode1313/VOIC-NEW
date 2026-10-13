@@ -3160,32 +3160,32 @@
                  x-cloak
                  class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-md overflow-y-auto"
                  @keydown.escape.window="closeCalibrationModal()">
-                <div class="glass-panel rounded-3xl max-w-3xl w-full border-white/90 dark:border-navy-800 shadow-2xl overflow-hidden my-auto"
+                <div class="glass-panel rounded-3xl max-w-3xl w-full border-white/90 dark:border-navy-800 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col"
                      @click.away="closeCalibrationModal()">
                     
                     <!-- Modal Header -->
-                    <div class="p-6 border-b border-slate-200/60 dark:border-navy-800 flex items-center justify-between">
+                    <div class="p-4 sm:p-6 border-b border-slate-200/60 dark:border-navy-800 flex items-center justify-between shrink-0">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-navy-950/70 border border-blue-200 dark:border-navy-800 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shadow-xs">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-50 dark:bg-navy-950/70 border border-blue-200 dark:border-navy-800 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg sm:text-xl shadow-xs shrink-0">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="font-bold text-base text-slate-900 dark:text-white">
+                                <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
                                     Pemeriksaan Perangkat & Kalibrasi Sesi
                                 </h3>
-                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                                     Pastikan posisi kamera dan mikrofon berfungsi optimal sebelum simulasi dimulai
                                 </p>
                             </div>
                         </div>
-                        <button type="button" @click="closeCalibrationModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold cursor-pointer">✕</button>
+                        <button type="button" @click="closeCalibrationModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold cursor-pointer shrink-0">✕</button>
                     </div>
 
                     <!-- Modal Body: 2 Columns (Preview Left, Settings Right) -->
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <div class="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 overflow-y-auto flex-1">
                         <!-- Left: Camera Preview & Face Alignment Reticle -->
                         <div class="md:col-span-6 space-y-3">
                             <div class="relative bg-slate-950 rounded-2xl overflow-hidden aspect-4/3 border border-slate-800 flex items-center justify-center shadow-lg">
@@ -3193,7 +3193,7 @@
                                 
                                 <!-- Center Target Reticle -->
                                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <div class="w-32 h-44 rounded-full border-2 border-dashed border-blue-400/70 animate-pulse"></div>
+                                    <div class="w-28 sm:w-32 h-36 sm:h-44 rounded-full border-2 border-dashed border-blue-400/70 animate-pulse"></div>
                                 </div>
                                 <div class="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-black/75 text-[10px] text-white font-mono flex items-center gap-1.5 shadow-md">
                                     <span class="w-2 h-2 rounded-full" :class="calibrationCameraOk ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'"></span>
@@ -3271,27 +3271,27 @@
                             <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800 grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400">
                                 <div class="flex items-center gap-1.5">
                                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    <span>Webcam 30 FPS Terkalibrasi</span>
+                                    <span>Webcam 30 FPS</span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    <span>Sensor Akustik Siap</span>
+                                    <span>Sensor Akustik</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="p-6 glass-subcard border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                    <div class="p-4 sm:p-6 glass-subcard border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between shrink-0">
                         <button type="button"
                                 @click="closeCalibrationModal()"
-                                class="px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 transition cursor-pointer">
+                                class="px-4 sm:px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 transition cursor-pointer">
                             Batal
                         </button>
                         <button type="button"
                                 @click="enterInterviewRoom()"
                                 :disabled="isStarting"
-                                class="inline-flex items-center px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 rounded-2xl shadow-lg shadow-blue-600/25 transition cursor-pointer disabled:opacity-50">
+                                class="inline-flex items-center px-6 sm:px-8 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 rounded-2xl shadow-lg shadow-blue-600/25 transition cursor-pointer disabled:opacity-50">
                             <span x-text="isStarting ? 'Menyiapkan...' : 'Mulai Sesi Simulasi'"></span>
                         </button>
                     </div>
@@ -3488,7 +3488,7 @@
                 </div>
 
                 <!-- Main Video Call Stage with Reactive Speaker Glow -->
-                <div class="relative bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border aspect-16/10 sm:aspect-16/9 flex items-center justify-center transition-all duration-500"
+                <div class="relative bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border min-h-[350px] sm:min-h-[460px] aspect-4/3 sm:aspect-16/9 flex items-center justify-center transition-all duration-500"
                      :class="orbState === 'ai_speaking' ? 'border-blue-500/80 ring-4 ring-blue-500/50 glow-active-ai shadow-blue-500/20' : 'border-slate-800'">
 
                     <!-- Conversational Barge-In Interruption Alert Banner -->
@@ -3955,11 +3955,11 @@
                     </template>
 
                     <!-- Top Left: Turn Status Badge & Stream Quality -->
-                    <div class="absolute top-4 left-4 z-20 pointer-events-none flex items-center gap-2">
-                        <div class="px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 text-white text-xs flex items-center gap-2 shadow-lg">
-                            <span class="w-2.5 h-2.5 rounded-full"
+                    <div class="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 pointer-events-none flex items-center gap-1.5 sm:gap-2">
+                        <div class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 text-white text-xs flex items-center gap-1.5 sm:gap-2 shadow-lg">
+                            <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full shrink-0"
                                   :class="orbState === 'ai_speaking' ? 'bg-blue-400 animate-ping' : (orbState === 'user_speaking' ? 'bg-emerald-400 animate-pulse' : (orbState === 'thinking' ? 'bg-amber-400 animate-spin' : 'bg-emerald-400'))"></span>
-                            <span class="font-bold text-xs"
+                            <span class="font-bold text-[11px] sm:text-xs max-w-[130px] sm:max-w-none truncate"
                                   x-text="orbState === 'ai_speaking' ? 'Penguji Sedang Berbicara...' : (orbState === 'user_speaking' ? 'Mendengarkan Anda Bicara...' : (orbState === 'thinking' ? 'Menelaah Jawaban...' : 'Giliran Anda Berbicara'))"></span>
                         </div>
                         <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/70 backdrop-blur-md border border-white/10 text-[10px] text-slate-300 font-mono shadow-md">
@@ -3969,27 +3969,28 @@
                     </div>
 
                     <!-- Bottom Left: Live AI Neural Voice Frequency Spectrum HUD -->
-                    <div class="absolute bottom-4 left-4 z-20 pointer-events-none flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/10 text-white shadow-xl">
-                        <div class="flex items-end gap-1 h-3.5 w-16">
+                    <div class="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 z-20 pointer-events-none flex items-center gap-1.5 sm:gap-2.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/10 text-white shadow-xl">
+                        <div class="flex items-end gap-0.5 sm:gap-1 h-3 sm:h-3.5 w-10 sm:w-16">
                             <template x-for="(barHeight, idx) in vocalSpectrumBars" :key="idx">
-                                <span class="w-1.5 rounded-full transition-all duration-75"
+                                <span class="w-1 sm:w-1.5 rounded-full transition-all duration-75"
                                       :style="`height: ${barHeight}%; background-color: ${orbState === 'ai_speaking' ? '#38bdf8' : '#475569'};`"></span>
                             </template>
                         </div>
-                        <div class="text-[10px] flex flex-col leading-tight">
-                            <span class="font-bold text-slate-200" x-text="orbState === 'ai_speaking' ? 'Neural Audio HD' : 'Audio Standby'"></span>
-                            <span class="text-[8px] text-slate-400 font-mono" x-text="orbState === 'ai_speaking' ? '24kHz • Low Latency' : 'Menunggu'"></span>
+                        <div class="text-[9px] sm:text-[10px] flex flex-col leading-tight">
+                            <span class="font-bold text-slate-200" x-text="orbState === 'ai_speaking' ? 'Neural HD' : 'Standby'"></span>
+                            <span class="text-[8px] text-slate-400 font-mono hidden sm:inline" x-text="orbState === 'ai_speaking' ? '24kHz • Low Latency' : 'Menunggu'"></span>
                         </div>
                     </div>
 
                     <!-- Bottom Right: Examiner Persona Watermark Badge & Mode Switcher Button -->
-                    <div class="absolute bottom-4 right-4 z-20 flex flex-col items-end gap-1.5">
+                    <div class="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-20 flex flex-col items-end gap-1.5">
                         <button type="button"
                                 @click="avatarStageMode = (avatarStageMode === 'animated' ? 'photo' : 'animated')"
-                                class="pointer-events-auto px-2.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-1.5 hover:bg-slate-800 transition cursor-pointer shadow-lg active:scale-95"
+                                class="pointer-events-auto px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-white/20 text-white text-[9px] sm:text-[11px] font-semibold flex items-center gap-1.5 hover:bg-slate-800 transition cursor-pointer shadow-lg active:scale-95"
                                 title="Ganti Mode Tampilan Karakter (Animasi Berbicara / Foto HD)">
-                            <span x-text="avatarStageMode === 'animated' ? '🎭 Mode: Karakter Animasi (Bicara)' : '📷 Mode: Foto Studio HD'"></span>
-                            <span class="text-blue-400 text-[10px] font-bold">⇄ Ganti</span>
+                            <span class="sm:hidden" x-text="avatarStageMode === 'animated' ? '🎭 Animasi' : '📷 Foto HD'"></span>
+                            <span class="hidden sm:inline" x-text="avatarStageMode === 'animated' ? '🎭 Mode: Karakter Animasi (Bicara)' : '📷 Mode: Foto Studio HD'"></span>
+                            <span class="text-blue-400 text-[9px] sm:text-[10px] font-bold">⇄</span>
                         </button>
                         <div class="pointer-events-none px-3 py-1.5 rounded-xl bg-slate-900/75 backdrop-blur-md border border-white/10 text-right shadow-lg hidden sm:block">
                             <div class="text-[11px] font-bold text-white tracking-wide" x-text="avatarPersonaName"></div>
@@ -3998,29 +3999,29 @@
                     </div>
 
                     <!-- USER WEBCAM CAMERA (Picture-in-Picture in Top-Right Corner with Reactive User Glow) -->
-                    <div class="absolute top-4 right-4 z-20 w-32 sm:w-44 aspect-4/3 rounded-2xl overflow-hidden shadow-2xl border-2 bg-slate-900 transition-all duration-300"
+                    <div class="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 z-20 w-24 sm:w-44 aspect-4/3 rounded-2xl overflow-hidden shadow-2xl border-2 bg-slate-900 transition-all duration-300"
                          :class="orbState === 'user_speaking' ? 'border-emerald-400 ring-4 ring-emerald-500/50 glow-active-user shadow-emerald-500/30' : 'border-white/20'">
                         <video id="webcamVideo"
                                autoplay
                                playsinline
                                muted
                                class="w-full h-full object-cover -scale-x-100"
-                               :class="isCameraOff ? 'hidden' : ''">
+                                :class="isCameraOff ? 'hidden' : ''">
                         </video>
 
                         <div x-show="isCameraOff" class="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400 p-2 text-center">
-                            <svg class="w-5 h-5 mb-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 sm:w-5 sm:h-5 mb-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                             </svg>
-                            <span class="text-[9px] font-semibold">Kamera Mati</span>
+                            <span class="text-[8px] sm:text-[9px] font-semibold">Kamera Mati</span>
                         </div>
 
                         <!-- Clean Status Pill with Mini Equalizer -->
-                        <div class="absolute bottom-1.5 inset-x-1.5 px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-[9px] text-white flex items-center justify-between font-medium">
+                        <div class="absolute bottom-1 sm:bottom-1.5 inset-x-1 sm:inset-x-1.5 px-1.5 sm:px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-[8px] sm:text-[9px] text-white flex items-center justify-between font-medium">
                             <span>Anda</span>
-                            <div class="flex items-center gap-1.5 font-semibold text-emerald-300">
+                            <div class="flex items-center gap-1 sm:gap-1.5 font-semibold text-emerald-300">
                                 <!-- 4-bar mini audio equalizer active when speaking -->
-                                <div class="flex items-end gap-0.5 h-2.5" x-show="!isMicMuted && orbState === 'user_speaking'">
+                                <div class="flex items-end gap-0.5 h-2 sm:h-2.5" x-show="!isMicMuted && orbState === 'user_speaking'">
                                     <span class="w-0.5 bg-emerald-400 rounded-full animate-bounce h-2" style="animation-delay: 0ms"></span>
                                     <span class="w-0.5 bg-emerald-400 rounded-full animate-bounce h-3" style="animation-delay: 150ms"></span>
                                     <span class="w-0.5 bg-emerald-400 rounded-full animate-bounce h-1.5" style="animation-delay: 300ms"></span>
@@ -4064,7 +4065,7 @@
                             @click="replayLastAiMessage()"
                             :disabled="orbState === 'ai_speaking' || orbState === 'thinking'"
                             title="Dengarkan Ulang Pertanyaan"
-                            class="shrink-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold glass-pill text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 border border-blue-200/80 dark:border-blue-900/60 transition cursor-pointer disabled:opacity-40 w-fit">
+                            class="w-full sm:w-fit shrink-0 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 sm:py-2 rounded-xl text-xs font-bold glass-pill text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-slate-800 border border-blue-200/80 dark:border-blue-900/60 transition cursor-pointer disabled:opacity-40">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
                         </svg>
@@ -4075,8 +4076,8 @@
                 <!-- LIVE USER SPEECH STRIP (Suara Pengguna Saat Bicara) -->
                 <div x-show="liveInterimTranscript || orbState === 'user_speaking'"
                      x-transition
-                     class="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-3 shadow-xs">
-                    <div class="flex items-center gap-2.5 min-w-0">
+                     class="p-3 sm:p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-2.5 sm:gap-3 shadow-xs">
+                    <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0"></span>
                         <div class="text-xs sm:text-sm font-medium truncate">
                             <span class="font-bold text-emerald-700 dark:text-emerald-300">Suara Anda: </span>
@@ -4087,45 +4088,45 @@
                     <button type="button"
                             @click="submitCurrentTurn()"
                             :disabled="!liveInterimTranscript.trim()"
-                            class="shrink-0 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer disabled:opacity-40">
-                        Kirim Jawaban ⏎
+                            class="shrink-0 px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer disabled:opacity-40">
+                        Kirim ⏎
                     </button>
                 </div>
 
                 <!-- CONVERSATIONAL GROUNDING & COHERENCE STRIP -->
                 <div x-show="detectedSalientEntities.length > 0 || liveCoherenceScore > 0"
-                     class="px-4 py-2 rounded-2xl bg-slate-50 dark:bg-navy-950/60 border border-slate-200/80 dark:border-navy-800 flex flex-wrap items-center justify-between gap-2 text-xs">
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                            <span>Koherensi Dialog:</span>
+                     class="px-3 sm:px-4 py-2 rounded-2xl bg-slate-50 dark:bg-navy-950/60 border border-slate-200/80 dark:border-navy-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center gap-1.5 sm:gap-2">
+                        <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 text-[11px] sm:text-xs">
+                            <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                            <span>Koherensi:</span>
                         </span>
-                        <span class="font-mono font-bold text-blue-600 dark:text-blue-400" x-text="liveCoherenceScore + '%'"></span>
+                        <span class="font-mono font-bold text-blue-600 dark:text-blue-400 text-xs" x-text="liveCoherenceScore + '%'"></span>
                         <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300" x-text="liveCoherenceCategory"></span>
                     </div>
-                    <div x-show="detectedSalientEntities.length > 0" class="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-[11px]">
-                        <span>Topik Terkait:</span>
+                    <div x-show="detectedSalientEntities.length > 0" class="flex flex-wrap items-center gap-1 sm:gap-1.5 text-slate-500 dark:text-slate-400 text-[10px] sm:text-[11px]">
+                        <span>Topik:</span>
                         <template x-for="ent in detectedSalientEntities" :key="ent">
-                            <span class="px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold" x-text="ent"></span>
+                            <span class="px-1.5 sm:px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold" x-text="ent"></span>
                         </template>
                     </div>
                 </div>
 
                 <!-- SIMPLE FLOATING CONTROL DOCK (Kontrol Utama Bawah) -->
-                <div class="glass-panel p-3 sm:p-4 rounded-3xl shadow-lg border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-3">
+                <div class="glass-panel p-2 sm:p-4 rounded-3xl shadow-lg border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-1.5 sm:gap-3">
 
                     <!-- Left: Mic & Camera Toggles -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <!-- Mic Button -->
                         <button type="button"
                                 @click="toggleMic()"
                                 :title="isMicMuted ? 'Nyalakan Mikrofon' : 'Matikan Mikrofon'"
                                 :class="isMicMuted ? 'bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300 border border-rose-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'"
-                                class="px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
-                            <svg x-show="!isMicMuted" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="p-2.5 sm:px-3 sm:py-2.5 rounded-2xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                            <svg x-show="!isMicMuted" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
                             </svg>
-                            <svg x-show="isMicMuted" class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg x-show="isMicMuted" class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
                             </svg>
                             <span class="hidden sm:inline" x-text="isMicMuted ? 'Mic Bisu' : 'Mic Aktif'"></span>
@@ -4136,8 +4137,8 @@
                                 @click="toggleCamera()"
                                 :title="isCameraOff ? 'Nyalakan Kamera' : 'Matikan Kamera'"
                                 :class="isCameraOff ? 'bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300 border border-rose-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'"
-                                class="px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="p-2.5 sm:px-3 sm:py-2.5 rounded-2xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                             </svg>
                             <span class="hidden sm:inline" x-text="isCameraOff ? 'Kamera Mati' : 'Kamera Aktif'"></span>
@@ -4145,23 +4146,23 @@
                     </div>
 
                     <!-- Center: The Big Intuitive Action Button -->
-                    <div class="flex items-center">
+                    <div class="flex items-center min-w-0">
                         <!-- When AI is Speaking -->
                         <template x-if="orbState === 'ai_speaking'">
-                            <div class="px-4 py-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                                <span>Penguji Sedang Berbicara...</span>
+                            <div class="px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-[11px] sm:text-xs font-bold flex items-center gap-1.5 sm:gap-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping shrink-0"></span>
+                                <span class="truncate max-w-[100px] sm:max-w-none">Penguji Bicara...</span>
                             </div>
                         </template>
 
                         <!-- When AI is Thinking -->
                         <template x-if="orbState === 'thinking'">
-                            <div class="px-4 py-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold flex items-center gap-2">
-                                <svg class="w-3.5 h-3.5 animate-spin text-amber-600" fill="none" viewBox="0 0 24 24">
+                            <div class="px-2.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-[11px] sm:text-xs font-bold flex items-center gap-1.5 sm:gap-2">
+                                <svg class="w-3.5 h-3.5 animate-spin text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span>Menelaah Jawaban...</span>
+                                <span class="truncate max-w-[100px] sm:max-w-none">Menelaah...</span>
                             </div>
                         </template>
 
@@ -4170,35 +4171,35 @@
                             <button type="button"
                                     @click="submitCurrentTurn()"
                                     :class="liveInterimTranscript ? 'bg-emerald-600 hover:bg-emerald-500 ring-4 ring-emerald-500/20 animate-pulse' : 'bg-blue-600 hover:bg-blue-500'"
-                                    class="px-5 py-2.5 sm:px-6 sm:py-3 rounded-2xl font-bold text-xs sm:text-sm text-white shadow-lg shadow-blue-600/20 transition transform hover:scale-102 flex items-center gap-2 cursor-pointer">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    class="px-3 py-2 sm:px-6 sm:py-3 rounded-2xl font-bold text-xs sm:text-sm text-white shadow-lg shadow-blue-600/20 transition transform hover:scale-102 flex items-center gap-1.5 sm:gap-2 cursor-pointer">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
-                                <span x-text="liveInterimTranscript ? 'Selesai Bicara (Kirim)' : 'Bicaralah Sekarang'"></span>
+                                <span class="truncate max-w-[110px] sm:max-w-none" x-text="liveInterimTranscript ? 'Kirim' : 'Bicara'"></span>
                             </button>
                         </template>
                     </div>
 
                     <!-- Right: Text Input Toggle & Finish Button -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <!-- Toggle Emergency Text Input -->
                         <button type="button"
                                 @click="showTextInput = !showTextInput"
                                 :class="showTextInput ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200'"
                                 title="Ketik jawaban jika mikrofon bermasalah"
-                                class="px-3 py-2.5 rounded-2xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                class="p-2.5 sm:px-3 sm:py-2.5 rounded-2xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
-                            <span class="hidden sm:inline">Ketik Teks</span>
+                            <span class="hidden sm:inline">Ketik</span>
                         </button>
 
                         <!-- Finish Session -->
                         <button type="button"
                                 @click="finishSession()"
                                 :disabled="isFinishing"
-                                class="px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-2xl shadow-md shadow-rose-600/25 transition cursor-pointer disabled:opacity-50">
-                            <span x-text="isFinishing ? 'Menganalisis...' : 'Selesai'"></span>
+                                class="px-3 py-2.5 sm:px-4 sm:py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-2xl shadow-md shadow-rose-600/25 transition cursor-pointer disabled:opacity-50 shrink-0">
+                            <span x-text="isFinishing ? '...' : 'Selesai'"></span>
                         </button>
                     </div>
                 </div>
