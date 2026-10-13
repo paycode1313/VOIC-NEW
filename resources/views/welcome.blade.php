@@ -86,11 +86,11 @@
                             </svg>
                         </a>
                     @else
-                        <!-- Innofest Expo Booth Quick Demo Button -->
+                        <!-- Instant Guest Practice Mode Button -->
                         <a href="{{ route('demo.create') }}"
                            class="hidden sm:inline-flex items-center px-3.5 py-2 text-xs font-bold rounded-xl text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition shadow-xs">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse me-1.5"></span>
-                            Demo Booth Innofest
+                            Coba Simulasi Instan
                         </a>
 
                         <a href="{{ route('login') }}"

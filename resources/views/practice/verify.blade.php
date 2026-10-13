@@ -119,7 +119,7 @@
                         {{ $session->getParticipantName() }}
                     </h2>
                     <p class="text-xs text-slate-400">
-                        {{ $session->getParticipantInstitution() ? 'Afiliasi: ' . $session->getParticipantInstitution() : ($user ? 'Email: ' . $user->email : 'Status: Pengunjung Booth Innofest 2026') }}
+                        {{ $session->getParticipantInstitution() ? 'Afiliasi: ' . $session->getParticipantInstitution() : ($user ? 'Email: ' . $user->email : 'Status: Peserta Tamu Terverifikasi') }}
                     </p>
                 </div>
 

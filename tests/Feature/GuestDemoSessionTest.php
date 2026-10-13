@@ -36,7 +36,7 @@ class GuestDemoSessionTest extends TestCase
         $response = $this->get(route('demo.create'));
 
         $response->assertOk();
-        $response->assertSee('Mode Booth Pameran Innofest 2026');
+        $response->assertSee('Sesi Uji Coba Tamu');
         $response->assertSee('VOIC-Dosen Penguji');
     }
 
@@ -145,8 +145,8 @@ class GuestDemoSessionTest extends TestCase
         $viewResponse->assertOk();
         $viewResponse->assertSee('Dr. Bambang');
         $viewResponse->assertSee('Kemenristek');
-        $viewResponse->assertSee('Mode Booth Innofest');
-        $viewResponse->assertSee('Reset untuk Pengunjung Berikutnya');
+        $viewResponse->assertSee('Sesi Uji Coba Tamu');
+        $viewResponse->assertSee('Mulai Sesi Baru');
     }
 
     public function test_guest_can_reset_demo_session_for_next_visitor(): void

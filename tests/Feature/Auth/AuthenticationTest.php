@@ -51,12 +51,4 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
-
-    public function test_guest_can_authenticate_via_1_click_demo_login(): void
-    {
-        $response = $this->get(route('demo.login'));
-
-        $this->assertAuthenticated();
-        $response->assertRedirect(route('practice.create', absolute: false));
-    }
 }

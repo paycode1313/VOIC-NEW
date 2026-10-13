@@ -5,10 +5,10 @@
                 @if($isDemo ?? false)
                     <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full glass-pill border border-emerald-300 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        🎪 Mode Booth Pameran Innofest 2026 • Simulasi Tamu
+                        ⚡ Sesi Uji Coba Tamu • Tanpa Registrasi
                     </div>
                     <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                        {{ __('Simulasi Cepat AI Booth Innofest 2026') }}
+                        {{ __('Simulasi Instan AI Coach') }}
                     </h2>
                     <p class="text-sm text-slate-500 dark:text-slate-400">
                         Coba simulasi interaktif tatap muka langsung bersama AI penguji tanpa perlu registrasi atau login.
@@ -2986,7 +2986,7 @@
                                 <div class="flex items-center gap-2">
                                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                     <h4 class="text-sm font-bold text-emerald-900 dark:text-emerald-300">
-                                        Identitas Pengunjung Booth Innofest 2026
+                                        Identitas Peserta Latihan
                                     </h4>
                                 </div>
                                 <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">

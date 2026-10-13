@@ -78,10 +78,10 @@
                         </div>
                         <div>
                             <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-1 border border-emerald-500/20">
-                                🎪 Innofest 2026 Booth Mode
+                                ⚡ Sesi Uji Coba Tamu
                             </div>
                             <h3 class="text-base font-extrabold text-white tracking-tight">
-                                Scan QR Code di Halaman Ini untuk Bawa Pulang Sertifikat ke Ponsel!
+                                Scan QR Code di Halaman Ini untuk Buka Sertifikat di Ponsel!
                             </h3>
                             <p class="text-xs text-slate-300">
                                 Sertifikat digital terverifikasi dengan nama <strong>{{ $session->getParticipantName() }}</strong> dapat langsung dibuka di smartphone Anda.
@@ -92,7 +92,7 @@
                         <form method="POST" action="{{ route('demo.reset') }}" class="w-full sm:w-auto">
                             @csrf
                             <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 transition shadow-md shadow-emerald-400/20 cursor-pointer">
-                                🚀 Reset untuk Pengunjung Berikutnya
+                                🚀 Mulai Sesi Baru
                             </button>
                         </form>
                         <a href="{{ route('register') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-md shadow-blue-600/20">

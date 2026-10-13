@@ -219,10 +219,21 @@ class AiRoleplayService
                 }
             }
         } catch (\Throwable $e) {
-            Log::info('Local AI service unreachable, using persona fallback: '.$e->getMessage());
+            Log::info('Local AI service unreachable, evaluating cloud/persona fallback: '.$e->getMessage());
         }
 
-        // 5. Intelligent contextual persona fallback if AI service was offline or warming up
+        // 5a. Optional Cloud LLM (Groq / OpenAI) if configured and local AI was unreachable
+        if (! $aiReplyText) {
+            $cloudReply = $this->generateCloudLlmResponse($roleType, $systemPrompt, $userMessage, $history, $lang, $stage);
+            if ($cloudReply) {
+                $aiReplyText = $cloudReply;
+                $coherenceScore = 88.0;
+                $coherenceCategory = 'Relevan & Kontekstual';
+                $aiEngine = 'cloud_llm';
+            }
+        }
+
+        // 5b. Intelligent contextual persona fallback if AI service was offline or warming up
         if (! $aiReplyText) {
             $fallback = $this->generatePersonaFallback($roleType, $userMessage, $facialStatus, $lang, $stage);
             $aiReplyText = $fallback['text'];
@@ -650,5 +661,90 @@ class AiRoleplayService
             'user_weaknesses' => $userProfile['identified_weaknesses'] ?? [],
             'user_mastered' => $userProfile['mastered_topics'] ?? [],
         ];
+    }
+
+    /**
+     * Attempt generating an AI response via Cloud LLM (Groq or OpenAI) if configured in .env.
+     *
+     * @param  array<array{role: string, content: string}>  $history
+     */
+    protected function generateCloudLlmResponse(
+        string $roleType,
+        string $systemPrompt,
+        string $userMessage,
+        array $history,
+        string $lang,
+        string $stage
+    ): ?string {
+        $groqKey = (string) Config::get('services.groq.key', '');
+        $openaiKey = (string) Config::get('services.openai.key', '');
+
+        if (! empty($groqKey)) {
+            try {
+                $messages = [
+                    ['role' => 'system', 'content' => $systemPrompt."\nBerikan tanggapan lisan 2-3 kalimat tajam, padat, dan langsung menguji poin pembicara tanpa kalimat pembuka klise."],
+                ];
+                foreach (array_slice($history, -4) as $item) {
+                    $messages[] = [
+                        'role' => $item['role'] === 'user' ? 'user' : 'assistant',
+                        'content' => $item['content'],
+                    ];
+                }
+                $messages[] = ['role' => 'user', 'content' => $userMessage];
+
+                $res = Http::timeout(10)
+                    ->withToken($groqKey)
+                    ->post('https://api.groq.com/openai/v1/chat/completions', [
+                        'model' => (string) Config::get('services.groq.model', 'llama-3.3-70b-versatile'),
+                        'messages' => $messages,
+                        'temperature' => 0.7,
+                        'max_tokens' => 220,
+                    ]);
+
+                if ($res->successful()) {
+                    $reply = trim((string) ($res->json('choices.0.message.content') ?? ''));
+                    if (! empty($reply)) {
+                        return $reply;
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Groq Cloud LLM failed: '.$e->getMessage());
+            }
+        }
+
+        if (! empty($openaiKey)) {
+            try {
+                $messages = [
+                    ['role' => 'system', 'content' => $systemPrompt."\nBerikan tanggapan lisan 2-3 kalimat tajam, padat, dan langsung menguji poin pembicara tanpa kalimat pembuka klise."],
+                ];
+                foreach (array_slice($history, -4) as $item) {
+                    $messages[] = [
+                        'role' => $item['role'] === 'user' ? 'user' : 'assistant',
+                        'content' => $item['content'],
+                    ];
+                }
+                $messages[] = ['role' => 'user', 'content' => $userMessage];
+
+                $res = Http::timeout(10)
+                    ->withToken($openaiKey)
+                    ->post('https://api.openai.com/v1/chat/completions', [
+                        'model' => (string) Config::get('services.openai.model', 'gpt-4o-mini'),
+                        'messages' => $messages,
+                        'temperature' => 0.7,
+                        'max_tokens' => 220,
+                    ]);
+
+                if ($res->successful()) {
+                    $reply = trim((string) ($res->json('choices.0.message.content') ?? ''));
+                    if (! empty($reply)) {
+                        return $reply;
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('OpenAI Cloud LLM failed: '.$e->getMessage());
+            }
+        }
+
+        return null;
     }
 }

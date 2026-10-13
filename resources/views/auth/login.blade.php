@@ -2,17 +2,7 @@
     <div class="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center"
          x-data="{
             showPassword: false,
-            isSubmitting: false,
-            fillDemo() {
-                const emailInput = document.getElementById('email');
-                const passInput = document.getElementById('password');
-                if (emailInput && passInput) {
-                    emailInput.value = 'test@example.com';
-                    passInput.value = 'password';
-                    this.isSubmitting = true;
-                    document.getElementById('loginForm').submit();
-                }
-            }
+            isSubmitting: false
          }">
 
         <!-- Left Showcase Pane (Visible on Large Screens) -->
@@ -87,44 +77,6 @@
 
                 <!-- Session Status (e.g. Password Reset Notification) -->
                 <x-auth-session-status class="mb-5" :status="session('status')" />
-
-                <!-- 1-Click Fast Demo Login for Evaluation -->
-                <div class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-sky-50/50 to-blue-50/90 dark:from-navy-950/90 dark:via-blue-950/40 dark:to-navy-950/90 border border-blue-200 dark:border-blue-900/70 shadow-xs">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-1.5 text-xs font-bold text-blue-700 dark:text-blue-300">
-                            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                            <span>Akses Cepat Penguji / Tamu</span>
-                        </div>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
-                            1-Klik Masuk
-                        </span>
-                    </div>
-                    <p class="text-xs text-slate-600 dark:text-slate-300 mb-3">
-                        Masuk otomatis tanpa mengetik kredensial untuk meninjau seluruh fitur platform:
-                    </p>
-                    <button type="button"
-                            @click="fillDemo()"
-                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 shadow-md shadow-blue-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer">
-                        <svg class="w-4 h-4 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-                        </svg>
-                        <span>Masuk Akun Evaluasi (test@example.com)</span>
-                    </button>
-                </div>
-
-                <!-- Or Divider -->
-                <div class="relative my-6">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-slate-200 dark:border-slate-800"></div>
-                    </div>
-                    <div class="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
-                        <span class="bg-white dark:bg-[#0c182b] px-3 text-slate-400 dark:text-slate-500">
-                            Atau Masuk dengan Akun Anda
-                        </span>
-                    </div>
-                </div>
 
                 <!-- Standard Login Form -->
                 <form method="POST" action="{{ route('login') }}" id="loginForm" @submit="isSubmitting = true" class="space-y-4">
