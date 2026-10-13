@@ -16,7 +16,8 @@ if "%ERRORLEVEL%"=="0" (
 )
 
 echo.
-echo [2/3] Memeriksa status Web Server...
+echo [2/3] Memeriksa status Web Server & Asset Produksi...
+if exist public\hot del /f /q public\hot
 netstat -ano | findstr /R ":80 " >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo   [OK] Laragon Web Server aktif di port 80.
