@@ -47,10 +47,7 @@ echo  - Web Application : http://localhost:8000
 echo  - AI FastAPI      : http://127.0.0.1:8001
 echo  - Ollama LLM      : http://127.0.0.1:11434 (Qwen 2.5)
 echo.
-echo  Akun Demo Booth:
-echo    Email    : test@example.com
-echo    Password : password
-echo    (Atau klik tombol 'Isi Otomatis' di halaman login)
+echo  Gunakan akun yang telah terdaftar atau buat akun baru di halaman register.
 echo ================================================================
 echo.
 echo Tekan tombol apa saja untuk menutup jendela launcher ini...
