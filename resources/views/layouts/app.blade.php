@@ -42,11 +42,11 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white relative overflow-x-hidden min-h-screen flex flex-col transition-colors duration-200">
-        <!-- Ambient Background Orbs -->
-        <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10" aria-hidden="true">
-            <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[750px] h-[450px] rounded-full bg-blue-500/10 dark:bg-blue-500/10 blur-[130px]"></div>
-            <div class="absolute top-1/3 -right-40 w-[450px] h-[450px] rounded-full bg-indigo-500/5 dark:bg-indigo-600/8 blur-[100px]"></div>
-            <div class="absolute -bottom-32 left-1/4 w-[600px] h-[450px] rounded-full bg-sky-500/5 dark:bg-sky-600/6 blur-[120px]"></div>
+        <!-- Ambient Background Orbs (GPU Layer Promoted) -->
+        <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10" aria-hidden="true" style="transform: translate3d(0,0,0); will-change: transform;">
+            <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[750px] h-[450px] rounded-full bg-blue-500/10 dark:bg-blue-500/10 blur-[80px]"></div>
+            <div class="absolute top-1/3 -right-40 w-[450px] h-[450px] rounded-full bg-indigo-500/5 dark:bg-indigo-600/8 blur-[70px]"></div>
+            <div class="absolute -bottom-32 left-1/4 w-[600px] h-[450px] rounded-full bg-sky-500/5 dark:bg-sky-600/6 blur-[80px]"></div>
         </div>
 
         <!-- Full-Width Top Navigation Bar -->

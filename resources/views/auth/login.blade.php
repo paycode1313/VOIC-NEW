@@ -8,12 +8,15 @@
         <!-- Left Showcase Pane (Visible on Large Screens) -->
         <div class="hidden lg:flex lg:col-span-5 flex-col justify-between space-y-8 pr-4">
             <div class="space-y-4">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/80 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 text-xs font-bold text-blue-700 dark:text-blue-300">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>AI Multimodal Defense & Pitch Coach</span>
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill-nav text-xs font-bold text-blue-700 dark:text-blue-300 shadow-2xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="tracking-wide">AI Multimodal Defense & Pitch Coach</span>
                 </div>
                 <h1 class="text-3xl font-black text-slate-900 dark:text-white leading-tight">
-                    Kuasai Presentasi & Sidang dengan <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 dark:from-blue-400 dark:via-sky-300 dark:to-indigo-300 bg-clip-text text-transparent">Percaya Diri Penuh</span>.
+                    Kuasai Presentasi & Sidang dengan <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 dark:from-blue-400 dark:via-sky-300 dark:to-cyan-200 bg-clip-text text-transparent">Percaya Diri Penuh</span>.
                 </h1>
                 <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                     Uji argumentasi Anda di hadapan 3 karakter evaluator AI interaktif dengan umpan balik tatapan kamera 30 FPS dan spektrum akustik real-time.
@@ -21,49 +24,50 @@
             </div>
 
             <!-- 3 Evaluator Avatars Preview Card -->
-            <div class="p-5 rounded-3xl bg-white/80 dark:bg-[#0c182b]/80 border border-slate-200/80 dark:border-slate-800/90 shadow-xl space-y-3">
-                <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500 block">
+            <div class="p-5 rounded-3xl glass-ultra border border-white/80 dark:border-white/10 shadow-xl space-y-3 relative overflow-hidden backdrop-blur-2xl">
+                <!-- Specular Highlight Top Line -->
+                <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 dark:via-sky-400/30 to-transparent"></div>
+
+                <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-400 block font-mono">
                     Pilihan Karakter Evaluator AI
                 </span>
                 <div class="space-y-2.5">
-                    <div class="flex items-center gap-3 p-2 rounded-2xl bg-slate-50 dark:bg-[#080f1b]/60 border border-slate-100 dark:border-slate-800">
-                        <img src="{{ asset('images/avatars/dosen.jpg') }}" alt="Dosen" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-700">
-                        <div class="flex-1">
-                            <span class="text-xs font-bold text-slate-900 dark:text-white block">VOIC-Dosen Penguji</span>
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Kritis, bariton berwibawa & mode interupsi</span>
+                    <div class="flex items-center gap-3 p-2.5 rounded-2xl glass-pill-nav hover:scale-[1.02] hover:border-blue-400/40 transition-all duration-300 group shadow-2xs">
+                        <img src="{{ asset('images/avatars/dosen.jpg') }}" alt="Dosen" class="w-10 h-10 rounded-xl object-cover border border-slate-200/80 dark:border-slate-700 shadow-xs group-hover:scale-105 transition-transform">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white block truncate">VOIC - Dosen Penguji</span>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block truncate">Kritis, metodologis & penguji landasan teori</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 p-2 rounded-2xl bg-slate-50 dark:bg-[#080f1b]/60 border border-slate-100 dark:border-slate-800">
-                        <img src="{{ asset('images/avatars/hrd.jpg') }}?v=3" alt="HRD" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-700">
-                        <div class="flex-1">
-                            <span class="text-xs font-bold text-slate-900 dark:text-white block">VOIC-HRD Profesional</span>
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Empatik, terstruktur & STAR methodology</span>
+                    <div class="flex items-center gap-3 p-2.5 rounded-2xl glass-pill-nav hover:scale-[1.02] hover:border-sky-400/40 transition-all duration-300 group shadow-2xs">
+                        <img src="{{ asset('images/avatars/hrd.jpg') }}?v=4" alt="HRD" class="w-10 h-10 rounded-xl object-cover border border-slate-200/80 dark:border-slate-700 shadow-xs group-hover:scale-105 transition-transform">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white block truncate">VOIC - HRD</span>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block truncate">Empatik, terstruktur & STAR methodology</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 p-2 rounded-2xl bg-slate-50 dark:bg-[#080f1b]/60 border border-slate-100 dark:border-slate-800">
-                        <img src="{{ asset('images/avatars/investor.jpg') }}" alt="Investor" class="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-700">
-                        <div class="flex-1">
-                            <span class="text-xs font-bold text-slate-900 dark:text-white block">VOIC-Investor Pitching</span>
-                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Cepat, to-the-point & uji unit economics</span>
+                    <div class="flex items-center gap-3 p-2.5 rounded-2xl glass-pill-nav hover:scale-[1.02] hover:border-indigo-400/40 transition-all duration-300 group shadow-2xs">
+                        <img src="{{ asset('images/avatars/investor.jpg') }}" alt="Investor" class="w-10 h-10 rounded-xl object-cover border border-slate-200/80 dark:border-slate-700 shadow-xs group-hover:scale-105 transition-transform">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white block truncate">VOIC - Investor</span>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block truncate">Cepat, to-the-point & uji unit economics</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- On-Device Privacy Guarantee Badge -->
-            <div class="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
-                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                </svg>
+            <div class="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-2xl glass-pill-nav text-xs text-slate-600 dark:text-slate-300 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                 <span>Zero Cloud Video • Kamera diproses 100% lokal di browser Anda.</span>
             </div>
         </div>
 
         <!-- Right Form Pane -->
         <div class="w-full lg:col-span-7 max-w-md mx-auto lg:max-w-none">
-            <div class="p-6 sm:p-9 rounded-3xl bg-white/95 dark:bg-[#0c182b]/95 backdrop-blur-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-blue-950/15 dark:shadow-blue-950/60 relative overflow-hidden">
-                <!-- Top Accent Line -->
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600"></div>
+            <div class="p-6 sm:p-9 rounded-3xl glass-ultra border border-white/80 dark:border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
+                <!-- Glowing Specular Top Accent Line -->
+                <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 dark:via-sky-400/40 to-transparent"></div>
 
                 <!-- Form Header -->
                 <div class="mb-6 space-y-1">
@@ -101,7 +105,7 @@
                                    autofocus
                                    autocomplete="username"
                                    placeholder="nama@email.com"
-                                   class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                                   class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                         </div>
                         <x-input-error :messages="$errors->get('email')" class="mt-1" />
                     </div>
@@ -131,7 +135,7 @@
                                    required
                                    autocomplete="current-password"
                                    placeholder="••••••••"
-                                   class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                                   class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                             <!-- Toggle Visibility Button -->
                             <button type="button"
                                     @click="showPassword = !showPassword"
@@ -166,7 +170,7 @@
                     <div class="pt-2">
                         <button type="submit"
                                 :disabled="isSubmitting"
-                                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 focus:ring-4 focus:ring-blue-500/30 shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-500 hover:to-sky-500 focus:ring-4 focus:ring-blue-500/30 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
                             <template x-if="!isSubmitting">
                                 <span class="flex items-center gap-2">
                                     <span>Masuk ke Akun</span>
@@ -189,7 +193,7 @@
                 </form>
 
                 <!-- Register Footer Link -->
-                <div class="mt-6 pt-5 border-t border-slate-200/80 dark:border-slate-800 text-center">
+                <div class="mt-6 pt-5 border-t border-slate-200/70 dark:border-white/10 text-center">
                     <p class="text-xs text-slate-600 dark:text-slate-400">
                         Belum memiliki akun?
                         <a href="{{ route('register') }}" class="font-bold text-blue-600 dark:text-blue-400 hover:underline ms-1">

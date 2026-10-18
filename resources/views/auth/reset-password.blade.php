@@ -32,23 +32,25 @@
             }
          }">
 
-        <div class="p-6 sm:p-9 rounded-3xl bg-white/95 dark:bg-[#0c182b]/95 backdrop-blur-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-blue-950/15 dark:shadow-blue-950/60 relative overflow-hidden space-y-6">
-            <!-- Top Accent Line -->
-            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600"></div>
+        <div class="p-6 sm:p-9 rounded-3xl glass-ultra border border-white/80 dark:border-white/10 shadow-2xl relative overflow-hidden space-y-6 backdrop-blur-2xl">
+            <!-- Glowing Specular Top Accent Line -->
+            <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 dark:via-sky-400/40 to-transparent"></div>
 
             <!-- Header with Reset Shield Icon -->
-            <div class="text-center space-y-2">
-                <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-md shadow-emerald-500/10">
+            <div class="text-center space-y-3">
+                <div class="w-14 h-14 mx-auto rounded-2xl glass-pill-nav border border-emerald-400/30 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/10 animate-float-subtle">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
                 </div>
-                <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                    Atur Ulang Kata Sandi
-                </h2>
-                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Buat kata sandi baru yang kuat dan aman untuk akun VOIC Anda.
-                </p>
+                <div>
+                    <h2 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                        Atur Ulang Kata Sandi
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed mt-1">
+                        Buat kata sandi baru yang kuat dan aman untuk akun VOIC Anda.
+                    </p>
+                </div>
             </div>
 
             <!-- Form -->
@@ -76,7 +78,7 @@
                                required
                                autofocus
                                autocomplete="username"
-                               class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                               class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                     </div>
                     <x-input-error :messages="$errors->get('email')" class="mt-1" />
                 </div>
@@ -99,7 +101,7 @@
                                required
                                autocomplete="new-password"
                                placeholder="Minimal 8 karakter"
-                               class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                               class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                         <button type="button"
                                 @click="showPassword = !showPassword"
                                 class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
@@ -148,7 +150,7 @@
                                required
                                autocomplete="new-password"
                                placeholder="Ulangi kata sandi baru"
-                               class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                               class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                         <button type="button"
                                 @click="showConfirmation = !showConfirmation"
                                 class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
@@ -185,7 +187,7 @@
                 <div class="pt-2">
                     <button type="submit"
                             :disabled="isSubmitting"
-                            class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 focus:ring-4 focus:ring-blue-500/30 shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                            class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-500 hover:to-sky-500 focus:ring-4 focus:ring-blue-500/30 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
                         <template x-if="!isSubmitting">
                             <span class="flex items-center gap-2">
                                 <span>Simpan Kata Sandi Baru</span>

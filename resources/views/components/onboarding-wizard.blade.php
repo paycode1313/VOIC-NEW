@@ -140,7 +140,7 @@
                             </div>
                             <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2">
                                 <span class="text-[10px] font-semibold text-slate-400">Penguji:</span>
-                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Dr. Ir. Hendra Gunawan</span>
+                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">VOIC - Dosen Penguji</span>
                             </div>
                         </div>
 
@@ -169,7 +169,7 @@
                             </div>
                             <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2">
                                 <span class="text-[10px] font-semibold text-slate-400">Interviewer:</span>
-                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Nadia Putri, S.Psi., CHRP</span>
+                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">VOIC - HRD</span>
                             </div>
                         </div>
 
@@ -198,7 +198,7 @@
                             </div>
                             <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2">
                                 <span class="text-[10px] font-semibold text-slate-400">Investor:</span>
-                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Alexander Wardhana, MBA</span>
+                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">VOIC - Investor</span>
                             </div>
                         </div>
 
@@ -227,7 +227,7 @@
                             </div>
                             <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center gap-2">
                                 <span class="text-[10px] font-semibold text-slate-400">Kurator:</span>
-                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">Dr. Ir. Hendra Gunawan</span>
+                                <span class="text-[10px] font-bold text-slate-700 dark:text-slate-300">VOIC - Dosen Penguji</span>
                             </div>
                         </div>
                     </div>
@@ -579,7 +579,7 @@
             roles: {
                 sidang_skripsi: {
                     roleKey: 'dosen_penguji',
-                    name: 'Dr. Ir. Hendra Gunawan',
+                    name: 'VOIC - Dosen Penguji',
                     title: 'Dosen Penguji Senior (Bidang Rekayasa & Sistem Informasi)',
                     avatar: '/images/avatars/dosen.jpg',
                     scenario: 'Simulasi Sidang Skripsi',
@@ -587,7 +587,7 @@
                 },
                 wawancara_kerja: {
                     roleKey: 'hrd',
-                    name: 'Nadia Putri, S.Psi., CHRP',
+                    name: 'VOIC - HRD',
                     title: 'Senior HR Recruiter & Talent Lead',
                     avatar: '/images/avatars/hrd.jpg?v=3',
                     scenario: 'Simulasi Wawancara Kerja',
@@ -595,7 +595,7 @@
                 },
                 pitching_startup: {
                     roleKey: 'investor',
-                    name: 'Alexander Wardhana, MBA',
+                    name: 'VOIC - Investor',
                     title: 'Managing Partner, Nusantara Ventures',
                     avatar: '/images/avatars/investor.jpg',
                     scenario: 'Simulasi Pitching Investor',
@@ -603,7 +603,7 @@
                 },
                 public_speaking: {
                     roleKey: 'dosen_penguji',
-                    name: 'Dr. Ir. Hendra Gunawan',
+                    name: 'VOIC - Dosen Penguji',
                     title: 'Kurator Retorika & Komunikasi Publik Formal',
                     avatar: '/images/avatars/dosen.jpg',
                     scenario: 'Simulasi Public Speaking',

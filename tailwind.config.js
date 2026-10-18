@@ -12,6 +12,12 @@ export default {
     darkMode: 'class',
     theme: {
         extend: {
+            aspectRatio: {
+                '4/3': '4 / 3',
+            },
+            scale: {
+                '102': '1.02',
+            },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
@@ -25,6 +31,7 @@ export default {
                     500: '#466c98',
                     600: '#34537d',
                     700: '#284063',
+                    750: '#223755',
                     800: '#1b2d47',
                     900: '#0f1c2f',
                     950: '#080f1b',
@@ -44,6 +51,7 @@ export default {
                 },
             },
             boxShadow: {
+                '2xs': '0 1px 1px 0 rgba(0, 0, 0, 0.03)',
                 'xs': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
                 'card': '0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04)',
                 'card-hover': '0 12px 30px -4px rgba(37, 99, 235, 0.12), 0 4px 12px -2px rgba(15, 23, 42, 0.06)',

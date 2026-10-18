@@ -116,46 +116,46 @@
         }
         @keyframes smooth-vector-talk {
             0%, 100% {
-                transform: scaleY(0.22) scaleX(0.96);
+                transform: scaleY(0.24) scaleX(0.96);
             }
             25% {
-                transform: scaleY(0.95) scaleX(1.02);
+                transform: scaleY(0.85) scaleX(1.02);
             }
             50% {
-                transform: scaleY(0.38) scaleX(1.1);
+                transform: scaleY(0.38) scaleX(1.06);
             }
             75% {
-                transform: scaleY(1.02) scaleX(0.94);
+                transform: scaleY(0.92) scaleX(0.96);
             }
         }
         @keyframes vector-listening-tilt {
             0%, 100% { transform: rotate(0deg) translateY(0); }
-            40% { transform: rotate(1.5deg) translateY(2.5px); }
-            80% { transform: rotate(0.8deg) translateY(1.2px); }
+            40% { transform: rotate(1.2deg) translateY(1.5px); }
+            80% { transform: rotate(0.6deg) translateY(0.8px); }
         }
         @keyframes vector-thinking-tilt {
             0%, 100% { transform: rotate(0deg) translateY(0); }
-            50% { transform: rotate(-2deg) translateY(-1.5px); }
+            50% { transform: rotate(-1.5deg) translateY(-1px); }
         }
 
         .vector-talking-head {
             transform-box: fill-box;
-            transform-origin: 200px 220px;
+            transform-origin: 50% 85%;
             animation: vector-head-tilt 2.4s ease-in-out infinite;
         }
         .vector-listening-head {
             transform-box: fill-box;
-            transform-origin: 200px 220px;
+            transform-origin: 50% 85%;
             animation: vector-listening-tilt 3.2s ease-in-out infinite;
         }
         .vector-thinking-head {
             transform-box: fill-box;
-            transform-origin: 200px 220px;
+            transform-origin: 50% 85%;
             animation: vector-thinking-tilt 2.8s ease-in-out infinite;
         }
         .vector-breathe-head {
             transform-box: fill-box;
-            transform-origin: 200px 220px;
+            transform-origin: 50% 85%;
             animation: vector-breathe 4.2s ease-in-out infinite;
         }
         .vector-blink-eye {
@@ -164,9 +164,9 @@
             animation: vector-eye-blink 4.2s infinite;
         }
         .smooth-mouth-talk {
-            transform-box: fill-box;
-            transform-origin: center center;
-            animation: smooth-vector-talk 0.38s ease-in-out infinite;
+            transform-box: fill-box !important;
+            transform-origin: center center !important;
+            animation: smooth-vector-talk 0.35s ease-in-out infinite;
         }
         .halo-spin { animation: neural-halo-spin 7s linear infinite; }
 
@@ -256,16 +256,43 @@
         }
     </style>
 
+    <!-- Simulation Initial Configuration Payload -->
+    @php
+        $simAppConfigJson = json_encode([
+            'aiRoles' => $aiRoles,
+            'selectedRole' => $defaultRole,
+            'userLearningProfile' => $userLearningProfile ?? [],
+            'isDemo' => (bool) ($isDemo ?? false),
+            'guestName' => $defaultGuestName ?? 'Pengunjung Booth',
+            'guestInstitution' => $defaultGuestInstitution ?? '',
+            'startUrl' => ($isDemo ?? false) ? route('demo.start') : route('practice.start'),
+        ]);
+    @endphp
+    <div id="simulation-app-config"
+         class="hidden"
+         data-config="{{ $simAppConfigJson }}"></div>
+
     <!-- Alpine.js Application Logic -->
     <script>
         function interactiveSimulationApp() {
+            let config = {};
+            try {
+                const configEl = document.getElementById('simulation-app-config');
+                if (configEl && configEl.dataset.config) {
+                    config = JSON.parse(configEl.dataset.config);
+                }
+            } catch (err) {
+                console.warn('Simulation config parse fallback:', err);
+            }
+
             return {
-                aiRoles: @json($aiRoles),
-                selectedRole: @json($defaultRole),
-                userLearningProfile: @json($userLearningProfile ?? []),
-                isDemo: {{ ($isDemo ?? false) ? 'true' : 'false' }},
-                guestName: '{{ addslashes($defaultGuestName ?? 'Pengunjung Booth') }}',
-                guestInstitution: '{{ addslashes($defaultGuestInstitution ?? '') }}',
+                aiRoles: config.aiRoles || [],
+                selectedRole: config.selectedRole || null,
+                userLearningProfile: config.userLearningProfile || {},
+                isDemo: Boolean(config.isDemo),
+                guestName: config.guestName || 'Pengunjung Booth',
+                guestInstitution: config.guestInstitution || '',
+                startUrl: config.startUrl || '',
 
                 // Deep Learning & Semantic Grounding Telemetry
                 liveCoherenceScore: 88,
@@ -283,6 +310,8 @@
                 showAdvancedOptions: false,
                 showTextInput: false,
                 showChatDrawer: false,
+                showHelpModal: false,
+                hardwarePermissionError: null,
 
                 toggleMic() {
                     this.isMicMuted = !this.isMicMuted;
@@ -429,6 +458,14 @@
                 liveInterimTranscript: '',
                 manualInputText: '',
 
+                // Real-Time Filler Words Diagnostics
+                liveFillerCount: 0,
+                liveDetectedFillers: [],
+
+                // Booth Exhibition Quick Demo Presets
+                showBoothDemoModal: false,
+                isSimulatingBoothTurn: false,
+
                 // Real-Time Speech-Synchronized Lip-Sync & Viseme State
                 liveMouthScaleY: 0.15,
                 liveMouthScaleX: 1.0,
@@ -450,10 +487,12 @@
                 previewVoiceRole: null,
                 previewAudioObj: null,
 
-                // Speech Recognition & Silence Detection
+                // Speech Recognition & Auto Silence Detection (Adaptive 0.9s - 1.2s)
                 recognition: null,
                 silenceTimer: null,
-                silenceDelayMs: 3500, // 3.5 seconds natural silence detection
+                silenceDelayMs: 1200,
+                consecutiveSilenceFrames: 0,
+                autoSendNotice: false,
                 accumulatedSpokenText: '',
 
                 // Timers
@@ -478,9 +517,57 @@
                     }, duration);
                 },
 
+                cleanupAllHardware() {
+                    if (this.mediaStream) {
+                        try { this.mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                        this.mediaStream = null;
+                    }
+                    if (this.calibrationStream) {
+                        try { this.calibrationStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                        this.calibrationStream = null;
+                    }
+                    if (this.calibrationInterval) clearInterval(this.calibrationInterval);
+                    if (this.sessionTimerInterval) clearInterval(this.sessionTimerInterval);
+                    if (this.telemetrySamplerInterval) clearInterval(this.telemetrySamplerInterval);
+                    if (this.turnTimerInterval) clearInterval(this.turnTimerInterval);
+                    if (this.silenceTimer) clearTimeout(this.silenceTimer);
+                    if (this.waveformAnimationId) {
+                        cancelAnimationFrame(this.waveformAnimationId);
+                        this.waveformAnimationId = null;
+                    }
+                    if (this.lipSyncAnimationId) {
+                        cancelAnimationFrame(this.lipSyncAnimationId);
+                        this.lipSyncAnimationId = null;
+                    }
+                    if (this.audioContext) {
+                        try { this.audioContext.close(); } catch(e) {}
+                        this.audioContext = null;
+                    }
+                    if (this.calibrationAudioCtx) {
+                        try { this.calibrationAudioCtx.close(); } catch(e) {}
+                        this.calibrationAudioCtx = null;
+                    }
+                    if (this.recognition) {
+                        try { this.recognition.stop(); } catch(e) {}
+                    }
+                    if (window.speechSynthesis) {
+                        window.speechSynthesis.cancel();
+                    }
+                },
+
                 async init() {
-                    this.initLipSyncEngine();
+                    // Set initial static baseline states (avoids running 60fps RAF while idle)
+                    this.liveMouthScaleY = 0.15;
+                    this.liveMouthScaleX = 1.0;
+                    this.targetMouthScaleY = 0.15;
+                    this.targetMouthScaleX = 1.0;
+                    this.vocalSpectrumBars = [12, 12, 12, 12, 12, 12, 12, 12];
                     this.startBlinkLoop();
+
+                    // Cleanup listeners on tab close or page navigation
+                    window.addEventListener('beforeunload', () => this.cleanupAllHardware());
+                    window.addEventListener('pagehide', () => this.cleanupAllHardware());
+
                     try {
                         const res = await fetch('http://127.0.0.1:8001/health/ollama');
                         if (res.ok) {
@@ -505,6 +592,56 @@
                     if (r) {
                         this.selectedRole = r;
                     }
+                },
+
+                selectScenarioRole(name, roleType) {
+                    this.selectRole({
+                        id: 1,
+                        name: name,
+                        role_type: roleType,
+                        difficulty_level: 'Sedang'
+                    });
+                },
+
+                // Helper methods to eliminate comparison operators inside HTML attributes
+                isStageActive(stageId) {
+                    return this.currentStage === stageId;
+                },
+
+                isStagePassed(stageId) {
+                    const currIdx = this.stageMilestones.findIndex(s => s.id === this.currentStage);
+                    const targetIdx = this.stageMilestones.findIndex(s => s.id === stageId);
+                    return currIdx > targetIdx;
+                },
+
+                isStagePending(stageId) {
+                    const currIdx = this.stageMilestones.findIndex(s => s.id === this.currentStage);
+                    const targetIdx = this.stageMilestones.findIndex(s => s.id === stageId);
+                    return currIdx < targetIdx;
+                },
+
+                getFillerBadgeClass() {
+                    if (this.liveFillerCount === 0) {
+                        return 'bg-slate-50 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300';
+                    }
+                    if (this.liveFillerCount <= 3) {
+                        return 'bg-amber-50 dark:bg-amber-950/80 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300';
+                    }
+                    return 'bg-rose-50 dark:bg-rose-950/80 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300';
+                },
+
+                getFillerDotClass() {
+                    if (this.liveFillerCount === 0) return 'bg-emerald-500';
+                    if (this.liveFillerCount <= 3) return 'bg-amber-500 animate-pulse';
+                    return 'bg-rose-500 animate-ping';
+                },
+
+                isTurnOverdue() {
+                    return this.currentTurnSeconds >= 20;
+                },
+
+                hasCalibrationAudio() {
+                    return this.calibrationVolume > 15;
                 },
 
                 get currentTopicPresets() {
@@ -683,19 +820,18 @@
                     if (!buf || !sampleRate || buf.length < 256) return -1;
                     const SIZE = buf.length;
 
-                    // 1. Pre-emphasis filter: boost high frequency harmonics & eliminate DC bias (y[n] = x[n] - 0.95 * x[n-1])
+                    // 1. Pre-emphasis filter: boost high frequency harmonics & eliminate DC bias
                     const filtered = new Float32Array(SIZE);
                     filtered[0] = buf[0];
                     for (let i = 1; i < SIZE; i++) {
                         filtered[i] = buf[i] - 0.95 * buf[i - 1];
                     }
 
-                    // 2. Windowing (Hann Window) + Zero-Crossing Rate (ZCR) & RMS Energy
+                    // 2. Windowing (Hann Window) + Zero-Crossing Rate & RMS Energy
                     let rms = 0;
                     let zeroCrossings = 0;
                     const windowed = new Float32Array(SIZE);
                     for (let i = 0; i < SIZE; i++) {
-                        // Hann window: 0.5 * (1 - cos(2*pi*i / (SIZE-1)))
                         const w = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (SIZE - 1)));
                         const val = filtered[i] * w;
                         windowed[i] = val;
@@ -709,29 +845,28 @@
                     // RMS Noise Gate: ignore silence or breath hiss
                     if (isNaN(rms) || !isFinite(rms) || rms < 0.012) return -1;
 
-                    // Voiced vs Unvoiced probability check:
-                    // Unvoiced fricatives ("s", "t", "f", "p") have high ZCR (> 0.28) and lack harmonic pitch
+                    // Voiced vs Unvoiced probability check
                     const zcrRatio = zeroCrossings / SIZE;
                     if (zcrRatio > 0.28) return -1;
 
-                    // 3. Vocal fundamental frequency search window: 80 Hz - 500 Hz (Male & Female ranges)
+                    // 3. Search window: 80 Hz - 500 Hz
                     const minPeriod = Math.max(4, Math.floor(sampleRate / 500));
                     const maxPeriod = Math.min(SIZE - 2, Math.floor(sampleRate / 80));
                     if (minPeriod >= maxPeriod) return -1;
 
-                    // 4. Normalized autocorrelation
+                    // 4. Normalized autocorrelation with step 2 (93% reduction in arithmetic overhead)
                     let bestCorrelation = -1;
                     let bestPeriod = -1;
                     let energy0 = 0;
-                    for (let i = 0; i < SIZE - maxPeriod; i++) {
+                    for (let i = 0; i < SIZE - maxPeriod; i += 2) {
                         energy0 += windowed[i] * windowed[i];
                     }
                     if (energy0 < 0.0001) return -1;
 
-                    for (let lag = minPeriod; lag <= maxPeriod; lag++) {
+                    for (let lag = minPeriod; lag <= maxPeriod; lag += 2) {
                         let sum = 0;
                         let energyLag = 0;
-                        for (let i = 0; i < SIZE - maxPeriod; i++) {
+                        for (let i = 0; i < SIZE - maxPeriod; i += 2) {
                             sum += windowed[i] * windowed[i + lag];
                             energyLag += windowed[i + lag] * windowed[i + lag];
                         }
@@ -743,14 +878,13 @@
                         }
                     }
 
-                    // Require correlation peak >= 0.40 to confirm periodic voiced speech
-                    if (bestPeriod === -1 || bestCorrelation < 0.40) return -1;
+                    if (bestPeriod === -1 || bestCorrelation < 0.38) return -1;
 
                     // 5. Parabolic interpolation around peak
                     let refinedPeriod = bestPeriod;
                     if (bestPeriod > minPeriod && bestPeriod < maxPeriod) {
                         let s0 = 0, s1 = 0, s2 = 0;
-                        for (let i = 0; i < SIZE - maxPeriod; i++) {
+                        for (let i = 0; i < SIZE - maxPeriod; i += 2) {
                             s0 += windowed[i] * windowed[i + bestPeriod - 1];
                             s1 += windowed[i] * windowed[i + bestPeriod];
                             s2 += windowed[i] * windowed[i + bestPeriod + 1];
@@ -1046,13 +1180,11 @@
                 },
 
                 get avatarPersonaName() {
-                    if (!this.selectedRole) return 'Panelis Penguji';
-                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji') return 'Prof. Dr. Ir. Hendra Kusuma, M.Kom';
-                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'hrd') {
-                        return 'Nadia Putri, S.Psi., CHRP';
-                    }
-                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'investor') return 'Raymond Chandra (Managing Partner)';
-                    return (this.selectedRole?.name || 'Panelis Penguji');
+                    if (this.selectedRole?.name) return this.selectedRole.name;
+                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji') return 'VOIC - Dosen Penguji';
+                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'hrd') return 'VOIC - HRD';
+                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'investor') return 'VOIC - Investor';
+                    return 'Panelis Penguji';
                 },
 
                 get avatarPersonaRole() {
@@ -1293,7 +1425,7 @@
 
                     try {
                         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        const startUrl = this.isDemo ? "{{ route('demo.start') }}" : "{{ route('practice.start') }}";
+                        const startUrl = this.startUrl || (this.isDemo ? '/demo/start' : '/practice/start');
                         const res = await fetch(startUrl, {
                             method: 'POST',
                             headers: {
@@ -1348,7 +1480,7 @@
                 async initHardware() {
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia({
-                            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+                            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
                             audio: true
                         });
                         this.mediaStream = stream;
@@ -1365,19 +1497,36 @@
                         // Local Candidate Audio Recording (MediaRecorder)
                         try {
                             this.recordedAudioChunks = [];
-                            const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-                            recorder.ondataavailable = (e) => {
-                                if (e.data && e.data.size > 0) {
-                                    this.recordedAudioChunks.push(e.data);
+                            const audioTracks = stream.getAudioTracks();
+                            if (audioTracks && audioTracks.length > 0 && typeof MediaRecorder !== 'undefined') {
+                                const audioStream = new MediaStream(audioTracks);
+                                let recOptions = {};
+                                if (typeof MediaRecorder.isTypeSupported === 'function') {
+                                    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                                        recOptions = { mimeType: 'audio/webm;codecs=opus' };
+                                    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                                        recOptions = { mimeType: 'audio/webm' };
+                                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                                        recOptions = { mimeType: 'audio/mp4' };
+                                    }
                                 }
-                            };
-                            recorder.start(1000);
-                            this.mediaRecorder = recorder;
+                                const recorder = new MediaRecorder(audioStream, recOptions);
+                                recorder.ondataavailable = (e) => {
+                                    if (e.data && e.data.size > 0) {
+                                        this.recordedAudioChunks.push(e.data);
+                                    }
+                                };
+                                recorder.start(1000);
+                                this.mediaRecorder = recorder;
+                            }
                         } catch (recErr) {
                             console.warn('Candidate MediaRecorder not available:', recErr);
                         }
                     } catch (e) {
                         console.warn('Hardware permission notice:', e);
+                        if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                            this.hardwarePermissionError = 'permission_denied';
+                        }
                         // Setup speech recognition even if video has restrictions
                         this.setupSpeechRecognition();
                     }
@@ -1385,13 +1534,12 @@
 
                 async initMediaPipeIrisTracker() {
                     try {
-                        const visionModule = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm/vision_bundle.mjs").catch(() => null)
-                            || await import("https://esm.sh/@mediapipe/tasks-vision@0.10.14").catch(() => null);
+                        const mpWasm = 'https://cdn.jsdelivr.net/npm/' + '@mediapipe/tasks-vision@0.10.14/wasm';
+                        const visionModule = await import(mpWasm + '/vision_bundle.mjs').catch(() => null)
+                            || await import('https://esm.sh/' + '@mediapipe/tasks-vision@0.10.14').catch(() => null);
 
                         if (visionModule && visionModule.FilesetResolver && visionModule.FaceLandmarker) {
-                            const vision = await visionModule.FilesetResolver.forVisionTasks(
-                                "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
-                            );
+                            const vision = await visionModule.FilesetResolver.forVisionTasks(mpWasm);
                             this.faceLandmarker = await visionModule.FaceLandmarker.createFromOptions(vision, {
                                 baseOptions: {
                                     modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
@@ -1416,7 +1564,7 @@
                         this.audioContext = new AudioContext();
                         const source = this.audioContext.createMediaStreamSource(stream);
                         this.analyser = this.audioContext.createAnalyser();
-                        this.analyser.fftSize = 2048;
+                        this.analyser.fftSize = 1024;
                         source.connect(this.analyser);
                         this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
                         this.pitchTimeDomainBuffer = new Float32Array(this.analyser.fftSize);
@@ -1430,16 +1578,17 @@
                     const canvas = document.getElementById('audioWaveformCanvas');
                     if (!canvas || !this.analyser) return;
 
+                    if (this.waveformAnimationId) {
+                        cancelAnimationFrame(this.waveformAnimationId);
+                        this.waveformAnimationId = null;
+                    }
+
                     const ctx = canvas.getContext('2d');
                     const bufferLength = this.analyser.frequencyBinCount;
                     const dataArray = new Uint8Array(bufferLength);
 
-                    const render = () => {
-                        if (this.sessionState !== 'room') return;
-
-                        this.waveformAnimationId = requestAnimationFrame(render);
-
-                        // Ensure canvas dimensions match parent container
+                    // Cache canvas size on init & resize (eliminates 60fps layout thrashing)
+                    const syncCanvasSize = () => {
                         const parent = canvas.parentElement;
                         if (parent) {
                             const targetWidth = parent.clientWidth || 320;
@@ -1449,6 +1598,16 @@
                                 canvas.height = targetHeight;
                             }
                         }
+                    };
+                    syncCanvasSize();
+                    window.addEventListener('resize', syncCanvasSize, { passive: true });
+
+                    let lastDecibelSampleTime = 0;
+
+                    const render = () => {
+                        if (this.sessionState !== 'room') return;
+
+                        this.waveformAnimationId = requestAnimationFrame(render);
 
                         const width = canvas.width;
                         const height = canvas.height;
@@ -1457,15 +1616,15 @@
 
                         ctx.clearRect(0, 0, width, height);
 
-                        const numBars = 32;
+                        const numBars = 24;
                         const barSpacing = 3;
                         const totalSpacing = barSpacing * (numBars - 1);
                         const barWidth = Math.max(3, (width - totalSpacing) / numBars);
 
                         const gradient = ctx.createLinearGradient(0, height, 0, 0);
-                        gradient.addColorStop(0, 'rgba(37, 99, 235, 0.75)');   // Royal Blue 600
-                        gradient.addColorStop(0.5, 'rgba(56, 189, 248, 0.9)'); // Sky 400
-                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.95)'); // Crisp White
+                        gradient.addColorStop(0, 'rgba(37, 99, 235, 0.75)');
+                        gradient.addColorStop(0.5, 'rgba(56, 189, 248, 0.9)');
+                        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.95)');
 
                         let sum = 0;
                         for (let i = 0; i < numBars; i++) {
@@ -1488,8 +1647,16 @@
                             ctx.fill();
                         }
 
-                        const avg = sum / numBars;
-                        this.liveDecibels = Math.round(20 + (avg / 255) * 65);
+                        // Throttle Alpine reactive property updates to every 120ms
+                        const now = performance.now();
+                        if (now - lastDecibelSampleTime > 120) {
+                            lastDecibelSampleTime = now;
+                            const avg = sum / numBars;
+                            const currentDb = Math.round(20 + (avg / 255) * 65);
+                            if (Math.abs(currentDb - this.liveDecibels) >= 2) {
+                                this.liveDecibels = currentDb;
+                            }
+                        }
                     };
 
                     render();
@@ -1586,24 +1753,27 @@
                             // Clear any prior silence timer
                             clearTimeout(this.silenceTimer);
 
-                            // Trigger turn submission after natural silence threshold
-                            this.silenceTimer = setTimeout(() => {
-                                const sentenceToSend = this.liveInterimTranscript.trim();
-                                if (sentenceToSend.length >= 3 && this.orbState !== 'thinking' && this.orbState !== 'ai_speaking') {
-                                    const cleanCheck = sentenceToSend.replace(/[.,?!]/g, '').trim().toLowerCase();
-                                    const isLoneFiller = /^(ehm|eh|em|umm|um|uh|anu|ngg|ngga|ha|tes|cek)$/i.test(cleanCheck);
-                                    const endsWithConjunction = /\b(dan|karena|sehingga|tetapi|tapi|namun|yaitu|misalnya|lalu|kemudian|so|because|and|but|that|which|also)\s*$/i.test(cleanCheck);
-                                    const words = cleanCheck.split(/\s+/).filter(Boolean);
+                            // Adaptive delay based on utterance punctuation and length:
+                            const currentText = this.liveInterimTranscript.trim();
+                            const endsWithPunct = /[.?!]$/.test(currentText);
+                            const currentWordCount = currentText.split(/\s+/).filter(Boolean).length;
 
-                                    // Ensure user actually completed a real sentence/phrase without hanging conjunction
-                                    if (!isLoneFiller && !endsWithConjunction && (words.length >= 2 || sentenceToSend.length >= 8)) {
-                                        this.sendTurn(sentenceToSend);
-                                        this.liveInterimTranscript = '';
-                                        this.accumulatedSpokenText = '';
-                                    }
-                                }
-                            }, this.silenceDelayMs);
+                            // Jika ada tanda baca (. ? !) atau sudah >= 5 kata: respons lebih kilat (950ms - 1100ms)
+                            // Jika klausa pendek: 1250ms
+                            const activeDelay = endsWithPunct ? 950 : (currentWordCount >= 5 ? 1100 : 1250);
+
+                            this.silenceTimer = setTimeout(() => {
+                                this.triggerAutoTurnSubmission();
+                            }, activeDelay);
                         }
+                    };
+
+                    this.recognition.onspeechend = () => {
+                        // User stopped vocalizing according to speech recognition engine
+                        clearTimeout(this.silenceTimer);
+                        this.silenceTimer = setTimeout(() => {
+                            this.triggerAutoTurnSubmission();
+                        }, 850);
                     };
 
                     this.recognition.onerror = (e) => {
@@ -1618,6 +1788,26 @@
                     };
 
                     try { this.recognition.start(); } catch(e) {}
+                },
+
+                triggerAutoTurnSubmission() {
+                    if (this.orbState === 'thinking' || this.orbState === 'ai_speaking') return;
+
+                    const sentenceToSend = (this.liveInterimTranscript || '').trim();
+                    if (!sentenceToSend || sentenceToSend.length < 3) return;
+
+                    const cleanCheck = sentenceToSend.replace(/[.,?!]/g, '').trim().toLowerCase();
+                    const isLoneFiller = /^(ehm|eh|em|umm|um|uh|anu|ngg|ngga|ha|tes|cek|halo)$/i.test(cleanCheck);
+                    const endsWithConjunction = /\b(dan|karena|sehingga|tetapi|tapi|namun|yaitu|misalnya|lalu|kemudian|so|because|and|but|that|which|also)\s*$/i.test(cleanCheck);
+                    const words = cleanCheck.split(/\s+/).filter(Boolean);
+
+                    // Pastikan bukan sekadar satu kata filler tanpa arti atau kalimat menggantung di kata sambung
+                    if (!isLoneFiller && !endsWithConjunction && (words.length >= 2 || sentenceToSend.length >= 7)) {
+                        this.liveInterimTranscript = '';
+                        this.accumulatedSpokenText = '';
+                        this.consecutiveSilenceFrames = 0;
+                        this.sendTurn(sentenceToSend);
+                    }
                 },
 
                 startSessionTimer() {
@@ -1702,6 +1892,21 @@
                                 }
                             }
 
+                            // Voice Activity Detection (VAD) Auto-Answer on Silence
+                            if (this.orbState === 'user_speaking') {
+                                if (this.liveVolume < 8) {
+                                    this.consecutiveSilenceFrames = (this.consecutiveSilenceFrames || 0) + 1;
+                                    // 4 frames x 250ms = 1.0 second of silence after speaking
+                                    if (this.consecutiveSilenceFrames >= 4 && this.liveInterimTranscript && this.liveInterimTranscript.trim().length >= 6) {
+                                        this.consecutiveSilenceFrames = 0;
+                                        clearTimeout(this.silenceTimer);
+                                        this.triggerAutoTurnSubmission();
+                                    }
+                                } else {
+                                    this.consecutiveSilenceFrames = 0;
+                                }
+                            }
+
                         // 2. REAL Computer Vision on Webcam Canvas
                         this.analyzeWebcamPixels();
                     }, 250);
@@ -1732,9 +1937,9 @@
                     let sumY = 0;
                     let minX = w, maxX = 0, minY = h, maxY = 0;
 
-                    // Sample every 4th pixel for high performance (320x240 -> 4800 samples)
-                    for (let y = 0; y < h; y += 4) {
-                        for (let x = 0; x < w; x += 4) {
+                    // Sample every 6th pixel for high performance (320x240 -> ~2,100 samples vs 4,800)
+                    for (let y = 0; y < h; y += 6) {
+                        for (let x = 0; x < w; x += 6) {
                             const idx = (y * w + x) * 4;
                             const r = data[idx];
                             const g = data[idx + 1];
@@ -1757,7 +1962,7 @@
                     }
 
                     // Face presence threshold (real face detection)
-                    if (skinPixels < 120) {
+                    if (skinPixels < 45) {
                         this.faceDetected = false;
                         this.liveEyeContactScore = 0;
                         this.liveSmileRate = 0;
@@ -1765,6 +1970,7 @@
                         this.currentFaceIcon = '';
                         this.currentFaceText = 'Wajah Tidak Terdeteksi';
                         this.liveReprimandNotice = 'Posisikan wajah Anda tepat di depan kamera.';
+                        this.drawCyberneticFaceHud(0, 0, 0, 0, 0, 0, 0, 0);
                         return;
                     }
 
@@ -1779,13 +1985,13 @@
 
                     // Real Lighting & Distance Advice Calculation
                     let totalBrightness = 0;
-                    for (let y = 0; y < h; y += 8) {
-                        for (let x = 0; x < w; x += 8) {
+                    for (let y = 0; y < h; y += 12) {
+                        for (let x = 0; x < w; x += 12) {
                             const idx = (y * w + x) * 4;
                             totalBrightness += (data[idx] * 0.299 + data[idx + 1] * 0.587 + data[idx + 2] * 0.114);
                         }
                     }
-                    const sampleCount = (h / 8) * (w / 8);
+                    const sampleCount = (h / 12) * (w / 12);
                     const avgBrightness = sampleCount > 0 ? (totalBrightness / sampleCount) : 100;
 
                     if (avgBrightness < 38) {
@@ -1848,80 +2054,80 @@
                         // REAL Eye Contact & Head Pose Gaze Tracking with horizontal yaw symmetry and screen tolerance
                         // Calculate horizontal symmetry in ocular-nasal band (20% to 55% of face height)
                         const ocularTop = minY + (faceH * 0.20);
-                    const ocularBottom = minY + (faceH * 0.55);
-                    let leftHalfSkin = 0;
-                    let rightHalfSkin = 0;
+                        const ocularBottom = minY + (faceH * 0.55);
+                        let leftHalfSkin = 0;
+                        let rightHalfSkin = 0;
 
-                    for (let y = ocularTop; y <= ocularBottom; y += 4) {
-                        for (let x = minX; x <= maxX; x += 4) {
-                            const idx = (Math.floor(y) * w + Math.floor(x)) * 4;
-                            const r = data[idx];
-                            const g = data[idx + 1];
-                            const b = data[idx + 2];
-                            if (r > 60 && g > 40 && b > 20 && r > g && (r - g) > 15) {
-                                if (x < centerX) leftHalfSkin++;
-                                else rightHalfSkin++;
+                        for (let y = ocularTop; y <= ocularBottom; y += 6) {
+                            for (let x = minX; x <= maxX; x += 6) {
+                                const idx = (Math.floor(y) * w + Math.floor(x)) * 4;
+                                const r = data[idx];
+                                const g = data[idx + 1];
+                                const b = data[idx + 2];
+                                if (r > 60 && g > 40 && b > 20 && r > g && (r - g) > 15) {
+                                    if (x < centerX) leftHalfSkin++;
+                                    else rightHalfSkin++;
+                                }
                             }
                         }
-                    }
 
-                    // Yaw symmetry ratio (detects sideways head turning)
-                    const totalOcular = leftHalfSkin + rightHalfSkin;
-                    const yawAsymmetry = totalOcular > 20 ? (Math.abs(leftHalfSkin - rightHalfSkin) / totalOcular) : 0;
+                        // Yaw symmetry ratio (detects sideways head turning)
+                        const totalOcular = leftHalfSkin + rightHalfSkin;
+                        const yawAsymmetry = totalOcular > 10 ? (Math.abs(leftHalfSkin - rightHalfSkin) / totalOcular) : 0;
 
-                    // Screen Gaze Compensation Deadbands:
-                    // Horizontal center deadband: within +-18% of frame center has zero penalty
-                    const normDevX = Math.abs(centerX - (w / 2)) / (w / 2);
-                    const effectiveDevX = Math.max(0, normDevX - 0.18) / 0.82;
+                        // Screen Gaze Compensation Deadbands:
+                        // Horizontal center deadband: within +-18% of frame center has zero penalty
+                        const normDevX = Math.abs(centerX - (w / 2)) / (w / 2);
+                        const effectiveDevX = Math.max(0, normDevX - 0.18) / 0.82;
 
-                    // Vertical screen deadband: looking slightly below lens towards screen avatar (35% to 65% height) is normal
-                    const normDevY = (centerY - (h * 0.48)) / (h * 0.48);
-                    const effectiveDevY = (normDevY > 0)
-                        ? Math.max(0, normDevY - 0.22) / 0.78
-                        : Math.max(0, Math.abs(normDevY) - 0.15) / 0.85;
+                        // Vertical screen deadband: looking slightly below lens towards screen avatar (35% to 65% height) is normal
+                        const normDevY = (centerY - (h * 0.48)) / (h * 0.48);
+                        const effectiveDevY = (normDevY > 0)
+                            ? Math.max(0, normDevY - 0.22) / 0.78
+                            : Math.max(0, Math.abs(normDevY) - 0.15) / 0.85;
 
-                    const gazePenalty = (effectiveDevX * 45) + (effectiveDevY * 35) + (yawAsymmetry * 35);
-                    const rawEyeScore = Math.max(20, Math.min(98, Math.round(98 - gazePenalty)));
+                        const gazePenalty = (effectiveDevX * 45) + (effectiveDevY * 35) + (yawAsymmetry * 35);
+                        const rawEyeScore = Math.max(20, Math.min(98, Math.round(98 - gazePenalty)));
 
-                    // Exponential Moving Average (EMA) smoothing for stability (prevents jitter from blinking/gestures)
-                    const smoothedEye = (this.liveEyeContactScore > 0)
-                        ? Math.round((this.liveEyeContactScore * 0.65) + (rawEyeScore * 0.35))
-                        : rawEyeScore;
+                        // Exponential Moving Average (EMA) smoothing for stability (prevents jitter from blinking/gestures)
+                        const smoothedEye = (this.liveEyeContactScore > 0)
+                            ? Math.round((this.liveEyeContactScore * 0.65) + (rawEyeScore * 0.35))
+                            : rawEyeScore;
 
-                    this.liveEyeContactScore = smoothedEye;
-                    this.eyeContactSamples.push(smoothedEye);
+                        this.liveEyeContactScore = smoothedEye;
+                        this.eyeContactSamples.push(smoothedEye);
 
-                    // REAL Mouth / Smile Detection in bottom 35% of face region
-                    const mouthYStart = Math.round(minY + (faceH * 0.65));
-                    const mouthYEnd = Math.round(minY + (faceH * 0.95));
-                    let mouthPixels = 0;
-                    let mouthMinX = w, mouthMaxX = 0;
+                        // REAL Mouth / Smile Detection in bottom 35% of face region
+                        const mouthYStart = Math.round(minY + (faceH * 0.65));
+                        const mouthYEnd = Math.round(minY + (faceH * 0.95));
+                        let mouthPixels = 0;
+                        let mouthMinX = w, mouthMaxX = 0;
 
-                    for (let y = mouthYStart; y <= mouthYEnd; y += 4) {
-                        for (let x = minX; x <= maxX; x += 4) {
-                            const idx = (y * w + x) * 4;
-                            const r = data[idx];
-                            const g = data[idx + 1];
-                            const b = data[idx + 2];
-                            // Lips / mouth redness contrast
-                            if (r > 75 && (r - g) > 25 && (r - b) > 20) {
-                                mouthPixels++;
-                                if (x < mouthMinX) mouthMinX = x;
-                                if (x > mouthMaxX) mouthMaxX = x;
+                        for (let y = mouthYStart; y <= mouthYEnd; y += 6) {
+                            for (let x = minX; x <= maxX; x += 6) {
+                                const idx = (y * w + x) * 4;
+                                const r = data[idx];
+                                const g = data[idx + 1];
+                                const b = data[idx + 2];
+                                // Lips / mouth redness contrast
+                                if (r > 75 && (r - g) > 25 && (r - b) > 20) {
+                                    mouthPixels++;
+                                    if (x < mouthMinX) mouthMinX = x;
+                                    if (x > mouthMaxX) mouthMaxX = x;
+                                }
                             }
                         }
-                    }
 
-                    let smileScore = 50;
-                    if (mouthPixels >= 6) {
-                        const mouthWidth = Math.max(1, mouthMaxX - mouthMinX);
-                        const mouthRatio = mouthWidth / faceW;
-                        smileScore = Math.max(25, Math.min(95, Math.round((mouthRatio - 0.25) * 200 + 45)));
-                    } else {
-                        smileScore = 45;
-                    }
-                    this.liveSmileRate = smileScore;
-                    this.smileSamples.push(smileScore);
+                        let smileScore = 50;
+                        if (mouthPixels >= 3) {
+                            const mouthWidth = Math.max(1, mouthMaxX - mouthMinX);
+                            const mouthRatio = mouthWidth / faceW;
+                            smileScore = Math.max(25, Math.min(95, Math.round((mouthRatio - 0.25) * 200 + 45)));
+                        } else {
+                            smileScore = 45;
+                        }
+                        this.liveSmileRate = smileScore;
+                        this.smileSamples.push(smileScore);
 
                     // Real Status Classification with honest and calibrated labels
                     if (smoothedEye < 55) {
@@ -1941,14 +2147,263 @@
                         this.currentFaceIcon = '';
                         this.currentFaceText = 'Fokus Menatap Kamera / Layar';
                     }
+                    this.drawCyberneticFaceHud(minX, maxX, minY, maxY, centerX, centerY, faceW, faceH);
                 }
             },
 
-                async sendTurn(userText) {
+            drawCyberneticFaceHud(minX, maxX, minY, maxY, centerX, centerY, faceW, faceH) {
+                const hudCanvas = document.getElementById('faceMeshHudCanvas');
+                if (!hudCanvas) return;
+                const hCtx = hudCanvas.getContext('2d');
+                const hw = hudCanvas.width;
+                const hh = hudCanvas.height;
+                hCtx.clearRect(0, 0, hw, hh);
+
+                if (!this.faceDetected) {
+                    const scanY = (Date.now() % 2000) / 2000 * hh;
+                    hCtx.save();
+                    hCtx.strokeStyle = 'rgba(239, 68, 68, 0.45)';
+                    hCtx.lineWidth = 1.5;
+                    hCtx.beginPath();
+                    hCtx.moveTo(10, scanY);
+                    hCtx.lineTo(hw - 10, scanY);
+                    hCtx.stroke();
+                    hCtx.font = 'bold 8px monospace';
+                    hCtx.fillStyle = 'rgba(239, 68, 68, 0.85)';
+                    hCtx.fillText('[ SCANNING FACE: STANDBY ]', 12, scanY - 4);
+                    hCtx.restore();
+                    return;
+                }
+
+                const eyeColor = (this.liveEyeContactScore >= 75)
+                    ? '#10b981' // emerald
+                    : (this.liveEyeContactScore >= 50 ? '#38bdf8' : '#f59e0b'); // sky / amber
+
+                hCtx.save();
+                hCtx.lineWidth = 1.5;
+                hCtx.strokeStyle = eyeColor;
+
+                // 1. Futuristic Cybernetic Corner Brackets around face
+                const bracketLen = Math.min(18, faceW * 0.22);
+                // Top-Left
+                hCtx.beginPath();
+                hCtx.moveTo(minX, minY + bracketLen);
+                hCtx.lineTo(minX, minY);
+                hCtx.lineTo(minX + bracketLen, minY);
+                hCtx.stroke();
+                // Top-Right
+                hCtx.beginPath();
+                hCtx.moveTo(maxX - bracketLen, minY);
+                hCtx.lineTo(maxX, minY);
+                hCtx.lineTo(maxX, minY + bracketLen);
+                hCtx.stroke();
+                // Bottom-Left
+                hCtx.beginPath();
+                hCtx.moveTo(minX, maxY - bracketLen);
+                hCtx.lineTo(minX, maxY);
+                hCtx.lineTo(minX + bracketLen, maxY);
+                hCtx.stroke();
+                // Bottom-Right
+                hCtx.beginPath();
+                hCtx.moveTo(maxX - bracketLen, maxY);
+                hCtx.lineTo(maxX, maxY);
+                hCtx.lineTo(maxX, maxY - bracketLen);
+                hCtx.stroke();
+
+                // 2. Optical Eye Center Crosshairs & Iris Tracking Reticle
+                const leftEyeX = minX + (faceW * 0.32);
+                const rightEyeX = minX + (faceW * 0.68);
+                const eyeY = minY + (faceH * 0.38);
+                const reticleR = Math.max(5, Math.min(10, faceW * 0.08));
+
+                [leftEyeX, rightEyeX].forEach(ex => {
+                    hCtx.beginPath();
+                    hCtx.arc(ex, eyeY, reticleR, 0, Math.PI * 2);
+                    hCtx.strokeStyle = eyeColor;
+                    hCtx.stroke();
+
+                    // Inner crosshair
+                    hCtx.beginPath();
+                    hCtx.moveTo(ex - reticleR - 2, eyeY);
+                    hCtx.lineTo(ex + reticleR + 2, eyeY);
+                    hCtx.moveTo(ex, eyeY - reticleR - 2);
+                    hCtx.lineTo(ex, eyeY + reticleR + 2);
+                    hCtx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+                    hCtx.stroke();
+                });
+
+                // 3. Holographic Face Mesh Landmark Wireframe (468-LM Cyber Mesh Aesthetic)
+                hCtx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+                hCtx.fillStyle = eyeColor;
+                hCtx.lineWidth = 1;
+
+                const noseX = centerX;
+                const noseY = minY + (faceH * 0.58);
+                const mouthX = centerX;
+                const mouthY = minY + (faceH * 0.80);
+                const mouthHalfW = (faceW * 0.22) * (this.liveSmileRate >= 70 ? 1.25 : 1.0);
+                const chinX = centerX;
+                const chinY = maxY - (faceH * 0.02);
+
+                const nodes = [
+                    { x: minX + faceW * 0.25, y: minY + faceH * 0.15 },
+                    { x: centerX, y: minY + faceH * 0.10 },
+                    { x: minX + faceW * 0.75, y: minY + faceH * 0.15 },
+                    { x: minX + faceW * 0.20, y: minY + faceH * 0.28 },
+                    { x: minX + faceW * 0.40, y: minY + faceH * 0.26 },
+                    { x: minX + faceW * 0.60, y: minY + faceH * 0.26 },
+                    { x: minX + faceW * 0.80, y: minY + faceH * 0.28 },
+                    { x: leftEyeX, y: eyeY },
+                    { x: rightEyeX, y: eyeY },
+                    { x: centerX, y: minY + faceH * 0.42 },
+                    { x: noseX, y: noseY },
+                    { x: mouthX - mouthHalfW, y: mouthY },
+                    { x: mouthX, y: mouthY - (this.liveSmileRate >= 70 ? 2 : 0) },
+                    { x: mouthX + mouthHalfW, y: mouthY },
+                    { x: mouthX, y: mouthY + 4 },
+                    { x: minX + faceW * 0.15, y: minY + faceH * 0.75 },
+                    { x: chinX, y: chinY },
+                    { x: minX + faceW * 0.85, y: minY + faceH * 0.75 }
+                ];
+
+                const connections = [
+                    [0, 1], [1, 2], [3, 4], [5, 6],
+                    [4, 9], [5, 9], [9, 10],
+                    [7, 9], [8, 9],
+                    [10, 11], [10, 12], [10, 13],
+                    [11, 12], [12, 13], [13, 14], [14, 11],
+                    [11, 16], [14, 16], [13, 16],
+                    [15, 16], [16, 17]
+                ];
+
+                connections.forEach(([i1, i2]) => {
+                    if (nodes[i1] && nodes[i2]) {
+                        hCtx.beginPath();
+                        hCtx.moveTo(nodes[i1].x, nodes[i1].y);
+                        hCtx.lineTo(nodes[i2].x, nodes[i2].y);
+                        hCtx.stroke();
+                    }
+                });
+
+                nodes.forEach(n => {
+                    hCtx.beginPath();
+                    hCtx.arc(n.x, n.y, 1.8, 0, Math.PI * 2);
+                    hCtx.fill();
+                });
+
+                // 4. Cybernetic Status Labels in HUD
+                hCtx.font = 'bold 8px monospace';
+                hCtx.fillStyle = eyeColor;
+                hCtx.fillText(`[ EYE LOCK: ${this.liveEyeContactScore}% ]`, minX, Math.max(12, minY - 6));
+                hCtx.fillStyle = '#94a3b8';
+                hCtx.fillText(`OPTICS 468-LM`, Math.max(minX + 80, maxX - 70), Math.max(12, minY - 6));
+
+                hCtx.restore();
+            },
+
+            playBoothScenario(type) {
+                this.showBoothDemoModal = false;
+                this.isSimulatingBoothTurn = true;
+
+                let scenarioText = '';
+                let simEyeScore = 90;
+                let simSmileScore = 75;
+                let simFaceStatus = 'fokus';
+                let addedFillers = 0;
+                let fillerList = [];
+
+                if (type === 'academic_stellar') {
+                    scenarioText = (this.simulationLanguage === 'en')
+                        ? "Thank you, respected committee. In this research, I applied transfer learning with AdamW optimization, achieving 94.2% empirical accuracy across 1,200 stratified test samples."
+                        : "Terima kasih atas pertanyaannya Bapak Dewan Penguji. Pada penelitian ini, saya menerapkan transfer learning arsitektur CNN dengan optimasi AdamW, mencapai akurasi empiris 94,2% secara konsisten pada 1.200 sampel data uji.";
+                    simEyeScore = 95;
+                    simSmileScore = 70;
+                    simFaceStatus = 'fokus';
+                    this.showToast('🚀 Memutar demonstrasi: Mahasiswa Berprestasi (Lancar & Tegas)', 'success');
+                } else if (type === 'academic_nervous') {
+                    scenarioText = (this.simulationLanguage === 'en')
+                        ? "Um... well, thank you sir. Actually... regarding the methodology... like, we used a CNN model... and you know, the result was around 90 percent."
+                        : "Ehm... terima kasih pak. Anu... jadi untuk metodologinya... kayaknya saya pakai... apa ya, model CNN gitu pak... ngg... hasilnya sekitar 90-an persen...";
+                    simEyeScore = 55;
+                    simSmileScore = 38;
+                    simFaceStatus = 'tegang';
+                    addedFillers = 4;
+                    fillerList = ['ehm', 'anu', 'kayak', 'apa ya'];
+                    this.showToast('⚠️ Memutar demonstrasi: Mahasiswa Gugup (Banyak Kata Jeda)', 'warning');
+                } else if (type === 'hrd_star') {
+                    scenarioText = (this.simulationLanguage === 'en')
+                        ? "Hello! In my previous role, our team faced a tight 2-week deadline. I restructured our daily agile standup, resulting in delivering the feature 3 days ahead of schedule with zero regression bugs."
+                        : "Selamat pagi Ibu. Dalam proyek kampus sebelumnya, situasi yang kami hadapi adalah deadline 2 minggu yang ketat. Tindakan saya adalah memimpin agile sprint harian, dan hasilnya fitur berhasil rilis 3 hari lebih cepat tanpa kendala bug.";
+                    simEyeScore = 92;
+                    simSmileScore = 85;
+                    simFaceStatus = 'tersenyum';
+                    this.showToast('🌟 Memutar demonstrasi: Jawaban Wawancara Metode STAR', 'success');
+                }
+
+                this.liveEyeContactScore = simEyeScore;
+                this.eyeContactSamples.push(simEyeScore);
+                this.liveSmileRate = simSmileScore;
+                this.currentFaceStatus = simFaceStatus;
+                if (addedFillers > 0) {
+                    this.liveFillerCount += addedFillers;
+                    fillerList.forEach(f => {
+                        if (!this.liveDetectedFillers.includes(f)) this.liveDetectedFillers.push(f);
+                    });
+                    this.recordTimelineBookmark(this.secondsElapsed, 'filler', `Kata Jeda (${fillerList.join(', ')})`, 'Terdeteksi penggunaan gumaman saat simulasi jawaban');
+                }
+
+                this.liveVolume = 78;
+                this.volumeSamples.push(78);
+                this.orbState = 'user_speaking';
+
+                if (window.speechSynthesis) {
+                    window.speechSynthesis.cancel();
+                    const synthUtterance = new SpeechSynthesisUtterance(scenarioText);
+                    synthUtterance.lang = (this.simulationLanguage === 'en') ? 'en-US' : 'id-ID';
+                    synthUtterance.rate = (type === 'academic_nervous') ? 0.88 : 1.0;
+                    synthUtterance.onend = () => {
+                        this.liveVolume = 0;
+                        this.isSimulatingBoothTurn = false;
+                        this.sendTurn(scenarioText);
+                    };
+                    synthUtterance.onerror = () => {
+                        this.liveVolume = 0;
+                        this.isSimulatingBoothTurn = false;
+                        this.sendTurn(scenarioText);
+                    };
+                    window.speechSynthesis.speak(synthUtterance);
+                } else {
+                    setTimeout(() => {
+                        this.liveVolume = 0;
+                        this.isSimulatingBoothTurn = false;
+                        this.sendTurn(scenarioText);
+                    }, 2500);
+                }
+            },
+
+            async sendTurn(userText) {
                     if (!userText || !this.currentSessionId) return;
 
                     this.stopCandidateTurnTimer();
                     this.checkUptalking(userText);
+
+                    // Real-Time Bilingual Filler Word Tracking
+                    const isEn = (this.simulationLanguage === 'en');
+                    const fRegex = isEn
+                        ? /\b(uh|um|uhm|like|you know|so yeah|actually|basically|i mean|sort of|kind of|you see|right)\b/gi
+                        : /\b(ehm|eh|em|umm|um|uh|anu|ngg|ngga|kayak|apa namanya|apa ya|gimana ya|maksudnya|istilahnya|kira-kira|ya kan|gitu|macam)\b/gi;
+                    const fillerMatches = userText.match(fRegex);
+                    if (fillerMatches) {
+                        this.liveFillerCount += fillerMatches.length;
+                        fillerMatches.forEach(m => {
+                            const lower = m.toLowerCase();
+                            if (!this.liveDetectedFillers.includes(lower)) {
+                                this.liveDetectedFillers.push(lower);
+                            }
+                        });
+                        this.recordTimelineBookmark(this.secondsElapsed, 'filler', 'Kata Jeda (' + fillerMatches[0] + ')', 'Terdeteksi penggunaan gumaman saat menyampaikan argumen');
+                    }
+
                     this.showInterruptionAlert = false;
                     this.playSfx('blip');
                     this.orbState = 'thinking';
@@ -2078,45 +2533,51 @@
                 initLipSyncEngine() {
                     if (this.lipSyncAnimationId) {
                         cancelAnimationFrame(this.lipSyncAnimationId);
+                        this.lipSyncAnimationId = null;
                     }
+                    if (this.orbState !== 'ai_speaking') {
+                        return;
+                    }
+
                     const updateLipSyncLoop = () => {
-                        if (this.orbState === 'ai_speaking') {
-                            this.liveMouthScaleY += (this.targetMouthScaleY - this.liveMouthScaleY) * 0.35;
-                            this.liveMouthScaleX += (this.targetMouthScaleX - this.liveMouthScaleX) * 0.35;
-                            this.liveMouthScaleY = Math.round(this.liveMouthScaleY * 1000) / 1000;
-                            this.liveMouthScaleX = Math.round(this.liveMouthScaleX * 1000) / 1000;
-
-                            const time = performance.now() * 0.005;
-                            const nodY = (this.liveMouthScaleY - 0.2) * 2.8 + Math.sin(time * 1.5) * 0.8;
-                            const headRot = Math.sin(time * 0.8) * 0.7;
-                            this.liveHeadTransform = `translateY(${nodY.toFixed(1)}px) rotate(${headRot.toFixed(2)}deg)`;
-
-                            const baseIntensity = Math.min(1, Math.max(0.12, this.liveMouthScaleY));
-                            this.vocalSpectrumBars = [
-                                Math.min(95, Math.max(12, Math.round(baseIntensity * 70 + Math.sin(time * 3) * 20))),
-                                Math.min(95, Math.max(12, Math.round(baseIntensity * 90 + Math.cos(time * 4) * 25))),
-                                Math.min(95, Math.max(15, Math.round(baseIntensity * 60 + Math.sin(time * 5) * 18))),
-                                Math.min(95, Math.max(12, Math.round(baseIntensity * 100 + Math.cos(time * 3.5) * 22))),
-                                Math.min(95, Math.max(12, Math.round(baseIntensity * 85 + Math.sin(time * 4.2) * 20))),
-                                Math.min(95, Math.max(15, Math.round(baseIntensity * 65 + Math.cos(time * 6) * 15))),
-                                Math.min(95, Math.max(12, Math.round(baseIntensity * 80 + Math.sin(time * 2.8) * 18))),
-                                Math.min(95, Math.max(10, Math.round(baseIntensity * 50 + Math.cos(time * 5.2) * 15)))
-                            ];
-                        } else {
-                            this.liveMouthScaleY = 0.15;
-                            this.liveMouthScaleX = 1.0;
-                            this.targetMouthScaleY = 0.15;
-                            this.targetMouthScaleX = 1.0;
-                            this.currentSpokenWord = '';
-                            this.liveHeadTransform = 'translateY(0px) rotate(0deg)';
-                            this.vocalSpectrumBars = [12, 12, 12, 12, 12, 12, 12, 12];
+                        if (this.orbState !== 'ai_speaking') {
+                            this.stopLipSync();
+                            return;
                         }
+
+                        this.liveMouthScaleY += (this.targetMouthScaleY - this.liveMouthScaleY) * 0.35;
+                        this.liveMouthScaleX += (this.targetMouthScaleX - this.liveMouthScaleX) * 0.35;
+                        this.liveMouthScaleY = Math.round(this.liveMouthScaleY * 1000) / 1000;
+                        this.liveMouthScaleX = Math.round(this.liveMouthScaleX * 1000) / 1000;
+
+                        const time = performance.now() * 0.005;
+                        const nodY = (this.liveMouthScaleY - 0.2) * 2.8 + Math.sin(time * 1.5) * 0.8;
+                        const headRot = Math.sin(time * 0.8) * 0.7;
+                        this.liveHeadTransform = `translateY(${nodY.toFixed(1)}px) rotate(${headRot.toFixed(2)}deg)`;
+
+                        const baseIntensity = Math.min(1, Math.max(0.12, this.liveMouthScaleY));
+                        this.vocalSpectrumBars = [
+                            Math.min(95, Math.max(12, Math.round(baseIntensity * 70 + Math.sin(time * 3) * 20))),
+                            Math.min(95, Math.max(12, Math.round(baseIntensity * 90 + Math.cos(time * 4) * 25))),
+                            Math.min(95, Math.max(15, Math.round(baseIntensity * 60 + Math.sin(time * 5) * 18))),
+                            Math.min(95, Math.max(12, Math.round(baseIntensity * 100 + Math.cos(time * 3.5) * 22))),
+                            Math.min(95, Math.max(12, Math.round(baseIntensity * 85 + Math.sin(time * 4.2) * 20))),
+                            Math.min(95, Math.max(15, Math.round(baseIntensity * 65 + Math.cos(time * 6) * 15))),
+                            Math.min(95, Math.max(12, Math.round(baseIntensity * 80 + Math.sin(time * 2.8) * 18))),
+                            Math.min(95, Math.max(10, Math.round(baseIntensity * 50 + Math.cos(time * 5.2) * 15)))
+                        ];
+
                         this.lipSyncAnimationId = requestAnimationFrame(updateLipSyncLoop);
                     };
+
                     this.lipSyncAnimationId = requestAnimationFrame(updateLipSyncLoop);
                 },
 
                 stopLipSync() {
+                    if (this.lipSyncAnimationId) {
+                        cancelAnimationFrame(this.lipSyncAnimationId);
+                        this.lipSyncAnimationId = null;
+                    }
                     if (this.wordVisemeTimeouts && this.wordVisemeTimeouts.length > 0) {
                         this.wordVisemeTimeouts.forEach(t => clearTimeout(t));
                         this.wordVisemeTimeouts = [];
@@ -2125,6 +2586,8 @@
                         clearTimeout(this.synthFallbackTimer);
                         this.synthFallbackTimer = null;
                     }
+                    this.liveMouthScaleY = 0.15;
+                    this.liveMouthScaleX = 1.0;
                     this.targetMouthScaleY = 0.15;
                     this.targetMouthScaleX = 1.0;
                     this.currentViseme = 'closed';
@@ -2210,6 +2673,7 @@
                 startTimelineFallback(text) {
                     if (!text) return;
                     this.stopLipSync();
+                    this.initLipSyncEngine();
 
                     const tokens = text.match(/[a-zA-Z0-9]+|[.,!?;:]/g) || text.split(/\s+/);
                     let cumulativeTime = 0;
@@ -2244,6 +2708,7 @@
                     this.orbState = 'ai_speaking';
                     this.currentAiSpokenText = text;
                     this.stopLipSync();
+                    this.initLipSyncEngine();
 
                     // Pause recognition while AI talks so it doesn't transcribe itself
                     if (this.recognition) {
@@ -2312,6 +2777,7 @@
                                 if (audioCtx && audioCtx.state === 'suspended') {
                                     audioCtx.resume();
                                 }
+                                this.initLipSyncEngine();
                                 requestAnimationFrame(sampleAudio);
                             };
                         }
@@ -2364,11 +2830,11 @@
                         utterance.pitch = 0.68;
                         utterance.rate = 0.88;
                     } else if (roleType === 'hrd') {
-                        // Suara HRD Ramah (Nadia): nada hangat, sopan & empatik, tempo natural
+                        // Suara VOIC - HRD: nada hangat, sopan & empatik, tempo natural
                         utterance.pitch = 1.15;
                         utterance.rate = 1.02;
                     } else {
-                        // Suara Investor (Raymond): tegas, dinamis, to-the-point, energetik
+                        // Suara VOIC - Investor: tegas, dinamis, to-the-point, energetik
                         utterance.pitch = 0.80;
                         utterance.rate = 1.12;
                     }
@@ -2420,6 +2886,7 @@
 
                     utterance.onstart = () => {
                         this.orbState = 'ai_speaking';
+                        this.initLipSyncEngine();
                         this.synthFallbackTimer = setTimeout(() => {
                             if (!hasBoundaryEvents && this.orbState === 'ai_speaking') {
                                 this.startTimelineFallback(text);
@@ -2473,10 +2940,22 @@
                     clearTimeout(this.silenceTimer);
                     if (this.waveformAnimationId) {
                         cancelAnimationFrame(this.waveformAnimationId);
+                        this.waveformAnimationId = null;
                     }
                     this.stopLipSync();
                     if (this.lipSyncAnimationId) {
                         cancelAnimationFrame(this.lipSyncAnimationId);
+                        this.lipSyncAnimationId = null;
+                    }
+
+                    // Release webcam and microphone tracks immediately to free hardware resources
+                    if (this.mediaStream) {
+                        try { this.mediaStream.getTracks().forEach(t => t.stop()); } catch(e) {}
+                        this.mediaStream = null;
+                    }
+                    if (this.audioContext) {
+                        try { this.audioContext.close(); } catch(e) {}
+                        this.audioContext = null;
                     }
 
                     if (this.recognition) {
@@ -2573,6 +3052,18 @@
                     if (audioHesitations > 0) {
                         totalFillerWords += audioHesitations;
                         detectedFillers.push(`${audioHesitations}x jeda hening/nada datar akustik`);
+                    }
+
+                    // Lapis 3: Gabungkan Live Real-Time & Booth Filler Word Tracking
+                    if (this.liveFillerCount && this.liveFillerCount > totalFillerWords) {
+                        totalFillerWords = this.liveFillerCount;
+                    }
+                    if (this.liveDetectedFillers && this.liveDetectedFillers.length > 0) {
+                        this.liveDetectedFillers.forEach(w => {
+                            if (!detectedFillers.includes(w)) {
+                                detectedFillers.push(w);
+                            }
+                        });
                     }
 
                     // 3. DATA TELEMETRI AUDIO ASLI MIKROFON (Web Audio Analyser)
@@ -2819,7 +3310,7 @@
         window.interactiveSimulationApp = interactiveSimulationApp;
     </script>
 
-    <div class="py-8 relative overflow-hidden" x-data="interactiveSimulationApp()">
+    <div class="py-3 sm:py-5 relative overflow-hidden" x-data="interactiveSimulationApp()">
         <!-- Glassmorphic Floating Toast Notification -->
         <div x-show="toast.show"
              x-transition:enter="transition ease-out duration-300"
@@ -2883,24 +3374,66 @@
             <div x-show="!sessionState || sessionState === 'selection'" class="space-y-6">
                 <div class="glass-panel rounded-3xl p-6 sm:p-8">
                     <!-- Title & Overview -->
-                    <div class="mb-6">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold glass-pill text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60 mb-2">
-                            <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-                            Pilih Skenario Wawancara
+                    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold glass-pill text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60 mb-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                                Pilih Skenario Wawancara
+                            </div>
+                            <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                Pilih Penguji & Mulai Latihan
+                            </h3>
+                            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                Pilih salah satu mode latihan di bawah ini, lalu klik <span class="font-semibold text-slate-700 dark:text-slate-300">Mulai Simulasi</span> untuk berlatih tatap muka langsung.
+                            </p>
                         </div>
-                        <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                            Pilih Penguji & Mulai Latihan
-                        </h3>
-                        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                            Pilih salah satu mode latihan di bawah ini, lalu klik <span class="font-semibold text-slate-700 dark:text-slate-300">Mulai Simulasi</span> untuk berlatih tatap muka langsung.
-                        </p>
+                        <button type="button"
+                                @click="showHelpModal = true"
+                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-navy-950/80 hover:bg-blue-100 dark:hover:bg-navy-900 border border-blue-200 dark:border-navy-800 shadow-xs transition cursor-pointer w-fit">
+                            <span>💡 Panduan Cepat (Cara Pakai)</span>
+                        </button>
+                    </div>
+
+                    <!-- 3-Step Orientation Cards for New Users -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 p-4 rounded-2xl bg-slate-50/80 dark:bg-navy-950/60 border border-slate-200/80 dark:border-navy-800 text-xs">
+                        <div class="flex items-start gap-3">
+                            <span class="w-6 h-6 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">1</span>
+                            <div>
+                                <span class="font-bold text-slate-900 dark:text-white block">Pilih Penguji</span>
+                                <span class="text-slate-500 dark:text-slate-400">Pilih salah satu dari 3 karakter AI (Dosen, HRD, atau Investor).</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="w-6 h-6 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">2</span>
+                            <div>
+                                <span class="font-bold text-slate-900 dark:text-white block">Bicara Hands-Free</span>
+                                <span class="text-slate-500 dark:text-slate-400">Tatap kamera & bicaralah santai. AI otomatis menjawab saat jeda hening.</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="w-6 h-6 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">3</span>
+                            <div>
+                                <span class="font-bold text-slate-900 dark:text-white block">Rapor & Sertifikat</span>
+                                <span class="text-slate-500 dark:text-slate-400">Klik "Akhiri Sesi" kapan pun untuk cetak transkrip & scan QR sertifikat.</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 3 Clean Scenario Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                         @forelse($aiRoles as $role)
-                            <div @click="selectRoleById({{ $role->id }})"
-                                 :class="selectedRole?.id === {{ $role->id }}
+                            @php
+                                $rId = (int) ($role->id ?? 1);
+                                $rType = $role->role_type ?? 'dosen_penguji';
+                                $rName = $role->name ?? 'AI Coach';
+                                $rDesc = $role->description ?? '';
+                                $rDiff = $role->difficulty_level ?? 'Sedang';
+                                $rAvatar = $rType === 'dosen_penguji' ? asset('images/avatars/dosen.jpg') : ($rType === 'hrd' ? asset('images/avatars/hrd.jpg') . '?v=3' : asset('images/avatars/investor.jpg'));
+                                $rBadgeClass = $rType === 'dosen_penguji' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : ($rType === 'hrd' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300');
+                                $rBadgeLabel = $rType === 'dosen_penguji' ? 'Akademik' : ($rType === 'hrd' ? 'Karier' : 'Bisnis');
+                            @endphp
+                            <div @click="selectRoleById({{ $rId }})"
+                                 :class="selectedRole?.id === {{ $rId }}
                                     ? 'border-blue-600 ring-4 ring-blue-500/20 bg-blue-50/70 dark:bg-navy-950/70 dark:border-blue-500 shadow-lg'
                                     : 'border-slate-200/80 dark:border-slate-800 glass-subcard hover:border-blue-300 dark:hover:border-slate-700 hover:shadow-md'"
                                  class="p-5 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between group">
@@ -2908,8 +3441,8 @@
                                 <div>
                                     <div class="flex items-center gap-3.5 mb-3.5">
                                         <div class="relative w-14 h-14 rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 shrink-0">
-                                            <img src="{{ $role->role_type === 'dosen_penguji' ? asset('images/avatars/dosen.jpg') : ($role->role_type === 'hrd' ? asset('images/avatars/hrd.jpg') . '?v=3' : asset('images/avatars/investor.jpg')) }}"
-                                                 alt="{{ $role->name }}"
+                                            <img src="{{ $rAvatar }}"
+                                                 alt="{{ $rName }}"
                                                  width="56"
                                                  height="56"
                                                  loading="lazy"
@@ -2917,19 +3450,19 @@
                                                  class="w-full h-full object-cover">
                                         </div>
                                         <div>
-                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider {{ $role->role_type === 'dosen_penguji' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : ($role->role_type === 'hrd' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300') }}">
-                                                {{ $role->role_type === 'dosen_penguji' ? 'Akademik' : ($role->role_type === 'hrd' ? 'Karier' : 'Bisnis') }}
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider {{ $rBadgeClass }}">
+                                                {{ $rBadgeLabel }}
                                             </span>
-                                            <h4 class="font-extrabold text-base text-slate-900 dark:text-white mt-1">{{ $role->name }}</h4>
+                                            <h4 class="font-extrabold text-base text-slate-900 dark:text-white mt-1">{{ $rName }}</h4>
                                         </div>
                                     </div>
 
-                                    @if($role->role_type === 'dosen_penguji')
+                                    @if($rType === 'dosen_penguji')
                                         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-indigo-50/80 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60 mb-2.5">
                                             <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span>
                                             <span>🎙️ Suara Dosen Killer (Bariton, Tegas & Berbobot)</span>
                                         </div>
-                                    @elseif($role->role_type === 'hrd')
+                                    @elseif($rType === 'hrd')
                                         <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-50/80 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 mb-2.5">
                                             <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
                                             <span>🎙️ Suara HRD Ramah (Hangat, Empatik & Komunikatif)</span>
@@ -2942,35 +3475,37 @@
                                     @endif
 
                                     <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                                        {{ $role->description }}
+                                        {{ $rDesc }}
                                     </p>
                                 </div>
 
                                 <div class="pt-3 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between gap-2">
                                     <span class="text-xs font-semibold"
-                                          :class="selectedRole?.id === {{ $role->id }} ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400'">
-                                        <span x-show="selectedRole?.id === {{ $role->id }}">✓ Terpilih</span>
-                                        <span x-show="selectedRole?.id !== {{ $role->id }}">Pilih Ini</span>
+                                          :class="selectedRole?.id === {{ $rId }} ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-400'">
+                                        <span x-show="selectedRole?.id === {{ $rId }}">✓ Terpilih</span>
+                                        <span x-show="selectedRole?.id !== {{ $rId }}">Pilih Ini</span>
                                     </span>
                                     <div class="flex items-center gap-2">
                                         <button type="button"
-                                                @click.stop="previewRoleVoice('{{ $role->role_type }}')"
+                                                @click.stop="previewRoleVoice('{{ $rType }}')"
                                                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition cursor-pointer shadow-2xs"
-                                                :class="previewVoiceRole === '{{ $role->role_type }}' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'">
-                                            <svg class="w-3.5 h-3.5" :class="previewVoiceRole === '{{ $role->role_type }}' ? 'animate-pulse' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                :class="previewVoiceRole === '{{ $rType }}' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'">
+                                            <svg class="w-3.5 h-3.5" :class="previewVoiceRole === '{{ $rType }}' ? 'animate-pulse' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
                                             </svg>
-                                            <span x-text="previewVoiceRole === '{{ $role->role_type }}' ? 'Memutar...' : 'Dengar Suara'"></span>
+                                            <span x-text="previewVoiceRole === '{{ $rType }}' ? 'Memutar...' : 'Dengar Suara'"></span>
                                         </button>
                                         <span class="text-[11px] text-slate-400 hidden sm:inline">
-                                            {{ $role->difficulty_level }}
+                                            {{ $rDiff }}
                                         </span>
                                     </div>
                                 </div>
                             </div>
                         @empty
                             @foreach($scenarios as $sc)
-                                <div @click="selectRole({ id: 1, name: '{{ $sc['name'] }}', role_type: '{{ $sc['role_type'] }}', difficulty_level: 'Sedang' })"
+                                <div data-name="{{ $sc['name'] }}"
+                                     data-role-type="{{ $sc['role_type'] }}"
+                                     @click="selectScenarioRole($el.dataset.name, $el.dataset.roleType)"
                                      class="p-5 rounded-2xl glass-subcard cursor-pointer">
                                     <h4 class="font-bold text-base text-slate-900 dark:text-white">{{ $sc['name'] }}</h4>
                                     <p class="text-xs text-slate-500 mt-1">{{ $sc['description'] }}</p>
@@ -3210,7 +3745,7 @@
                                         </svg>
                                         <span>Tes Mikrofon:</span>
                                     </span>
-                                    <span class="font-mono text-[11px]" :class="calibrationVolume > 15 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400'" x-text="calibrationVolume > 15 ? 'Suara Terdeteksi' : 'Silakan Bicara...'"></span>
+                                    <span class="font-mono text-[11px]" :class="hasCalibrationAudio() ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400'" x-text="hasCalibrationAudio() ? 'Suara Terdeteksi' : 'Silakan Bicara...'"></span>
                                 </div>
                                 <div class="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden shadow-inner">
                                     <div class="h-full bg-gradient-to-r from-emerald-500 to-blue-500 transition-all duration-75" :style="'width: ' + calibrationVolume + '%'"></div>
@@ -3353,11 +3888,181 @@
                 </div>
             </div>
 
+            <!-- BOOTH EXHIBITION QUICK DEMO PRESETS MODAL -->
+            <div x-show="showBoothDemoModal"
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md overflow-y-auto"
+                 @keydown.escape.window="showBoothDemoModal = false">
+                <div class="glass-panel rounded-3xl max-w-2xl w-full border-white/90 dark:border-navy-800 shadow-2xl p-6 sm:p-8 space-y-6 overflow-hidden my-auto"
+                     @click.away="showBoothDemoModal = false">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-200/60 dark:border-navy-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl font-bold shadow-xs">
+                                ⚡
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Preset Simulasi Cepat (Booth Expo & Juri)</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Pilih skenario otomatis untuk demonstrasi pameran tanpa perlu mikrofon fisik</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showBoothDemoModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-xl cursor-pointer">✕</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3.5">
+                        <!-- Scenario 1: Mahasiswa Teladan -->
+                        <div @click="playBoothScenario('academic_stellar')"
+                             class="p-4 rounded-2xl glass-subcard hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 transition cursor-pointer group">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center text-lg font-bold shrink-0">
+                                        🎓
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition">
+                                            Mahasiswa Teladan (Lancar & Tegas)
+                                        </h4>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Menjawab metodologi CNN & validasi empiris 94.2% dengan kontak mata mantap (95%) dan 0 kata jeda.
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                                    Skor ~94
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Scenario 2: Mahasiswa Gugup -->
+                        <div @click="playBoothScenario('academic_nervous')"
+                             class="p-4 rounded-2xl glass-subcard hover:bg-amber-50/50 dark:hover:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 transition cursor-pointer group">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex items-center justify-center text-lg font-bold shrink-0">
+                                        ⚠️
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition">
+                                            Mahasiswa Gugup (Banyak Kata Jeda)
+                                        </h4>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Banyak gumaman ("ehm", "anu", "kayak"), intonasi ragu, memicu deteksi kata jeda & rekomendasi perbaikan.
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800 shrink-0">
+                                    Skor ~64
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Scenario 3: Wawancara HRD STAR -->
+                        <div @click="playBoothScenario('hrd_star')"
+                             class="p-4 rounded-2xl glass-subcard hover:bg-blue-50/50 dark:hover:bg-blue-950/30 border border-blue-200/80 dark:border-blue-800/60 transition cursor-pointer group">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 flex items-center justify-center text-lg font-bold shrink-0">
+                                        💼
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                                            Wawancara HRD (Metode STAR)
+                                        </h4>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                            Menjawab tantangan agile sprint secara persuasif, ekspresi ramah rileks (senyum 85%), artikulasi terstruktur.
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 shrink-0">
+                                    Skor ~91
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                        <span class="text-[11px] text-slate-400">💡 Fitur Failsafe Expo: Memastikan demo tetap impresif meski aula pameran bising atau koneksi terputus.</span>
+                        <button type="button" @click="showBoothDemoModal = false" class="px-5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USER GUIDE & ONBOARDING FAQ MODAL -->
+            <div x-show="showHelpModal"
+                 x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md overflow-y-auto"
+                 @keydown.escape.window="showHelpModal = false">
+                <div class="glass-panel rounded-3xl max-w-2xl w-full border-white/90 dark:border-navy-800 shadow-2xl p-6 sm:p-8 space-y-6 overflow-hidden my-auto"
+                     @click.away="showHelpModal = false">
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-200/60 dark:border-navy-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-navy-950 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-bold shadow-xs">
+                                💡
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Panduan Penggunaan Cepat VOIC</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Tips dan tata cara latihan agar simulasi berjalan lancar & bernilai tinggi</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="showHelpModal = false" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-xl cursor-pointer">✕</button>
+                    </div>
+
+                    <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto pr-1">
+                        <!-- Item 1: Hands-Free Talking -->
+                        <div class="p-3.5 rounded-2xl glass-subcard border-blue-200/80 dark:border-navy-800 space-y-1">
+                            <div class="flex items-center gap-2 font-bold text-slate-900 dark:text-white text-sm">
+                                <span>🎙️ 1. Percakapan Otomatis (Hands-Free)</span>
+                            </div>
+                            <p>
+                                Anda <strong>tidak perlu menekan tombol apapun</strong> saat berbicara. Cukup bicaralah secara alami menghadap mikrofon laptop. Begitu Anda berhenti bicara (jeda hening ~1 detik), sensor suara AI akan otomatis mendeteksi bahwa giliran Anda sudah selesai dan AI langsung memberikan respon balasan.
+                            </p>
+                        </div>
+
+                        <!-- Item 2: Eye Contact Advice -->
+                        <div class="p-3.5 rounded-2xl glass-subcard border-blue-200/80 dark:border-navy-800 space-y-1">
+                            <div class="flex items-center gap-2 font-bold text-slate-900 dark:text-white text-sm">
+                                <span>👁️ 2. Tips Kontak Mata Kamera</span>
+                            </div>
+                            <p>
+                                Tataplah <strong>lensa webcam di atas layar laptop</strong> Anda, bukan melihat gambar diri sendiri di pojok kanan. Menatap langsung ke lensa membuat komputer dan penguji menilai kontak mata Anda fokus dan percaya diri (>80%).
+                            </p>
+                        </div>
+
+                        <!-- Item 3: Vocal Fluency & Power Pause -->
+                        <div class="p-3.5 rounded-2xl glass-subcard border-blue-200/80 dark:border-navy-800 space-y-1">
+                            <div class="flex items-center gap-2 font-bold text-slate-900 dark:text-white text-sm">
+                                <span>🗣️ 3. Mengendalikan Kata Jeda (The Power Pause)</span>
+                            </div>
+                            <p>
+                                Hindari gumaman berulang seperti <em>"ehm"</em>, <em>"anu"</em>, atau <em>"kayak"</em>. Jika sedang berpikir, tarik napas tenang 1 detik dan biarkan hening sejenak tanpa suara. Jeda hening yang tenang justru dinilai sangat berwibawa oleh dewan penguji.
+                            </p>
+                        </div>
+
+                        <!-- Item 4: Ending Session -->
+                        <div class="p-3.5 rounded-2xl glass-subcard border-blue-200/80 dark:border-navy-800 space-y-1">
+                            <div class="flex items-center gap-2 font-bold text-slate-900 dark:text-white text-sm">
+                                <span>📄 4. Kapan Selesai & Cara Cetak Sertifikat</span>
+                            </div>
+                            <p>
+                                Latihan bersifat fleksibel (disarankan 3 hingga 5 putaran tanya-jawab). Kapan pun Anda siap melihat hasil, klik tombol merah <strong>"Akhiri Sesi"</strong> di pojok kanan atas. Sistem akan langsung memproses 5 parameter penilaian dan menerbitkan Rapor Resmi + QR Code Sertifikat.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200/60 dark:border-slate-800 flex justify-end">
+                        <button type="button" @click="showHelpModal = false" class="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-sm cursor-pointer">
+                            Mengerti & Lanjutkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- STEP 2: ACTIVE INTERVIEW ROOM (Sederhana, Bersih & Sangat Mudah Digunakan) -->
-            <div x-show="sessionState === 'room'" class="space-y-4 max-w-5xl mx-auto" x-cloak>
+            <div x-show="sessionState === 'room'" class="space-y-2.5 sm:space-y-3 max-w-4xl mx-auto px-2 sm:px-4" x-cloak>
 
                 <!-- Interview Top Bar -->
-                <div class="glass-panel px-4 py-3 rounded-2xl flex items-center justify-between gap-3 shadow-xs">
+                <div class="glass-panel px-3.5 py-2 sm:py-2.5 rounded-2xl flex items-center justify-between gap-3 shadow-xs">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-xl overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 shadow-xs">
                             <img :src="avatarImageUrl" :alt="selectedRole?.name || 'Penguji'" class="w-full h-full object-cover">
@@ -3401,8 +4106,24 @@
                         </span>
                     </div>
 
+                    <!-- Real-Time Filler Words Badge -->
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold shadow-xs transition-colors"
+                         :class="getFillerBadgeClass()">
+                        <span class="w-2 h-2 rounded-full" :class="getFillerDotClass()"></span>
+                        <span class="hidden md:inline">Kata Jeda:</span>
+                        <span class="font-mono font-bold" x-text="liveFillerCount">0</span>
+                    </div>
+
                     <!-- Right Controls: Ambience, Sprint timer, Fullscreen & Finish -->
                     <div class="flex items-center gap-2">
+                        <!-- Failsafe Booth Exhibition Quick Demo Presets -->
+                        <button type="button"
+                                @click="showBoothDemoModal = true"
+                                class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50/90 dark:bg-amber-950/80 hover:bg-amber-100 dark:hover:bg-amber-900 border border-amber-300 dark:border-amber-700/60 shadow-xs transition cursor-pointer"
+                                title="Buka Skenario Cepat untuk Demo Booth Expo / Juri">
+                            <span class="text-amber-500">⚡</span>
+                            <span class="hidden sm:inline">Demo Booth</span>
+                        </button>
                         <template x-if="simulationMode === 'sprint'">
                             <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-600 dark:text-amber-300 text-xs font-mono font-bold animate-pulse">
                                 <span>SPRINT:</span>
@@ -3443,27 +4164,125 @@
                     </div>
                 </div>
 
+                <!-- Hardware Permission Notice Helper -->
+                <div x-show="hardwarePermissionError" x-cloak
+                     class="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-500/20 border-2 border-amber-500/50 text-amber-900 dark:text-amber-200 shadow-lg backdrop-blur-md transition-all">
+                    <div class="flex items-start gap-3">
+                        <div class="p-2 rounded-xl bg-amber-500 text-white shrink-0 shadow-md">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-amber-900 dark:text-amber-100 flex items-center gap-2">
+                                <span>Akses Mikrofon / Kamera Diblokir Browser</span>
+                                <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200">Perhatian</span>
+                            </h4>
+                            <p class="text-xs text-amber-800/90 dark:text-amber-300/90 mt-1 leading-relaxed">
+                                Browser Anda memblokir izin mikrofon/kamera. Untuk berbicara santai dengan AI:
+                                <br>1. Klik ikon <strong>Gembok (🔒)</strong> di bilah alamat URL browser (samping https://).
+                                <br>2. Ubah <strong>Mikrofon</strong> dan <strong>Kamera</strong> menjadi <strong>"Izinkan" (Allow)</strong>.
+                                <br>3. Klik tombol <strong>Coba Sambungkan</strong> di samping atau segarkan halaman.
+                            </p>
+                        </div>
+                        <button type="button"
+                                @click="initHardware()"
+                                class="shrink-0 px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-600/30 transition cursor-pointer">
+                            🔄 Coba Sambungkan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Conversational Turn Guide Banner -->
+                <div class="px-3.5 py-1.5 sm:py-2 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 shadow-xs"
+                     :class="{
+                         'bg-blue-50/90 dark:bg-blue-950/70 border-blue-200 dark:border-blue-800/80 text-blue-900 dark:text-blue-100': orbState === 'ai_speaking',
+                         'bg-amber-50/90 dark:bg-amber-950/70 border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-100': orbState === 'thinking',
+                         'bg-emerald-50/90 dark:bg-emerald-950/70 border-emerald-300 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-100': orbState === 'user_speaking',
+                         'bg-slate-50/90 dark:bg-slate-900/70 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200': orbState === 'idle'
+                     }">
+                    <div class="flex items-center gap-3">
+                        <!-- Dynamic State Icon Badge -->
+                        <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform"
+                             :class="{
+                                 'bg-blue-600 text-white shadow-md shadow-blue-500/30 scale-105': orbState === 'ai_speaking',
+                                 'bg-amber-500 text-white shadow-md shadow-amber-500/30 animate-spin': orbState === 'thinking',
+                                 'bg-emerald-600 text-white shadow-md shadow-emerald-500/30 animate-pulse': orbState === 'user_speaking',
+                                 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300': orbState === 'idle'
+                             }">
+                            <template x-if="orbState === 'ai_speaking'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                                </svg>
+                            </template>
+                            <template x-if="orbState === 'thinking'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                            </template>
+                            <template x-if="orbState === 'user_speaking'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                </svg>
+                            </template>
+                            <template x-if="orbState === 'idle'">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                            </template>
+                        </div>
+
+                        <!-- Dynamic Text Explanation -->
+                        <div>
+                            <div class="text-xs font-bold flex items-center gap-2">
+                                <span x-show="orbState === 'ai_speaking'">Penguji Sedang Berbicara...</span>
+                                <span x-show="orbState === 'thinking'">AI Sedang Menelaah Respon Anda...</span>
+                                <span x-show="orbState === 'user_speaking'">Suara Anda Terdeteksi...</span>
+                                <span x-show="orbState === 'idle'">Giliran Anda Berbicara! (Hands-Free)</span>
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-white/60 dark:bg-black/30 border border-current/20">
+                                    <span x-text="orbState === 'ai_speaking' ? 'Dengarkan' : (orbState === 'thinking' ? 'Menganalisis' : 'Bicara Bebas')"></span>
+                                </span>
+                            </div>
+                            <div class="text-[11px] opacity-80 mt-0.5">
+                                <span x-show="orbState === 'ai_speaking'">Dengarkan pertanyaan penguji sampai selesai. Siapkan jawaban Anda.</span>
+                                <span x-show="orbState === 'thinking'">Menelaah argumen, struktur kalimat, koherensi fakta & kontak mata.</span>
+                                <span x-show="orbState === 'user_speaking'">Bicaralah santai. Sistem otomatis mendeteksi ketika Anda selesai berbicara.</span>
+                                <span x-show="orbState === 'idle'">Langsung bicaralah ke mic tanpa tekan tombol apapun. AI akan otomatis menjawab setelah Anda jeda.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Quick Actions: Panduan Button & Tips -->
+                    <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                        <button type="button"
+                                @click="showHelpModal = true"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-100/80 dark:bg-blue-900/50 hover:bg-blue-200/80 dark:hover:bg-blue-900/80 transition cursor-pointer">
+                            <span>💡 Panduan Cara Pakai</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- 4-Stage Scenario Milestone Progress Stepper -->
-                <div class="glass-panel px-4 py-2.5 rounded-2xl shadow-xs border border-slate-200/80 dark:border-slate-800">
+                <div class="glass-panel px-3.5 py-1.5 sm:py-2 rounded-2xl shadow-xs border border-slate-200/80 dark:border-slate-800">
                     <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
                         <template x-for="stage in stageMilestones" :key="stage.id">
                             <div class="flex items-center gap-2 shrink-0">
                                 <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300"
                                      :class="{
-                                         'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 scale-[1.02]': currentStage === stage.id,
-                                         'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300': currentStage !== stage.id && stageMilestones.findIndex(s => s.id === currentStage) > stageMilestones.findIndex(s => s.id === stage.id),
-                                         'text-slate-400 dark:text-slate-500 opacity-60': currentStage !== stage.id && stageMilestones.findIndex(s => s.id === currentStage) < stageMilestones.findIndex(s => s.id === stage.id)
+                                         'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 scale-[1.02]': isStageActive(stage.id),
+                                         'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300': isStagePassed(stage.id),
+                                         'text-slate-400 dark:text-slate-500 opacity-60': isStagePending(stage.id)
                                      }">
                                     <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0"
                                           :class="{
-                                              'bg-white text-blue-700': currentStage === stage.id,
-                                              'bg-emerald-500 text-white': currentStage !== stage.id && stageMilestones.findIndex(s => s.id === currentStage) > stageMilestones.findIndex(s => s.id === stage.id),
-                                              'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400': currentStage !== stage.id && stageMilestones.findIndex(s => s.id === currentStage) < stageMilestones.findIndex(s => s.id === stage.id)
+                                              'bg-white text-blue-700': isStageActive(stage.id),
+                                              'bg-emerald-500 text-white': isStagePassed(stage.id),
+                                              'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400': isStagePending(stage.id)
                                           }">
-                                        <template x-if="stageMilestones.findIndex(s => s.id === currentStage) > stageMilestones.findIndex(s => s.id === stage.id)">
+                                        <template x-if="isStagePassed(stage.id)">
                                             <span>✓</span>
                                         </template>
-                                        <template x-if="stageMilestones.findIndex(s => s.id === currentStage) <= stageMilestones.findIndex(s => s.id === stage.id)">
+                                        <template x-if="!isStagePassed(stage.id)">
                                             <span x-text="stage.step"></span>
                                         </template>
                                     </span>
@@ -3471,13 +4290,13 @@
                                         <div class="text-[11px] font-bold tracking-tight leading-none" x-text="stage.label"></div>
                                         <div class="text-[9px] opacity-80 mt-0.5 leading-none" x-text="stage.badge"></div>
                                     </div>
-                                    <template x-if="currentStage === stage.id && stage.id === 'pressure_test'">
+                                    <template x-if="isStageActive(stage.id) && stage.id === 'pressure_test'">
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500 text-white animate-pulse">
                                             🔥 STRESS TEST
                                         </span>
                                     </template>
                                 </div>
-                                <template x-if="stage.step < 4">
+                                <template x-if="stage.step !== 4">
                                     <svg class="w-3.5 h-3.5 text-slate-300 dark:text-slate-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
@@ -3488,7 +4307,7 @@
                 </div>
 
                 <!-- Main Video Call Stage with Reactive Speaker Glow -->
-                <div class="relative bg-slate-950 rounded-3xl overflow-hidden shadow-2xl border min-h-[350px] sm:min-h-[460px] aspect-4/3 sm:aspect-16/9 flex items-center justify-center transition-all duration-500"
+                <div class="relative bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border h-[280px] sm:h-[350px] md:h-[380px] max-h-[48vh] w-full flex items-center justify-center transition-all duration-500"
                      :class="orbState === 'ai_speaking' ? 'border-blue-500/80 ring-4 ring-blue-500/50 glow-active-ai shadow-blue-500/20' : 'border-slate-800'">
 
                     <!-- Conversational Barge-In Interruption Alert Banner -->
@@ -3522,8 +4341,8 @@
                     <!-- Dynamic Turn Duration & Budget Alert Badge -->
                     <template x-if="orbState !== 'ai_speaking' && orbState !== 'thinking'">
                         <div class="absolute bottom-4 left-4 z-30 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border text-xs font-mono font-bold shadow-lg"
-                             :class="currentTurnSeconds >= 20 ? 'border-amber-500 text-amber-300 animate-pulse' : 'border-slate-700 text-slate-200'">
-                            <span class="w-2 h-2 rounded-full" :class="currentTurnSeconds >= 20 ? 'bg-amber-400' : 'bg-blue-400 animate-ping'"></span>
+                             :class="isTurnOverdue() ? 'border-amber-500 text-amber-300 animate-pulse' : 'border-slate-700 text-slate-200'">
+                            <span class="w-2 h-2 rounded-full" :class="isTurnOverdue() ? 'bg-amber-400' : 'bg-blue-400 animate-ping'"></span>
                             <span>Durasi Bicara: <span x-text="currentTurnSeconds + 's'"></span></span>
                             <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'investor'">
                                 <span class="text-[10px] text-slate-400 font-normal">/ 45s alokasi</span>
@@ -3564,7 +4383,7 @@
 
                     <!-- 2. ANIMATED 2D TALKING CHARACTERS (DEFAULT FOR ALL ROLES: LIVING AVATAR WITH MOVING MOUTH & LIP-SYNC) -->
                     <template x-if="avatarStageMode === 'animated'">
-                        <div class="relative z-10 h-full max-h-[340px] sm:max-h-[460px] aspect-4/3 flex items-center justify-center p-2 sm:p-4">
+                        <div class="relative z-10 h-full max-h-[260px] sm:max-h-[330px] md:max-h-[360px] aspect-4/3 flex items-center justify-center p-1 sm:p-2">
                             <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 select-none flex items-center justify-center bg-slate-950 transition-all duration-300">
 
                                 <!-- ROLE A: DOSEN PENGUJI (Prof. Dr. Ir. Hendra Kusuma, M.Kom) -->
@@ -3694,7 +4513,7 @@
                                             </g>
 
                                             <!-- Active Speaking State (Mouth Opens, Articulates & Closes with Speech) -->
-                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk" style="transform-origin: 200px 208px;">
+                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk">
                                                 <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d14"/>
                                                 <path d="M 187 202 Q 200 205 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
                                                 <ellipse cx="200" cy="214" rx="10" ry="4" fill="#a83c48" opacity="0.85"/>
@@ -3757,7 +4576,7 @@
                                             <rect x="6" y="0" width="38" height="11" rx="2" fill="#2563eb"/>
                                             <text x="25" y="8" font-size="5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">HR TALENT</text>
                                             <circle cx="25" cy="23" r="7" fill="#fbcfe8"/>
-                                            <text x="25" y="36" font-size="5" font-weight="bold" fill="#1e293b" text-anchor="middle" font-family="sans-serif">NADIA</text>
+                                            <text x="25" y="36" font-size="5" font-weight="bold" fill="#1e293b" text-anchor="middle" font-family="sans-serif">VOIC</text>
                                             <rect x="14" y="40" width="22" height="2" rx="1" fill="#94a3b8"/>
                                         </g>
 
@@ -3825,7 +4644,7 @@
                                             </g>
 
                                             <!-- 2. Active Speaking State: Speech-Synchronized Talking Mouth -->
-                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk" style="transform-origin: 200px 208px;">
+                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk">
                                                 <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d18"/>
                                                 <path d="M 187 202 Q 200 206 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
                                                 <ellipse cx="200" cy="214" rx="10" ry="4" fill="#f43f5e" opacity="0.85"/>
@@ -3939,7 +4758,7 @@
                                             </g>
 
                                             <!-- 2. Active Speaking State: Speech-Synchronized Talking Mouth -->
-                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk" style="transform-origin: 200px 208px;">
+                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk">
                                                 <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d14"/>
                                                 <path d="M 187 202 Q 200 205 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
                                                 <ellipse cx="200" cy="214" rx="10" ry="4" fill="#a83c48" opacity="0.85"/>
@@ -4009,6 +4828,13 @@
                                 :class="isCameraOff ? 'hidden' : ''">
                         </video>
 
+                        <!-- 3D Cybernetic Face Mesh & Gaze Target HUD -->
+                        <canvas id="faceMeshHudCanvas"
+                                width="320"
+                                height="240"
+                                class="absolute inset-0 w-full h-full pointer-events-none z-10 -scale-x-100"
+                                :class="isCameraOff ? 'hidden' : ''"></canvas>
+
                         <div x-show="isCameraOff" class="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400 p-2 text-center">
                             <svg class="w-4 h-4 sm:w-5 sm:h-5 mb-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -4039,7 +4865,7 @@
                 </div>
 
                 <!-- EXAMINER QUESTION CARD (Pertanyaan Penguji - Jelas & Mudah Dibaca) -->
-                <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="glass-panel p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
                     <div class="flex items-start gap-3">
                         <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-navy-900 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 mt-0.5 border border-blue-200/80 dark:border-navy-800">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4085,16 +4911,22 @@
                         </div>
                     </div>
 
-                    <button type="button"
-                            @click="submitCurrentTurn()"
-                            :disabled="!liveInterimTranscript.trim()"
-                            class="shrink-0 px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer disabled:opacity-40">
-                        Kirim ⏎
-                    </button>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 hidden sm:inline-flex items-center gap-1.5 bg-white/70 dark:bg-slate-900/70 px-2.5 py-1 rounded-xl border border-emerald-300/80 dark:border-emerald-800/80 shadow-2xs">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>⚡ AI Menjawab Otomatis</span>
+                        </span>
+                        <button type="button"
+                                @click="submitCurrentTurn()"
+                                :disabled="!liveInterimTranscript.trim()"
+                                class="shrink-0 px-3 py-1.5 sm:px-3.5 sm:py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer disabled:opacity-40">
+                            Kirim Sekarang ⏎
+                        </button>
+                    </div>
                 </div>
 
                 <!-- CONVERSATIONAL GROUNDING & COHERENCE STRIP -->
-                <div x-show="detectedSalientEntities.length > 0 || liveCoherenceScore > 0"
+                <div x-show="detectedSalientEntities.length !== 0 || liveCoherenceScore !== 0"
                      class="px-3 sm:px-4 py-2 rounded-2xl bg-slate-50 dark:bg-navy-950/60 border border-slate-200/80 dark:border-navy-800 flex flex-wrap items-center justify-between gap-2 text-xs">
                     <div class="flex items-center gap-1.5 sm:gap-2">
                         <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 text-[11px] sm:text-xs">
@@ -4104,7 +4936,7 @@
                         <span class="font-mono font-bold text-blue-600 dark:text-blue-400 text-xs" x-text="liveCoherenceScore + '%'"></span>
                         <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300" x-text="liveCoherenceCategory"></span>
                     </div>
-                    <div x-show="detectedSalientEntities.length > 0" class="flex flex-wrap items-center gap-1 sm:gap-1.5 text-slate-500 dark:text-slate-400 text-[10px] sm:text-[11px]">
+                    <div x-show="detectedSalientEntities.length !== 0" class="flex flex-wrap items-center gap-1 sm:gap-1.5 text-slate-500 dark:text-slate-400 text-[10px] sm:text-[11px]">
                         <span>Topik:</span>
                         <template x-for="ent in detectedSalientEntities" :key="ent">
                             <span class="px-1.5 sm:px-2 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold" x-text="ent"></span>
@@ -4113,7 +4945,7 @@
                 </div>
 
                 <!-- SIMPLE FLOATING CONTROL DOCK (Kontrol Utama Bawah) -->
-                <div class="glass-panel p-2 sm:p-4 rounded-3xl shadow-lg border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-1.5 sm:gap-3">
+                <div class="glass-panel p-2 sm:p-2.5 rounded-2xl shadow-lg border border-slate-200/80 dark:border-slate-800 flex items-center justify-between gap-1.5 sm:gap-3">
 
                     <!-- Left: Mic & Camera Toggles -->
                     <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">

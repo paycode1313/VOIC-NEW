@@ -65,6 +65,137 @@
             </div>
         </div>
 
+        <!-- HABIT LOOP: DAILY STREAK, LEVEL PROGRESSION & PERSONALIZED MISSION -->
+        <div class="max-w-4xl mx-auto px-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- 1. Daily Practice Streak Card -->
+                <div class="rounded-3xl p-5 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent dark:from-amber-500/15 dark:via-orange-500/10 dark:to-transparent border border-amber-300/80 dark:border-amber-500/30 backdrop-blur-xl shadow-md dark:shadow-xl relative overflow-hidden flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[10px] uppercase tracking-wider font-extrabold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            Konsistensi Latihan
+                        </span>
+                        <span class="text-xl">🔥</span>
+                    </div>
+
+                    <div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono">
+                                {{ $streakData['streak'] ?? 0 }}
+                            </span>
+                            <span class="text-xs font-bold text-amber-600 dark:text-amber-400">Hari Beruntun</span>
+                        </div>
+
+                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+                            @if(!empty($streakData['has_practiced_today']))
+                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">✓ Target santai hari ini selesai!</span>
+                                Cukup 2 menit sehari sudah sangat baik melatih kelancaran bicara.
+                            @elseif(!empty($streakData['is_streak_at_risk']))
+                                <span class="text-amber-600 dark:text-amber-400 font-bold">☕ Luangkan 2 menit santai</span>
+                                Jawab 1–2 pertanyaan cepat hari ini untuk menjaga kebiasaan bicaramu tetap terasah.
+                            @else
+                                Mulai latihan santai 2 menit hari ini untuk membangun rasa percaya diri bertahap.
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-amber-200/60 dark:border-amber-500/20 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                        <span>Status Hari Ini</span>
+                        <span class="font-bold {{ !empty($streakData['has_practiced_today']) ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400' }}">
+                            {{ !empty($streakData['has_practiced_today']) ? '✓ Aktif' : '⏳ Belum Latihan' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 2. Rank & Level Progression Card -->
+                <div class="rounded-3xl p-5 bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent dark:from-blue-500/15 dark:via-indigo-500/10 dark:to-transparent border border-blue-300/80 dark:border-blue-500/30 backdrop-blur-xl shadow-md dark:shadow-xl relative overflow-hidden flex flex-col justify-between">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[10px] uppercase tracking-wider font-extrabold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            Tingkat Kemampuan
+                        </span>
+                        <span class="text-xl">🏆</span>
+                    </div>
+
+                    <div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-xs font-black px-2 py-0.5 rounded-lg bg-blue-600 text-white">
+                                LVL {{ $rankProgress['level'] ?? 1 }}
+                            </span>
+                            <span class="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
+                                {{ $rankProgress['title'] ?? 'Novice Speaker' }}
+                            </span>
+                        </div>
+
+                        <div class="mt-3 space-y-1.5">
+                            <div class="flex justify-between text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                                <span>Progres Level</span>
+                                <span class="font-mono">{{ $rankProgress['progress_pct'] ?? 0 }}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 h-full rounded-full transition-all duration-500"
+                                     style="width: {{ $rankProgress['progress_pct'] ?? 0 }}%;"></div>
+                            </div>
+                        </div>
+
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+                            @if(($rankProgress['needed_sessions'] ?? 0) > 0)
+                                Butuh <strong class="text-blue-600 dark:text-blue-400">{{ $rankProgress['needed_sessions'] }} sesi lagi</strong> untuk membuka gelar <em>{{ $rankProgress['next_title'] }}</em>.
+                            @else
+                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">Tingkat Tertinggi Terbuka!</span> Pertahankan performa Anda.
+                            @endif
+                        </p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-blue-200/60 dark:border-blue-500/20 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                        <span>Total Sesi</span>
+                        <span class="font-bold text-slate-900 dark:text-white font-mono">{{ $totalSessions }} Sesi</span>
+                    </div>
+                </div>
+
+                <!-- 3. Personalized Daily Mission Card -->
+                <div class="rounded-3xl p-5 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent dark:from-emerald-500/15 dark:via-teal-500/10 dark:to-transparent border border-emerald-300/80 dark:border-emerald-500/30 backdrop-blur-xl shadow-md dark:shadow-xl relative overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Misi Rekomendasi AI
+                            </span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                Target Hari Ini
+                            </span>
+                        </div>
+
+                        <h4 class="text-sm font-extrabold text-slate-900 dark:text-white leading-snug">
+                            {{ $recommendedMission['title'] ?? 'Misi Latihan Terarah' }}
+                        </h4>
+                        <div class="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                            {{ $recommendedMission['subtitle'] ?? 'Tingkatkan Kesiapan Berbicara' }}
+                        </div>
+
+                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed line-clamp-2">
+                            {{ $recommendedMission['desc'] ?? 'Latih respons spontan dan pertahankan kontak mata stabil.' }}
+                        </p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-500/20 flex items-center gap-2">
+                        <a href="{{ $recommendedMission['route'] ?? route('practice.create') }}"
+                           class="flex-1 inline-flex items-center justify-center px-3.5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition shadow-md shadow-emerald-600/20 text-center">
+                            <span>Mulai Misi ⏎</span>
+                        </a>
+                        <button type="button"
+                                data-reminder-title="{{ $recommendedMission['title'] ?? 'Latihan VOIC AI' }}"
+                                data-reminder-desc="{{ $recommendedMission['desc'] ?? 'Latihan public speaking interaktif VOIC AI' }}"
+                                onclick="downloadIcsReminder(this.dataset.reminderTitle, this.dataset.reminderDesc)"
+                                title="Pasang Pengingat Kalender (.ics)"
+                                class="px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 transition cursor-pointer">
+                            📅
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 2. Benchmark Certificate Card (Centered Highlight Card from Reference) -->
         <div class="max-w-4xl mx-auto px-4 mb-8">
             <div class="rounded-3xl bg-white dark:bg-[#0b121e]/90 border border-slate-200 dark:border-white/10 p-6 sm:p-8 backdrop-blur-xl shadow-xl dark:shadow-2xl transition-colors">
@@ -110,13 +241,13 @@
                     <div>
                         <span class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold block">Kontak Mata</span>
                         <span class="text-xl font-black text-slate-900 dark:text-white mt-0.5 block">
-                            {{ $averageEyeScore > 0 ? number_format($averageEyeScore, 1).'%' : '-' }}
+                            {{ ($averageEyeScore ?? 0) > 0 ? number_format($averageEyeScore, 1).'%' : '-' }}
                         </span>
                     </div>
                     <div>
                         <span class="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold block">Skor Vokal</span>
                         <span class="text-xl font-black text-slate-900 dark:text-white mt-0.5 block">
-                            {{ $averageVoiceScore > 0 ? number_format($averageVoiceScore, 1) : '-' }}
+                            {{ ($averageVoiceScore ?? 0) > 0 ? number_format($averageVoiceScore, 1) : '-' }}
                         </span>
                     </div>
                     <div>
@@ -215,7 +346,7 @@
                                 <img src="{{ asset('images/avatars/dosen.jpg') }}" alt="Sidang Skripsi" width="40" height="40" class="w-10 h-10 rounded-xl object-cover object-top border border-slate-200 dark:border-white/10">
                                 <div>
                                     <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">Sidang Skripsi</h4>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">Dr. Ir. Hendra Gunawan</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC - Dosen Penguji</span>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
@@ -235,7 +366,7 @@
                                 <img src="{{ asset('images/avatars/hrd.jpg') }}?v=3" alt="Wawancara Kerja" width="40" height="40" class="w-10 h-10 rounded-xl object-cover object-top border border-slate-200 dark:border-white/10">
                                 <div>
                                     <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition">Wawancara Kerja</h4>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">Nadia Putri, S.Psi.</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC - HRD</span>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
@@ -255,7 +386,7 @@
                                 <img src="{{ asset('images/avatars/investor.jpg') }}" alt="Pitching Startup" width="40" height="40" class="w-10 h-10 rounded-xl object-cover object-top border border-slate-200 dark:border-white/10">
                                 <div>
                                     <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">Pitching Startup</h4>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">Alexander Wardhana, MBA</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC - Investor</span>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
@@ -290,7 +421,7 @@
 
                 <div class="relative h-60 w-full">
                     @if($totalSessions > 0)
-                        <canvas id="scoreChart"></canvas>
+                        <canvas id="scoreChart" data-labels="{{ json_encode($chartLabels) }}" data-scores="{{ json_encode($chartScores) }}"></canvas>
                     @else
                         <div class="h-full flex flex-col items-center justify-center text-center p-6 border border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
                             <svg class="w-8 h-8 text-slate-400 dark:text-slate-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -410,8 +541,8 @@
                 const ctx = document.getElementById('scoreChart');
                 if (!ctx) return;
 
-                const labels = @json($chartLabels);
-                const scores = @json($chartScores);
+                const labels = JSON.parse(ctx.getAttribute('data-labels') || '[]');
+                const scores = JSON.parse(ctx.getAttribute('data-scores') || '[]');
 
                 let chartInstance = null;
 
@@ -493,4 +624,44 @@
             });
         </script>
     @endif
+
+    <script>
+        function downloadIcsReminder(title, description) {
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            tomorrow.setHours(10, 0, 0, 0);
+            const tomorrowEnd = new Date(tomorrow.getTime() + 15 * 60 * 1000);
+
+            const pad = (n) => String(n).padStart(2, '0');
+            const toIcs = (d) => `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+
+            const ics = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//VOIC AI//Public Speaking Coach//ID',
+                'CALSCALE:GREGORIAN',
+                'BEGIN:VEVENT',
+                `SUMMARY:🎙️ ${title}`,
+                `DESCRIPTION:${description}\\n\\nBuka sesi latihan di: ${window.location.origin}/practice/create`,
+                `DTSTART:${toIcs(tomorrow)}`,
+                `DTEND:${toIcs(tomorrowEnd)}`,
+                'STATUS:CONFIRMED',
+                'BEGIN:VALARM',
+                'TRIGGER:-PT15M',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Pengingat Latihan VOIC AI',
+                'END:VALARM',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ].join('\r\n');
+
+            const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'voic-misi-latihan.ics';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
 </x-app-layout>

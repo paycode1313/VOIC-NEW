@@ -102,4 +102,12 @@ class PracticeSession extends Model
 
         return $notes['guest_institution'] ?? null;
     }
+
+    /**
+     * Get unique cryptographic certificate serial number for this session.
+     */
+    public function getCertificateSerial(): string
+    {
+        return 'VOIC-CERT-'.strtoupper(substr(md5($this->id.$this->created_at), 0, 10));
+    }
 }

@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 title VOIC - Voice ^& Optics Intelligent Coach (Launcher)
 color 0b
 

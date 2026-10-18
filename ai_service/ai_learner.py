@@ -298,129 +298,162 @@ class AiContinuousLearner:
         language: str = "id"
     ) -> str:
         """
-        Menghasilkan respons lisan cadangan yang cerdas, tajam, dan bebas formula template.
-        Mendeteksi niat (intent) kalimat peserta: metrik angka, metodologi/teknis, dinamika tim, atau proposisi nilai.
+        Menghasilkan respons lisan cadangan yang cerdas, tajam, kontekstual,
+        dan 100% NYAMBUNG dengan ucapan peserta (Anti-Kaku, Anti-Template).
         """
         is_en = (language == "en")
-        entities = self.extract_salient_entities(user_message)
-        primary = entities[0] if entities else ""
-        msg_lower = user_message.lower()
+        raw = user_message.strip()
+        msg_lower = raw.lower()
 
-        # Deteksi intent percakapan
-        has_metric = bool(re.search(r"\b(?:\d+%?|\d+\s*(?:bulan|tahun|persen|ribu|juta|miliar|user|sampel|accuracy|margin|cac))\b", msg_lower))
-        has_tech = any(k in msg_lower for k in [
-            "algoritma", "metode", "model", "sistem", "database", "arsitektur", "framework", "dataset", "validasi",
-            "algorithm", "method", "architecture", "data", "benchmark", "code", "testing", "api"
-        ])
-        has_team = any(k in msg_lower for k in [
-            "tim", "rekan", "atasan", "konflik", "komunikasi", "inisiatif", "diskusi", "klien", "meeting",
-            "team", "colleague", "manager", "conflict", "disagreement", "initiative", "stakeholder"
-        ])
-
+        # 1. Deteksi Nama / Perkenalan Diri
+        name = None
         if is_en:
-            if role_type == "dosen_penguji":
-                if has_metric:
-                    options = [
-                        f"How exactly were those quantitative bounds verified? Demonstrate that your sample distribution doesn't suffer from data leakage or selection bias.",
-                        f"Numbers alone don't validate a thesis without rigorous baselines. What statistical significance test proves this outcome isn't mere randomness?",
-                    ]
-                elif has_tech:
-                    subject = f"with {primary}" if primary else "in this architecture"
-                    options = [
-                        f"That specific design {subject} introduces computational trade-offs. What empirical evidence proves it outperforms standard, well-established baselines?",
-                        f"How do you mathematically defend the stability of this approach when tested against noisy, adversarial edge cases?",
-                    ]
-                else:
-                    options = [
-                        "Directly connect your theoretical foundation in chapter two with this empirical finding. Avoid purely abstract claims.",
-                        "What is the genuine, defensible novelty here compared to seminal literature in this field?",
-                    ]
-            elif role_type == "hrd":
-                if has_team:
-                    options = [
-                        "When facing that interpersonal friction, what specific action did you personally take to realign priorities without escalating conflict?",
-                        "Walk me through how you influenced team members who were initially resistant to your direction.",
-                    ]
-                elif has_metric:
-                    options = [
-                        "That milestone is impressive on paper. But what was the single biggest obstacle that almost derailed it, and how did you pivot?",
-                        "How did you keep your focus and composure when unexpected roadblocks threatened that deadline?",
-                    ]
-                else:
-                    options = [
-                        "What was the first concrete step you executed the moment you realized this problem needed immediate intervention?",
-                        "Looking back with hindsight, what key decision would you execute differently to achieve a higher impact?",
-                    ]
-            else:  # investor
-                if has_metric:
-                    options = [
-                        "What is the actual monthly burn rate and Customer Acquisition Cost required to maintain that growth trajectory?",
-                        "Healthy metrics require retention. What does your net revenue retention look like after month six?",
-                    ]
-                elif has_tech:
-                    subject = f"around {primary}" if primary else "you built"
-                    options = [
-                        f"The technology {subject} is solid, but what is your defensible moat if an incumbent tech giant clones this next month?",
-                        "How defensible is your IP if key developers leave or open-source alternatives catch up?",
-                    ]
-                else:
-                    options = [
-                        "Cut straight to the bottom line: why will enterprises pay premium for this rather than sticking with their current workflow?",
-                        "What is your clear path to achieving venture-scale return within the next 18 months?",
-                    ]
+            name_m = re.search(r"\b(?:my\s+name\s+is|i\s+am|i'm|call\s+me)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)", raw)
+            if name_m:
+                name = name_m.group(1).strip()
         else:
-            if role_type == "dosen_penguji":
-                if has_metric:
-                    options = [
-                        "Angka dan metrik pengujian tersebut diuji pada seberapa banyak data riil? Buktikan bahwa hasil tersebut bukan akibat overfitting atau data leakage.",
-                        "Capaian kuantitatif itu tidak ada artinya tanpa uji signifikansi statistik. Uji hipotesis apa yang Saudara gunakan untuk membuktikan klaim tersebut?",
-                    ]
-                elif has_tech:
-                    subjek = f"pemilihan {primary}" if primary else "pendekatan teknis tersebut"
-                    options = [
-                        f"Keputusan {subjek} punya kompromi komputasi dan kompleksitas tersendiri. Apa dasar ilmiah Saudara bahwa metode ini lebih unggul daripada baseline yang sudah mapan?",
-                        "Bagaimana Saudara menjamin kestabilan metode tersebut saat dihadapkan pada skenario noise atau anomali data di lapangan?",
-                    ]
+            name_m = re.search(r"\b(?:nama\s+saya|namaku|perkenalkan\s+saya|nama\s+lengkap\s+saya|saya\s+bernama)\s+([A-Za-z]+(?:\s+[A-Za-z]+)?)", raw, re.IGNORECASE)
+            if not name_m and re.search(r"\b(?:nama|perkenalkan|panggil)\b", msg_lower):
+                # Fallback coba ambil kata setelah 'saya'
+                alt_m = re.search(r"\bsaya\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)", raw)
+                if alt_m:
+                    name = alt_m.group(1).strip()
+            elif name_m:
+                name = name_m.group(1).strip()
+
+        # 2. Deteksi Salam Murni / Sangat Singkat
+        is_short_greeting = any(w in msg_lower for w in ["halo", "hai", "selamat pagi", "selamat siang", "selamat sore", "assalamualaikum", "hello", "hi "]) and len(raw.split()) <= 4
+
+        # 3. Deteksi Peran / Minat Karir / Posisi Impian
+        role_intent = None
+        role_m = re.search(r"\b(?:ingin\s+menjadi|posisi|melamar\s+sebagai|sebagai|bidang|minat\s+ke|apply\s+for|role\s+of|become\s+a)\s+([A-Za-z0-9\/\s-]{2,30})", raw, re.IGNORECASE)
+        if role_m:
+            candidate_role = role_m.group(1).strip()
+            # Bersihkan kata sambung di ujung
+            clean_role = re.sub(r"\s+(karena|dan|untuk|yang|tentunya|di|pada|agar).*$", "", candidate_role, flags=re.IGNORECASE).strip()
+            if len(clean_role) >= 2:
+                role_intent = clean_role
+
+        # 4. Deteksi Metrik / Angka
+        metric_m = re.search(r"\b(?:\d+(?:[\.,]\d+)?%?|\d+\s*(?:bulan|tahun|hari|persen|ribu|juta|miliar|user|sampel|accuracy|margin|cac|ltv))\b", raw, re.IGNORECASE)
+        metric_val = metric_m.group(0).strip() if metric_m else None
+
+        # 5. Deteksi Teknologi / Metodologi
+        entities = self.extract_salient_entities(raw)
+        tech_keywords = [
+            "algoritma", "metode", "model", "sistem", "database", "arsitektur", "framework", "dataset", "validasi",
+            "yolo", "cnn", "mobilenet", "random forest", "svm", "deep learning", "machine learning",
+            "laravel", "react", "vue", "flutter", "python", "api", "docker", "qa", "testing",
+            "algorithm", "method", "architecture", "data", "benchmark", "code"
+        ]
+        detected_tech = None
+        for ent in entities:
+            if any(k in ent.lower() for k in tech_keywords):
+                detected_tech = ent
+                break
+        if not detected_tech:
+            for k in tech_keywords:
+                if k in msg_lower:
+                    detected_tech = k.upper() if len(k) <= 4 else k.title()
+                    break
+
+        # 6. Deteksi Dinamika Tim / Soft Skills
+        has_team = any(k in msg_lower for k in [
+            "tim", "rekan", "atasan", "konflik", "komunikasi", "inisiatif", "diskusi", "klien", "meeting", "stakeholder",
+            "team", "colleague", "manager", "conflict", "disagreement"
+        ])
+
+        primary_subject = detected_tech or (entities[0] if entities else "penjelasan Anda")
+
+        # === RESPON BAHASA INGGRIS ===
+        if is_en:
+            if is_short_greeting:
+                if role_type == "dosen_penguji":
+                    return "Welcome to the defense room. Please introduce yourself and articulate your core research problem."
+                elif role_type == "hrd":
+                    return "Hello, welcome to this interview session. Could you walk me through your background and motivation for joining us?"
                 else:
-                    options = [
-                        "Coba tunjukkan korelasi langsung antara rumusan masalah di bab satu dengan pembuktian empiris yang Saudara sebutkan tadi. Jangan berhenti di tataran konseptual.",
-                        "Buktikan kepada dewan penguji: di mana letak kebaruan atau novelty orisinal penelitian Saudara dibanding publikasi terdahulu?",
-                    ]
+                    return "Welcome to the pitch room. Straight to the point: what urgent problem does your startup solve?"
+
+            if name:
+                if role_type == "dosen_penguji":
+                    return f"Nice to meet you, {name}. Please explain the central research problem and methodology of your thesis."
+                elif role_type == "hrd":
+                    return f"Pleasure to connect with you, {name}! What is your strongest motivation for targeting this role, and what experience prepares you best?"
+                else:
+                    return f"Great to meet you, {name}. What is the real market pain point your product addresses and how do you monetize?"
+
+            if role_intent and role_type == "hrd":
+                return f"Your aspiration in {role_intent} is exciting. What hands-on project or past achievement best demonstrates your technical competency for this role?"
+
+            if role_type == "dosen_penguji":
+                if metric_val:
+                    return f"Regarding that metric of {metric_val}, what statistical significance or baseline proves this result is free from dataset leakage or bias?"
+                elif detected_tech:
+                    return f"Regarding your choice of {detected_tech}, what scientific justification proves it outperforms established baselines, and what are its computational trade-offs?"
+                else:
+                    return f"Regarding what you just shared about '{primary_subject}', how does that directly validate your research hypothesis in chapter one?"
+
             elif role_type == "hrd":
                 if has_team:
-                    options = [
-                        "Dalam dinamika tim tersebut, tindakan nyata apa yang kamu ambil secara personal untuk menengahi perbedaan pendapat tanpa memicu konflik berkepanjangan?",
-                        "Bagaimana pendekatan komunikasimu saat harus meyakinkan rekan kerja atau atasan yang awalnya menentang ide tersebut?",
-                    ]
-                elif has_metric:
-                    options = [
-                        "Pencapaian angka itu signifikan. Tapi ceritakan kendala paling berat di balik layar yang hampir menggagalkan target tersebut, dan bagaimana kamu mengatasinya?",
-                        "Bagaimana kamu menjaga ritme kerja dan ketenangan tim saat menghadapi tenggat waktu yang tiba-tiba dimajukan?",
-                    ]
+                    return "In that team dynamic, what concrete action did you personally take to realign priorities and resolve friction effectively?"
+                elif metric_val:
+                    return f"Achieving {metric_val} is noteworthy. What was the single toughest roadblock you faced to hit that target, and how did you overcome it?"
                 else:
-                    options = [
-                        "Langkah konkret pertama apa yang langsung kamu eksekusi saat menyadari ada masalah mendesak yang butuh solusi cepat?",
-                        "Kalau kamu diberi kesempatan mengulang situasi tersebut dengan pengalamanmu sekarang, keputusan apa yang akan kamu ubah agar hasilnya lebih berdampak?",
-                    ]
-            else:  # investor
-                if has_metric:
-                    options = [
-                        "Angka pertumbuhan itu bagus di atas kertas. Tapi langsung ke intinya: berapa burn rate bulanan dan Customer Acquisition Cost nyata untuk menopang angka itu?",
-                        "Metrik traksi butuh retensi. Bagaimana persentase churn rate pengguna kalian setelah bulan ketiga?",
-                    ]
-                elif has_tech:
-                    subjek = f"seputar {primary}" if primary else "produk kalian"
-                    options = [
-                        f"Solusi {subjek} ini masuk akal. Tapi apa benteng pertahanan atau moat bisnis kalian kalau pemain besar menyalin fitur ini minggu depan?",
-                        "Seberapa bergantung teknologi ini pada infrastruktur pihak ketiga, dan bagaimana strategi kalian menjaga margin tetap tebal?",
-                    ]
-                else:
-                    options = [
-                        "Langsung ke intinya: kenapa pelanggan bersedia membayar solusi kalian sekarang juga daripada bertahan dengan cara lama yang gratis?",
-                        "Berapa lama modal operasional yang ada sekarang bisa bertahan sampai kalian membuktikan unit economics yang positif?",
-                    ]
+                    return f"Following up on '{primary_subject}', what was the most valuable lesson you learned that influences how you work today?"
 
-        return random.choice(options)
+            else:  # investor
+                if metric_val:
+                    return f"That {metric_val} milestone is interesting on paper. What is your actual monthly burn rate and Customer Acquisition Cost to sustain it?"
+                elif detected_tech:
+                    return f"Your technology around {detected_tech} sounds viable. But what is your defensible moat if a tech giant replicates this next quarter?"
+                else:
+                    return f"Looking at '{primary_subject}', why will paying customers switch to your product rather than sticking with their existing habits?"
+
+        # === RESPON BAHASA INDONESIA ===
+        else:
+            if is_short_greeting:
+                if role_type == "dosen_penguji":
+                    return "Selamat datang di ruang sidang tugas akhir. Silakan atur posisi duduk tegak dan jelaskan apa rumusan masalah serta metode utama penelitian Anda."
+                elif role_type == "hrd":
+                    return "Halo, selamat datang di sesi wawancara ini! Silakan perkenalkan diri Anda dan ceritakan apa motivasi terbesar Anda melamar di perusahaan kami."
+                else:
+                    return "Halo, selamat datang di sesi pitching. Langsung ke intinya: problem riil apa di pasar yang ingin diselesaikan oleh solusi Anda?"
+
+            if name:
+                if role_type == "dosen_penguji":
+                    return f"Salam kenal Saudara {name}. Silakan langsung jelaskan apa judul skripsi dan rumusan masalah utama yang Anda angkat dalam penelitian ini."
+                elif role_type == "hrd":
+                    return f"Halo {name}, senang berkenalan dengan Anda! Boleh ceritakan latar belakang Anda dan apa motivasi terbesar Anda melamar untuk posisi ini?"
+                else:
+                    return f"Salam kenal {name}. Langsung saja, problem riil apa yang dihadapi pasar dan bagaimana model bisnis solusi Anda menghasilkan revenue?"
+
+            if role_intent and role_type == "hrd":
+                return f"Menarik sekali minat Anda di bidang {role_intent}. Pengalaman atau proyek nyata apa yang paling membuktikan kesiapan dan keahlian Anda di posisi ini?"
+
+            if role_type == "dosen_penguji":
+                if metric_val:
+                    return f"Mengenai capaian {metric_val} yang Anda sebutkan, bagaimana validasi pengujiannya untuk membuktikan hasil tersebut bebas dari overfitting atau data leakage?"
+                elif detected_tech:
+                    return f"Terkait penerapan {detected_tech} tersebut, apa dasar ilmiah Anda memilihnya dibanding metode baseline yang sudah mapan, dan bagaimana evaluasi performanya?"
+                else:
+                    return f"Menanggapi penjelasan Saudara mengenai '{primary_subject}', bagaimana korelasinya dengan rumusan masalah dan batasan penelitian yang Anda tetapkan?"
+
+            elif role_type == "hrd":
+                if has_team:
+                    return "Dalam dinamika tim tersebut, tindakan nyata apa yang Anda ambil secara personal untuk meredakan kendala komunikasi dan memastikan target tetap tercapai?"
+                elif metric_val:
+                    return f"Pencapaian {metric_val} itu sangat baik. Ceritakan kendala paling berat di balik layar yang sempat Anda hadapi saat mengejar target tersebut, dan bagaimana Anda mengatasinya?"
+                else:
+                    return f"Terkait hal yang Anda ceritakan mengenai '{primary_subject}', apa pembelajaran terpenting yang Anda dapatkan dan bagaimana hal itu mengubah cara kerja Anda sekarang?"
+
+            else:  # investor
+                if metric_val:
+                    return f"Angka {metric_val} itu menarik di atas kertas. Berapa burn rate bulanan dan Customer Acquisition Cost (CAC) nyata untuk menopang pertumbuhan tersebut?"
+                elif detected_tech:
+                    return f"Pendekatan seputar {detected_tech} ini menjanjikan. Tapi apa benteng pertahanan atau moat bisnis kalian jika pemain besar menyalin fitur ini besok?"
+                else:
+                    return f"Mengenai '{primary_subject}' ini, kenapa pelanggan bersedia membayar solusi Anda sekarang juga dibanding menggunakan cara lama yang gratis?"
 
 
 # Singleton Instance

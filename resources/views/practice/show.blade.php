@@ -64,8 +64,93 @@
         </div>
     </x-slot>
 
+    <style>
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 12mm 14mm;
+            }
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .print\:hidden,
+            header,
+            nav,
+            footer,
+            .fixed,
+            button {
+                display: none !important;
+            }
+            .max-w-7xl {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .dark * {
+                color: #0f172a !important;
+                text-shadow: none !important;
+            }
+            .bg-white, .dark\:bg-\[\#0c182b\], .dark\:bg-navy-900, .glass-panel, .glass-card, .glass-subcard {
+                background: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                border-radius: 8px !important;
+            }
+            .print-avoid-break {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            .print-executive-header {
+                display: block !important;
+            }
+            .print-official-footer {
+                display: flex !important;
+            }
+        }
+        @media screen {
+            .print-executive-header,
+            .print-official-footer {
+                display: none !important;
+            }
+        }
+    </style>
+
     <div class="py-8" x-data="{ showMethodologyModal: false, showShareCardModal: false, copiedShare: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+            <!-- OFFICIAL PRINT EXECUTIVE CERTIFICATE HEADER -->
+            <div class="print-executive-header mb-6 pb-4 border-b-2 border-slate-900">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-xl">
+                            V
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-black tracking-tight text-slate-900">VOIC — VOICE & OPTICS INTELLIGENT COACH</h1>
+                            <p class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                                Transkrip Resmi Evaluasi Kesiapan Komunikasi & Sidang Akademik
+                            </p>
+                            <p class="text-[9px] text-slate-500">
+                                Berdasarkan Model Non-Verbal Albert Mehrabian (7-38-55) & Toastmasters International
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-block px-2.5 py-1 text-[10px] font-mono font-bold bg-slate-100 border border-slate-300 rounded">
+                            NO: {{ $benchmarkData['serial'] ?? $session->getCertificateSerial() }}
+                        </span>
+                        <div class="text-[10px] text-slate-500 mt-1">{{ $session->created_at->format('d F Y, H:i') }} WIB</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-200 text-xs">
+                    <div><strong>Nama Kandidat:</strong> {{ $session->getParticipantName() }}</div>
+                    <div><strong>Penguji / Karakter:</strong> {{ $session->aiRole ? $session->aiRole->name : $session->scenario_type }}</div>
+                    <div><strong>Durasi Simulasi:</strong> {{ floor($session->duration_seconds / 60) }}m {{ $session->duration_seconds % 60 }}s</div>
+                </div>
+            </div>
 
             @if($isDemo ?? false)
                 <!-- Innofest Booth Quick Action Banner -->
@@ -465,12 +550,14 @@
             </div>
 
             <!-- 30-Second Targeted Mini-Drills Section (Penajaman Refleks Bicara Interaktif) -->
-            <div x-data="{
+            <div data-sim-lang="{{ ($simLanguage ?? 'id') === 'en' ? 'en-US' : 'id-ID' }}"
+                 x-data="{
                     activeDrill: 'eye_contact',
                     isDrillRunning: false,
                     drillSecondsRemaining: 30,
                     drillTimer: null,
                     drillFeedback: '',
+                    get simLanguage() { return this.$el.dataset.simLang || 'id-ID'; },
 
                     // Drill 1: Eye Contact State
                     eyeScore: 85,
@@ -557,7 +644,7 @@
                                 this.recognition = new SpeechRecognition();
                                 this.recognition.continuous = true;
                                 this.recognition.interimResults = true;
-                                this.recognition.lang = '{{ $simLanguage === 'en' ? 'en-US' : 'id-ID' }}';
+                                this.recognition.lang = this.simLanguage;
                                 const fillerRegex = /\b(uh|um|uhm|ehm|eh|em|anu|ngg|ngga|kayak|apa ya|gitu|macam|like|you know|so yeah)\b/gi;
                                 this.recognition.onresult = (e) => {
                                     let full = '';
@@ -582,7 +669,7 @@
                                 this.recognition = new SpeechRecognition();
                                 this.recognition.continuous = true;
                                 this.recognition.interimResults = true;
-                                this.recognition.lang = '{{ $simLanguage === 'en' ? 'en-US' : 'id-ID' }}';
+                                this.recognition.lang = this.simLanguage;
                                 this.recognition.onresult = (e) => {
                                     let full = '';
                                     for (let i = 0; i < e.results.length; i++) full += e.results[i][0].transcript + ' ';
@@ -793,6 +880,9 @@
             <!-- Official AI Conclusion Card with Speech Synthesis Playback -->
             @if($session->ai_conclusion)
                 <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-navy-950 via-navy-900 to-blue-950 text-white shadow-xl border border-navy-800/80 relative overflow-hidden"
+                     data-conclusion="{{ $session->ai_conclusion }}"
+                     data-role-type="{{ $session->aiRole ? $session->aiRole->role_type : 'dosen_penguji' }}"
+                     data-lang="{{ ($session->feedback_notes['language'] ?? 'id') === 'en' ? 'en' : 'id' }}"
                      x-data="{
                         isPlaying: false,
                         audioObj: null,
@@ -806,9 +896,9 @@
                                 this.isPlaying = false;
                                 return;
                             }
-                            const text = @js($session->ai_conclusion);
-                            const roleType = @js($session->aiRole ? $session->aiRole->role_type : 'dosen_penguji');
-                            const lang = @js(($session->feedback_notes['language'] ?? 'id') === 'en' ? 'en' : 'id');
+                            const text = this.$el.dataset.conclusion || '';
+                            const roleType = this.$el.dataset.roleType || 'dosen_penguji';
+                            const lang = this.$el.dataset.lang || 'id';
 
                             this.isPlaying = true;
 
@@ -1083,6 +1173,85 @@
                 </div>
             </div>
 
+            <!-- Vocal Fluency & Filler Words Diagnostic Card -->
+            @php
+                $fillerCount = (int)($feedback['filler_words_count'] ?? 0);
+                $rawFillerList = $feedback['filler_words_list'] ?? [];
+                $fillerList = is_array($rawFillerList) ? $rawFillerList : [];
+                $fluencyScore = max(45, min(100, 100 - ($fillerCount * 8)));
+            @endphp
+            <div class="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-navy-900/40 border border-purple-500/30 shadow-xs print-avoid-break">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-purple-500/20">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-2xl bg-purple-500/20 border border-purple-400/30 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+                                    Vocal Fluency Intelligence
+                                </span>
+                                <h3 class="font-extrabold text-base text-slate-900 dark:text-white">
+                                    Analisis Kelancaran Bicara & Deteksi Kata Jeda (Filler Words)
+                                </h3>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Mengidentifikasi gumaman tanpa arti (seperti "ehm", "anu", "ngg", "kayak") yang dapat mengurangi wibawa penyampaian di hadapan dewan penguji.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div class="flex flex-col items-end">
+                            <span class="text-[10px] uppercase font-bold text-slate-400">Indeks Kelancaran</span>
+                            <span class="text-2xl font-black {{ $fluencyScore >= 85 ? 'text-emerald-600 dark:text-emerald-400' : ($fluencyScore >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400') }}">
+                                {{ $fluencyScore }}%
+                            </span>
+                        </div>
+                        <div class="px-3.5 py-1.5 rounded-xl border text-xs font-bold {{ $fillerCount === 0 ? 'bg-emerald-50 dark:bg-emerald-950/80 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300' : ($fillerCount <= 3 ? 'bg-amber-50 dark:bg-amber-950/80 border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300' : 'bg-rose-50 dark:bg-rose-950/80 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300') }}">
+                            {{ $fillerCount }} Kata Jeda Terdeteksi
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-4">
+                    <div class="space-y-2">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                            <span>🔍 Kata Gumaman yang Terdeteksi:</span>
+                        </span>
+                        @if(!empty($fillerList))
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($fillerList as $item)
+                                    <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 shadow-2xs">
+                                        "{{ $item }}"
+                                    </span>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                                <span class="text-emerald-500 font-bold">✓</span>
+                                <span>Luar biasa! Tidak ada kata gumaman berlebih yang terdeteksi. Artikulasi Anda sangat lugas dan terarah.</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 space-y-1.5">
+                        <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <span>💡 Saran Coaching Toastmasters International:</span>
+                        </span>
+                        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                            @if($fillerCount === 0)
+                                Pertahankan ritme ini. Menggunakan jeda hening alami daripada mengisi kekosongan dengan gumaman membuat dewan penguji melihat Anda sebagai presenter yang matang dan percaya diri.
+                            @else
+                                Terapkan teknik <strong>"The Power Pause"</strong>: Saat sedang berpikir atau mencari kata kunci, tarik napas tenang 1 detik dan biarkan hening sejenak tanpa mengucapkan <em>"ehm"</em> atau <em>"anu"</em>. Jeda hening justru memberi kesan mendalam dan berwibawa di hadapan dewan penguji.
+                            @endif
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- 5-Axis Competency Radar Balance Analysis Section -->
             <div class="bg-white dark:bg-[#0c182b] rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-100 dark:border-slate-700/60 print:break-inside-avoid">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-700/60">
@@ -1108,7 +1277,7 @@
                     <!-- Radar Canvas -->
                     <div class="lg:col-span-7 flex justify-center">
                         <div class="relative w-full max-w-md h-72 sm:h-80">
-                            <canvas id="competencyRadarChart"></canvas>
+                            <canvas id="competencyRadarChart" data-scores="{{ json_encode([min(100, max(0, $eyeContact)), min(100, max(0, $clarity)), min(100, max(0, $pitchScore)), min(100, max(0, round(($paceWpm / 140) * 100))), min(100, max(0, $smileRate))]) }}"></canvas>
                         </div>
                     </div>
 
@@ -1369,7 +1538,8 @@
 
                                 <!-- Copy Link Button -->
                                 <button type="button"
-                                        @click="navigator.clipboard.writeText('{{ route('practice.verify', $session) }}'); copied = true; setTimeout(() => copied = false, 2500)"
+                                        data-verify-url="{{ route('practice.verify', $session) }}"
+                                        @click="navigator.clipboard.writeText($el.dataset.verifyUrl); copied = true; setTimeout(() => copied = false, 2500)"
                                         class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-navy-800 hover:bg-navy-750 border border-navy-700 transition cursor-pointer">
                                     <svg class="w-3.5 h-3.5 me-1.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
@@ -1406,7 +1576,7 @@
 
                         <!-- QR Code Container -->
                         <div class="flex flex-col items-center bg-white p-4 rounded-2xl shadow-2xl text-slate-900 shrink-0 border-4 border-blue-500/40">
-                            <div id="qrcodeSvgContainer" class="w-36 h-36 flex items-center justify-center">
+                            <div id="qrcodeSvgContainer" data-url="{{ route('practice.verify', $session) }}" class="w-36 h-36 flex items-center justify-center">
                                 <!-- Rendered dynamically via QR SVG Generator -->
                             </div>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-2">
@@ -1572,8 +1742,96 @@
                     </div>
                 </div>
 
-                <!-- Right Col: Recommendation Card -->
+                <!-- Right Col: Recommendation & Habit Loop Retention Card -->
                 <div class="space-y-6">
+                    <!-- 1. HABIT LOOP: Next Daily Mission Card -->
+                    <div class="bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent dark:from-emerald-500/15 dark:via-teal-500/10 dark:to-transparent border border-emerald-300/80 dark:border-emerald-500/30 p-6 rounded-3xl shadow-xs relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Target Latihan Berikutnya
+                            </span>
+                            <span class="text-xl">🎯</span>
+                        </div>
+
+                        <h4 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white leading-snug">
+                            {{ $recommendedMission['title'] ?? 'Misi Latihan Terarah' }}
+                        </h4>
+                        <div class="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                            {{ $recommendedMission['subtitle'] ?? 'Tingkatkan Kesiapan Berbicara' }}
+                        </div>
+
+                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
+                            {{ $recommendedMission['desc'] ?? 'AI telah menganalisis sesi ini dan merekomendasikan target latihan lanjutan.' }}
+                        </p>
+
+                        <div class="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/70 dark:bg-slate-900/60 border border-emerald-200/80 dark:border-emerald-800/80 text-[10px] text-emerald-800 dark:text-emerald-300 font-medium">
+                            <span>☕</span>
+                            <span>Santai saja, cukup 2 menit (1–2 pertanyaan) untuk menjaga perkembangan bicaramu.</span>
+                        </div>
+
+                        <!-- Streak & Level Progress Indicator in Report -->
+                        <div class="mt-4 pt-4 border-t border-emerald-200/60 dark:border-emerald-500/20 space-y-3">
+                            <div class="flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-1.5 font-bold text-amber-600 dark:text-amber-400">
+                                    <span>🔥</span>
+                                    <span>Streak: {{ $streakData['streak'] ?? 1 }} Hari</span>
+                                </div>
+                                <div class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                    LVL {{ $rankProgress['level'] ?? 1 }} • {{ $rankProgress['title'] ?? 'Novice Speaker' }}
+                                </div>
+                            </div>
+
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500"
+                                     style="width: {{ $rankProgress['progress_pct'] ?? 33 }}%;"></div>
+                            </div>
+                            <div class="text-[10px] text-slate-400 dark:text-slate-500 text-right">
+                                {{ ($rankProgress['needed_sessions'] ?? 1) > 0 ? ($rankProgress['needed_sessions'] . ' sesi lagi ke ' . ($rankProgress['next_title'] ?? 'Confident Communicator')) : 'Tingkat tertinggi terbuka!' }}
+                            </div>
+                        </div>
+
+                        <div class="mt-5 pt-4 border-t border-emerald-200/60 dark:border-emerald-500/20 flex flex-col sm:flex-row items-center gap-2 print:hidden">
+                            <a href="{{ $recommendedMission['route'] ?? route('practice.create') }}"
+                               class="w-full sm:flex-1 inline-flex items-center justify-center px-4 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition shadow-md shadow-emerald-600/25 text-center">
+                                Mulai Misi Lanjutan ⏎
+                            </a>
+                            <button type="button"
+                                    data-reminder-title="{{ $recommendedMission['title'] ?? 'Latihan VOIC AI' }}"
+                                    data-reminder-desc="{{ $recommendedMission['desc'] ?? 'Latihan public speaking interaktif VOIC AI' }}"
+                                    onclick="downloadIcsReminder(this.dataset.reminderTitle, this.dataset.reminderDesc)"
+                                    title="Pasang Pengingat Latihan Besok di Kalender (.ics)"
+                                    class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white bg-white/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition cursor-pointer">
+                                <span>📅 Ingatkan Besok</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2. GUEST CONVERSION HOOK: Claim Session to Permanent Account -->
+                    @if($session->isGuest() || ($isDemo ?? false))
+                        <div class="bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-800 text-white p-6 rounded-3xl shadow-xl border border-blue-400/40 relative overflow-hidden print:hidden">
+                            <div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/20 text-white">
+                                    Simpan Permanen
+                                </span>
+                            </div>
+
+                            <h4 class="text-base font-extrabold text-white leading-tight">
+                                Kunci Skor {{ number_format($session->overall_score, 1) }} & Buka Rapor Lengkap
+                            </h4>
+                            <p class="text-xs text-blue-100/90 mt-2 leading-relaxed">
+                                Daftarkan akun gratis sekarang agar riwayat evaluasi dan sertifikat ber-QR Code ini langsung tersimpan ke dashboard Anda. Bangun streak latihan setiap hari!
+                            </p>
+
+                            <a href="{{ route('register', ['claim_session_id' => $session->id]) }}"
+                               class="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-3 text-xs font-black text-blue-900 bg-white hover:bg-blue-50 rounded-xl transition shadow-lg shadow-black/20 text-center">
+                                <span>🚀 Buat Akun & Klaim Rapor Ini (Gratis)</span>
+                            </a>
+                        </div>
+                    @endif
+
                     <div class="bg-white dark:bg-[#0c182b] p-6 rounded-3xl shadow-xs border border-slate-100 dark:border-slate-700/60">
                         <h4 class="text-base font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                             <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1613,22 +1871,22 @@
             </div>
 
             <!-- Print-Only Footer Signature & Verification Stamp -->
-            <div class="hidden print:block pt-8 mt-6 border-t border-slate-300">
-                <div class="flex justify-between items-end text-xs text-slate-600">
-                    <div class="flex items-center gap-4">
-                        <div id="printQrcodeSvgContainer" class="w-20 h-20 bg-white border border-slate-300 p-1 flex items-center justify-center shrink-0"></div>
-                        <div>
-                            <p class="font-bold text-slate-900">Platform Evaluator VOIC</p>
-                            <p class="text-[10px] text-slate-500">VOIC Platform • Enterprise AI Public Speaking & Defense Evaluation</p>
-                            <p class="text-[10px] text-slate-400 mt-1">Verifikasi digital: {{ $benchmarkData['serial'] ?? 'VOIC-CERT-' . strtoupper(substr(md5($session->id . $session->created_at), 0, 10)) }}</p>
-                            <p class="text-[9px] text-slate-400">Pindai QR Code untuk memvalidasi keaslian laporan secara daring.</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] text-slate-400">Tanda Tangan Penguji AI:</p>
-                        <p class="font-bold text-slate-900 mt-6">{{ $session->aiRole ? $session->aiRole->name : 'Evaluator VOIC' }}</p>
+            <div class="print-official-footer pt-8 mt-6 border-t-2 border-slate-900 justify-between items-end text-xs text-slate-800 print-avoid-break">
+                <div class="flex items-center gap-4">
+                    <div id="printQrcodeSvgContainer" class="w-20 h-20 bg-white border border-slate-400 p-1 flex items-center justify-center shrink-0"></div>
+                    <div>
+                        <p class="font-bold text-slate-900 text-sm">Transkrip Resmi Terverifikasi VOIC</p>
+                        <p class="text-[10px] text-slate-600">Enterprise AI Public Speaking & Academic Defense Examination</p>
+                        <p class="text-[10px] text-slate-700 font-mono font-bold mt-1">Serial Kriptografis: {{ $benchmarkData['serial'] ?? 'VOIC-CERT-' . strtoupper(substr(md5($session->id . $session->created_at), 0, 10)) }}</p>
+                        <p class="text-[9px] text-slate-500">Pindai QR Code untuk memvalidasi sertifikat & transkrip secara publik.</p>
                     </div>
                 </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Divalidasi oleh AI Examiner:</p>
+                    <p class="font-extrabold text-slate-900 text-sm mt-5 underline underline-offset-4">{{ $session->aiRole ? $session->aiRole->name : 'Panelis Evaluator VOIC' }}</p>
+                    <p class="text-[9px] text-slate-500 font-mono mt-0.5">INNOFEST 2026 DIGITAL LEDGER</p>
+                </div>
+            </div>
         </div>
 
         <!-- SCIENTIFIC METHODOLOGY & BENCHMARK MODAL -->
@@ -1825,7 +2083,8 @@
                                    value="{{ route('practice.verify', $session) }}"
                                    class="flex-1 text-xs px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono select-all focus:outline-none">
                             <button type="button"
-                                    @click="navigator.clipboard.writeText('{{ route('practice.verify', $session) }}'); copiedShare = true; setTimeout(() => copiedShare = false, 2500)"
+                                    data-verify-url="{{ route('practice.verify', $session) }}"
+                                    @click="navigator.clipboard.writeText($el.dataset.verifyUrl); copiedShare = true; setTimeout(() => copiedShare = false, 2500)"
                                     class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-sm cursor-pointer whitespace-nowrap">
                                 <span x-text="copiedShare ? '✓ Disalin!' : 'Salin Tautan'"></span>
                             </button>
@@ -1883,14 +2142,14 @@
     <script src="{{ asset('js/qrcode.min.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var verifyUrl = "{{ route('practice.verify', $session) }}";
+            var screenContainer = document.getElementById('qrcodeSvgContainer');
+            var verifyUrl = screenContainer ? screenContainer.getAttribute('data-url') : window.location.href;
             try {
                 if (typeof qrcode === 'function') {
                     // Render for Screen Card
                     var qrScreen = qrcode(0, 'M');
                     qrScreen.addData(verifyUrl);
                     qrScreen.make();
-                    var screenContainer = document.getElementById('qrcodeSvgContainer');
                     if (screenContainer) {
                         screenContainer.innerHTML = qrScreen.createSvgTag(3, 4);
                     }
@@ -1913,6 +2172,7 @@
                 if (window.Chart) {
                     var radarCanvas = document.getElementById('competencyRadarChart');
                     if (radarCanvas) {
+                        var radarScores = JSON.parse(radarCanvas.getAttribute('data-scores') || '[75,75,75,75,75]');
                         var isDark = document.documentElement.classList.contains('dark');
                         new window.Chart(radarCanvas, {
                             type: 'radar',
@@ -1920,13 +2180,7 @@
                                 labels: ['Kontak Mata', 'Artikulasi', 'Dinamika Nada', 'Tempo WPM', 'Ketenangan Wajah'],
                                 datasets: [{
                                     label: 'Skor Sesi Ini',
-                                    data: [
-                                        {{ min(100, max(0, $eyeContact)) }},
-                                        {{ min(100, max(0, $clarity)) }},
-                                        {{ min(100, max(0, $pitchScore)) }},
-                                        {{ min(100, max(0, round(($paceWpm / 140) * 100))) }},
-                                        {{ min(100, max(0, $smileRate)) }}
-                                    ],
+                                    data: radarScores,
                                     fill: true,
                                     backgroundColor: 'rgba(37, 99, 235, 0.25)',
                                     borderColor: 'rgba(37, 99, 235, 1)',
@@ -1984,5 +2238,43 @@
                 console.warn('Radar Chart initialization notice:', chartErr);
             }
         });
+
+        function downloadIcsReminder(title, description) {
+            const now = new Date();
+            const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            tomorrow.setHours(10, 0, 0, 0);
+            const tomorrowEnd = new Date(tomorrow.getTime() + 15 * 60 * 1000);
+
+            const pad = (n) => String(n).padStart(2, '0');
+            const toIcs = (d) => `${d.getUTCFullYear()}${pad(d.getUTCMonth()+1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}Z`;
+
+            const ics = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//VOIC AI//Public Speaking Coach//ID',
+                'CALSCALE:GREGORIAN',
+                'BEGIN:VEVENT',
+                `SUMMARY:🎙️ ${title}`,
+                `DESCRIPTION:${description}\\n\\nBuka sesi latihan di: ${window.location.origin}/practice/create`,
+                `DTSTART:${toIcs(tomorrow)}`,
+                `DTEND:${toIcs(tomorrowEnd)}`,
+                'STATUS:CONFIRMED',
+                'BEGIN:VALARM',
+                'TRIGGER:-PT15M',
+                'ACTION:DISPLAY',
+                'DESCRIPTION:Pengingat Latihan VOIC AI',
+                'END:VALARM',
+                'END:VEVENT',
+                'END:VCALENDAR'
+            ].join('\r\n');
+
+            const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'voic-misi-latihan.ics';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
     </script>
 </x-app-layout>

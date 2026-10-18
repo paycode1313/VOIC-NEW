@@ -19,8 +19,12 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        if ($request->has('claim_session_id')) {
+            $request->session()->put('pending_claim_session_id', $request->query('claim_session_id'));
+        }
+
         return view('auth.register');
     }
 

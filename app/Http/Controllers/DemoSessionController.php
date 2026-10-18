@@ -27,7 +27,7 @@ class DemoSessionController extends Controller
 
         $defaultRole = $matchedRole ?? $aiRoles->first() ?? [
             'id' => 1,
-            'name' => 'VOIC-Dosen Penguji',
+            'name' => 'VOIC - Dosen Penguji',
             'role_type' => 'dosen_penguji',
             'difficulty_level' => 'Sulit',
             'voice_id' => 'id-ID-ArdiNeural',
@@ -277,12 +277,37 @@ class DemoSessionController extends Controller
         $practiceSession->load(['aiRole', 'messages']);
         $benchmarkData = $verificationService->getBenchmarkData($practiceSession);
 
+        $user = auth()->user();
+        $streakData = $user ? $user->getStreakData() : ['streak' => 1, 'has_practiced_today' => true, 'is_streak_at_risk' => false];
+        $rankProgress = $user ? $user->getRankProgress() : [
+            'level' => 1,
+            'title' => 'Novice Speaker',
+            'current_sessions' => 1,
+            'next_sessions' => 3,
+            'progress_pct' => 33,
+            'needed_sessions' => 2,
+            'next_title' => 'Confident Communicator',
+        ];
+        $recommendedMission = $user ? $user->getNextRecommendedMission() : [
+            'id' => 'first_streak',
+            'title' => 'Kunci Streak Hari Pertama',
+            'subtitle' => 'Target: Buat Akun & Lanjutkan Latihan',
+            'desc' => 'Simpan rapor ini dan lanjutkan latihan besok untuk membangun kebiasaan berbicara percaya diri!',
+            'icon' => 'sparkles',
+            'role_key' => 'dosen_penguji',
+            'badge_target' => 'Tatapan Elang',
+            'route' => route('register', ['claim_session_id' => $practiceSession->id]),
+        ];
+
         return view('practice.show', [
             'session' => $practiceSession,
             'role' => $practiceSession->aiRole,
             'messages' => $practiceSession->messages,
             'benchmarkData' => $benchmarkData,
             'isDemo' => true,
+            'streakData' => $streakData,
+            'rankProgress' => $rankProgress,
+            'recommendedMission' => $recommendedMission,
         ]);
     }
 

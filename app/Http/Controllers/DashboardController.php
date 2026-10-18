@@ -152,6 +152,9 @@ class DashboardController extends Controller
             'unlockedTotal' => $unlockedTotal,
             'totalMasterBadges' => count($masterBadges),
             'deepLearningStats' => $deepLearningStats,
+            'streakData' => $user->getStreakData(),
+            'rankProgress' => $user->getRankProgress(),
+            'recommendedMission' => $user->getNextRecommendedMission(),
         ]);
     }
 }

@@ -35,12 +35,15 @@
         <!-- Left Showcase Pane (Visible on Large Screens) -->
         <div class="hidden lg:flex lg:col-span-5 flex-col justify-between space-y-8 pr-4">
             <div class="space-y-4">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100/80 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-800 text-xs font-bold text-blue-700 dark:text-blue-300">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span>Registrasi Akun Gratis</span>
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass-pill-nav text-xs font-bold text-blue-700 dark:text-blue-300 shadow-2xs">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span class="tracking-wide">Registrasi Akun Gratis</span>
                 </div>
                 <h1 class="text-3xl font-black text-slate-900 dark:text-white leading-tight">
-                    Mulai Perjalanan Anda Menjadi <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 dark:from-blue-400 dark:via-sky-300 dark:to-indigo-300 bg-clip-text text-transparent">Pembicara Handal</span>.
+                    Mulai Perjalanan Anda Menjadi <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 dark:from-blue-400 dark:via-sky-300 dark:to-cyan-200 bg-clip-text text-transparent">Pembicara Handal</span>.
                 </h1>
                 <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                     Dapatkan akses ke simulasi sidang & wawancara interaktif, telemetri tatapan kamera, sertifikat digital resmi, serta profil adaptif AI.
@@ -48,12 +51,15 @@
             </div>
 
             <!-- Benefit Features List -->
-            <div class="space-y-3.5 p-5 rounded-3xl bg-white/80 dark:bg-[#0c182b]/80 border border-slate-200/80 dark:border-slate-800/90 shadow-xl">
-                <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500 block">
+            <div class="space-y-3 p-5 rounded-3xl glass-ultra border border-white/80 dark:border-white/10 shadow-xl relative overflow-hidden backdrop-blur-2xl">
+                <!-- Specular Highlight Top Line -->
+                <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/40 dark:via-sky-400/30 to-transparent"></div>
+
+                <span class="text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-400 block font-mono">
                     Keuntungan Akun VOIC
                 </span>
-                <div class="flex items-start gap-3">
-                    <div class="w-7 h-7 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <div class="flex items-start gap-3 p-2.5 rounded-2xl glass-pill-nav hover:scale-[1.01] transition-all shadow-2xs">
+                    <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     </div>
                     <div>
@@ -61,8 +67,8 @@
                         <span class="text-[11px] text-slate-500 dark:text-slate-400 block">5 parameter: Kontak Mata, WPM, Filler Words, Nada Pitch & Artikulasi.</span>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <div class="flex items-start gap-3 p-2.5 rounded-2xl glass-pill-nav hover:scale-[1.01] transition-all shadow-2xs">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     </div>
                     <div>
@@ -70,8 +76,8 @@
                         <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Verifikasi publik otentik untuk lampiran CV dan portofolio akademik.</span>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-7 h-7 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                <div class="flex items-start gap-3 p-2.5 rounded-2xl glass-pill-nav hover:scale-[1.01] transition-all shadow-2xs">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     </div>
                     <div>
@@ -82,19 +88,17 @@
             </div>
 
             <!-- Privacy Guarantee Badge -->
-            <div class="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
-                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
+            <div class="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-2xl glass-pill-nav text-xs text-slate-600 dark:text-slate-300 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
                 <span>Privasi Terjamin • Video kamera tidak pernah dikirim ke internet.</span>
             </div>
         </div>
 
         <!-- Right Form Pane -->
         <div class="w-full lg:col-span-7 max-w-md mx-auto lg:max-w-none">
-            <div class="p-6 sm:p-9 rounded-3xl bg-white/95 dark:bg-[#0c182b]/95 backdrop-blur-2xl border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-blue-950/15 dark:shadow-blue-950/60 relative overflow-hidden">
-                <!-- Top Accent Line -->
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600"></div>
+            <div class="p-6 sm:p-9 rounded-3xl glass-ultra border border-white/80 dark:border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
+                <!-- Glowing Specular Top Accent Line -->
+                <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 dark:via-sky-400/40 to-transparent"></div>
 
                 <!-- Form Header -->
                 <div class="mb-6 space-y-1">
@@ -129,7 +133,7 @@
                                    autofocus
                                    autocomplete="name"
                                    placeholder="Contoh: Muhammad Farhan"
-                                   class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                                   class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                         </div>
                         <x-input-error :messages="$errors->get('name')" class="mt-1" />
                     </div>
@@ -152,7 +156,7 @@
                                    required
                                    autocomplete="username"
                                    placeholder="nama@email.com"
-                                   class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                                   class="w-full pl-10 pr-4 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                         </div>
                         <x-input-error :messages="$errors->get('email')" class="mt-1" />
                     </div>
@@ -175,7 +179,7 @@
                                    required
                                    autocomplete="new-password"
                                    placeholder="Minimal 8 karakter"
-                                   class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                                   class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                             <button type="button"
                                     @click="showPassword = !showPassword"
                                     class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
@@ -224,7 +228,7 @@
                                    required
                                    autocomplete="new-password"
                                    placeholder="Ulangi kata sandi Anda"
-                                   class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white dark:bg-[#080f1b]/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-500 focus:border-transparent transition shadow-xs">
+                                   class="w-full pl-10 pr-11 py-2.5 rounded-xl text-sm bg-white/70 dark:bg-[#080f1b]/80 border border-slate-200/80 dark:border-white/10 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-500/50 focus:border-transparent transition shadow-2xs backdrop-blur-sm">
                             <button type="button"
                                     @click="showConfirmation = !showConfirmation"
                                     class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
@@ -266,7 +270,7 @@
                     <div class="pt-2">
                         <button type="submit"
                                 :disabled="isSubmitting"
-                                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 focus:ring-4 focus:ring-blue-500/30 shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
+                                class="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-500 hover:to-sky-500 focus:ring-4 focus:ring-blue-500/30 shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed">
                             <template x-if="!isSubmitting">
                                 <span class="flex items-center gap-2">
                                     <span>Daftar Akun VOIC Sekarang</span>
@@ -289,7 +293,7 @@
                 </form>
 
                 <!-- Login Footer Link -->
-                <div class="mt-6 pt-5 border-t border-slate-200/80 dark:border-slate-800 text-center">
+                <div class="mt-6 pt-5 border-t border-slate-200/70 dark:border-white/10 text-center">
                     <p class="text-xs text-slate-600 dark:text-slate-400">
                         Sudah memiliki akun?
                         <a href="{{ route('login') }}" class="font-bold text-blue-600 dark:text-blue-400 hover:underline ms-1">

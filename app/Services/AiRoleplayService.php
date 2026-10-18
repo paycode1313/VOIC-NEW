@@ -91,7 +91,7 @@ class AiRoleplayService
         $audioUrl = null;
 
         try {
-            $response = Http::timeout(3)->post("{$this->aiServiceUrl}/tts", [
+            $response = Http::connectTimeout(1.5)->timeout(3)->post("{$this->aiServiceUrl}/tts", [
                 'text' => $message,
                 'role_type' => $role->role_type,
                 'language' => $language,
@@ -184,7 +184,7 @@ class AiRoleplayService
 
         try {
             $contextMaterial = $session->feedback_notes['context_material'] ?? null;
-            $response = Http::timeout($this->timeout)->post("{$this->aiServiceUrl}/chat", [
+            $response = Http::connectTimeout(2.0)->timeout($this->timeout)->post("{$this->aiServiceUrl}/chat", [
                 'session_id' => $session->id,
                 'role_name' => $roleName,
                 'role_type' => $roleType,
@@ -475,7 +475,7 @@ class AiRoleplayService
 
         // 2. Try local AI service via Ollama
         try {
-            $response = Http::timeout(min(20, $this->timeout))->post("{$this->aiServiceUrl}/conclude", [
+            $response = Http::connectTimeout(2.0)->timeout(min(20, $this->timeout))->post("{$this->aiServiceUrl}/conclude", [
                 'role_name' => $roleName,
                 'role_type' => $roleType,
                 'system_prompt' => $systemPrompt,
