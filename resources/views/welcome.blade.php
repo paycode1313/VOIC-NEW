@@ -12,7 +12,7 @@
     <script>
         (function() {
             const savedTheme = localStorage.getItem('voic_theme');
-            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            if (savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
             } else {
                 document.documentElement.classList.remove('dark');
@@ -43,64 +43,54 @@
 <body class="bg-slate-50 dark:bg-[#080f1b] text-slate-800 dark:text-slate-100 antialiased font-sans selection:bg-blue-600 selection:text-white transition-colors duration-200">
 
     <!-- Top Navigation Bar -->
-    <nav class="sticky top-0 z-50 backdrop-blur-2xl bg-white/75 dark:bg-[#080f1b]/75 border-b border-slate-200/70 dark:border-white/10 shadow-xs transition-colors duration-200"
+    <nav class="sticky top-0 z-50 backdrop-blur-2xl bg-white/70 dark:bg-[#070e1b]/70 border-b border-slate-200/50 dark:border-white/10 transition-colors duration-200"
          x-data="{ mobileNavOpen: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 sm:h-20">
                 <a href="/" class="flex items-center group">
-                    <x-application-logo variant="horizontal" class="h-7 sm:h-11 w-auto max-w-[130px] sm:max-w-none group-hover:scale-[1.02] transition-transform" />
+                    <x-application-logo variant="horizontal" class="h-7 sm:h-10 w-auto max-w-[130px] sm:max-w-none group-hover:scale-[1.02] transition-transform" />
                 </a>
 
                 <!-- Nav Menu Desktop -->
-                <div class="hidden md:flex items-center gap-6 text-sm font-bold text-slate-600 dark:text-slate-300">
-                    <a href="#fitur" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Teknologi Multimodal</a>
-                    <a href="#karakter-ai" class="hover:text-blue-600 dark:hover:text-blue-400 transition">3 Karakter Penguji</a>
-                    <a href="#keunggulan" class="hover:text-blue-600 dark:hover:text-blue-400 transition">Standar Industri</a>
-                    <a href="#faq" class="hover:text-blue-600 dark:hover:text-blue-400 transition">FAQ</a>
+                <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <a href="#fitur" class="hover:text-slate-900 dark:hover:text-white transition">Teknologi</a>
+                    <a href="#karakter-ai" class="hover:text-slate-900 dark:hover:text-white transition">3 Penguji AI</a>
+                    <a href="#keunggulan" class="hover:text-slate-900 dark:hover:text-white transition">Standar Industri</a>
+                    <a href="#faq" class="hover:text-slate-900 dark:hover:text-white transition">FAQ</a>
                 </div>
 
                 <!-- Right Actions & Theme Switcher -->
-                <div class="flex items-center gap-2 sm:gap-3">
+                <div class="flex items-center gap-2.5 sm:gap-3">
                     <!-- Dark / Light Theme Toggle Button -->
                     <button type="button"
                             onclick="
                                 const isDark = document.documentElement.classList.toggle('dark');
                                 localStorage.setItem('voic_theme', isDark ? 'dark' : 'light');
                             "
-                            class="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition cursor-pointer"
+                            class="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
                             title="Ganti Mode Gelap / Terang">
-                        <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        <svg class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                         </svg>
                     </button>
 
                     @auth
                         <a href="{{ route('dashboard') }}"
-                           class="inline-flex items-center px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/30 transition transform hover:-translate-y-0.5">
+                           class="inline-flex items-center px-5 py-2 text-xs sm:text-sm font-semibold rounded-full text-white bg-slate-900 hover:bg-black dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 shadow-sm transition transform hover:-translate-y-0.5">
                             Buka Dashboard
-                            <svg class="w-4 h-4 ms-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-                            </svg>
                         </a>
                     @else
-                        <!-- Instant Guest Practice Mode Button -->
-                        <a href="{{ route('demo.create') }}"
-                           class="hidden sm:inline-flex items-center px-3.5 py-2 text-xs font-bold rounded-xl text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-500/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition shadow-xs">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse me-1.5"></span>
-                            Coba Simulasi Instan
-                        </a>
-
                         <a href="{{ route('login') }}"
-                           class="px-3 py-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white transition">
+                           class="hidden sm:inline-block px-4 py-2 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition">
                             Masuk
                         </a>
 
-                        <a href="{{ route('register') }}"
-                           class="hidden md:inline-flex items-center px-4 py-2 text-xs sm:text-sm font-bold rounded-xl text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-600/30 transition transform hover:-translate-y-0.5">
-                            Daftar
+                        <a href="{{ route('demo.create') }}"
+                           class="inline-flex items-center px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-full text-white bg-slate-900 hover:bg-black dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 shadow-sm transition transform hover:-translate-y-0.5">
+                            Coba Simulasi
                         </a>
                     @endauth
 
@@ -128,30 +118,30 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 translate-y-0"
              x-transition:leave-end="opacity-0 -translate-y-2"
-             class="md:hidden px-4 pt-2 pb-6 bg-white/95 dark:bg-[#0b1329]/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 space-y-3 shadow-xl"
+             class="md:hidden px-4 pt-2 pb-6 bg-white/95 dark:bg-[#070e1b]/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 space-y-3 shadow-xl"
              x-cloak>
-            <div class="flex flex-col space-y-2 text-sm font-bold text-slate-700 dark:text-slate-200">
-                <a @click="mobileNavOpen = false" href="#fitur" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">Teknologi Multimodal</a>
-                <a @click="mobileNavOpen = false" href="#karakter-ai" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">3 Karakter Penguji</a>
+            <div class="flex flex-col space-y-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                <a @click="mobileNavOpen = false" href="#fitur" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">Teknologi</a>
+                <a @click="mobileNavOpen = false" href="#karakter-ai" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">3 Penguji AI</a>
                 <a @click="mobileNavOpen = false" href="#keunggulan" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">Standar Industri</a>
                 <a @click="mobileNavOpen = false" href="#faq" class="px-3 py-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition">Pertanyaan Umum (FAQ)</a>
             </div>
 
             <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col gap-2">
                 @guest
-                    <a href="{{ route('demo.create') }}" class="w-full text-center px-4 py-2.5 rounded-xl font-bold text-xs text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-700/60">
-                        🎪 Coba Mode Booth Tamu (Tanpa Login)
+                    <a href="{{ route('demo.create') }}" class="w-full text-center px-4 py-2.5 rounded-full font-semibold text-xs text-white bg-slate-900 shadow-md">
+                        Coba Demo Tanpa Login
                     </a>
-                    <a href="{{ route('register') }}" class="w-full text-center px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 shadow-md">
-                        Daftar Akun Baru
+                    <a href="{{ route('login') }}" class="w-full text-center px-4 py-2.5 rounded-full font-semibold text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800">
+                        Masuk Akun
                     </a>
                 @endguest
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section with Executive Video Conference Mockup HUD -->
-    <section class="relative overflow-hidden pt-8 pb-16 sm:pt-16 sm:pb-28 bg-slate-50/50 dark:bg-[#070e1b] transition-colors duration-200"
+    <!-- HERO SECTION: ETHEREAL AQUATIC GLASSMORPHISM THEME -->
+    <section class="relative overflow-hidden pt-6 pb-14 sm:pt-10 sm:pb-20 bg-slate-50 dark:bg-[#070e1b] transition-colors duration-300"
              x-data="{
                 activeRole: 'dosen',
                 roles: {
@@ -169,7 +159,8 @@
                         wpm: '128 WPM',
                         filler: '0',
                         pitch: '142 Hz (Stabil)',
-                        gaze: '94.6% Terkunci',
+                        gaze: '94.6%',
+                        score: '96.4',
                         cta: 'Mulai Simulasi Sidang Skripsi →'
                     },
                     hrd: {
@@ -186,7 +177,8 @@
                         wpm: '134 WPM',
                         filler: '1',
                         pitch: '156 Hz (Hangat)',
-                        gaze: '96.2% Terkunci',
+                        gaze: '96.2%',
+                        score: '94.8',
                         cta: 'Mulai Simulasi Wawancara HRD →'
                     },
                     investor: {
@@ -203,306 +195,261 @@
                         wpm: '142 WPM',
                         filler: '0',
                         pitch: '148 Hz (Tegas)',
-                        gaze: '93.8% Terkunci',
+                        gaze: '93.8%',
+                        score: '97.2',
                         cta: 'Mulai Simulasi Pitching Investor →'
                     }
                 }
              }">
 
-        <!-- Ambient Mesh Light Aura Orbs & Minimalist Matrix Grid -->
-        <div class="absolute inset-0 -z-10 pointer-events-none overflow-hidden select-none">
-            <!-- Center Cyan/Blue Pulse Glow -->
-            <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[40rem] sm:w-[64rem] h-[30rem] rounded-full bg-gradient-to-b from-blue-600/20 via-sky-500/15 to-transparent blur-[120px] animate-pulse-slow"></div>
-            <!-- Left Emerald Accent Glow -->
-            <div class="absolute top-1/4 -left-32 w-80 h-80 rounded-full bg-emerald-500/10 blur-[100px] animate-float-slow"></div>
-            <!-- Right Indigo Accent Glow -->
-            <div class="absolute top-1/2 -right-32 w-80 h-80 rounded-full bg-indigo-600/15 blur-[100px] animate-float-delayed"></div>
-            <!-- High-Tech Micro Dot Grid Texture with Smooth Radial Mask -->
-            <div class="absolute inset-0 bg-[radial-gradient(rgba(59,130,246,0.14)_1px,transparent_1px)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_15%,#000_70%,transparent_100%)] opacity-70 dark:opacity-90"></div>
+        <!-- Light Mode Ocean Background -->
+        <div class="absolute inset-0 bg-cover bg-bottom dark:hidden pointer-events-none"
+             style="background-image: url('{{ asset('images/hero-water-bg.jpg') }}');">
+            <!-- Smooth clean white gradient to guarantee high text contrast -->
+            <div class="absolute inset-0 bg-gradient-to-b from-white/95 via-white/50 to-transparent"></div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <!-- Header Text & Hero Headline -->
-            <div class="text-center max-w-4xl mx-auto space-y-5">
-                <!-- Status Badge -->
-                <div class="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full glass-pill-nav text-[11px] sm:text-xs font-bold text-blue-700 dark:text-blue-300 shadow-xs max-w-full text-center">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span class="leading-tight tracking-wide">AI Multimodal Public Speaking & Defense Coach</span>
+        <!-- Dark Mode Ocean Background -->
+        <div class="absolute inset-0 bg-cover bg-bottom hidden dark:block pointer-events-none"
+             style="background-image: url('{{ asset('images/hero-water-bg-dark.jpg') }}');">
+            <!-- Smooth deep midnight gradient to guarantee high text contrast -->
+            <div class="absolute inset-0 bg-gradient-to-b from-[#070e1b]/95 via-[#070e1b]/80 to-[#070e1b]/35"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-6">
+            
+            <!-- HEADER TEXT: BADGE, HEADLINE, & SUBTITLE -->
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <!-- Verified Pill Badge -->
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/90 dark:border-white/10 shadow-xs text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    <svg class="w-3.5 h-3.5 text-blue-600 fill-current shrink-0" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>AI Multimodal Defense & Public Speaking Platform</span>
                 </div>
 
-                <!-- Main Headline -->
-                <h1 class="text-3xl sm:text-5xl lg:text-7xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.14] sm:leading-[1.08] break-words">
-                    Kuasai Panggung Sidang & Wawancara Bersama <span class="bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 dark:from-blue-400 dark:via-sky-300 dark:to-cyan-200 bg-clip-text text-transparent">VOIC AI</span>
+                <!-- Main Hero Headline (Slim, Sleek, & Proportional) -->
+                <h1 class="text-xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-950 dark:text-white leading-snug sm:leading-tight max-w-2xl mx-auto">
+                    Kecerdasan Multimodal,<br class="hidden sm:inline">
+                    Dirancang untuk Public Speaking Modern
                 </h1>
 
                 <!-- Subheadline -->
-                <p class="text-sm sm:text-lg lg:text-xl text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
-                    Sparring partner AI interaktif pertama yang menggabungkan <strong>telemetri tatapan kamera (Gaze Tracking)</strong>, <strong>spektrum akustik suara</strong>, dan <strong>roleplay kontekstual</strong> untuk persiapan sidang skripsi, wawancara kerja, dan pitching startup.
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl mx-auto leading-relaxed font-normal">
+                    Dapatkan analisis objektif performa presentasi Anda secara instan. Pantau kontak mata, ukur stabilitas intonasi suara, deteksi kata jeda, dan roleplay interaktif bersama AI penguji.
                 </p>
 
-                <!-- CTA Action Buttons -->
-                <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
-                    @auth
-                        <a href="{{ route('practice.create') }}"
-                           class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-extrabold rounded-2xl text-white bg-blue-600 hover:bg-blue-500 shadow-xl shadow-blue-600/30 transition transform hover:-translate-y-0.5 text-center">
-                            Mulai Ruang Simulasi Interaktif
-                            <svg class="w-5 h-5 ms-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                            </svg>
-                        </a>
-                    @else
-                        <a href="{{ route('demo.create') }}"
-                           class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-extrabold rounded-2xl text-white bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-500 shadow-xl shadow-emerald-600/30 transition transform hover:-translate-y-0.5 text-center">
-                            <span class="w-2.5 h-2.5 rounded-full bg-white animate-pulse me-2 shrink-0"></span>
-                            Coba Demo Booth Tamu (Tanpa Login)
-                        </a>
-                        <a href="{{ route('register') }}"
-                           class="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3.5 sm:py-4 text-sm sm:text-base font-bold rounded-2xl text-slate-800 dark:text-slate-200 glass-pill-nav hover:bg-slate-100 dark:hover:bg-slate-800 transition shadow-xs text-center border border-slate-300/80 dark:border-white/10">
-                            Daftar Akun Baru
-                        </a>
-                    @endauth
-                </div>
-
-                <!-- Trust Badges with Glassmorphic Pills -->
-                <div class="pt-3 sm:pt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
-                    <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full glass-pill-nav hover:border-emerald-500/50 hover:scale-[1.02] transition shadow-2xs">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                        <span class="text-[10px] sm:text-xs tracking-tight">EDGE CV TATAPAN (30 FPS)</span>
-                    </div>
-                    <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full glass-pill-nav hover:border-blue-500/50 hover:scale-[1.02] transition shadow-2xs">
-                        <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
-                        <span class="text-[10px] sm:text-xs tracking-tight">100% ZERO-CLOUD (PRIVAT)</span>
-                    </div>
-                    <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full glass-pill-nav hover:border-sky-500/50 hover:scale-[1.02] transition shadow-2xs">
-                        <span class="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
-                        <span class="text-[10px] sm:text-xs tracking-tight">SPEKTRUM AKUSTIK 32-BAND</span>
-                    </div>
-                    <div class="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-full glass-pill-nav hover:border-indigo-500/50 hover:scale-[1.02] transition shadow-2xs">
-                        <span class="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
-                        <span class="text-[10px] sm:text-xs tracking-tight">VALIDASI RISET r = 0.87</span>
-                    </div>
+                <!-- Action CTA Pill Buttons -->
+                <div class="pt-1 flex flex-wrap items-center justify-center gap-2.5">
+                    <a href="{{ auth()->check() ? route('practice.create') : route('demo.create') }}"
+                       class="rounded-full bg-slate-900 hover:bg-black text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 px-5 py-2 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold shadow-md shadow-slate-900/15 dark:shadow-white/10 transition-all hover:scale-105 inline-flex items-center gap-2">
+                        <span>Mulai Latihan</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                        </svg>
+                    </a>
+                    <a href="#fitur"
+                       class="rounded-full bg-white/90 hover:bg-white text-slate-800 border border-slate-300/80 dark:bg-slate-800/90 dark:hover:bg-slate-800 dark:text-white dark:border-white/15 px-5 py-2 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold shadow-xs transition-all hover:scale-105">
+                        Pelajari Fitur
+                    </a>
                 </div>
             </div>
 
-            <!-- EXECUTIVE VIDEO CONFERENCE MOCKUP HUD WITH INTERACTIVE PERSONA TABS -->
-            <div class="relative mt-8 max-w-5xl mx-auto">
-                <!-- Floating Left Telemetry Pill (Eye Gaze Edge CV) -->
-                <div class="hidden lg:flex items-center gap-3 px-4 py-2.5 rounded-2xl glass-ultra border border-white/60 dark:border-white/10 shadow-2xl absolute -left-8 top-20 z-20 animate-float-subtle">
-                    <div class="relative flex h-3 w-3 shrink-0">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </div>
-                    <div class="text-left font-mono">
-                        <span class="block text-[9px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-400">Eye Gaze Edge CV</span>
-                        <span class="block text-xs font-black text-emerald-600 dark:text-emerald-400" x-text="roles[activeRole].gaze">94.6% Terkunci</span>
-                    </div>
-                </div>
+            <!-- THE HERO CENTERPIECE: CENTRAL GLASS DASHBOARD WITH 3D DEPTH CARDS -->
+            <div class="relative mt-6 sm:mt-10 max-w-4xl mx-auto">
 
-                <!-- Floating Right Telemetry Pill (Acoustic Pitch DSP with Live Equalizer) -->
-                <div class="hidden lg:flex items-center gap-3 px-4 py-2.5 rounded-2xl glass-ultra border border-white/60 dark:border-white/10 shadow-2xl absolute -right-8 bottom-20 z-20 animate-float-delayed">
-                    <!-- Live mini equalizer bars -->
-                    <div class="flex items-end gap-1 h-5 px-1.5 py-0.5 rounded-md bg-blue-900/30 dark:bg-blue-950/60 border border-blue-400/20 shrink-0" title="Audio Waveform">
-                        <span class="w-1 bg-gradient-to-t from-blue-600 to-sky-400 rounded-full animate-eq-1"></span>
-                        <span class="w-1 bg-gradient-to-t from-blue-600 to-sky-400 rounded-full animate-eq-2"></span>
-                        <span class="w-1 bg-gradient-to-t from-blue-600 to-sky-400 rounded-full animate-eq-3"></span>
-                        <span class="w-1 bg-gradient-to-t from-blue-600 to-sky-400 rounded-full animate-eq-4"></span>
-                    </div>
-                    <div class="text-left font-mono">
-                        <span class="block text-[9px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-400">Acoustic Pitch DSP</span>
-                        <span class="block text-xs font-black text-blue-600 dark:text-blue-400" x-text="roles[activeRole].pitch">142 Hz Dinamis</span>
+                <!-- 3D DEPTH CARD 1: Top-Left Floating Circle (Camera Telemetry Badge) -->
+                <div class="hidden sm:flex absolute -top-5 -left-3 sm:-left-5 z-30 animate-float-subtle">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white dark:bg-slate-800 backdrop-blur-xl shadow-[0_12px_24px_rgba(0,0,0,0.1)] border border-slate-200/80 dark:border-slate-700 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
                     </div>
                 </div>
 
-                <!-- Interactive Persona Switcher Tabs -->
-                <div class="flex items-center justify-center mb-4 sm:mb-5">
-                    <div class="inline-flex p-1 sm:p-1.5 rounded-2xl glass-pill-nav border border-slate-200/80 dark:border-white/10 shadow-lg gap-1 max-w-full overflow-x-auto">
-                        <button type="button"
-                                @click="activeRole = 'dosen'"
-                                class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer whitespace-nowrap"
-                                :class="activeRole === 'dosen' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40 scale-[1.02]' : 'text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60'">
-                            <span class="text-sm sm:text-base">🎓</span>
-                            <span>VOIC - Dosen Penguji</span>
-                            <span class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded-md font-semibold"
-                                  :class="activeRole === 'dosen' ? 'bg-blue-700/60 text-blue-100' : 'bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400'">Akademik</span>
-                        </button>
-                        <button type="button"
-                                @click="activeRole = 'hrd'"
-                                class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer whitespace-nowrap"
-                                :class="activeRole === 'hrd' ? 'bg-sky-600 text-white shadow-md shadow-sky-600/30 ring-1 ring-sky-400/40 scale-[1.02]' : 'text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60'">
-                            <span class="text-sm sm:text-base">💼</span>
-                            <span>VOIC - HRD</span>
-                            <span class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded-md font-semibold"
-                                  :class="activeRole === 'hrd' ? 'bg-sky-700/60 text-sky-100' : 'bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400'">Wawancara</span>
-                        </button>
-                        <button type="button"
-                                @click="activeRole = 'investor'"
-                                class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 cursor-pointer whitespace-nowrap"
-                                :class="activeRole === 'investor' ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-1 ring-indigo-400/40 scale-[1.02]' : 'text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/60'">
-                            <span class="text-sm sm:text-base">🚀</span>
-                            <span>VOIC - Investor</span>
-                            <span class="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded-md font-semibold"
-                                  :class="activeRole === 'investor' ? 'bg-indigo-700/60 text-indigo-100' : 'bg-slate-200/60 dark:bg-slate-700/60 text-slate-500 dark:text-slate-400'">Pitching</span>
-                        </button>
+                <!-- 3D DEPTH CARD 2: Top-Right Stacked Blue Folder ("Total Balance" style) -->
+                <div class="hidden sm:block absolute -top-8 -right-3 sm:-right-6 z-30 rotate-3 hover:rotate-0 transition-transform duration-300">
+                    <!-- Layered folder flaps behind to create 3D stacked depth -->
+                    <div class="absolute -top-2.5 left-4 right-4 h-7 rounded-2xl bg-sky-200/60 dark:bg-sky-400/20 backdrop-blur-xs"></div>
+                    <div class="absolute -top-1.5 left-2 right-2 h-7 rounded-2xl bg-sky-300/80 dark:bg-sky-500/30 backdrop-blur-xs"></div>
+                    <!-- Main folder card -->
+                    <div class="relative rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 p-3.5 sm:p-4 text-white shadow-[0_18px_36px_rgba(37,99,235,0.3)] w-44 sm:w-50">
+                        <div class="text-[9px] sm:text-[10px] font-semibold text-sky-100 opacity-90 tracking-wider uppercase">Skor Kelayakan Sidang</div>
+                        <div class="mt-0.5 text-xl sm:text-2xl font-bold tracking-tight">
+                            <span x-text="roles[activeRole].score">96.4</span> <span class="text-xs font-normal text-sky-100">/ 100</span>
+                        </div>
+                        <div class="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-[9px] sm:text-[10px] font-bold text-white">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                            <span>Status: Sangat Siap</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Window Shell (Glassmorphism Ultra) -->
-                <div class="rounded-3xl p-3 sm:p-5 glass-ultra border border-white/80 dark:border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-2xl">
-                    <!-- Glowing Specular Top Accent Line -->
-                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 dark:via-sky-400/40 to-transparent"></div>
-
-                    <!-- Window Titlebar -->
-                    <div class="px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-white/75 dark:bg-[#0b1424]/85 border border-slate-200/70 dark:border-white/10 flex items-center justify-between mb-3 text-xs shadow-xs gap-2 backdrop-blur-md">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="w-3 h-3 rounded-full bg-rose-500/90 inline-block shadow-sm shrink-0"></span>
-                            <span class="w-3 h-3 rounded-full bg-amber-500/90 inline-block shadow-sm shrink-0"></span>
-                            <span class="w-3 h-3 rounded-full bg-emerald-500/90 inline-block shadow-sm shrink-0"></span>
-                            <span class="ms-2 font-mono text-[10px] sm:text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate flex items-center gap-1.5">
-                                <span>VOIC Telemetry HUD</span>
-                                <span class="hidden sm:inline text-slate-400">•</span>
-                                <span class="hidden sm:inline text-blue-600 dark:text-blue-400" x-text="'Aktif: ' + roles[activeRole].name"></span>
-                            </span>
+                <!-- 3D DEPTH CARD 3: Bottom-Left Tilted Bar Chart ("Average Spend" style) -->
+                <div class="hidden sm:block absolute -bottom-8 -left-3 sm:-left-6 z-30 -rotate-6 hover:rotate-0 transition-transform duration-300">
+                    <div class="rounded-2xl bg-white dark:bg-slate-900 backdrop-blur-xl p-3.5 sm:p-4 shadow-[0_20px_40px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.5)] border border-slate-200/80 dark:border-slate-800 w-42 sm:w-48">
+                        <div class="text-xs font-bold text-slate-900 dark:text-white">Distribusi Intonasi</div>
+                        <div class="mt-2.5 flex items-end justify-between gap-1.5 h-12 px-1">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 sm:w-2.5 rounded-full bg-gradient-to-t from-blue-600 to-sky-400 h-5"></div>
+                                <span class="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 font-mono">120</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 sm:w-2.5 rounded-full bg-gradient-to-t from-blue-600 to-sky-400 h-8"></div>
+                                <span class="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 font-mono">135</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 sm:w-2.5 rounded-full bg-gradient-to-t from-blue-600 to-sky-400 h-11"></div>
+                                <span class="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 font-mono">148</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 sm:w-2.5 rounded-full bg-gradient-to-t from-blue-600 to-sky-400 h-6"></div>
+                                <span class="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 font-mono">142</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 sm:w-2.5 rounded-full bg-gradient-to-t from-blue-600 to-sky-400 h-4"></div>
+                                <span class="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 font-mono">130</span>
+                            </div>
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="w-2 sm:w-2.5 rounded-full bg-gradient-to-t from-blue-600 to-sky-400 h-10"></div>
+                                <span class="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 font-mono">155</span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2 sm:gap-3 font-mono text-[10px] text-slate-500 dark:text-slate-400 shrink-0">
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500/30 text-[9px] sm:text-[10px]">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                                LIVE 30 FPS
-                            </span>
-                            <span class="hidden sm:inline">Latensi: 18ms</span>
-                            <span class="hidden md:inline">Zero-Cloud CV</span>
+                        <div class="mt-1 text-center text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 font-mono">Hz Variasi Nada</div>
+                    </div>
+                </div>
+
+                <!-- 3D DEPTH CARD 4: Bottom-Right Pill Badge ("USD 0.87" style) -->
+                <div class="hidden sm:flex absolute -bottom-5 right-4 sm:right-10 z-30">
+                    <div class="rounded-full bg-white dark:bg-slate-900 backdrop-blur-xl py-1.5 px-3.5 shadow-md border border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
+                        <div class="w-5 h-5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700 flex items-center justify-center bg-red-600 text-white font-bold text-[8px] shrink-0">
+                            <span class="text-xs leading-none">🇮🇩</span>
+                        </div>
+                        <div class="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-white">
+                            Akurasi AI <span class="text-blue-600 dark:text-blue-400 font-mono">98.7%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- THE CENTRAL FROSTED GLASS CONTAINER -->
+                <div class="rounded-3xl sm:rounded-[2.25rem] bg-white/80 dark:bg-slate-900/85 backdrop-blur-2xl border border-white dark:border-white/10 shadow-[0_20px_50px_-15px_rgba(14,165,233,0.18)] dark:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.6)] p-5 sm:p-8 relative overflow-hidden ring-1 ring-slate-200/80 dark:ring-white/10">
+
+                    <!-- Specular Highlight Top Edge -->
+                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-white/20 to-transparent"></div>
+
+                    <!-- Sleek Persona Selector Tabs on Top of Dashboard -->
+                    <div class="flex items-center justify-center mb-6 sm:mb-7">
+                        <div class="inline-flex p-1 rounded-full bg-slate-100/90 dark:bg-slate-800/90 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-xs gap-1">
+                            <button type="button" @click="activeRole = 'dosen'"
+                                    class="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                                    :class="activeRole === 'dosen' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'">
+                                <span>🎓</span>
+                                <span>Dosen Penguji</span>
+                            </button>
+                            <button type="button" @click="activeRole = 'hrd'"
+                                    class="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                                    :class="activeRole === 'hrd' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'">
+                                <span>💼</span>
+                                <span>HRD Recruiter</span>
+                            </button>
+                            <button type="button" @click="activeRole = 'investor'"
+                                    class="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-semibold transition-all duration-200 cursor-pointer flex items-center gap-1.5"
+                                    :class="activeRole === 'investor' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'">
+                                <span>🚀</span>
+                                <span>Investor VC</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Main Stage: AI Panelist Examiner View vs Candidate Telemetry -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                        <!-- Pane 1: AI Panelist Examiner View -->
-                        <div class="relative rounded-2xl overflow-hidden bg-slate-900 min-h-[300px] sm:min-h-0 sm:aspect-4/3 flex flex-col justify-between p-3.5 sm:p-4 border border-slate-800/90 shadow-inner group">
-                            <!-- Ambient Blurred Backdrop -->
-                            <img :src="roles[activeRole].avatar" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover filter blur-2xl opacity-20 scale-125 pointer-events-none select-none transition-all duration-500">
-                            
-                            <!-- Naturally Framed Examiner Portrait with Dynamic Bind -->
-                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <img :src="roles[activeRole].avatar" :alt="roles[activeRole].name" width="380" height="380" fetchpriority="high" decoding="async" class="h-full w-auto max-w-[85%] object-contain object-top opacity-95 group-hover:scale-105 transition duration-700">
-                            </div>
-                            
-                            <!-- Dark Vignette Overlay -->
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-slate-950/60 pointer-events-none"></div>
+                    <!-- 3-COLUMN METRICS GRID (Exact match to reference photo!) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-200/80 dark:divide-white/10 gap-5 md:gap-0">
 
-                            <!-- Top Overlay: Active Speaking Status & Animated Equalizer -->
-                            <div class="relative z-10 flex items-center justify-between gap-2">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[9px] sm:text-[10px] font-bold text-white border border-white/10">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
-                                    <span x-text="roles[activeRole].statusText">Sedang Berbicara (Live Voice)</span>
-                                </span>
-                                <div class="flex items-end gap-1 h-5 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-md border border-white/15 shrink-0" title="Audio Equalizer">
-                                    <span class="w-1 bg-blue-400 rounded-full animate-eq-1"></span>
-                                    <span class="w-1 bg-sky-400 rounded-full animate-eq-2"></span>
-                                    <span class="w-1 bg-blue-300 rounded-full animate-eq-3"></span>
-                                    <span class="w-1 bg-sky-400 rounded-full animate-eq-4"></span>
+                        <!-- Column 1: Total Cash style -> Kontak Mata (Eye Gaze) -->
+                        <div class="relative md:pr-6 pb-4 md:pb-0 flex flex-col justify-between overflow-hidden">
+                            <div>
+                                <div class="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kontak Mata (Eye Contact)</div>
+                                <div class="mt-1.5 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white" x-text="roles[activeRole].gaze">
+                                    94.6%
+                                </div>
+                                <div class="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                    <span class="px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[10px] sm:text-xs font-bold">▲ 4.5%</span>
+                                    <span class="font-medium text-slate-600 dark:text-slate-400 text-[11px] sm:text-xs">Fokus Optimal</span>
                                 </div>
                             </div>
-
-                            <!-- Bottom Overlay: Subtitle Speech Bubble & Examiner Credentials -->
-                            <div class="relative z-10 space-y-2">
-                                <div class="p-2.5 sm:p-3 rounded-xl bg-slate-950/85 backdrop-blur-md border border-white/15 text-left shadow-lg">
-                                    <p class="text-[11px] sm:text-xs text-blue-100 font-medium leading-relaxed" x-text="'&ldquo;' + roles[activeRole].quote + '&rdquo;'">
-                                        "Saudara mahasiswa, coba jelaskan kebaruan metodologi penelitian Anda dan bagaimana mengantisipasi risiko overfitting pada model?"
-                                    </p>
-                                </div>
-                                <div class="flex flex-wrap items-center justify-between text-white text-xs gap-1.5">
-                                    <div class="flex flex-wrap items-center gap-1.5">
-                                        <span class="font-extrabold text-[11px] sm:text-xs text-white" x-text="roles[activeRole].name">VOIC - Dosen Penguji</span>
-                                        <span class="text-[9px] sm:text-[10px] text-blue-300 font-semibold px-1.5 py-0.5 rounded bg-blue-900/60 border border-blue-400/20" x-text="roles[activeRole].tag">Dosen Penguji Utama</span>
-                                    </div>
-                                    <span class="text-[9px] sm:text-[10px] font-mono text-emerald-400" x-text="roles[activeRole].badge">Akademik & Metodologi</span>
-                                </div>
+                            <!-- Subtle Wave Background SVG -->
+                            <div class="mt-3 h-10 sm:h-12 w-full text-blue-500/20 dark:text-blue-400/15">
+                                <svg viewBox="0 0 200 60" class="w-full h-full" fill="currentColor">
+                                    <path d="M0,45 C40,20 80,55 120,30 C160,10 180,40 200,25 L200,60 L0,60 Z" opacity="0.4"/>
+                                    <path d="M0,50 C50,30 90,45 130,20 C170,35 190,15 200,35 L200,60 L0,60 Z" opacity="0.6"/>
+                                </svg>
                             </div>
                         </div>
 
-                        <!-- Pane 2: Candidate Realtime Computer Vision Telemetry View -->
-                        <div class="relative rounded-2xl overflow-hidden bg-slate-950 min-h-[300px] sm:min-h-0 sm:aspect-4/3 flex flex-col justify-between p-3.5 sm:p-4 border border-cyan-500/40 shadow-inner group">
-                            <!-- High Tech Grid Matrix Background -->
-                            <div class="absolute inset-0 bg-[radial-gradient(#1e3a8a_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
-                            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-slate-950/80 pointer-events-none"></div>
-
-                            <!-- Computer Vision Reticle Overlay (Candidate Face HUD) -->
-                            <div class="absolute inset-x-3 inset-y-8 sm:inset-x-10 sm:inset-y-10 border border-cyan-400/30 rounded-2xl pointer-events-none flex flex-col justify-between p-2 overflow-hidden">
-                                <!-- Sweeping Laser Scanline Beam -->
-                                <div class="absolute left-0 right-0 h-16 bg-gradient-to-b from-transparent via-cyan-400/25 to-cyan-400/0 border-b border-cyan-400/70 pointer-events-none animate-scanline-beam"></div>
-
-                                <div class="flex justify-between items-start z-10">
-                                    <div class="w-3.5 h-3.5 border-t-2 border-l-2 border-cyan-400"></div>
-                                    <span class="font-mono text-[8px] sm:text-[9px] font-bold text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/30" x-text="'TATAPAN: ' + roles[activeRole].gaze">TATAPAN: 94.6% OPTIMAL</span>
-                                    <div class="w-3.5 h-3.5 border-t-2 border-r-2 border-cyan-400"></div>
+                        <!-- Column 2: Net Cash Flow style -> Kata Jeda (Filler Words) -->
+                        <div class="relative md:px-6 pt-4 md:pt-0 pb-4 md:pb-0 flex flex-col justify-between overflow-hidden">
+                            <div>
+                                <div class="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kata Jeda (Filler Words)</div>
+                                <div class="mt-1.5 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                    <span x-text="roles[activeRole].filler">0</span> <span class="text-base font-normal text-slate-400 dark:text-slate-500">kata</span>
                                 </div>
-                                <div class="text-center font-mono text-[8px] sm:text-[9px] text-cyan-400/80 tracking-widest uppercase z-10">
-                                    [ FACE RETICLE LOCKED • 30 FPS ]
-                                </div>
-                                <div class="flex justify-between items-end z-10">
-                                    <div class="w-3.5 h-3.5 border-b-2 border-l-2 border-cyan-400"></div>
-                                    <span class="font-mono text-[8px] sm:text-[9px] font-bold text-emerald-300 bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/30" x-text="'PITCH: ' + roles[activeRole].pitch">PITCH: 142 Hz (STABIL)</span>
-                                    <div class="w-3.5 h-3.5 border-b-2 border-r-2 border-cyan-400"></div>
+                                <div class="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                    <span class="px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[10px] sm:text-xs font-bold">▼ -8.9%</span>
+                                    <span class="font-medium text-slate-600 dark:text-slate-400 text-[11px] sm:text-xs">Minim Gumaman</span>
                                 </div>
                             </div>
+                            <!-- Subtle Wave Background SVG -->
+                            <div class="mt-3 h-10 sm:h-12 w-full text-sky-500/20 dark:text-sky-400/15">
+                                <svg viewBox="0 0 200 60" class="w-full h-full" fill="currentColor">
+                                    <path d="M0,35 C30,50 70,25 110,40 C150,20 180,45 200,30 L200,60 L0,60 Z" opacity="0.4"/>
+                                    <path d="M0,40 C40,25 80,45 120,30 C160,40 180,20 200,35 L200,60 L0,60 Z" opacity="0.6"/>
+                                </svg>
+                            </div>
+                        </div>
 
-                            <!-- Top Overlay: Telemetry Metrics Ribbons -->
-                            <div class="relative z-10 flex items-center justify-between gap-2">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[9px] sm:text-[10px] font-bold text-white border border-white/10">
-                                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
-                                    Kamera Kandidat (Anda)
-                                </span>
-                                <div class="flex items-center gap-1.5 font-mono text-[9px] sm:text-[10px] shrink-0">
-                                    <span class="px-1.5 sm:px-2 py-0.5 rounded bg-emerald-900/70 text-emerald-300 border border-emerald-400/30 font-bold" x-text="'Filler: ' + roles[activeRole].filler">Filler: 0</span>
-                                    <span class="px-1.5 sm:px-2 py-0.5 rounded bg-blue-900/70 text-blue-300 border border-blue-400/30 font-bold" x-text="roles[activeRole].wpm">128 WPM</span>
+                        <!-- Column 3: Month Revenue style -> Kecepatan Bicara (Pace) -->
+                        <div class="relative md:pl-6 pt-4 md:pt-0 flex flex-col justify-between overflow-hidden">
+                            <div>
+                                <div class="text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Kecepatan Bicara (Pace)</div>
+                                <div class="mt-1.5 text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-900 dark:text-white" x-text="roles[activeRole].wpm">
+                                    128 WPM
+                                </div>
+                                <div class="mt-1.5 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                    <span class="px-1.5 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 text-[10px] sm:text-xs font-bold">▲ 3.1%</span>
+                                    <span class="font-medium text-slate-600 dark:text-slate-400 text-[11px] sm:text-xs">Ritme Terjaga</span>
                                 </div>
                             </div>
-
-                            <!-- Bottom Overlay: Realtime Speech Transcription Transcript & Score -->
-                            <div class="relative z-10 space-y-2">
-                                <div class="p-2.5 sm:p-3 rounded-xl bg-slate-950/85 backdrop-blur-md border border-cyan-500/30 text-left shadow-lg">
-                                    <div class="flex items-center gap-1 text-[8px] sm:text-[9px] font-mono text-cyan-400 mb-1">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
-                                        TRANSRIPSI AKUSTIK LANGSUNG:
-                                    </div>
-                                    <p class="text-[11px] sm:text-xs text-white font-medium leading-relaxed" x-text="'&ldquo;' + roles[activeRole].candidateReply + '&rdquo;'">
-                                        "Baik Dosen Penguji, untuk mencegah overfitting kami menerapkan teknik Data Augmentation serta Dropout 0.3..."
-                                    </p>
-                                </div>
-                                <div class="flex items-center justify-between text-white text-xs gap-1.5">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="font-bold text-[11px] sm:text-xs">Peserta Ujian</span>
-                                        <span class="text-[9px] sm:text-[10px] text-emerald-300 font-semibold px-1.5 py-0.5 rounded bg-emerald-900/60 border border-emerald-400/20">Kontak Mata: Prima</span>
-                                    </div>
-                                    <span class="font-mono text-[9px] sm:text-[10px] text-slate-400">32-Band DSP</span>
-                                </div>
+                            <!-- Line Chart Curve with Dot SVG -->
+                            <div class="mt-3 h-10 sm:h-12 w-full">
+                                <svg viewBox="0 0 200 60" class="w-full h-full overflow-visible">
+                                    <path d="M0,45 C40,20 70,50 110,30 C150,15 180,40 200,20" fill="none" stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round"/>
+                                    <circle cx="200" cy="20" r="4" fill="#0284c7" stroke="#ffffff" stroke-width="2"/>
+                                </svg>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Conference Action Dock -->
-                    <div class="mt-3 p-3 sm:px-4 sm:py-2.5 rounded-2xl bg-white/70 dark:bg-[#0c1829]/80 border border-slate-200/70 dark:border-white/10 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs shadow-xs backdrop-blur-md">
-                        <div class="flex flex-wrap items-center justify-around sm:justify-start gap-2.5 sm:gap-4 text-[11px] sm:text-xs">
-                            <span class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                                Mikrofon (Web Audio 48kHz)
-                            </span>
-                            <span class="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                                Kamera On-Device 30 FPS
-                            </span>
+                    <!-- EXAMINER SPEECH & VOICE PLAYBACK BAR -->
+                    <div class="mt-8 pt-6 border-t border-slate-200/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <img :src="roles[activeRole].avatar" :alt="roles[activeRole].name" class="w-10 h-10 rounded-full object-cover ring-2 ring-slate-200 dark:ring-white/20 shadow-xs shrink-0">
+                            <div class="text-left text-xs min-w-0">
+                                <div class="font-bold text-slate-900 dark:text-white truncate" x-text="roles[activeRole].name">VOIC - Dosen Penguji</div>
+                                <div class="text-slate-500 dark:text-slate-400 text-[11px] truncate" x-text="roles[activeRole].statusText">Sedang Menguji Metodologi (Live Voice)</div>
+                            </div>
                         </div>
-                        <div class="flex items-center">
+                        
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
                             <a :href="'{{ auth()->check() ? route('practice.create') : route('demo.create') }}?role=' + roles[activeRole].id"
-                               class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-500 hover:to-sky-500 shadow-md shadow-blue-600/30 hover:shadow-blue-600/50 transition-all transform hover:-translate-y-0.5 text-center">
-                                <span x-text="roles[activeRole].cta">Coba Langsung Simulasi di Browser Anda →</span>
+                               class="rounded-full bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 px-5 py-2 text-xs font-semibold shadow-xs hover:shadow-md transition-all flex items-center gap-1.5 w-full sm:w-auto justify-center">
+                                <span x-text="roles[activeRole].cta">Mulai Simulasi Sidang Skripsi →</span>
                             </a>
                         </div>
                     </div>
+
                 </div>
             </div>
+
         </div>
     </section>
 

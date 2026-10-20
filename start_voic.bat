@@ -38,7 +38,7 @@ echo   [OK] Laravel aktif di http://localhost:8000
 
 echo.
 echo [4/4] Membuka Browser Aplikasi VOIC...
-timeout /t 3 /nobreak >nul
+ping 127.0.0.1 -n 4 >nul
 start http://localhost:8000/login
 
 echo.
