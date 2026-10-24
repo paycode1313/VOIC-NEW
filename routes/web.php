@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DemoSessionController;
-use App\Http\Controllers\OnboardingController;
-use App\Http\Controllers\PracticeSessionController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\DemoSessionController;
+use App\Http\Controllers\Web\OnboardingController;
+use App\Http\Controllers\Web\PracticeSessionController;
+use App\Http\Controllers\Web\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
