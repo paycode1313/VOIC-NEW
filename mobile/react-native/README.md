@@ -21,9 +21,9 @@ php artisan serve
 ```
 
 ### 2. Jalankan Aplikasi Mobile (Expo)
-Buka terminal dan masuk ke folder `platforms/mobile`:
+Buka terminal dan masuk ke folder `mobile/react-native`:
 ```bash
-cd platforms/mobile
+cd mobile/react-native
 npm start
 ```
 

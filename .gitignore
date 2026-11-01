@@ -30,4 +30,7 @@ __pycache__/
 /ai_service/audio_outputs/
 
 node_modules/
-platforms/mobile/node_modules/
+mobile/react-native/node_modules/
+mobile/react-native/.expo/
+mobile/flutter/.dart_tool/
+mobile/flutter/build/

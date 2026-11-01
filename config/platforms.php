@@ -3,22 +3,26 @@
 /**
  * Platform Configuration
  *
- * Mendefinisikan paths untuk berbagai platform (web & mobile)
- * Keduanya menggunakan 1 database dan shared logic di app/
+ * Mendefinisikan paths dan namespace untuk platform Web & Mobile.
+ * Keduanya menggunakan 1 database dan shared business logic di app/.
  */
 
 return [
     'web' => [
-        'name' => 'Web Platform',
+        'name' => 'Web Platform (VOIC Monolith)',
         'controllers_namespace' => 'App\\Http\\Controllers\\Web',
-        'views_path' => base_path('platforms/web/resources/views'),
-        'routes_path' => base_path('platforms/web/routes'),
+        'views_path' => resource_path('views'),
+        'routes_path' => base_path('routes/web.php'),
     ],
 
     'mobile' => [
         'name' => 'Mobile API Platform',
-        'controllers_namespace' => 'App\\Http\\Controllers\\Mobile\\Api',
-        'routes_path' => base_path('platforms/mobile/routes'),
+        'controllers_namespace' => 'App\\Http\\Controllers\\Api\\v1',
+        'routes_path' => base_path('routes/api.php'),
+        'apps' => [
+            'flutter' => base_path('mobile/flutter'),
+            'react_native' => base_path('mobile/react-native'),
+        ],
     ],
 
     'shared' => [

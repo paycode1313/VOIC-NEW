@@ -25,9 +25,9 @@ Aplikasi mobile resmi **VOIC (Voice & Optics Intelligent Coach)** yang terhubung
 
 ## 🚀 Cara Menjalankan
 
-### 1. Masuk ke Direktori Mobile
+### 1. Masuk ke Direktori Flutter Mobile
 ```bash
-cd platforms/mobile
+cd mobile/flutter
 ```
 
 ### 2. Unduh Paket Dependensi
