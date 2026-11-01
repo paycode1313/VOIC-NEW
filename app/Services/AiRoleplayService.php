@@ -47,19 +47,19 @@ class AiRoleplayService
             if ($hasContext) {
                 $greetings = [
                     'dosen_penguji' => "Welcome to your oral examination room. I have reviewed your research abstract regarding '{$shortSnippet}'. Please introduce yourself briefly, and walk me through the core motivation and primary research problem driving your work.",
-                    'hrd' => 'Hello and welcome! It is a real pleasure to meet you today. Take a comfortable breath, introduce yourself, and share what strongly motivates you to pursue this role.',
+                    'hrd' => 'Hello and welcome! It is truly wonderful to connect with you today. Feel completely at ease, share a little about your journey, and tell me what excites you most about this opportunity.',
                     'investor' => "Hello, welcome to today's venture pitch session. I reviewed your teaser premise regarding '{$shortSnippet}'. When you are ready, introduce yourself and outline the urgent market problem your startup is positioned to solve.",
                 ];
             } elseif ($hasCustomTopic) {
                 $greetings = [
                     'dosen_penguji' => "Welcome to your thesis examination session focusing on '{$topic}'. Please introduce yourself briefly, and walk me through the primary research problem and methodology you have formulated.",
-                    'hrd' => "Hello, welcome to our interview session today for the '{$topic}' position! It is wonderful to connect with you. When you are ready, please share your background and what excites you most about this role.",
+                    'hrd' => "Hello, welcome to our interview session today for the '{$topic}' position! It is wonderful to connect with you. When you are ready, please share a bit about yourself and what motivates you to pursue this role.",
                     'investor' => "Hello, welcome to today's pitch session on '{$topic}'. Let us begin: introduce yourself and explain the core market friction you are solving along with your value proposition.",
                 ];
             } else {
                 $greetings = [
                     'dosen_penguji' => 'Welcome to your thesis defense examination room. Please introduce yourself briefly, and walk me through your core research motivation, problem statement, and primary methodology.',
-                    'hrd' => 'Hello, welcome to our interview session today! It is a real pleasure to connect with you. Take a comfortable breath, tell me about your journey, and share your strongest motivation for joining us.',
+                    'hrd' => 'Hello and welcome! It is truly a pleasure to connect with you today. Feel free to relax, tell me about your background, and share what makes you most passionate about joining us.',
                     'investor' => "Hello and welcome to today's pitch session. When you are ready, introduce yourself and walk me through the core problem in your target market and how your product addresses it.",
                 ];
             }
@@ -68,19 +68,19 @@ class AiRoleplayService
             if ($hasContext) {
                 $greetings = [
                     'dosen_penguji' => "Selamat datang di ruang sidang tugas akhir. Saya telah membaca abstrak penelitian Anda mengenai '{$shortSnippet}'. Silakan perkenalkan diri Anda secara singkat, dan jelaskan motivasi utama serta rumusan masalah yang mendasari penelitian ini.",
-                    'hrd' => 'Halo, selamat datang di sesi wawancara hari ini! Senang sekali bisa bertemu dengan Anda. Tarik napas santai, silakan perkenalkan diri Anda dan ceritakan apa motivasi terbesar Anda melamar di posisi ini.',
+                    'hrd' => 'Halo, selamat datang di sesi wawancara hari ini! Senang sekali bisa terhubung dengan Anda. Suasananya santai saja ya. Boleh ceritakan sedikit tentang diri Anda dan hal apa yang paling membuat Anda tertarik melamar di posisi ini?',
                     'investor' => "Halo, salam kenal. Selamat datang di sesi pitching hari ini. Saya telah melihat ringkasan materi bisnis Anda mengenai '{$shortSnippet}'. Silakan mulai perkenalan singkat dan paparkan problem mendesak di pasar serta solusi yang Anda tawarkan.",
                 ];
             } elseif ($hasCustomTopic) {
                 $greetings = [
                     'dosen_penguji' => "Selamat datang di ruang sidang tugas akhir dengan topik '{$topic}'. Silakan perkenalkan diri Anda secara singkat, dan jelaskan apa rumusan masalah serta metode utama yang Anda kembangkan dalam penelitian ini.",
-                    'hrd' => "Halo, selamat datang di sesi wawancara untuk posisi '{$topic}'! Senang sekali bisa terhubung dengan Anda. Boleh ceritakan latar belakang singkat Anda dan apa motivasi utama Anda memilih posisi ini?",
+                    'hrd' => "Halo, selamat datang di sesi wawancara untuk posisi '{$topic}'! Senang sekali bisa terhubung dengan Anda. Suasananya rileks saja ya. Boleh ceritakan latar belakang singkat Anda dan apa motivasi utama Anda memilih posisi ini?",
                     'investor' => "Halo, salam kenal. Selamat datang di sesi pitching startup bidang '{$topic}'. Waktu Anda berjalan, silakan perkenalkan diri dan jelaskan problem riil di pasar serta keunggulan solusi produk yang Anda bangun.",
                 ];
             } else {
                 $greetings = [
                     'dosen_penguji' => 'Selamat datang di ruang sidang tugas akhir. Silakan perkenalkan diri Anda secara singkat, dan jelaskan apa rumusan masalah serta metodologi utama yang menjadi fokus penelitian Anda.',
-                    'hrd' => 'Halo, selamat datang di sesi wawancara hari ini! Senang sekali bisa bertemu dengan Anda. Tarik napas santai, boleh ceritakan latar belakang Anda dan apa motivasi terbesar Anda ingin bergabung di tim kami?',
+                    'hrd' => 'Halo, selamat datang di sesi wawancara hari ini! Senang sekali bisa terhubung dengan Anda. Suasananya santai saja ya. Boleh ceritakan sedikit tentang diri Anda dan apa motivasi terbesar Anda ingin bergabung di tim kami?',
                     'investor' => 'Halo, salam kenal. Selamat datang di sesi pitching hari ini. Waktu Anda berjalan, silakan mulai perkenalan singkat dan paparkan problem mendesak apa di pasar yang ingin diselesaikan oleh produk Anda.',
                 ];
             }
@@ -375,14 +375,14 @@ class AiRoleplayService
                         'I appreciate your explanation. Could you highlight for the examination committee: where does the distinct, original novelty of your research lie when contrasted against seminal prior literature?',
                     ]),
                     'hrd' => $hasTeam ? [
-                        'Thank you for sharing that experience, fostering healthy team synergy is a core value here. Could you walk me through a specific situation where interpersonal friction occurred, and how you personally de-escalated it to achieve consensus?',
-                        'I appreciate that teamwork example. How do you approach communication when you need to align colleagues or leaders who initially express strong skepticism toward your proposed direction?',
+                        'That is wonderful to hear, fostering healthy team synergy is a core value here. When differing viewpoints or friction arose, how did you personally navigate the team dynamic to align everyone smoothly?',
+                        'I really appreciate that teamwork mindset. When you needed to get buy-in from colleagues or leaders who were initially hesitant, what communication approach felt most natural and effective for you?',
                     ] : ($hasMetric ? [
-                        'That is a commendable achievement. Behind that milestone, what was the single most difficult roadblock that threatened progress, and what concrete steps did you take to overcome it?',
-                        'Thank you for detailing that result. How do you maintain mental clarity, emotional balance, and prioritization when unexpected blockers arise under demanding deadlines?',
+                        'That milestone is a huge achievement, your proactive initiative really stands out! Behind that success, what was the most demanding challenge you faced, and how did you keep your motivation positive?',
+                        'Thank you for that insightful reflection. How do you keep a clear head and organize priorities when multiple tight deadlines compete for your attention?',
                     ] : [
-                        'Thank you for that insight. Could you walk me through the very first concrete step you took the moment you realized this problem demanded urgent intervention?',
-                        'I appreciate your reflection. Looking back with your current experience, what key strategic decision would you execute differently to produce an even greater impact?',
+                        'That sounds like a genuinely valuable experience. When that operational challenge first surfaced, what was the immediate first step you discussed with your team?',
+                        'I appreciate your honesty and self-awareness. Looking back at that journey with your current experience, what is one thing you would do differently to create an even stronger impact?',
                     ]),
                     'investor' => $hasMetric ? [
                         'Thank you, those top-line metrics look engaging. Diving deeper into the unit economics: what is your current monthly burn rate and Customer Acquisition Cost required to sustain that growth velocity?',
@@ -406,8 +406,8 @@ class AiRoleplayService
                         'Penjelasan Saudara saya pahami. Namun dewan penguji ingin menelisik potensi kerentanan metodologi: jika dataset uji Saudara dicurigai memiliki bias distribusi tersembunyi, bukti empiris apa yang menjamin temuan penelitian ini tetap valid secara ilmiah?',
                     ],
                     'hrd' => [
-                        'Terima kasih, pemikiran Anda menunjukkan inisiatif yang baik. Sekarang mari kita uji dalam situasi tekanan tinggi: bayangkan seorang rekan kunci mengundurkan diri mendadak 3 hari sebelum jadwal rilis sementara atasan menolak perpanjangan waktu. Langkah operasional konkret apa yang pertama kali Anda eksekusi?',
-                        'Saya menghargai keterbukaan Anda. Bagaimana jika Anda berada di situasi saat pimpinan mengevaluasi keras kegagalan sebuah fitur di depan tim, padahal kendala tersebut berasal dari divisi lain: bagaimana cara Anda mengendalikan emosi dan meresponsnya secara profesional?',
+                        'Terima kasih, caramu berpikir menunjukkan kedewasaan kerja yang sangat baik. Nah, bayangkan seorang rekan kunci mendadak harus cuti darurat 3 hari sebelum jadwal rilis sementara atasan meminta hasil tetap tepat waktu. Tindakan manusiawi dan taktis apa yang pertama kali kamu ambil untuk menolong tim?',
+                        'Saya sangat menghargai keterbukaan Anda. Bagaimana jika Anda berada di situasi saat pimpinan mengevaluasi keras sebuah kendala sistem di depan banyak orang, padahal penyebabnya dari divisi lain: bagaimana caramu mengendalikan emosi dan meresponsnya secara bijak?',
                     ],
                     'investor' => [
                         'Visi produk Anda menarik. Namun mari kita bicara soal defensibility bisnis: jika raksasa teknologi dengan modal triliunan meluncurkan fitur yang serupa minggu depan secara cuma-cuma, alasan kuat apa yang membuat pelanggan tetap setia membayar solusi Anda? Apa unfair advantage Anda?',
@@ -429,14 +429,14 @@ class AiRoleplayService
                         'Poin yang Saudara sampaikan cukup jelas. Boleh dipertegas kepada dewan penguji: di mana letak kebaruan atau novelty orisinal dari penelitian Saudara jika dikomparasikan dengan studi-studi terdahulu?',
                     ]),
                     'hrd' => $hasTeam ? [
-                        'Bagus sekali, kemampuan berkolaborasi dan menjaga dinamika tim adalah nilai yang sangat kami cari di sini. Boleh ceritakan satu situasi nyata saat terjadi perbedaan pandangan di tim Anda, dan bagaimana langkah konkret Anda menengahi hingga tercapai kesepakatan?',
-                        'Senang mendengar cerita kerja sama tim tersebut. Bagaimana pendekatan komunikasi Anda saat harus meyakinkan rekan kerja atau atasan yang awalnya sempat ragu terhadap usulan yang Anda sampaikan?',
+                        'Wah, luar biasa sekali. Kemampuan menjaga kekompakan dan dinamika tim itu modal yang sangat berharga di budaya kami. Nah, waktu itu sempat ada perbedaan pandangan nggak di antara rekan tim, dan bagaimana caramu menyelaraskannya dengan kepala dingin?',
+                        'Senang sekali mendengar cerita kerja sama tim tersebut. Waktu kamu perlu meyakinkan rekan kerja atau atasan yang awalnya sempat ragu, pendekatan komunikasi apa yang paling nyaman kamu lakukan?',
                     ] : ($hasMetric ? [
-                        'Pencapaian angka tersebut merupakan prestasi yang sangat baik. Di balik keberhasilan itu, apa kendala paling menantang yang sempat dihadapi, dan bagaimana proses Anda mengatasinya hingga target tercapai?',
-                        'Terima kasih atas ceritanya yang terstruktur. Bagaimana cara Anda menjaga ketenangan dan menentukan prioritas saat dihadapkan pada tenggat waktu yang ketat dan ekspektasi yang tinggi?',
+                        'Pencapaian angka tersebut merupakan prestasi yang sangat membanggakan! Di balik keberhasilan itu, momen apa yang paling bikin kamu tertantang dan bagaimana kamu menjaga motivasimu tetap positif?',
+                        'Terima kasih atas ceritanya yang sangat menarik. Bagaimana cara kamu menjaga kejernihan pikiran dan menentukan prioritas saat dihadapkan pada tenggat waktu yang padat?',
                     ] : [
-                        'Menarik sekali mendengar pengalaman tersebut. Boleh ceritakan langkah konkret pertama yang langsung Anda ambil saat pertama kali menyadari ada tantangan operasional yang butuh penanganan segera?',
-                        'Terima kasih atas refleksinya yang mendalam. Jika Anda diberi kesempatan mengulang situasi tersebut dengan pengalaman Anda hari ini, keputusan atau pendekatan apa yang akan Anda lakukan secara berbeda agar hasilnya lebih optimal?',
+                        'Menarik sekali mendengar pengalaman tersebut, inisiatifmu patut diapresiasi! Waktu masalah itu pertama kali muncul, langkah awal apa yang langsung kamu diskusikan bareng rekan kerja atau atasan?',
+                        'Terima kasih atas refleksinya yang mendalam. Kalau melihat kembali proses tersebut dengan kedewasaanmu hari ini, ada nggak satu keputusan yang ingin kamu lakukan secara berbeda agar hasilnya lebih optimal?',
                     ]),
                     'investor' => $hasMetric ? [
                         'Terima kasih, indikator traksi yang Anda paparkan terlihat menjanjikan. Membedah lebih dalam ke unit economics: berapa burn rate bulanan dan Customer Acquisition Cost (CAC) riil yang dibutuhkan untuk menopang tren pertumbuhan tersebut?',
@@ -912,7 +912,7 @@ class AiRoleplayService
     {
         if (str_contains($rawPrompt, 'DILARANG KERAS menggunakan kalimat pembuka klise')) {
             return match ($roleType) {
-                'hrd' => "Anda adalah {$roleName}, AI Talent Acquisition Lead profesional yang ramah, hangat, komunikatif, dan mengadopsi protokol wawancara kerja lisan ala GoPrep. Terapkan Active Listening: sambut jawaban kandidat dengan apresiatif, lalu gali bukti perilaku nyata berbasis metode STAR (Situation, Task, Action, Result) dalam 2-3 kalimat lisan yang mengalir santai namun berbobot.",
+                'hrd' => "Anda adalah {$roleName}, AI Talent Acquisition Lead profesional yang hangat, empatik, tenang, dan sangat manusiawi ala GoPrep. Terapkan Active Listening: sambut jawaban kandidat dengan tulus dan bersahabat, hindari template kaku buku teks, lalu gali dinamika kerja sama tim, cara komunikasi, atau pembelajaran pribadi secara hangat dalam 2-3 kalimat lisan santai.",
                 'investor' => "Anda adalah {$roleName}, AI Partner Venture Capital dan juri pitching startup yang tajam, komunikatif, dan mengadopsi protokol pitching lisan ala GoPrep. Terapkan Active Listening: akui inovasi dan visi founder, lalu arahkan diskusi secara lugas dan elegan untuk menguji unit economics riil, traksi pasar, dan keunggulan kompetitif dalam 2-3 kalimat lisan.",
                 default => "Anda adalah {$roleName}, AI penguji utama sidang skripsi yang berwibawa, objektif, dan mengadopsi protokol penguji lisan ala GoPrep. Terapkan Active Listening: selalu akui dan apresiasi pemaparan mahasiswa terlebih dahulu, lalu lanjutkan dengan jembatan percakapan alami menuju 1 pertanyaan uji metodologis yang tajam dan konstruktif dalam 2-3 kalimat lisan.",
             };

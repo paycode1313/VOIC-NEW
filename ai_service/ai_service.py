@@ -151,7 +151,7 @@ FEW_SHOT_ID = {
         },
         {
             "role": "assistant",
-            "content": "Bagus sekali, komitmen terhadap ketepatan waktu adalah kualitas yang sangat kami cari di tim ini. Boleh Anda ceritakan satu situasi nyata saat rencana kerja tim Anda menghadapi hambatan tak terduga, dan bagaimana langkah konkret Anda mengatasinya?",
+            "content": "Wah, inisiatif yang luar biasa. Menjaga komitmen ritme tim di bawah deadline ketat memang butuh ketenangan tersendiri. Nah, waktu itu sempat ada perbedaan pandangan nggak di antara rekan kerja, dan bagaimana caramu menyelaraskannya?",
         },
         {
             "role": "user",
@@ -159,7 +159,7 @@ FEW_SHOT_ID = {
         },
         {
             "role": "assistant",
-            "content": "Senang mendengarnya, fleksibilitas itu modal penting di lingkungan kerja yang dinamis. Bisa berikan satu contoh konkret saat Anda pertama kali dilempar ke proyek dengan teknologi asing, apa capaian nyata yang berhasil Anda selesaikan di dua minggu pertama?",
+            "content": "Senang sekali mendengarnya, adaptabilitas cepat itu modal yang sangat berharga di tim kami. Dari pengalaman tersebut, momen apa yang paling bikin kamu tertantang dan tindakan spesifik apa yang kamu ambil di minggu-minggu awal?",
         },
     ],
     "dosen_penguji": [
@@ -208,7 +208,7 @@ FEW_SHOT_EN = {
         },
         {
             "role": "assistant",
-            "content": "Thank you, taking ownership of quality is a vital attribute for our team. Could you walk me through a specific instance when an unexpected bottleneck threatened your release, and how you personally resolved it?",
+            "content": "That is wonderful to hear, taking proactive ownership is something we truly value here. When unexpected pushback or bottlenecks came up, how did you personally navigate the team's dynamic to resolve it smoothly?",
         },
         {
             "role": "user",
@@ -216,7 +216,7 @@ FEW_SHOT_EN = {
         },
         {
             "role": "assistant",
-            "content": "That is wonderful to hear, adaptability is essential in our fast-paced environment. Could you share one concrete situation where you were thrown into an unfamiliar tech stack and what you managed to deliver in your first two weeks?",
+            "content": "I appreciate that authentic mindset, adaptability is such a crucial superpower in our culture. Looking back at that journey, what was the steepest learning curve you encountered, and what concrete lesson stayed with you?",
         },
     ],
     "dosen_penguji": [
@@ -375,9 +375,10 @@ async def process_chat(req: ChatRequest):
     if is_en:
         persona_map = {
             "hrd": (
-                f"You are {req.role_name}, a Senior HR Interviewer conducting a professional speaking evaluation (GoPrep style). "
-                "Personality: warm, encouraging, engaging, and practicing active listening. "
-                "You validate the candidate's remarks first, then smoothly probe for real behavioral evidence (STAR method) in an authentic, conversational voice."
+                f"You are {req.role_name}, a friendly, emotionally intelligent Senior Talent Acquisition Lead conducting an interview (GoPrep style). "
+                "Personality: deeply empathetic, warm, natural, and conversational with high emotional intelligence. "
+                "Avoid stiff textbook formulas like 'Can you tell me a concrete situation...'. "
+                "Instead, genuinely appreciate their story, and naturally probe into team communication, conflict resolution, or personal resilience in 2-3 calm spoken sentences."
             ),
             "dosen_penguji": (
                 f"You are {req.role_name}, an Esteemed Thesis Examiner conducting an oral examination (GoPrep style). "
@@ -408,9 +409,10 @@ async def process_chat(req: ChatRequest):
     else:
         persona_map = {
             "hrd": (
-                f"Kamu adalah {req.role_name}, Senior HR Recruiter profesional yang sedang melakukan sesi interview kerja mendalam (gaya GoPrep). "
-                "Kepribadianmu: hangat, ramah, komunikatif, luwes, dan menerapkan teknik mendengarkan aktif (active listening). "
-                "Kamu selalu menyambut jawaban kandidat dengan apresiatif, lalu menggali kisah nyata di balik pengalaman kandidat dengan alur mengalir tanpa menghakimi."
+                f"Kamu adalah {req.role_name}, Talent Acquisition Lead profesional yang hangat, bersahabat, empatik, dan sangat manusiawi (gaya GoPrep). "
+                "Kepribadianmu: tenang, ramah, dewasa, dan cerdas membaca dinamika emosi dan kerja sama tim. "
+                "JANGAN gunakan template kaku seperti buku teks (misalnya 'Boleh ceritakan satu situasi nyata saat...'). "
+                "Bicaralah mengalir selayaknya HR tech modern: apresiasi usaha kandidat dengan tulus, lalu tanyakan dinamika tim, cara menyatukan perbedaan pendapat, atau pembelajaran pribadi secara hangat dalam 2-3 kalimat lisan yang rileks."
             ),
             "dosen_penguji": (
                 f"Kamu adalah {req.role_name}, Dosen Penguji Sidang Skripsi senior yang berwibawa, bijaksana, dan adil (gaya GoPrep). "
@@ -659,14 +661,14 @@ async def generate_tts_audio(text: str, role_type: str, language: str = "id") ->
             if role_type == "dosen_penguji":
                 voice, pitch, rate = "en-US-GuyNeural", "-5Hz", "-5%"
             elif role_type == "hrd":
-                voice, pitch, rate = "en-US-JennyNeural", "+3Hz", "+5%"
+                voice, pitch, rate = "en-US-JennyNeural", "+0Hz", "-4%"
             else:
                 voice, pitch, rate = "en-US-BrianNeural", "+0Hz", "+12%"
         else:
             if role_type == "dosen_penguji":
                 voice, pitch, rate = "id-ID-ArdiNeural", "-4Hz", "-4%"
             elif role_type == "hrd":
-                voice, pitch, rate = "id-ID-GadisNeural", "+3Hz", "+6%"
+                voice, pitch, rate = "id-ID-GadisNeural", "-1Hz", "-5%"
             else:
                 voice, pitch, rate = "id-ID-ArdiNeural", "-1Hz", "+12%"
 
@@ -696,9 +698,9 @@ def generate_natural_fallback(req: ChatRequest) -> str:
     if is_en:
         fallbacks = {
             "hrd": [
-                "Oke, fair enough. But can you tell me about one real situation where that completely blew up, and what specific action you took to fix it?",
-                "Hmm, look, that sounds neat in theory. When you actually executed that on the ground, what was the biggest pushback you faced from your team?",
-                "Right, got it. How did you personally measure the success of that effort, and what did you learn when things didn't go according to plan?",
+                "That sounds like a genuinely valuable experience. In that situation, how did you maintain clear communication and alignment across your team?",
+                "I appreciate you sharing that journey. Looking back, what was the biggest takeaway that fundamentally shaped the way you approach team challenges today?",
+                "That is a compelling perspective. When colleagues or leaders have contrasting opinions, how do you navigate that dynamic to build consensus?",
             ],
             "dosen_penguji": [
                 "Wait a second, cut out the generic theoretical talk. What is the single biggest empirical vulnerability in that methodology, and why should we trust your conclusions?",
@@ -714,9 +716,9 @@ def generate_natural_fallback(req: ChatRequest) -> str:
     else:
         fallbacks = {
             "hrd": [
-                "Oke, paham. Tapi boleh ceritain satu contoh nyata pas kamu ngadepin masalah itu langsung, dan apa tindakan spesifik yang kamu ambil?",
-                "Hmm, kedengarannya meyakinkan di awal. Tapi pas situasi di lapangan nggak sesuai rencana kamu, gimana cara kamu beresin kekacauan itu tanpa panik?",
-                "Wah, bentar deh, klaim kamu menarik banget. Waktu eksekusi hal itu, apa kendala paling berat yang pernah bikin kamu hampir nyerah dan gimana solusinya?",
+                "Wah, inisiatif yang luar biasa. Di tengah situasi seperti itu, bagaimana caramu menjaga koordinasi dan komunikasi dengan rekan tim agar tetap solid?",
+                "Paham sekali, itu tentu momen yang cukup menantang. Dari pengalaman itu, hal apa yang paling mengubah caramu menyelesaikan masalah sampai hari ini?",
+                "Menarik sekali ceritamu. Saat ada rekan kerja atau atasan yang berbeda sudut pandang, pendekatan komunikasi apa yang paling nyaman kamu lakukan untuk mencari titik temu?",
             ],
             "dosen_penguji": [
                 "Tunggu dulu, penjelasan kamu tadi masih terlalu berputar-putar di teori umum. Coba tunjukin kelemahan paling fatal dari metodologi yang kamu pilih itu apa?",

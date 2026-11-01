@@ -1403,11 +1403,11 @@
                     ut.lang = this.simulationLanguage === 'en' ? 'en-US' : 'id-ID';
 
                     if (roleType === 'dosen_penguji') {
-                        ut.pitch = 0.80; // Bariton berat Dosen Killer
+                        ut.pitch = 0.80; // Bariton berat akademis
                         ut.rate = 0.88;  // Tempo terukur & berwibawa
                     } else if (roleType === 'hrd') {
-                        ut.pitch = 1.12; // Nada ramah & hangat HRD
-                        ut.rate = 1.02;  // Tempo santun mengalir
+                        ut.pitch = 0.96; // Nada hangat, dewasa, natural & empatik (tidak melengking)
+                        ut.rate = 0.88;  // Tempo tenang, ramah & artikulatif (nyaman di telinga)
                     } else { // investor
                         ut.pitch = 0.96; // Nada tegas percaya diri
                         ut.rate = 1.16;  // Tempo cepat pitch bisnis
@@ -2916,9 +2916,9 @@
                         utterance.pitch = 0.68;
                         utterance.rate = 0.88;
                     } else if (roleType === 'hrd') {
-                        // Suara VOIC - HRD: nada hangat, sopan & empatik, tempo natural
-                        utterance.pitch = 1.15;
-                        utterance.rate = 1.02;
+                        // Suara VOIC - HRD: nada hangat, dewasa, empatik & santai (tidak cempreng/melengking)
+                        utterance.pitch = 0.96;
+                        utterance.rate = 0.88;
                     } else {
                         // Suara VOIC - Investor: tegas, dinamis, to-the-point, energetik
                         utterance.pitch = 0.80;
