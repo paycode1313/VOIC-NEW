@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Models\PracticeSession;
 use App\Services\AiRoleplayService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
