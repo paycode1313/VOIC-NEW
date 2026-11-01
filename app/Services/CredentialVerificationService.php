@@ -168,4 +168,28 @@ class CredentialVerificationService
             ],
         ];
     }
+
+    /**
+     * Get comprehensive verification payload including URL and serial.
+     *
+     * @return array{
+     *     serial: string,
+     *     verification_url: string,
+     *     qr_data: string,
+     *     benchmark: array<string, mixed>
+     * }
+     */
+    public function getVerificationPayload(PracticeSession $session): array
+    {
+        $serial = $this->generateCertificateSerial($session);
+        $url = route('practice.verify', $session);
+        $benchmark = $this->getBenchmarkData($session);
+
+        return [
+            'serial' => $serial,
+            'verification_url' => $url,
+            'qr_data' => $url,
+            'benchmark' => $benchmark,
+        ];
+    }
 }

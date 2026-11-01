@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "VOIC Mobile",
+    "slug": "voic-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#070B14",
+    "splash": {
+      "backgroundColor": "#070B14",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "VOIC memerlukan akses kamera untuk menganalisis kontak mata dan ekspresi wajah saat simulasi latihan."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#070B14"
+      },
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-status-bar",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Izinkan VOIC mengakses kamera untuk memantau kontak mata dan ketenangan gestur Anda."
+        }
+      ]
+    ]
+  }
+}
