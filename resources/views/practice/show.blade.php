@@ -2,14 +2,14 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-xs font-bold text-emerald-400 mb-1.5 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                     Sesi Latihan Selesai • Laporan Evaluasi Performa
                 </div>
-                <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                     {{ __('Laporan Evaluasi Performa Interaktif') }}
                 </h2>
-                <p class="text-sm text-slate-500 dark:text-slate-400">
+                <p class="text-sm text-slate-500 dark:text-slate-400 font-medium">
                     Sesi #{{ $session->id }} • {{ $session->aiRole ? $session->aiRole->name : $session->scenario_type }} • {{ $session->created_at->format('d M Y, H:i') }} WIB
                 </p>
             </div>
@@ -17,7 +17,7 @@
             <div class="flex flex-wrap items-center gap-2 sm:gap-3 print:hidden">
                 <button type="button"
                         @click="showShareCardModal = true"
-                        class="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 rounded-xl hover:bg-blue-100 transition shadow-xs cursor-pointer">
+                        class="inline-flex items-center px-4 py-2.5 text-xs sm:text-sm font-bold text-blue-700 dark:text-blue-200 bg-white dark:bg-[#141d33]/90 hover:bg-blue-50 dark:hover:bg-[#1a2542] border border-blue-200 dark:border-blue-500/60 rounded-xl transition shadow-xs dark:shadow-[0_0_18px_rgba(59,130,246,0.35)] cursor-pointer active:scale-95">
                     <svg class="w-4 h-4 me-1.5 sm:me-2 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                     </svg>
@@ -25,8 +25,8 @@
                 </button>
                 <button type="button"
                         onclick="window.print()"
-                        class="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 bg-white dark:bg-[#0c182b] border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-xs cursor-pointer">
-                    <svg class="w-4 h-4 me-1.5 sm:me-2 text-blue-600 dark:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="inline-flex items-center px-4 py-2.5 text-xs sm:text-sm font-bold text-teal-800 dark:text-teal-200 bg-white dark:bg-[#0e2730]/90 hover:bg-teal-50 dark:hover:bg-[#12333f] border border-teal-200 dark:border-teal-400/60 rounded-xl transition shadow-xs dark:shadow-[0_0_18px_rgba(20,184,166,0.35)] cursor-pointer active:scale-95">
+                    <svg class="w-4 h-4 me-1.5 sm:me-2 text-teal-600 dark:text-teal-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                     </svg>
                     <span>Cetak PDF</span>
@@ -36,24 +36,24 @@
                     <form method="POST" action="{{ route('demo.reset') }}" class="inline">
                         @csrf
                         <button type="submit"
-                                class="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-emerald-950 bg-emerald-400 hover:bg-emerald-300 rounded-xl transition shadow-xs cursor-pointer">
+                                class="inline-flex items-center px-4 py-2.5 text-xs sm:text-sm font-black text-slate-950 bg-[#22c55e] hover:bg-[#16a34a] rounded-xl transition shadow-[0_0_22px_rgba(34,197,94,0.45)] cursor-pointer active:scale-95">
                             🚀 Sesi Baru
                         </button>
                     </form>
                     <a href="{{ route('demo.create') }}"
-                       class="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 rounded-xl shadow-md transition">
+                       class="inline-flex items-center px-4 py-2.5 text-xs sm:text-sm font-black text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl shadow-[0_0_25px_rgba(99,102,241,0.55)] transition active:scale-95">
                         Coba Lagi
                     </a>
                 @else
                     <a href="{{ route('dashboard') }}"
-                       class="inline-flex items-center px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-[#0c182b] border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-xs">
+                       class="inline-flex items-center px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-[#0c182b] border border-slate-300 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-750 transition shadow-xs">
                         <svg class="w-4 h-4 me-1.5 sm:me-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                         </svg>
                         Dashboard
                     </a>
                     <a href="{{ route('practice.create') }}"
-                       class="inline-flex items-center px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 rounded-xl shadow-md shadow-blue-600/25 transition transform hover:-translate-y-0.5">
+                       class="inline-flex items-center px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl shadow-md shadow-blue-600/30 transition transform hover:-translate-y-0.5">
                         <svg class="w-4 h-4 me-1.5 sm:me-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                         </svg>
@@ -115,10 +115,20 @@
             .print-official-footer {
                 display: none !important;
             }
+            .dark header {
+                background: transparent !important;
+                border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+            }
         }
     </style>
 
-    <div class="py-8" x-data="{ showMethodologyModal: false, showShareCardModal: false, copiedShare: false }">
+    <!-- Animated Cybernetic Flowing Background Waves & Particles ("dan backgrounya ada yang gerak gerak gitu") -->
+    <canvas id="cyberFlowCanvas"
+            class="fixed inset-0 pointer-events-none -z-10 w-full h-full"
+            style="transform: translate3d(0,0,0); will-change: transform;">
+    </canvas>
+
+    <div class="py-8 relative z-10" x-data="{ showMethodologyModal: false, showShareCardModal: false, copiedShare: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
             <!-- OFFICIAL PRINT EXECUTIVE CERTIFICATE HEADER -->
@@ -153,19 +163,20 @@
             </div>
 
             @if($isDemo ?? false)
-                <!-- Innofest Booth Quick Action Banner -->
-                <div class="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/90 via-navy-900 to-navy-950 border border-emerald-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-5 print:hidden">
+                <!-- Innofest Booth Quick Action Banner with Multi-Tone Gradient Cyber Border -->
+                <div class="p-5 sm:p-6 rounded-3xl relative overflow-hidden backdrop-blur-xl flex flex-col sm:flex-row items-center justify-between gap-5 print:hidden shadow-2xl transition hover:border-emerald-400/60"
+                     style="background: linear-gradient(rgba(9, 16, 29, 0.92), rgba(9, 16, 29, 0.92)) padding-box, linear-gradient(135deg, #10b981 0%, #06b6d4 50%, #8b5cf6 100%) border-box; border: 1.5px solid transparent; box-shadow: 0 0 28px rgba(16, 185, 129, 0.16), 0 0 36px rgba(139, 92, 246, 0.16);">
                     <div class="flex items-center gap-4 text-center sm:text-left">
-                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/10">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/60 text-emerald-400 flex items-center justify-center shrink-0 shadow-[0_0_18px_rgba(16,185,129,0.35)]">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
                             </svg>
                         </div>
                         <div>
-                            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-1 border border-emerald-500/20">
+                            <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-black uppercase tracking-wider mb-1.5 border border-emerald-400/40 shadow-[0_0_10px_rgba(16,185,129,0.25)]">
                                 ⚡ Sesi Uji Coba Tamu
                             </div>
-                            <h3 class="text-base font-extrabold text-white tracking-tight">
+                            <h3 class="text-base sm:text-lg font-black text-white tracking-tight">
                                 Scan QR Code di Halaman Ini untuk Buka Sertifikat di Ponsel!
                             </h3>
                             <p class="text-xs text-slate-300">
@@ -176,11 +187,11 @@
                     <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto shrink-0">
                         <form method="POST" action="{{ route('demo.reset') }}" class="w-full sm:w-auto">
                             @csrf
-                            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 transition shadow-md shadow-emerald-400/20 cursor-pointer">
+                            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-black text-slate-950 bg-[#2dd4bf] hover:bg-[#14b8a6] transition shadow-[0_0_20px_rgba(45,212,191,0.45)] cursor-pointer active:scale-95">
                                 🚀 Mulai Sesi Baru
                             </button>
                         </form>
-                        <a href="{{ route('register') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-md shadow-blue-600/20">
+                        <a href="{{ route('register') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] transition shadow-[0_0_20px_rgba(37,99,235,0.45)] cursor-pointer active:scale-95">
                             Daftar & Simpan Sesi
                         </a>
                     </div>
@@ -223,15 +234,15 @@
                 </p>
             </div>
 
-            <!-- Hero Score Banner -->
-            <div class="bg-white dark:bg-[#0c182b] rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-100 dark:border-slate-700/60 relative overflow-hidden">
+            <!-- Hero Score Banner with Cyber Neon Tiles & Radial Gauge Ring -->
+            <div class="bg-white/95 dark:bg-[#0c1424]/90 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-xl dark:shadow-2xl border border-slate-200 dark:border-slate-700/60 relative overflow-hidden">
                 <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
                     <div class="space-y-3 text-center lg:text-left">
                         <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2">
-                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider {{ $session->overall_score >= 80 ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : ($session->overall_score >= 65 ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800' : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800') }}">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider {{ $session->overall_score >= 80 ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/50 dark:shadow-[0_0_12px_rgba(16,185,129,0.3)]' : ($session->overall_score >= 65 ? 'bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/50 dark:shadow-[0_0_12px_rgba(245,158,11,0.3)]' : 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/60 dark:shadow-[0_0_12px_rgba(244,63,94,0.3)]') }}">
                                 <span>Predikat: {{ $session->overall_score >= 85 ? 'Sangat Baik (Distinction)' : ($session->overall_score >= 70 ? 'Cukup Baik (Pass)' : 'Perlu Peningkatan') }}</span>
                             </div>
-                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-navy-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-navy-800">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/60 dark:shadow-[0_0_12px_rgba(59,130,246,0.25)]">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                                 </svg>
@@ -239,7 +250,7 @@
                             </span>
                             <button type="button"
                                     @click="showMethodologyModal = true"
-                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer print:hidden">
+                                    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600/60 hover:border-cyan-400/50 dark:shadow-[0_0_10px_rgba(148,163,184,0.15)] transition cursor-pointer print:hidden">
                                 <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                                 </svg>
@@ -248,7 +259,7 @@
                         </div>
 
                         <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                            Evaluasi Simulasi: {{ $session->scenario_type }}
+                            Evaluasi Simulasi: {{ $session->aiRole ? $session->aiRole->name : $session->scenario_type }}
                         </h1>
                         <p class="text-sm text-slate-500 dark:text-slate-400 max-w-xl">
                             Durasi latihan: <strong>{{ floor($session->duration_seconds / 60) }} menit {{ $session->duration_seconds % 60 }} detik</strong>.
@@ -257,67 +268,88 @@
                     </div>
 
                     <!-- Quad Score Summary (Face, Voice, Pitch Dynamics, Overall) -->
-                    <div class="flex flex-wrap items-center justify-center gap-3">
+                    <div class="flex flex-wrap items-center justify-center gap-3.5">
                         <!-- Face Score -->
                         @if($session->face_score !== null)
-                            <div class="flex flex-col items-center p-3 rounded-2xl bg-blue-50/60 dark:bg-navy-950/60 border border-blue-100 dark:border-navy-800 w-24 sm:w-28 text-center">
-                                <span class="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400">Skor Wajah</span>
-                                <span class="text-2xl font-black text-blue-700 dark:text-blue-300 mt-0.5">
+                            <div class="flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-2xl bg-blue-50/80 dark:bg-[#091a2e]/90 border border-blue-200 dark:border-cyan-400/90 shadow-xs dark:shadow-[0_0_20px_rgba(34,211,238,0.35)] w-24 sm:w-28 text-center transition hover:scale-105">
+                                <span class="text-[10px] uppercase font-bold text-blue-600 dark:text-cyan-400 tracking-wider">Skor Wajah</span>
+                                <span class="text-2xl font-black text-blue-700 dark:text-cyan-200 mt-0.5 tracking-tight">
                                     {{ number_format($session->face_score, 1) }}
                                 </span>
-                                <span class="text-[9px] text-slate-400">Optik Kamera</span>
+                                <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-cyan-400/80 font-medium">Optik Kamera</span>
                             </div>
                         @endif
 
                         <!-- Voice Score -->
                         @if($session->voice_score !== null)
-                            <div class="flex flex-col items-center p-3 rounded-2xl bg-sky-50/60 dark:bg-navy-950/60 border border-sky-100 dark:border-navy-800 w-24 sm:w-28 text-center">
-                                <span class="text-[10px] uppercase font-bold text-sky-600 dark:text-sky-400">Skor Suara</span>
-                                <span class="text-2xl font-black text-sky-700 dark:text-sky-300 mt-0.5">
+                            <div class="flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-2xl bg-sky-50/80 dark:bg-[#0a1738]/90 border border-sky-200 dark:border-blue-400/90 shadow-xs dark:shadow-[0_0_20px_rgba(59,130,246,0.35)] w-24 sm:w-28 text-center transition hover:scale-105">
+                                <span class="text-[10px] uppercase font-bold text-sky-600 dark:text-blue-400 tracking-wider">Skor Suara</span>
+                                <span class="text-2xl font-black text-sky-700 dark:text-blue-200 mt-0.5 tracking-tight">
                                     {{ number_format($session->voice_score, 1) }}
                                 </span>
-                                <span class="text-[9px] text-slate-400">Artikulasi</span>
+                                <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-blue-400/80 font-medium">Artikulasi</span>
                             </div>
                         @endif
 
                         <!-- Pitch Dynamics Score -->
-                        <div class="flex flex-col items-center p-3 rounded-2xl bg-teal-50/60 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900/60 w-24 sm:w-28 text-center">
-                            <span class="text-[10px] uppercase font-bold text-teal-600 dark:text-teal-400">Dinamika Nada</span>
-                            <span class="text-2xl font-black text-teal-700 dark:text-teal-300 mt-0.5">
+                        <div class="flex flex-col items-center justify-center p-3 sm:p-3.5 rounded-2xl bg-teal-50/80 dark:bg-[#08221c]/90 border border-teal-200 dark:border-emerald-400/90 shadow-xs dark:shadow-[0_0_20px_rgba(16,185,129,0.35)] w-24 sm:w-28 text-center transition hover:scale-105">
+                            <span class="text-[10px] uppercase font-bold text-teal-600 dark:text-emerald-400 tracking-wider">Dinamika Nada</span>
+                            <span class="text-2xl font-black text-teal-700 dark:text-emerald-200 mt-0.5 tracking-tight">
                                 {{ number_format($pitchScore, 0) }}%
                             </span>
-                            <span class="text-[9px] text-slate-400">Intonasi Vokal</span>
+                            <span class="text-[9px] sm:text-[10px] text-slate-500 dark:text-emerald-400/80 font-medium">Intonasi Vokal</span>
                         </div>
 
-                        <!-- Overall Score Dial -->
-                        <div class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center bg-gradient-to-tr {{ $session->overall_score >= 80 ? 'from-emerald-500 to-teal-400 shadow-emerald-500/25' : ($session->overall_score >= 65 ? 'from-amber-500 to-yellow-400 shadow-amber-500/25' : 'from-rose-500 to-pink-500 shadow-rose-500/25') }} text-white shadow-2xl p-1 ring-6 ring-slate-50 dark:ring-navy-800">
-                            <div class="w-full h-full rounded-full bg-white dark:bg-navy-900 flex flex-col items-center justify-center text-slate-900 dark:text-white">
-                                <span class="text-2xl sm:text-3xl font-black tracking-tight {{ $session->overall_score >= 80 ? 'text-emerald-600 dark:text-emerald-400' : ($session->overall_score >= 65 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400') }}">
+                        <!-- Overall Score Dial with Neon Glowing Progress Ring -->
+                        @php
+                            $ovScore = (float)$session->overall_score;
+                            $pct = max(0, min(100, $ovScore));
+                            $strokeDash = round(($pct / 100) * 283, 1);
+                            $ringColor = $ovScore >= 80 ? '#10b981' : ($ovScore >= 65 ? '#f59e0b' : '#f43f5e');
+                            $ringShadow = $ovScore >= 80 ? 'rgba(16,185,129,0.5)' : ($ovScore >= 65 ? 'rgba(245,158,11,0.5)' : 'rgba(244,63,94,0.5)');
+                        @endphp
+                        <div class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full flex items-center justify-center p-1 transition hover:scale-105"
+                             style="box-shadow: 0 0 35px {{ $ringShadow }};">
+                            <!-- Circular Progress Ring SVG -->
+                            <svg class="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 100 100">
+                                <!-- Background Track -->
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" class="text-slate-200 dark:text-white/10" stroke-width="4.5" />
+                                <!-- Active Neon Glow Progress -->
+                                <circle cx="50" cy="50" r="45" fill="none"
+                                        stroke="{{ $ringColor }}"
+                                        stroke-width="5"
+                                        stroke-linecap="round"
+                                        stroke-dasharray="283"
+                                        stroke-dashoffset="{{ 283 - $strokeDash }}"
+                                        style="filter: drop-shadow(0 0 6px {{ $ringColor }}); transition: stroke-dashoffset 1s ease-out;" />
+                            </svg>
+                            <div class="w-[86%] h-[86%] rounded-full bg-white dark:bg-[#0a1222] border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center text-center z-10 shadow-inner">
+                                <span class="text-2xl sm:text-3xl font-black tracking-tight" style="color: {{ $ringColor }};">
                                     {{ number_format($session->overall_score, 1) }}
                                 </span>
-                                <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Skor Total</span>
+                                <span class="text-[9px] text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-widest mt-0.5">Skor Total</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Unlocked Achievement Badges Card -->
+            <!-- Unlocked Achievement Badges Card with Amber Cyber Glow -->
             @if(!empty($badges))
-                <div class="p-6 sm:p-7 rounded-3xl bg-gradient-to-r from-amber-500/10 via-blue-500/10 to-navy-900/40 border border-amber-500/30 shadow-lg space-y-4">
+                <div class="p-6 sm:p-7 rounded-3xl bg-white/95 dark:bg-[#0e1422]/90 backdrop-blur-xl border border-amber-200 dark:border-amber-500/35 shadow-lg dark:shadow-[0_0_25px_rgba(245,158,11,0.12)] space-y-4">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <span class="p-2.5 rounded-2xl bg-amber-500/20 text-amber-500">
+                        <div class="flex items-center gap-3.5">
+                            <span class="p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-400/40 shadow-xs dark:shadow-[0_0_15px_rgba(245,158,11,0.3)]">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
                                 </svg>
                             </span>
                             <div>
-                                <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Lencana Prestasi Diraih (Achievements Unlocked)</h3>
+                                <h3 class="font-extrabold text-base text-slate-900 dark:text-white tracking-tight">Lencana Prestasi Diraih (Achievements Unlocked)</h3>
                                 <p class="text-xs text-slate-500 dark:text-slate-400">Pencapaian khusus Anda selama simulasi berdasarkan telemetri real-time.</p>
                             </div>
                         </div>
-                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-500 text-white shadow-sm shadow-amber-500/40">
+                        <span class="text-xs font-black px-3.5 py-1 rounded-full bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.45)]">
                             {{ count($badges) }} Lencana
                         </span>
                     </div>
@@ -2446,5 +2478,112 @@
             a.click();
             document.body.removeChild(a);
         }
+
+        // =========================================================================
+        // Animated Cybernetic Flowing Background Waves & Particles
+        // ("dan backgrounya ada yang gerak gerak gitu")
+        // =========================================================================
+        (function() {
+            const canvas = document.getElementById('cyberFlowCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let width = 0, height = 0;
+            let t = 0;
+
+            function resize() {
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+            }
+
+            // Drifting floating ambient cyber particles
+            const particles = [];
+            for (let i = 0; i < 42; i++) {
+                particles.push({
+                    x: Math.random() * 1.2,
+                    y: Math.random(),
+                    r: Math.random() * 2 + 1,
+                    speedY: Math.random() * 0.0003 + 0.0001,
+                    speedX: (Math.random() - 0.5) * 0.0002,
+                    alpha: Math.random() * 0.7 + 0.25,
+                    color: Math.random() > 0.55 ? '#06b6d4' : (Math.random() > 0.5 ? '#3b82f6' : (Math.random() > 0.5 ? '#8b5cf6' : '#10b981'))
+                });
+            }
+
+            // Multi-harmonic flowing cyber ribbons (cyan, blue, purple, emerald)
+            const ribbons = [
+                { color: 'rgba(34, 211, 238, 0.45)', glow: 'rgba(34, 211, 238, 0.65)', offset: 0.0, amp: 48, freq: 0.0022, speed: 0.0012, width: 2.2, yFactor: 0.28 },
+                { color: 'rgba(56, 189, 248, 0.35)', glow: 'rgba(56, 189, 248, 0.55)', offset: 1.2, amp: 40, freq: 0.0018, speed: 0.0015, width: 1.6, yFactor: 0.32 },
+                { color: 'rgba(59, 130, 246, 0.42)', glow: 'rgba(59, 130, 246, 0.60)', offset: 2.4, amp: 56, freq: 0.0015, speed: 0.0010, width: 2.0, yFactor: 0.38 },
+                { color: 'rgba(99, 102, 241, 0.38)', glow: 'rgba(99, 102, 241, 0.55)', offset: 3.6, amp: 50, freq: 0.0020, speed: 0.0013, width: 1.8, yFactor: 0.44 },
+                { color: 'rgba(139, 92, 246, 0.40)', glow: 'rgba(139, 92, 246, 0.60)', offset: 4.8, amp: 65, freq: 0.0013, speed: 0.0008, width: 2.4, yFactor: 0.50 },
+                { color: 'rgba(168, 85, 247, 0.30)', glow: 'rgba(168, 85, 247, 0.45)', offset: 5.5, amp: 38, freq: 0.0024, speed: 0.0017, width: 1.4, yFactor: 0.56 },
+                { color: 'rgba(16, 185, 129, 0.32)', glow: 'rgba(16, 185, 129, 0.50)', offset: 0.8, amp: 42, freq: 0.0017, speed: 0.0014, width: 1.5, yFactor: 0.22 }
+            ];
+
+            function draw() {
+                const isDark = document.documentElement.classList.contains('dark');
+                ctx.clearRect(0, 0, width, height);
+
+                // Draw cyber ribbons flowing across screen
+                ribbons.forEach((r, idx) => {
+                    ctx.beginPath();
+                    const step = 14;
+                    for (let x = -50; x <= width + 50; x += step) {
+                        const slopeY = height * r.yFactor + (1 - (x / width)) * 140;
+                        const y = slopeY 
+                            + Math.sin(x * r.freq + t * r.speed + r.offset) * r.amp
+                            + Math.cos(x * (r.freq * 0.6) - t * (r.speed * 0.8) + r.offset) * (r.amp * 0.45);
+                        if (x === -50) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.lineWidth = r.width;
+                    ctx.strokeStyle = isDark ? r.color : r.color.replace('0.45', '0.2').replace('0.42', '0.2').replace('0.40', '0.2').replace('0.38', '0.18').replace('0.35', '0.15').replace('0.32', '0.15').replace('0.30', '0.12');
+                    
+                    if (isDark && idx % 2 === 0) {
+                        ctx.shadowColor = r.glow;
+                        ctx.shadowBlur = 10;
+                    } else {
+                        ctx.shadowBlur = 0;
+                    }
+                    ctx.stroke();
+                });
+
+                // Draw floating particles
+                ctx.shadowBlur = isDark ? 8 : 0;
+                particles.forEach(p => {
+                    p.y -= p.speedY;
+                    p.x += p.speedX;
+                    if (p.y < 0) { p.y = 1; p.x = Math.random() * 1.2; }
+                    if (p.x < 0) p.x = 1.2;
+                    if (p.x > 1.2) p.x = 0;
+                    const px = p.x * width;
+                    const py = p.y * height;
+                    ctx.fillStyle = p.color;
+                    ctx.shadowColor = p.color;
+                    ctx.globalAlpha = isDark ? p.alpha : p.alpha * 0.45;
+                    ctx.beginPath();
+                    ctx.arc(px, py, p.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1.0;
+                ctx.shadowBlur = 0;
+            }
+
+            function loop() {
+                if (!document.hidden) {
+                    t += 16;
+                    draw();
+                }
+                requestAnimationFrame(loop);
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+            loop();
+        })();
     </script>
 </x-app-layout>
