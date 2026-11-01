@@ -8,11 +8,11 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/svg+xml" href="/icon.svg">
 
-    <!-- Theme Initialization Script -->
+        <!-- Theme Initialization Script -->
     <script>
         (function() {
             const savedTheme = localStorage.getItem('voic_theme');
-            if (savedTheme === 'dark') {
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                 document.documentElement.classList.add('dark');
             } else {
                 document.documentElement.classList.remove('dark');
@@ -79,7 +79,7 @@
 
                     @auth
                         <a href="{{ route('dashboard') }}"
-                           class="inline-flex items-center px-5 py-2 text-xs sm:text-sm font-semibold rounded-full text-white bg-slate-900 hover:bg-black dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 shadow-sm transition transform hover:-translate-y-0.5">
+                           class="inline-flex items-center px-5 py-2 text-xs sm:text-sm font-semibold rounded-full text-white bg-blue-600 hover:bg-blue-500 shadow-sm transition transform hover:-translate-y-0.5">
                             Buka Dashboard
                         </a>
                     @else
@@ -89,7 +89,7 @@
                         </a>
 
                         <a href="{{ route('demo.create') }}"
-                           class="inline-flex items-center px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-full text-white bg-slate-900 hover:bg-black dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 shadow-sm transition transform hover:-translate-y-0.5">
+                           class="inline-flex items-center px-4 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-full text-white bg-blue-600 hover:bg-blue-500 shadow-sm transition transform hover:-translate-y-0.5">
                             Coba Simulasi
                         </a>
                     @endauth

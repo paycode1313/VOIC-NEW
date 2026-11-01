@@ -69,7 +69,7 @@
                     <!-- Quick CTA button (hidden if already on practice.create) -->
                     @if(!request()->routeIs('practice.create'))
                         <a href="{{ route('practice.create') }}"
-                           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white dark:text-slate-900 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 rounded-xl transition shadow-sm">
+                           class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition shadow-sm">
                             <span>Mulai Latihan</span>
                         </a>
                     @endif

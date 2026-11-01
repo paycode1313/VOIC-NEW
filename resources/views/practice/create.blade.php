@@ -3513,10 +3513,10 @@
              style="display: none;">
             <div class="pointer-events-auto p-4 rounded-2xl backdrop-blur-xl border shadow-2xl flex items-start gap-3 text-sm"
                  :class="{
-                     'bg-rose-950/90 border-rose-500/50 text-rose-100 shadow-rose-950/50': toast.type === 'error',
-                     'bg-amber-950/90 border-amber-500/50 text-amber-100 shadow-amber-950/50': toast.type === 'warning',
-                     'bg-emerald-950/90 border-emerald-500/50 text-emerald-100 shadow-emerald-950/50': toast.type === 'success',
-                     'bg-slate-900/90 border-blue-500/50 text-slate-100 shadow-blue-950/50': toast.type === 'info'
+                     'bg-white/95 dark:bg-rose-950/90 border-rose-300 dark:border-rose-500/50 text-rose-800 dark:text-rose-100 shadow-rose-900/20': toast.type === 'error',
+                     'bg-white/95 dark:bg-amber-950/90 border-amber-300 dark:border-amber-500/50 text-amber-800 dark:text-amber-100 shadow-amber-900/20': toast.type === 'warning',
+                     'bg-white/95 dark:bg-emerald-950/90 border-emerald-300 dark:border-emerald-500/50 text-emerald-800 dark:text-emerald-100 shadow-emerald-900/20': toast.type === 'success',
+                     'bg-white/95 dark:bg-slate-900/90 border-blue-300 dark:border-blue-500/50 text-slate-800 dark:text-slate-100 shadow-blue-900/20': toast.type === 'info'
                  }">
                 <div class="shrink-0 mt-0.5">
                     <template x-if="toast.type === 'warning'">
@@ -4562,7 +4562,7 @@
 
                 <!-- Main Video Call Stage with Reactive Speaker Glow -->
                 <div class="relative bg-slate-950 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border h-[280px] sm:h-[350px] md:h-[380px] max-h-[48vh] w-full flex items-center justify-center transition-all duration-500"
-                     :class="orbState === 'ai_speaking' ? 'border-blue-500/80 ring-4 ring-blue-500/50 glow-active-ai shadow-blue-500/20' : 'border-slate-800'">
+                     :class="orbState === 'ai_speaking' ? 'border-blue-500/80 ring-4 ring-blue-500/50 glow-active-ai shadow-blue-500/20' : 'border-slate-300/80 dark:border-slate-800'">
 
                     <!-- Conversational Barge-In Interruption Alert Banner -->
                     <div x-show="showInterruptionAlert"
@@ -4594,15 +4594,15 @@
 
                     <!-- Dynamic Turn Duration & Budget Alert Badge -->
                     <template x-if="orbState !== 'ai_speaking' && orbState !== 'thinking'">
-                        <div class="absolute bottom-4 left-4 z-30 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border text-xs font-mono font-bold shadow-lg"
-                             :class="isTurnOverdue() ? 'border-amber-500 text-amber-300 animate-pulse' : 'border-slate-700 text-slate-200'">
-                            <span class="w-2 h-2 rounded-full" :class="isTurnOverdue() ? 'bg-amber-400' : 'bg-blue-400 animate-ping'"></span>
+                        <div class="absolute bottom-4 left-4 z-30 inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border text-xs font-mono font-bold shadow-lg"
+                             :class="isTurnOverdue() ? 'border-amber-500 text-amber-600 dark:text-amber-300 animate-pulse' : 'border-slate-200/90 dark:border-slate-700 text-slate-800 dark:text-slate-200'">
+                            <span class="w-2 h-2 rounded-full" :class="isTurnOverdue() ? 'bg-amber-400' : 'bg-blue-500 dark:bg-blue-400 animate-ping'"></span>
                             <span>Durasi Bicara: <span x-text="currentTurnSeconds + 's'"></span></span>
                             <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'investor'">
-                                <span class="text-[10px] text-slate-400 font-normal">/ 45s alokasi</span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">/ 45s alokasi</span>
                             </template>
                             <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji'">
-                                <span class="text-[10px] text-slate-400 font-normal">/ 24s batas</span>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-normal">/ 24s batas</span>
                             </template>
                         </div>
                     </template>
@@ -4771,7 +4771,7 @@
                                  x-transition:leave="transition ease-in duration-200"
                                  x-transition:leave-start="opacity-100 translate-y-0"
                                  x-transition:leave-end="opacity-0 translate-y-2"
-                                 class="absolute bottom-6 sm:bottom-8 z-15 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-slate-950/85 backdrop-blur-md border border-white/10 shadow-2xl">
+                                 class="absolute bottom-6 sm:bottom-8 z-15 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-white/95 dark:bg-slate-950/85 backdrop-blur-md border border-slate-200/90 dark:border-white/10 shadow-2xl">
                                 <span class="w-1.5 rounded-full animate-pulse" :style="`height: 14px; background-color: ${currentRoleAccent.color}; animation-duration: 0.6s;`"></span>
                                 <span class="w-1.5 rounded-full animate-pulse" :style="`height: 24px; background-color: ${currentRoleAccent.color}; animation-duration: 0.8s;`"></span>
                                 <span class="w-1.5 rounded-full animate-pulse" :style="`height: 30px; background-color: ${currentRoleAccent.color}; animation-duration: 0.5s;`"></span>
@@ -4789,29 +4789,29 @@
 
                     <!-- Top Left: Turn Status Badge & Stream Quality -->
                     <div class="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 pointer-events-none flex items-center gap-1.5 sm:gap-2">
-                        <div class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/15 text-white text-xs flex items-center gap-1.5 sm:gap-2 shadow-lg">
+                        <div class="px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/90 dark:border-white/15 text-slate-800 dark:text-white text-xs flex items-center gap-1.5 sm:gap-2 shadow-lg">
                             <span class="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full shrink-0"
-                                  :class="orbState === 'ai_speaking' ? 'bg-blue-400 animate-ping' : (orbState === 'user_speaking' ? 'bg-emerald-400 animate-pulse' : (orbState === 'thinking' ? 'bg-amber-400 animate-spin' : 'bg-emerald-400'))"></span>
+                                  :class="orbState === 'ai_speaking' ? 'bg-blue-500 animate-ping' : (orbState === 'user_speaking' ? 'bg-emerald-500 animate-pulse' : (orbState === 'thinking' ? 'bg-amber-500 animate-spin' : 'bg-emerald-500'))"></span>
                             <span class="font-bold text-[11px] sm:text-xs max-w-[130px] sm:max-w-none truncate"
                                   x-text="orbState === 'ai_speaking' ? 'Penguji Sedang Berbicara...' : (orbState === 'user_speaking' ? 'Mendengarkan Anda Bicara...' : (orbState === 'thinking' ? 'Menelaah Jawaban...' : 'Giliran Anda Berbicara'))"></span>
                         </div>
-                        <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-900/70 backdrop-blur-md border border-white/10 text-[10px] text-slate-300 font-mono shadow-md">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/90 dark:border-white/10 text-[10px] text-slate-600 dark:text-slate-300 font-mono shadow-md">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             <span>1080p • 60 FPS • 14ms</span>
                         </div>
                     </div>
 
                     <!-- Bottom Left: Live AI Neural Voice Frequency Spectrum HUD -->
-                    <div class="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 z-20 pointer-events-none flex items-center gap-1.5 sm:gap-2.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-slate-900/85 backdrop-blur-md border border-white/10 text-white shadow-xl">
+                    <div class="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 z-20 pointer-events-none flex items-center gap-1.5 sm:gap-2.5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/90 dark:border-white/10 text-slate-800 dark:text-white shadow-xl">
                         <div class="flex items-end gap-0.5 sm:gap-1 h-3 sm:h-3.5 w-10 sm:w-16">
                             <template x-for="(barHeight, idx) in vocalSpectrumBars" :key="idx">
                                 <span class="w-1 sm:w-1.5 rounded-full transition-all duration-75"
-                                      :style="`height: ${barHeight}%; background-color: ${orbState === 'ai_speaking' ? '#38bdf8' : '#475569'};`"></span>
+                                      :style="`height: ${barHeight}%; background-color: ${orbState === 'ai_speaking' ? '#2563eb' : '#94a3b8'};`"></span>
                             </template>
                         </div>
                         <div class="text-[9px] sm:text-[10px] flex flex-col leading-tight">
-                            <span class="font-bold text-slate-200" x-text="orbState === 'ai_speaking' ? 'Neural HD' : 'Standby'"></span>
-                            <span class="text-[8px] text-slate-400 font-mono hidden sm:inline" x-text="orbState === 'ai_speaking' ? '24kHz • Low Latency' : 'Menunggu'"></span>
+                            <span class="font-bold text-slate-800 dark:text-slate-200" x-text="orbState === 'ai_speaking' ? 'Neural HD' : 'Standby'"></span>
+                            <span class="text-[8px] text-slate-500 dark:text-slate-400 font-mono hidden sm:inline" x-text="orbState === 'ai_speaking' ? '24kHz • Low Latency' : 'Menunggu'"></span>
                         </div>
                     </div>
 
@@ -4819,23 +4819,23 @@
                     <div class="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-20 flex flex-col items-end gap-1.5">
                         <button type="button"
                                 @click="cyclePersona()"
-                                class="pointer-events-auto px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-900/90 backdrop-blur-md border text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-2 hover:bg-slate-800 transition cursor-pointer shadow-xl active:scale-95"
+                                class="pointer-events-auto px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border text-slate-800 dark:text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer shadow-xl active:scale-95"
                                 :style="`border-color: ${currentRoleAccent.border}; box-shadow: 0 4px 20px ${currentRoleAccent.glow};`"
                                 title="Klik untuk berganti Karakter Penguji (Dosen / HRD / Investor)">
                             <span class="w-2 h-2 rounded-full animate-pulse" :style="`background-color: ${currentRoleAccent.color};`"></span>
-                            <span class="text-slate-300">Mode:</span>
-                            <span class="font-bold text-white" x-text="avatarPersonaShortName"></span>
+                            <span class="text-slate-500 dark:text-slate-300">Mode:</span>
+                            <span class="font-bold text-slate-900 dark:text-white" x-text="avatarPersonaShortName"></span>
                             <span :style="`color: ${currentRoleAccent.color};`" class="text-xs font-bold">⇄</span>
                         </button>
-                        <div class="pointer-events-none px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md border border-white/10 text-right shadow-lg hidden sm:block">
-                            <div class="text-[11px] font-bold text-white tracking-wide" x-text="avatarPersonaName"></div>
+                        <div class="pointer-events-none px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/90 dark:border-white/10 text-right shadow-lg hidden sm:block">
+                            <div class="text-[11px] font-bold text-slate-900 dark:text-white tracking-wide" x-text="avatarPersonaName"></div>
                             <div class="text-[9px] font-medium" :style="`color: ${currentRoleAccent.color};`" x-text="avatarPersonaRole"></div>
                         </div>
                     </div>
 
                     <!-- USER WEBCAM CAMERA (Picture-in-Picture in Top-Right Corner with Reactive User Glow) -->
                     <div class="absolute top-2.5 right-2.5 sm:top-4 sm:right-4 z-20 w-24 sm:w-44 aspect-4/3 rounded-2xl overflow-hidden shadow-2xl border-2 bg-slate-900 transition-all duration-300"
-                         :class="orbState === 'user_speaking' ? 'border-emerald-400 ring-4 ring-emerald-500/50 glow-active-user shadow-emerald-500/30' : 'border-white/20'">
+                         :class="orbState === 'user_speaking' ? 'border-emerald-500 ring-4 ring-emerald-500/50 glow-active-user shadow-emerald-500/30' : 'border-slate-300/90 dark:border-white/20'">
                         <video id="webcamVideo"
                                autoplay
                                playsinline
@@ -4859,7 +4859,7 @@
                         </div>
 
                         <!-- Clean Status Pill with Mini Equalizer -->
-                        <div class="absolute bottom-1 sm:bottom-1.5 inset-x-1 sm:inset-x-1.5 px-1.5 sm:px-2 py-0.5 rounded-lg bg-black/75 backdrop-blur-md text-[8px] sm:text-[9px] text-white flex items-center justify-between font-medium">
+                        <div class="absolute bottom-1 sm:bottom-1.5 inset-x-1 sm:inset-x-1.5 px-1.5 sm:px-2 py-0.5 rounded-lg bg-white/90 dark:bg-black/75 backdrop-blur-md text-[8px] sm:text-[9px] text-slate-800 dark:text-white flex items-center justify-between font-medium shadow-sm">
                             <span>Anda</span>
                             <div class="flex items-center gap-1 sm:gap-1.5 font-semibold text-emerald-300">
                                 <!-- 4-bar mini audio equalizer active when speaking -->

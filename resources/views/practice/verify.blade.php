@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-navy-950 text-slate-100">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,23 +10,50 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Theme Initialization Script -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('voic_theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
 </head>
-<body class="min-h-full font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col justify-between bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950 text-slate-100">
+<body class="min-h-full font-sans antialiased selection:bg-blue-600 selection:text-white flex flex-col justify-between bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
 
     <!-- Top Navigation Header -->
-    <header class="border-b border-navy-800/80 bg-navy-900/80 backdrop-blur-md sticky top-0 z-30">
+    <header class="border-b border-slate-200 dark:border-navy-800/80 bg-white/90 dark:bg-navy-900/80 backdrop-blur-md sticky top-0 z-30 transition-colors">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <x-application-logo variant="mark" class="w-9 h-9" />
                 <div>
-                    <span class="font-extrabold text-base tracking-tight text-white block">VOIC AI</span>
-                    <span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold block">Official Credential Registry</span>
+                    <span class="font-extrabold text-base tracking-tight text-slate-900 dark:text-white block">VOIC AI</span>
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-semibold block">Official Credential Registry</span>
                 </div>
             </div>
 
             <div class="flex items-center gap-3">
-                <button type="button" onclick="window.print()" class="hidden sm:inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-300 bg-navy-800/90 hover:bg-navy-700 border border-navy-700 rounded-lg transition">
-                    <svg class="w-3.5 h-3.5 me-1.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Theme Toggle Button -->
+                <button type="button"
+                        onclick="
+                            const isDark = document.documentElement.classList.toggle('dark');
+                            localStorage.setItem('voic_theme', isDark ? 'dark' : 'light');
+                        "
+                        class="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 transition cursor-pointer"
+                        title="Ganti Mode Tampilan (Gelap / Terang)">
+                    <svg class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+
+                <button type="button" onclick="window.print()" class="hidden sm:inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-navy-800/90 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-300 dark:border-navy-700 rounded-lg transition">
+                    <svg class="w-3.5 h-3.5 me-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                     </svg>
                     Cetak Verifikasi
@@ -42,7 +69,7 @@
     <main class="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full space-y-6">
 
         <!-- Verification Banner Badge -->
-        <div class="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/80 via-navy-900 to-navy-950/90 border border-emerald-500/40 shadow-2xl relative overflow-hidden">
+        <div class="p-6 rounded-3xl bg-gradient-to-r from-emerald-50 via-white to-blue-50/50 dark:from-emerald-950/80 dark:via-navy-900 dark:to-navy-950/90 border border-emerald-300 dark:border-emerald-500/40 shadow-xl dark:shadow-2xl relative overflow-hidden">
             <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
@@ -56,10 +83,10 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                         Kredensial Sah & Terverifikasi
                     </div>
-                    <h1 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+                    <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
                         Sertifikat Hasil Evaluasi AI Multimodal
                     </h1>
-                    <p class="text-xs sm:text-sm text-slate-300">
+                    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                         Dokumen ini adalah bukti otentik hasil pengujian simulasi berbicara, telemetri tatapan kamera, dan vokal yang tersimpan pada pangkalan data VOIC.
                     </p>
                     <p class="text-[11px] font-mono text-emerald-400/90 pt-1">
@@ -103,7 +130,7 @@
             $currentStage = (int) ($feedback['current_stage'] ?? 4);
         @endphp
 
-        <div class="bg-navy-900/90 rounded-3xl p-6 sm:p-8 border border-navy-800 shadow-xl space-y-6">
+        <div class="bg-white dark:bg-navy-900/90 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-navy-800 shadow-xl space-y-6">
             <div class="border-b border-navy-800 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                     <div class="flex items-center gap-2 mb-1">
@@ -115,15 +142,15 @@
                             <span>{{ $simLanguage === 'en' ? 'English' : 'Bahasa Indonesia' }}</span>
                         </span>
                     </div>
-                    <h2 class="text-2xl font-extrabold text-white mt-0.5">
+                    <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-0.5">
                         {{ $session->getParticipantName() }}
                     </h2>
-                    <p class="text-xs text-slate-400">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
                         {{ $session->getParticipantInstitution() ? 'Afiliasi: ' . $session->getParticipantInstitution() : ($user ? 'Email: ' . $user->email : 'Status: Peserta Tamu Terverifikasi') }}
                     </p>
                 </div>
 
-                <div class="flex items-center gap-2 bg-navy-800/80 border border-navy-700/60 px-4 py-2 rounded-2xl w-fit">
+                <div class="flex items-center gap-2 bg-slate-50 dark:bg-navy-800/80 border border-slate-200 dark:border-navy-700/60 px-4 py-2 rounded-2xl w-fit">
                     <div class="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-400/20 text-blue-300 flex items-center justify-center">
                         @if($role?->role_type === 'dosen_penguji')
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +168,7 @@
                     </div>
                     <div>
                         <span class="text-[10px] text-slate-400 uppercase font-bold block">Karakter Penguji AI</span>
-                        <span class="text-xs font-extrabold text-blue-300 block">{{ $role ? $role->name : $session->scenario_type }}</span>
+                        <span class="text-xs font-extrabold text-blue-600 dark:text-blue-300 block">{{ $role ? $role->name : $session->scenario_type }}</span>
                     </div>
                 </div>
             </div>
@@ -149,9 +176,9 @@
             <!-- Scorecards (Quad Metrics) -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <!-- Overall Score -->
-                <div class="p-4 rounded-2xl bg-gradient-to-tr from-navy-950 to-blue-950/60 border border-blue-500/30 text-center relative overflow-hidden">
+                <div class="p-4 rounded-2xl bg-gradient-to-tr from-blue-50 to-white dark:from-navy-950 dark:to-blue-950/60 border border-blue-200 dark:border-blue-500/30 text-center relative overflow-hidden">
                     <span class="text-[10px] uppercase font-bold text-blue-300 tracking-wider">Skor Total</span>
-                    <div class="text-3xl font-black text-white mt-1">
+                    <div class="text-3xl font-black text-slate-900 dark:text-white mt-1">
                         {{ number_format($session->overall_score, 1) }}
                     </div>
                     <span class="text-[9px] text-slate-400 block mt-1">
@@ -160,9 +187,9 @@
                 </div>
 
                 <!-- Optical Face Score -->
-                <div class="p-4 rounded-2xl bg-gradient-to-tr from-navy-950 to-sky-950/60 border border-sky-500/30 text-center">
+                <div class="p-4 rounded-2xl bg-gradient-to-tr from-sky-50 to-white dark:from-navy-950 dark:to-sky-950/60 border border-sky-200 dark:border-sky-500/30 text-center">
                     <span class="text-[10px] uppercase font-bold text-sky-300 tracking-wider">Optik Kamera</span>
-                    <div class="text-3xl font-black text-white mt-1">
+                    <div class="text-3xl font-black text-slate-900 dark:text-white mt-1">
                         {{ number_format($session->face_score ?? 80, 1) }}
                     </div>
                     <span class="text-[9px] text-slate-400 block mt-1">
@@ -171,9 +198,9 @@
                 </div>
 
                 <!-- Voice Score -->
-                <div class="p-4 rounded-2xl bg-gradient-to-tr from-navy-950 to-emerald-950/60 border border-emerald-500/30 text-center">
+                <div class="p-4 rounded-2xl bg-gradient-to-tr from-emerald-50 to-white dark:from-navy-950 dark:to-emerald-950/60 border border-emerald-200 dark:border-emerald-500/30 text-center">
                     <span class="text-[10px] uppercase font-bold text-emerald-300 tracking-wider">Artikulasi</span>
-                    <div class="text-3xl font-black text-white mt-1">
+                    <div class="text-3xl font-black text-slate-900 dark:text-white mt-1">
                         {{ number_format($session->voice_score ?? 85, 1) }}
                     </div>
                     <span class="text-[9px] text-slate-400 block mt-1">
@@ -182,9 +209,9 @@
                 </div>
 
                 <!-- Pitch Dynamics Score -->
-                <div class="p-4 rounded-2xl bg-gradient-to-tr from-navy-950 to-teal-950/60 border border-teal-500/30 text-center">
+                <div class="p-4 rounded-2xl bg-gradient-to-tr from-teal-50 to-white dark:from-navy-950 dark:to-teal-950/60 border border-teal-200 dark:border-teal-500/30 text-center">
                     <span class="text-[10px] uppercase font-bold text-teal-300 tracking-wider">Dinamika Nada</span>
-                    <div class="text-3xl font-black text-white mt-1">
+                    <div class="text-3xl font-black text-slate-900 dark:text-white mt-1">
                         {{ number_format($pitchScore, 0) }}%
                     </div>
                     <span class="text-[9px] text-slate-400 block mt-1">
@@ -195,7 +222,7 @@
 
             <!-- Unlocked Badges Section on Certificate -->
             @if(!empty($badges))
-                <div class="p-4 rounded-2xl bg-navy-950/90 border border-amber-500/30 space-y-2">
+                <div class="p-4 rounded-2xl bg-amber-50/50 dark:bg-navy-950/90 border border-amber-200 dark:border-amber-500/30 space-y-2">
                     <div class="flex items-center justify-between text-xs font-bold text-amber-400">
                         <span class="flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +236,7 @@
                     </div>
                     <div class="flex flex-wrap gap-2 pt-1">
                         @foreach($badges as $badge)
-                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-navy-900 border border-navy-750 text-xs">
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-750 text-xs">
                                 <div class="w-4 h-4 text-amber-400">
                                     @if(($badge['icon'] ?? '') === 'eye')
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -227,7 +254,7 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
                                     @endif
                                 </div>
-                                <span class="font-bold text-white">{{ $badge['name'] ?? 'Lencana' }}</span>
+                                <span class="font-bold text-slate-900 dark:text-white">{{ $badge['name'] ?? 'Lencana' }}</span>
                             </div>
                         @endforeach
                     </div>
@@ -235,7 +262,7 @@
             @endif
 
             <!-- Calibrated Prototype Benchmark Ranking Badge -->
-            <div class="p-4 rounded-2xl bg-navy-950/80 border border-navy-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-navy-950/80 border border-slate-200 dark:border-navy-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 shrink-0">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,7 +271,7 @@
                     </div>
                     <div>
                         <span class="text-xs text-slate-400 block">Tolak Ukur Acuan Kalibrasi Internal:</span>
-                        <span class="text-sm font-extrabold text-white">{{ $benchmarkData['percentile_rank'] }}</span>
+                        <span class="text-sm font-extrabold text-slate-900 dark:text-white">{{ $benchmarkData['percentile_rank'] }}</span>
                     </div>
                 </div>
 
@@ -255,26 +282,26 @@
 
             <!-- Official AI Conclusion -->
             @if($session->ai_conclusion)
-                <div class="p-5 rounded-2xl bg-blue-950/40 border border-blue-800/40 space-y-2">
+                <div class="p-5 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 space-y-2">
                     <div class="flex items-center gap-2 text-xs font-bold text-blue-300">
                         <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                         </svg>
                         <span>Kesimpulan Resmi Evaluator AI:</span>
                     </div>
-                    <p class="text-xs sm:text-sm text-slate-200 leading-relaxed italic">
+                    <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed italic">
                         "{{ $session->ai_conclusion }}"
                     </p>
                 </div>
             @endif
 
             <!-- 4-Stage Completion & Acoustic Diagnostic Badges -->
-            <div class="p-4 rounded-2xl bg-navy-950/60 border border-navy-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div class="p-4 rounded-2xl bg-slate-50 dark:bg-navy-950/60 border border-slate-200 dark:border-navy-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div class="flex items-center gap-2.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
                     <div>
                         <span class="text-[10px] text-slate-400 uppercase font-bold block">Penyelesaian Skenario</span>
-                        <span class="font-bold text-white">
+                        <span class="font-bold text-slate-900 dark:text-white">
                             Tahap {{ $currentStage }}/4
                             @if($currentStage >= 3)
                                 <span class="text-[10px] text-emerald-400 font-semibold">• Lolos Stress Test</span>
@@ -306,15 +333,15 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-navy-800 text-xs text-slate-400">
                 <div>
                     <span class="block text-[10px] uppercase font-bold text-slate-500">Skenario Latihan</span>
-                    <span class="text-white font-medium">{{ $session->scenario_type }}</span>
+                    <span class="text-slate-900 dark:text-white font-medium">{{ $session->scenario_type }}</span>
                 </div>
                 <div>
                     <span class="block text-[10px] uppercase font-bold text-slate-500">Tanggal Pengujian</span>
-                    <span class="text-white font-medium">{{ $session->created_at->format('d M Y, H:i') }} WIB</span>
+                    <span class="text-slate-900 dark:text-white font-medium">{{ $session->created_at->format('d M Y, H:i') }} WIB</span>
                 </div>
                 <div>
                     <span class="block text-[10px] uppercase font-bold text-slate-500">Durasi Bicara</span>
-                    <span class="text-white font-medium">{{ floor($session->duration_seconds / 60) }}m {{ $session->duration_seconds % 60 }}d</span>
+                    <span class="text-slate-900 dark:text-white font-medium">{{ floor($session->duration_seconds / 60) }}m {{ $session->duration_seconds % 60 }}d</span>
                 </div>
                 <div>
                     <span class="block text-[10px] uppercase font-bold text-slate-500">Status Validasi</span>
@@ -324,8 +351,8 @@
         </div>
 
         <!-- Security Cryptographic Verification Footer -->
-        <div class="p-5 rounded-2xl bg-navy-950/70 border border-navy-800/80 text-center space-y-2">
-            <p class="text-xs text-slate-400">
+        <div class="p-5 rounded-2xl bg-slate-100 dark:bg-navy-950/70 border border-slate-200 dark:border-navy-800/80 text-center space-y-2">
+            <p class="text-xs text-slate-500 dark:text-slate-400">
                 Keaslian laporan ini dijamin oleh <strong>VOIC Multimodal Engine</strong>. Seluruh proses visual diproses langsung di perangkat peserta (Edge On-Device) untuk menjaga kerahasiaan data privasi sesuai standar industri.
             </p>
             <p class="text-[10px] font-mono text-slate-500">
@@ -336,7 +363,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-navy-800/80 py-6 text-center text-xs text-slate-500">
+    <footer class="border-t border-slate-200 dark:border-navy-800/80 py-6 text-center text-xs text-slate-500">
         <p>© 2026 VOIC - Voice & Optical Intelligent Coach • Platform Evaluasi Presentasi & Wawancara Berbasis AI</p>
     </footer>
 

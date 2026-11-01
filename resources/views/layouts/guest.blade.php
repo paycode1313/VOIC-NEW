@@ -8,11 +8,11 @@
 
         <title>{{ $title ?? config('app.name', 'VOIC AI') }} • Platform Evaluasi AI Multimodal</title>
 
-        <!-- Theme Initialization Script -->
+                <!-- Theme Initialization Script -->
         <script>
             (function() {
                 const savedTheme = localStorage.getItem('voic_theme');
-                if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                if (savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dark');
                 } else {
                     document.documentElement.classList.remove('dark');

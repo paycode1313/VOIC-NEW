@@ -10,14 +10,14 @@
         <link rel="manifest" href="/manifest.json">
         <link rel="icon" type="image/svg+xml" href="/icon.svg">
 
-        <!-- Theme Initialization Script -->
+                <!-- Theme Initialization Script -->
         <script>
             (function() {
                 const savedTheme = localStorage.getItem('voic_theme');
-                if (savedTheme === 'light') {
-                    document.documentElement.classList.remove('dark');
-                } else {
+                if (savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
                 }
             })();
         </script>
