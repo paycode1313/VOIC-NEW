@@ -200,6 +200,13 @@
                 $detectedUptalking = $feedback['detected_uptalking'] ?? 0;
                 $awkwardPauses = $feedback['awkward_pauses'] ?? 0;
                 $currentStage = $feedback['current_stage'] ?? 'core';
+                $goprepDiagnostic = $feedback['goprep_diagnostic'] ?? app(\App\Services\AiRoleplayService::class)->buildGoprepDiagnostic(
+                    $session,
+                    (float) ($session->face_score ?? 80),
+                    (float) ($session->voice_score ?? 80),
+                    (float) ($session->overall_score ?? 80),
+                    $simLanguage
+                );
             @endphp
 
             <!-- Print-Only Official Report Header -->
@@ -1084,6 +1091,127 @@
                             </button>
                         </div>
                     </div>
+                </div>
+            @endif
+
+            <!-- GoPrep AI Speaking Diagnostic & Answer Polishing Section -->
+            @if(!empty($goprepDiagnostic))
+                <div class="rounded-3xl bg-white dark:bg-[#0c182b] p-6 sm:p-8 shadow-sm border border-slate-200/80 dark:border-slate-700/60 space-y-6">
+                    <!-- Section Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold shrink-0 border border-indigo-200/60 dark:border-indigo-800/60 shadow-xs">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
+                                        Analisis Diagnostik Penguji (GoPrep Oral Assessment)
+                                    </h3>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
+                                        4 Pilar Evaluasi
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Pengukuran terstandarisasi kelancaran bicara, diksi, tata bahasa lisan, serta performa tatapan kamera.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-indigo-500/10 to-blue-500/10 dark:from-indigo-950/40 dark:to-blue-950/40 border border-indigo-200/60 dark:border-indigo-800/60 shrink-0">
+                            <span class="text-xs text-slate-600 dark:text-slate-300 font-semibold">Predikat Band:</span>
+                            <span class="text-sm font-black text-indigo-600 dark:text-indigo-400">
+                                Band {{ $goprepDiagnostic['overall_band'] }} / 9.0
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- 4 Competency Cards Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        @foreach($goprepDiagnostic['criteria'] as $cKey => $crit)
+                            <div class="p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-800 space-y-2.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                        {{ $crit['label'] }}
+                                    </span>
+                                    <span class="text-xs font-black px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-slate-200/60 dark:border-slate-700">
+                                        Band {{ $crit['band'] }}
+                                    </span>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                                        <span>Skor</span>
+                                        <span>{{ $crit['score'] }}%</span>
+                                    </div>
+                                    <div class="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full"
+                                             style="width: {{ $crit['score'] }}%"></div>
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed pt-1">
+                                    {{ $crit['assessment'] }}
+                                </p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <!-- GoPrep Answer Polishing (Rekomendasi Jawaban Emas) -->
+                    @if(!empty($goprepDiagnostic['answer_polishing']))
+                        @php $polish = $goprepDiagnostic['answer_polishing']; @endphp
+                        <div class="rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-950 to-blue-950 text-white p-5 sm:p-6 border border-indigo-900/60 space-y-4">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-7 h-7 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center text-sm font-bold">✨</span>
+                                    <h4 class="text-sm font-bold text-white tracking-tight">
+                                        Rekomendasi Jawaban Emas Penguji (Answer Polishing ala GoPrep)
+                                    </h4>
+                                </div>
+                                <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                    Perbandingan Kalimat Jawaban
+                                </span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                                <!-- Original Candidate Utterance -->
+                                <div class="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                            <span>🗣️</span> Ujaran Asli Anda
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-200 leading-relaxed italic bg-black/20 p-3 rounded-lg border border-white/5">
+                                        "{{ $polish['original'] }}"
+                                    </p>
+                                    <p class="text-[11px] text-amber-200/90 leading-relaxed pt-1">
+                                        <strong>💡 Catatan Penguji:</strong> {{ $polish['critique'] }}
+                                    </p>
+                                </div>
+
+                                <!-- Polished Recommendation -->
+                                <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-950/40 to-indigo-950/40 border border-emerald-500/30 space-y-2"
+                                     x-data="{ copied: false }">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+                                            <span>🌟</span> Versi Jawaban Ideal (Skor 90+)
+                                        </span>
+                                        <button type="button"
+                                                @click="navigator.clipboard.writeText('{{ addslashes($polish['polished']) }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                                class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-slate-200 transition flex items-center gap-1 cursor-pointer">
+                                            <template x-if="!copied"><span>Salin Teks</span></template>
+                                            <template x-if="copied"><span class="text-emerald-400">✓ Tersalin</span></template>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-emerald-100 font-medium leading-relaxed bg-black/30 p-3 rounded-lg border border-emerald-500/20">
+                                        "{{ $polish['polished'] }}"
+                                    </p>
+                                    <p class="text-[11px] text-emerald-200/90 leading-relaxed pt-1">
+                                        <strong>🎯 Tips Penguji:</strong> {{ $polish['examiner_tip'] }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             @endif
 

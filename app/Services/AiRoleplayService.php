@@ -46,45 +46,45 @@ class AiRoleplayService
         if ($language === 'en') {
             if ($hasContext) {
                 $greetings = [
-                    'dosen_penguji' => "Welcome to your thesis defense examination. I have received your research abstract: '{$shortSnippet}'. Please sit upright, look directly into the camera, and explain the core justification of your methodology.",
-                    'hrd' => "Hello! Glad to meet you. I noted your profile summary: '{$shortSnippet}'. Take a calm breath and walk me through your key achievements and motivations.",
-                    'investor' => "Pitch time is live. I reviewed your teaser premise: '{$shortSnippet}'. Cut straight to the point: explain your unit economics and customer validation in 60 seconds.",
+                    'dosen_penguji' => "Welcome to your oral examination room. I have reviewed your research abstract regarding '{$shortSnippet}'. Please introduce yourself briefly, and walk me through the core motivation and primary research problem driving your work.",
+                    'hrd' => 'Hello and welcome! It is a real pleasure to meet you today. Take a comfortable breath, introduce yourself, and share what strongly motivates you to pursue this role.',
+                    'investor' => "Hello, welcome to today's venture pitch session. I reviewed your teaser premise regarding '{$shortSnippet}'. When you are ready, introduce yourself and outline the urgent market problem your startup is positioned to solve.",
                 ];
             } elseif ($hasCustomTopic) {
                 $greetings = [
-                    'dosen_penguji' => "Welcome to your thesis defense examination focusing on '{$topic}'. Please sit upright, maintain direct eye contact with the camera, and present your core research problem along with your primary methodology.",
-                    'hrd' => "Hello! Glad to connect with you for this interview regarding the '{$topic}' position. Take a deep breath and stay confident. Could you walk me through your background and key motivations for this role?",
-                    'investor' => "Hello, great to meet you. Pitch time is valuable in '{$topic}'. Cut straight to the point: explain your market problem, your 10x solution, and your monetization model in 60 seconds.",
+                    'dosen_penguji' => "Welcome to your thesis examination session focusing on '{$topic}'. Please introduce yourself briefly, and walk me through the primary research problem and methodology you have formulated.",
+                    'hrd' => "Hello, welcome to our interview session today for the '{$topic}' position! It is wonderful to connect with you. When you are ready, please share your background and what excites you most about this role.",
+                    'investor' => "Hello, welcome to today's pitch session on '{$topic}'. Let us begin: introduce yourself and explain the core market friction you are solving along with your value proposition.",
                 ];
             } else {
                 $greetings = [
-                    'dosen_penguji' => 'Welcome to your thesis defense examination. Please sit upright, maintain direct eye contact with the camera, and introduce yourself along with your core research problem and methodology.',
-                    'hrd' => 'Hello! Glad to meet you in this interview session today. Take a calm breath and stay confident. To begin, could you share your background and your strongest motivation for joining us?',
-                    'investor' => 'Hello, nice to meet you. Pitching time is extremely precious. Let us get right to the essence: explain the real problem in your market and how your product produces scalable revenue.',
+                    'dosen_penguji' => 'Welcome to your thesis defense examination room. Please introduce yourself briefly, and walk me through your core research motivation, problem statement, and primary methodology.',
+                    'hrd' => 'Hello, welcome to our interview session today! It is a real pleasure to connect with you. Take a comfortable breath, tell me about your journey, and share your strongest motivation for joining us.',
+                    'investor' => "Hello and welcome to today's pitch session. When you are ready, introduce yourself and walk me through the core problem in your target market and how your product addresses it.",
                 ];
             }
-            $defaultMsg = "Hello, I am {$role->name}. Let us begin today's session. Please present your opening remarks.";
+            $defaultMsg = "Hello, I am {$role->name}. Welcome to our session today. Whenever you are ready, please share your opening remarks.";
         } else {
             if ($hasContext) {
                 $greetings = [
-                    'dosen_penguji' => "Selamat datang di ruang sidang tugas akhir. Saya telah menelaah abstrak penelitian Anda: '{$shortSnippet}'. Silakan atur posisi duduk tegak, tatap kamera, dan jelaskan rumusan masalah serta validasi metode penelitian Anda.",
-                    'hrd' => "Halo! Senang bisa bertemu dengan Anda. Saya telah membaca ringkasan profil Anda: '{$shortSnippet}'. Tarik napas santai dan ceritakan bagaimana pengalaman Anda relevan untuk posisi ini.",
-                    'investor' => "Halo, salam kenal. Waktu pitching berjalan. Saya mencatat premis bisnis Anda: '{$shortSnippet}'. Langsung ke intinya: jelaskan dalam 1 menit problem riil pasar dan model monetisasi solusi Anda.",
+                    'dosen_penguji' => "Selamat datang di ruang sidang tugas akhir. Saya telah membaca abstrak penelitian Anda mengenai '{$shortSnippet}'. Silakan perkenalkan diri Anda secara singkat, dan jelaskan motivasi utama serta rumusan masalah yang mendasari penelitian ini.",
+                    'hrd' => 'Halo, selamat datang di sesi wawancara hari ini! Senang sekali bisa bertemu dengan Anda. Tarik napas santai, silakan perkenalkan diri Anda dan ceritakan apa motivasi terbesar Anda melamar di posisi ini.',
+                    'investor' => "Halo, salam kenal. Selamat datang di sesi pitching hari ini. Saya telah melihat ringkasan materi bisnis Anda mengenai '{$shortSnippet}'. Silakan mulai perkenalan singkat dan paparkan problem mendesak di pasar serta solusi yang Anda tawarkan.",
                 ];
             } elseif ($hasCustomTopic) {
                 $greetings = [
-                    'dosen_penguji' => "Selamat datang di ruang sidang tugas akhir dengan topik '{$topic}'. Silakan atur posisi duduk tegak dan tatap kamera dengan tenang. Silakan perkenalkan diri Anda dan jelaskan rumusan masalah serta metode utama penelitian Anda.",
-                    'hrd' => "Halo! Senang bisa bertemu dengan Anda di sesi wawancara untuk posisi '{$topic}'. Tarik napas santai dan tetap percaya diri. Bisakah Anda menceritakan latar belakang Anda dan motivasi terbesar melamar di posisi ini?",
-                    'investor' => "Halo, salam kenal. Waktu pitching sangat berharga untuk startup di bidang '{$topic}'. Langsung ke intinya: jelaskan dalam 1 menit problem riil pasar dan model monetisasi solusi produk Anda.",
+                    'dosen_penguji' => "Selamat datang di ruang sidang tugas akhir dengan topik '{$topic}'. Silakan perkenalkan diri Anda secara singkat, dan jelaskan apa rumusan masalah serta metode utama yang Anda kembangkan dalam penelitian ini.",
+                    'hrd' => "Halo, selamat datang di sesi wawancara untuk posisi '{$topic}'! Senang sekali bisa terhubung dengan Anda. Boleh ceritakan latar belakang singkat Anda dan apa motivasi utama Anda memilih posisi ini?",
+                    'investor' => "Halo, salam kenal. Selamat datang di sesi pitching startup bidang '{$topic}'. Waktu Anda berjalan, silakan perkenalkan diri dan jelaskan problem riil di pasar serta keunggulan solusi produk yang Anda bangun.",
                 ];
             } else {
                 $greetings = [
-                    'dosen_penguji' => 'Selamat datang di ruang sidang tugas akhir. Silakan atur posisi duduk yang tegak dan tatap kamera dengan tenang. Silakan perkenalkan diri Anda dan jelaskan apa rumusan masalah serta metode utama penelitian Anda.',
-                    'hrd' => 'Halo! Senang bisa bertemu dengan Anda di sesi wawancara ini. Tarik napas santai dan tetap percaya diri. Untuk memulai, bisakah Anda menceritakan latar belakang Anda dan apa motivasi terbesar Anda melamar di posisi ini?',
-                    'investor' => 'Halo, salam kenal. Waktu pitching sangat berharga. Langsung ke intinya: jelaskan dalam 1 menit problem riil apa yang dihadapi pasar dan bagaimana solusi produk Anda menghasilkan pendapatan.',
+                    'dosen_penguji' => 'Selamat datang di ruang sidang tugas akhir. Silakan perkenalkan diri Anda secara singkat, dan jelaskan apa rumusan masalah serta metodologi utama yang menjadi fokus penelitian Anda.',
+                    'hrd' => 'Halo, selamat datang di sesi wawancara hari ini! Senang sekali bisa bertemu dengan Anda. Tarik napas santai, boleh ceritakan latar belakang Anda dan apa motivasi terbesar Anda ingin bergabung di tim kami?',
+                    'investor' => 'Halo, salam kenal. Selamat datang di sesi pitching hari ini. Waktu Anda berjalan, silakan mulai perkenalan singkat dan paparkan problem mendesak apa di pasar yang ingin diselesaikan oleh produk Anda.',
                 ];
             }
-            $defaultMsg = "Halo, saya {$role->name}. Mari kita mulai simulasi hari ini. Silakan sampaikan pembuka Anda.";
+            $defaultMsg = "Halo, saya {$role->name}. Selamat datang di sesi hari ini. Kapan pun Anda siap, silakan sampaikan pemaparan pembuka Anda.";
         }
 
         $message = $greetings[$role->role_type] ?? $defaultMsg;
@@ -325,15 +325,15 @@ class AiRoleplayService
             $nameStr = $candidateName ? " {$candidateName}" : '';
             if ($language === 'en') {
                 $greetings = [
-                    'dosen_penguji' => "Welcome to the examination room{$nameStr}. Please sit upright, look directly into the camera, and introduce your core research topic.",
-                    'hrd' => "Hello{$nameStr}, pleasure to meet you! Take a calm breath and tell me a bit about your background and motivation for this role.",
-                    'investor' => "Welcome{$nameStr}. Straight to the point: what urgent market problem does your startup solve and who is your target customer?",
+                    'dosen_penguji' => "Welcome to your oral examination room{$nameStr}. It is great to have you here. Whenever you are ready, please introduce yourself and walk me through your core research topic.",
+                    'hrd' => "Hello{$nameStr}! It is a real pleasure to meet you today. Take a comfortable breath, tell me about yourself, and share your strongest motivation for joining us.",
+                    'investor' => "Welcome{$nameStr}. Great to connect with you. When you are ready, introduce yourself and walk me through the urgent market problem your venture is solving.",
                 ];
             } else {
                 $greetings = [
-                    'dosen_penguji' => "Salam kenal Saudara{$nameStr}. Silakan atur posisi duduk tegak dan mulai jelaskan apa rumusan masalah serta metode utama penelitian Anda.",
-                    'hrd' => "Halo{$nameStr}, senang berkenalan dengan Anda! Boleh ceritakan latar belakang Anda dan apa motivasi terbesar Anda melamar untuk posisi ini?",
-                    'investor' => "Salam kenal{$nameStr}. Langsung ke intinya saja: problem mendesak apa di pasar yang ingin diselesaikan oleh startup Anda?",
+                    'dosen_penguji' => "Salam kenal Saudara{$nameStr}. Senang bisa bertemu di ruang sidang hari ini. Silakan perkenalkan diri Anda secara singkat dan ceritakan apa motivasi serta fokus utama penelitian Anda.",
+                    'hrd' => "Halo{$nameStr}, senang sekali bisa bertemu dengan Anda hari ini! Tarik napas santai, boleh ceritakan latar belakang Anda dan apa motivasi terbesar Anda melamar di posisi ini?",
+                    'investor' => "Salam kenal{$nameStr}. Senang bisa terhubung di sesi pitching hari ini. Silakan mulai perkenalan singkat dan paparkan problem mendesak di pasar yang ingin diselesaikan oleh startup Anda.",
                 ];
             }
 
@@ -348,53 +348,53 @@ class AiRoleplayService
             if ($stage === 'pressure_test') {
                 $dialogues = [
                     'dosen_penguji' => [
-                        'Committee pressure test: If your system faces extreme noisy data anomalies where your baseline assumptions fail, how do you mathematically prove your bounds without hallucinations?',
-                        'Critical flaw challenge: How do you defend your thesis if your core algorithm benchmark is proven to have overfitting bias?',
+                        'Thank you for outlining that thesis premise. Let us stress-test your core assumption: if extreme anomalies arise in real-world deployment where your baseline assumptions fail, how do you mathematically prove your bounds and guarantee system stability?',
+                        'I hear your defense, but let us probe the deepest methodological vulnerability: if an external benchmark reveals overfitting bias on your primary dataset, what empirical evidence guarantees your thesis holds true?',
                     ],
                     'hrd' => [
-                        'Workplace stress test: If a vital team member abruptly quits 3 days before product launch and your boss refuses extensions, what concrete action do you take immediately?',
-                        'Scenario challenge: If an executive publicly reprimands you for a critical bug caused by another department, how do you handle the emotional confrontation?',
+                        'That shows strong initiative. Let us explore a high-pressure scenario: if a vital team member abruptly resigns 3 days before product release and leadership rejects extensions, what immediate operational actions do you execute to keep the launch on track?',
+                        'I appreciate that perspective. Now imagine an executive publicly critiques a critical glitch caused by another department in front of your peers: how do you manage that emotional friction and resolve it constructively?',
                     ],
                     'investor' => [
-                        'Critical defensibility test: If a tech giant with billions in cash clones your entire roadmap next week for free, why will customers pay you? What is your unfair moat?',
-                        'Runway stress test: If your Customer Acquisition Cost triples tomorrow and you have only 4 months of cash, what exact operational cuts do you make?',
+                        'The vision is captivating. But let us confront defensibility: if an incumbent tech giant with billions in cash clones your entire feature roadmap next month for free, why will customers stay with you? What is your genuine, unfair moat?',
+                        'That target is ambitious. But if your Customer Acquisition Cost doubles tomorrow while operational runway is limited to 4 months, what specific strategic trade-offs do you execute immediately?',
                     ],
                 ];
             } else {
                 $dialogues = [
                     'dosen_penguji' => $hasMetric ? [
-                        'How exactly were those quantitative bounds verified? Demonstrate that your sample distribution does not suffer from data leakage or selection bias.',
-                        'Numbers alone do not validate a thesis without rigorous baselines. What statistical significance test proves this outcome is not mere randomness?',
+                        'Thank you, I noted the quantitative outcomes you shared. From a rigorous research standpoint, how did you statistically validate that these metrics are not skewed by sampling bias or subtle data leakage?',
+                        'I see those benchmark figures. To ensure empirical robustness, what specific statistical significance tests did you conduct to prove this outcome is genuinely reproducible?',
                     ] : ($hasTech ? [
                         $primaryEntity
-                            ? "That specific architecture around '{$primaryEntity}' introduces computational trade-offs. What empirical evidence proves it outperforms standard, well-established baselines?"
-                            : 'That specific technical architecture introduces computational trade-offs. What empirical evidence proves it outperforms standard baselines?',
-                        'How do you mathematically defend the stability of this approach when tested against noisy, adversarial edge cases in production?',
+                            ? "Thank you for explaining the adoption of '{$primaryEntity}'. Every technical architecture introduces computational trade-offs: what empirical benchmarks proved this approach outperforms conventional, well-established baselines?"
+                            : 'Thank you for explaining that technical architecture. Every novel method involves trade-offs: what empirical evidence demonstrates it outperforms well-established standard baselines?',
+                        'I understand that technical design. How do you rigorously guarantee the stability of this methodology when subjected to noisy, real-world edge cases in field deployment?',
                     ] : [
-                        'Directly connect your theoretical foundation in chapter two with this empirical finding. Avoid purely abstract claims.',
-                        'Demonstrate to the committee: what is the genuine, defensible novelty here compared to seminal literature in this field?',
+                        'Thank you for that theoretical overview. Connecting that directly with your chapter one problem formulation, what concrete empirical findings validate the real-world utility of your thesis?',
+                        'I appreciate your explanation. Could you highlight for the examination committee: where does the distinct, original novelty of your research lie when contrasted against seminal prior literature?',
                     ]),
                     'hrd' => $hasTeam ? [
-                        'When facing that interpersonal friction, what specific action did you personally take to realign priorities without escalating conflict?',
-                        'Walk me through how you influenced team members who were initially skeptical or resistant to your direction.',
+                        'Thank you for sharing that experience, fostering healthy team synergy is a core value here. Could you walk me through a specific situation where interpersonal friction occurred, and how you personally de-escalated it to achieve consensus?',
+                        'I appreciate that teamwork example. How do you approach communication when you need to align colleagues or leaders who initially express strong skepticism toward your proposed direction?',
                     ] : ($hasMetric ? [
-                        'That milestone is impressive on paper. But what was the single biggest obstacle that almost derailed it, and how did you pivot?',
-                        'How did you maintain composure and prioritize your workload when unexpected blockers arose under tight deadlines?',
+                        'That is a commendable achievement. Behind that milestone, what was the single most difficult roadblock that threatened progress, and what concrete steps did you take to overcome it?',
+                        'Thank you for detailing that result. How do you maintain mental clarity, emotional balance, and prioritization when unexpected blockers arise under demanding deadlines?',
                     ] : [
-                        'What was the first concrete step you executed the moment you realized this problem needed immediate intervention?',
-                        'Looking back with hindsight, what key operational decision would you execute differently to achieve a higher impact?',
+                        'Thank you for that insight. Could you walk me through the very first concrete step you took the moment you realized this problem demanded urgent intervention?',
+                        'I appreciate your reflection. Looking back with your current experience, what key strategic decision would you execute differently to produce an even greater impact?',
                     ]),
                     'investor' => $hasMetric ? [
-                        'What is the actual monthly burn rate and Customer Acquisition Cost required to maintain that growth trajectory?',
-                        'Healthy metrics require retention. What does your net revenue retention look like after month six?',
+                        'Thank you, those top-line metrics look engaging. Diving deeper into the unit economics: what is your current monthly burn rate and Customer Acquisition Cost required to sustain that growth velocity?',
+                        'I noted that traction data. In terms of product stickiness, what does your net revenue retention look like after month six, and what drives repeat engagement?',
                     ] : ($hasTech ? [
                         $primaryEntity
-                            ? "The technology around '{$primaryEntity}' is solid, but what is your defensible moat if an incumbent tech giant clones this next month?"
-                            : 'The underlying technology is solid, but what is your defensible moat if an incumbent tech giant clones this next month?',
-                        'How defensible is your IP if key developers leave or open-source alternatives catch up?',
+                            ? "Thank you, the solution around '{$primaryEntity}' is certainly compelling. From an investment perspective, what is your defensible moat that prevents competitors or incumbents from easily replicating it?"
+                            : 'Thank you, that product solution is compelling. From an investment perspective, what is your defensible moat that prevents competitors from easily replicating it?',
+                        'I see the technological value proposition. How sustainable are your operational margins as user volume scales fivefold over the next year?',
                     ] : [
-                        'Cut straight to the bottom line: why will enterprises pay premium for this rather than sticking with their current workflow?',
-                        'What is your clear path to achieving venture-scale return and operational break-even within the next 18 months?',
+                        'Thank you for outlining that value proposition. Cut straight to customer psychology: why will enterprise buyers pay real budget for this today rather than continuing with their existing manual habits?',
+                        'I understand the overarching vision. What is your concrete milestone roadmap to reaching operational break-even and venture-scale capital efficiency within the next 18 months?',
                     ]),
                 ];
             }
@@ -402,53 +402,53 @@ class AiRoleplayService
             if ($stage === 'pressure_test') {
                 $dialogues = [
                     'dosen_penguji' => [
-                        'Ujian tekanan dewan penguji: Jika sistem Saudara diuji pada skenario noise ekstrem di mana asumsi dasar runtuh, bagaimana Saudara membuktikan batas error-nya dan menjamin sistem tidak crash fatal?',
-                        'Pertanyaan kritis penguji: Bagaimana jika metodologi yang Saudara pilih sebenarnya bias terhadap dataset uji? Buktikan dasar ilmiah Saudara sekarang juga!',
+                        'Baik, terima kasih atas pemaparan Saudara. Sekarang mari kita uji titik kritis metodologinya: jika sistem Saudara dihadapkan pada skenario anomali atau data noise ekstrem di mana asumsi dasar runtuh, bagaimana Saudara membuktikan batas error-nya dan menjamin sistem tetap reliabel?',
+                        'Penjelasan Saudara saya pahami. Namun dewan penguji ingin menelisik potensi kerentanan metodologi: jika dataset uji Saudara dicurigai memiliki bias distribusi tersembunyi, bukti empiris apa yang menjamin temuan penelitian ini tetap valid secara ilmiah?',
                     ],
                     'hrd' => [
-                        'Pertanyaan uji stres: Bayangkan rekan tim Anda mengundurkan diri mendadak 3 hari sebelum deadline rilis, sementara atasan menolak perpanjangan waktu. Konkretnya apa aksi pertama Anda?',
-                        'Studi kasus tekanan: Jika klien penting memarahi Anda di depan umum atas kegagalan sistem yang bukan salah Anda, bagaimana cara Anda mengendalikan emosi dan meredamnya?',
+                        'Terima kasih, pemikiran Anda menunjukkan inisiatif yang baik. Sekarang mari kita uji dalam situasi tekanan tinggi: bayangkan seorang rekan kunci mengundurkan diri mendadak 3 hari sebelum jadwal rilis sementara atasan menolak perpanjangan waktu. Langkah operasional konkret apa yang pertama kali Anda eksekusi?',
+                        'Saya menghargai keterbukaan Anda. Bagaimana jika Anda berada di situasi saat pimpinan mengevaluasi keras kegagalan sebuah fitur di depan tim, padahal kendala tersebut berasal dari divisi lain: bagaimana cara Anda mengendalikan emosi dan meresponsnya secara profesional?',
                     ],
                     'investor' => [
-                        'Ujian defensibility kritis: Jika raksasa teknologi dengan modal triliunan meluncurkan fitur yang persis sama besok pagi gratis, kenapa pengguna tidak kabur? Apa moat riil Anda?',
-                        'Uji ketahanan modal: Jika CAC Anda melonjak 3x lipat bulan depan sementara modal operasional tersisa 4 bulan, langkah pemangkasan drastis apa yang langsung Anda ambil?',
+                        'Visi produk Anda menarik. Namun mari kita bicara soal defensibility bisnis: jika raksasa teknologi dengan modal triliunan meluncurkan fitur yang serupa minggu depan secara cuma-cuma, alasan kuat apa yang membuat pelanggan tetap setia membayar solusi Anda? Apa unfair advantage Anda?',
+                        'Target pertumbuhan tersebut cukup agresif. Namun jika biaya akuisisi pelanggan (CAC) Anda tiba-tiba melonjak dua kali lipat sementara sisa modal operasional tersisa 4 bulan, keputusan strategis apa yang segera Anda ambil untuk menjaga kelangsungan bisnis?',
                     ],
                 ];
             } else {
                 $dialogues = [
                     'dosen_penguji' => $hasMetric ? [
-                        'Angka dan metrik pengujian tersebut diuji pada seberapa banyak data riil? Buktikan bahwa hasil tersebut bukan akibat overfitting atau data leakage.',
-                        'Capaian kuantitatif itu tidak ada artinya tanpa uji signifikansi statistik. Uji hipotesis apa yang Saudara gunakan untuk membuktikan klaim tersebut?',
+                        'Baik, terima kasih. Saya mencatat capaian kuantitatif yang Saudara sebutkan. Dari kacamata metodologi ilmiah, bagaimana Saudara membuktikan bahwa angka tersebut valid secara statistik dan tidak dipengaruhi oleh bias seleksi sampel?',
+                        'Terima kasih atas rincian angkanya. Untuk memastikan ketahanan temuan tersebut, uji signifikansi atau komparasi baseline apa yang Saudara gunakan untuk membuktikan bahwa hasil ini bukan sekadar kebetulan?',
                     ] : ($hasTech ? [
                         $primaryEntity
-                            ? "Keputusan mengadopsi '{$primaryEntity}' punya kompromi komputasi dan kompleksitas tersendiri. Apa dasar ilmiah Saudara bahwa metode ini lebih unggul dibanding baseline yang sudah mapan?"
-                            : 'Keputusan pendekatan teknis tersebut punya kompromi komputasi dan kompleksitas tersendiri. Apa dasar ilmiah Saudara bahwa metode ini lebih unggul dibanding baseline yang sudah mapan?',
-                        'Bagaimana Saudara menjamin kestabilan metode tersebut saat dihadapkan pada skenario noise atau anomali data di lapangan?',
+                            ? "Penjelasan Saudara mengenai penerapan '{$primaryEntity}' sangat menarik. Mengingat setiap arsitektur teknis memiliki kompromi komputasi, bukti empiris apa yang menunjukkan bahwa metode ini lebih unggul dibanding baseline standar yang sudah mapan?"
+                            : 'Penjelasan Saudara mengenai pendekatan teknis tersebut sangat menarik. Mengingat setiap metode memiliki kompromi, bukti empiris apa yang menunjukkan bahwa metode ini lebih unggul dibanding pendekatan standar yang sudah mapan?',
+                        'Baik, saya memahami logika teknis tersebut. Bagaimana Saudara menjamin kestabilan metode ini saat dihadapkan pada variasi data nyata di lapangan yang jauh lebih dinamis dibanding data laboratorium?',
                     ] : [
-                        'Coba tunjukkan korelasi langsung antara rumusan masalah di bab satu dengan pembuktian empiris yang Saudara sebutkan tadi. Jangan berhenti di tataran konseptual.',
-                        'Buktikan kepada dewan penguji: di mana letak kebaruan atau novelty orisinal penelitian Saudara dibanding publikasi terdahulu?',
+                        'Terima kasih atas pemaparannya. Menghubungkan hal tersebut dengan rumusan masalah di bab awal, bagaimana Saudara membuktikan bahwa solusi yang dikembangkan benar-benar menjawab celah permasalahan yang diteliti?',
+                        'Poin yang Saudara sampaikan cukup jelas. Boleh dipertegas kepada dewan penguji: di mana letak kebaruan atau novelty orisinal dari penelitian Saudara jika dikomparasikan dengan studi-studi terdahulu?',
                     ]),
                     'hrd' => $hasTeam ? [
-                        'Dalam dinamika tim tersebut, tindakan nyata apa yang kamu ambil secara personal untuk menengahi perbedaan pendapat tanpa memicu friksi berkepanjangan?',
-                        'Bagaimana pendekatan komunikasimu saat harus meyakinkan rekan kerja atau atasan yang awalnya menentang inisiatif tersebut?',
+                        'Bagus sekali, kemampuan berkolaborasi dan menjaga dinamika tim adalah nilai yang sangat kami cari di sini. Boleh ceritakan satu situasi nyata saat terjadi perbedaan pandangan di tim Anda, dan bagaimana langkah konkret Anda menengahi hingga tercapai kesepakatan?',
+                        'Senang mendengar cerita kerja sama tim tersebut. Bagaimana pendekatan komunikasi Anda saat harus meyakinkan rekan kerja atau atasan yang awalnya sempat ragu terhadap usulan yang Anda sampaikan?',
                     ] : ($hasMetric ? [
-                        'Pencapaian angka itu signifikan. Tapi ceritakan kendala paling berat di balik layar yang hampir menggagalkan target tersebut, dan bagaimana kamu menyelesaikannya?',
-                        'Bagaimana kamu menjaga ritme kerja dan ketenangan saat menghadapi tenggat waktu yang tiba-tiba dimajukan oleh manajemen?',
+                        'Pencapaian angka tersebut merupakan prestasi yang sangat baik. Di balik keberhasilan itu, apa kendala paling menantang yang sempat dihadapi, dan bagaimana proses Anda mengatasinya hingga target tercapai?',
+                        'Terima kasih atas ceritanya yang terstruktur. Bagaimana cara Anda menjaga ketenangan dan menentukan prioritas saat dihadapkan pada tenggat waktu yang ketat dan ekspektasi yang tinggi?',
                     ] : [
-                        'Langkah konkret pertama apa yang langsung kamu eksekusi saat menyadari ada masalah mendesak yang butuh solusi cepat?',
-                        'Kalau kamu diberi kesempatan mengulang situasi tersebut dengan pengalamanmu sekarang, keputusan apa yang akan kamu ubah agar dampaknya lebih maksimal?',
+                        'Menarik sekali mendengar pengalaman tersebut. Boleh ceritakan langkah konkret pertama yang langsung Anda ambil saat pertama kali menyadari ada tantangan operasional yang butuh penanganan segera?',
+                        'Terima kasih atas refleksinya yang mendalam. Jika Anda diberi kesempatan mengulang situasi tersebut dengan pengalaman Anda hari ini, keputusan atau pendekatan apa yang akan Anda lakukan secara berbeda agar hasilnya lebih optimal?',
                     ]),
                     'investor' => $hasMetric ? [
-                        'Angka pertumbuhan itu bagus di atas kertas. Tapi langsung ke intinya: berapa burn rate bulanan dan Customer Acquisition Cost nyata untuk menopang angka itu?',
-                        'Metrik traksi butuh retensi. Bagaimana persentase churn rate pengguna kalian setelah bulan ketiga?',
+                        'Terima kasih, indikator traksi yang Anda paparkan terlihat menjanjikan. Membedah lebih dalam ke unit economics: berapa burn rate bulanan dan Customer Acquisition Cost (CAC) riil yang dibutuhkan untuk menopang tren pertumbuhan tersebut?',
+                        'Saya mencatat angka pertumbuhan pengguna tersebut. Dari segi retensi dan stickiness produk, bagaimana persentase pelanggan yang terus aktif dan bertransaksi kembali setelah bulan ketiga?',
                     ] : ($hasTech ? [
                         $primaryEntity
-                            ? "Solusi seputar '{$primaryEntity}' ini menjanjikan. Tapi apa benteng pertahanan atau moat bisnis kalian kalau pemain besar menyalin fitur ini minggu depan?"
-                            : 'Solusi teknologi ini menjanjikan. Tapi apa benteng pertahanan atau moat bisnis kalian kalau pemain besar menyalin fitur ini minggu depan?',
-                        'Seberapa bergantung teknologi ini pada infrastruktur pihak ketiga, dan bagaimana strategi kalian menjaga margin tetap tebal?',
+                            ? "Solusi berbasis '{$primaryEntity}' ini memiliki potensi inovasi yang bagus. Dari kacamata bisnis, apa moat atau benteng keunggulan kompetitif yang melindungi bisnis Anda dari ancaman imitasi kompetitor?"
+                            : 'Solusi teknologi ini memiliki potensi inovasi yang bagus. Dari kacamata bisnis, apa moat atau benteng keunggulan kompetitif yang melindungi bisnis Anda dari ancaman imitasi kompetitor?',
+                        'Penjelasan teknisnya menarik. Bagaimana strategi Anda menjaga margin operasional tetap sehat dan efisien ketika volume transaksi meningkat 5 kali lipat dalam setahun ke depan?',
                     ] : [
-                        'Langsung ke intinya: kenapa pelanggan bersedia membayar solusi kalian sekarang juga daripada bertahan dengan cara lama yang gratis?',
-                        'Berapa lama modal operasional yang ada sekarang bisa bertahan sampai kalian membuktikan unit economics yang positif?',
+                        'Terima kasih atas pemaparannya yang jelas. Dari sudut pandang psikologi pelanggan: faktor apa yang paling meyakinkan pelanggan untuk bersedia membayar solusi Anda hari ini daripada bertahan dengan cara lama yang gratis?',
+                        'Saya memahami visi besar yang Anda bangun. Apa milestone utama dalam 12 hingga 18 bulan ke depan untuk membuktikan bahwa model bisnis ini siap mencapai titik impas dan menghasilkan arus kas positif?',
                     ]),
                 ];
             }
@@ -474,7 +474,7 @@ class AiRoleplayService
         float $faceScore,
         float $voiceScore,
         float $overallScore,
-        array $feedbackNotes = [],
+        array &$feedbackNotes = [],
         ?string $language = null
     ): string {
         $lang = $language ?: ($feedbackNotes['language'] ?? 'id');
@@ -482,6 +482,9 @@ class AiRoleplayService
         $roleType = $role?->role_type ?? 'dosen_penguji';
         $roleName = $role?->name ?? 'Evaluator VOIC';
         $systemPrompt = $role?->system_prompt ?? 'Anda adalah evaluator profesional.';
+
+        // Attach GoPrep-style 4-pillar diagnostics and answer polishing
+        $feedbackNotes['goprep_diagnostic'] = $this->buildGoprepDiagnostic($session, $faceScore, $voiceScore, $overallScore, $lang);
 
         // Retrieve last turns of conversation for real context
         $history = $session->messages()
@@ -776,5 +779,129 @@ class AiRoleplayService
         }
 
         return null;
+    }
+
+    /**
+     * Build GoPrep-grade 4-pillar speaking diagnostic and candidate answer polishing.
+     *
+     * @return array<string, mixed>
+     */
+    public function buildGoprepDiagnostic(
+        PracticeSession $session,
+        float $faceScore,
+        float $voiceScore,
+        float $overallScore,
+        string $lang = 'id'
+    ): array {
+        $role = $session->aiRole;
+        $roleType = $role?->role_type ?? 'dosen_penguji';
+
+        // 1. Calculate 4 core speaking competency scores (0-100 & Band 0-9)
+        $fluencyScore = round(min(98.0, max(52.0, $voiceScore * 1.02)), 1);
+        $lexicalScore = round(min(97.0, max(50.0, ($overallScore * 0.96) + ($voiceScore * 0.05))), 1);
+        $grammarScore = round(min(99.0, max(54.0, $overallScore * 1.01)), 1);
+        $presenceScore = round(min(98.0, max(50.0, ($faceScore * 0.65) + ($voiceScore * 0.35))), 1);
+
+        $toBand = fn (float $sc) => round(min(9.0, max(4.0, ($sc / 100) * 9)), 1);
+
+        // 2. Extract Candidate's most meaningful user answer
+        $userMsgs = $session->messages()->where('sender', 'user')->orderBy('id')->get();
+        $sampleUserText = null;
+        foreach ($userMsgs as $uMsg) {
+            $txt = trim((string) $uMsg->message);
+            if (mb_strlen($txt) >= 20 && ! preg_match('/^(halo|hai|pagi|siang|assalamualaikum|tes|hello|hi)/i', $txt)) {
+                $sampleUserText = $txt;
+                break;
+            }
+        }
+        if (! $sampleUserText && $userMsgs->isNotEmpty()) {
+            $sampleUserText = trim((string) $userMsgs->first()->message);
+        }
+
+        // 3. Generate Polished Answer tailored to Role
+        $isEn = $lang === 'en';
+        if ($isEn) {
+            $polishing = match ($roleType) {
+                'dosen_penguji' => [
+                    'original' => $sampleUserText ?: 'My research evaluates standard algorithms on sample data to solve system issues.',
+                    'critique' => 'The spoken response conveyed the core idea, but lacked academic precision and explicit methodological justification.',
+                    'polished' => 'In this research, I formulated an empirical methodology benchmarked against representative operational datasets to rigorously quantify model accuracy and mitigate systemic anomalies.',
+                    'examiner_tip' => 'In an academic oral defense, replace generic verbs like "solve" with precise scientific terms such as "mitigate", "quantify", or "empirically benchmark".',
+                ],
+                'hrd' => [
+                    'original' => $sampleUserText ?: 'I worked hard with the team and we managed to deliver the project before deadline.',
+                    'critique' => 'Good enthusiasm, but hiring managers look for the STAR method: specific action taken and measurable outcome achieved.',
+                    'polished' => 'When faced with tight project milestones, I proactively facilitated daily sprint alignment and reprioritized deliverables, which enabled our team to launch the release 3 days ahead of schedule.',
+                    'examiner_tip' => 'Use the STAR formula (Situation, Task, Action, Result) to transform general team claims into concrete evidence of leadership.',
+                ],
+                default => [
+                    'original' => $sampleUserText ?: 'Our product has high potential in a huge market and users really like it.',
+                    'critique' => 'Sounds like an early concept claim. VCs require clear unit economics, customer problem-solution fit, and a defensible moat.',
+                    'polished' => 'We address an urgent workflow friction for 20,000 SME operators, achieving positive unit economics with a 3-month customer payback and 15% month-over-month organic retention.',
+                    'examiner_tip' => 'Cut vanity metrics and immediately highlight customer retention rate, payback period, and your defensible advantage.',
+                ],
+            };
+        } else {
+            $polishing = match ($roleType) {
+                'dosen_penguji' => [
+                    'original' => $sampleUserText ?: 'Penelitian saya menggunakan metode klasifikasi dengan sampel data untuk mendeteksi anomali sistem.',
+                    'critique' => 'Penyampaian sudah komunikatif dan lugas, namun diksi ilmiah dapat diperkuat dengan batasan dataset dan metode validasi yang lebih spesifik.',
+                    'polished' => 'Penelitian ini mengimplementasikan pendekatan klasifikasi berbasis machine learning yang diuji secara empiris pada data teranotasi, guna mengevaluasi kestabilan deteksi anomali serta mengukur tingkat presisi model terhadap baseline.',
+                    'examiner_tip' => 'Di hadapan dewan penguji, hindari kalimat pasif non-spesifik. Selalu sertakan dasar pemilihan metode dan bagaimana Anda memvalidasi keabsahan data.',
+                ],
+                'hrd' => [
+                    'original' => $sampleUserText ?: 'Di tim kemarin saya selalu berusaha kerja sama dengan baik dan menyelesaikan tugas tepat waktu.',
+                    'critique' => 'Sikap positif terlihat jelas, namun rekruter membutuhkan metode STAR: tindakan personal nyata dan dampak terukur yang Anda ciptakan.',
+                    'polished' => 'Saat menghadapi tenggat waktu proyek yang dipercepat, saya mengambil inisiatif memetakan prioritas tugas tim dan membuka komunikasi transparan, sehingga kami berhasil menyelesaikan rilis 2 hari lebih cepat dengan zero critical bug.',
+                    'examiner_tip' => 'Gunakan rumus STAR (Situasi, Tantangan, Aksi Pribadi, Hasil Terukur) agar pewawancara langsung melihat kepemimpinan nyata Anda.',
+                ],
+                default => [
+                    'original' => $sampleUserText ?: 'Pasar kami sangat besar dan produk kami menawarkan solusi yang lebih praktis untuk pengguna.',
+                    'critique' => 'Klaim pasar besar masih terasa normatif. Investor membutuhkan bukti unit economics, retensi pengguna, dan benteng keunggulan bisnis.',
+                    'polished' => 'Solusi kami menjawab inefisiensi biaya operasional bagi segmen target spesifik, dengan model bisnis yang membukukan Customer Payback 3 bulan dan tingkat retensi organik 80% pada kuartal pertama.',
+                    'examiner_tip' => 'Ganti angka estimasi pasar makro dengan metrik traksi riil: berapa biaya akuisisi pengguna Anda dan kenapa mereka tidak pindah ke kompetitor gratisan.',
+                ],
+            };
+        }
+
+        return [
+            'examiner_style' => 'goprep_ielts_oral_protocol',
+            'overall_band' => $toBand($overallScore),
+            'criteria' => [
+                'fluency_coherence' => [
+                    'label' => $isEn ? 'Fluency & Coherence' : 'Kelancaran & Koherensi Alur',
+                    'score' => $fluencyScore,
+                    'band' => $toBand($fluencyScore),
+                    'assessment' => $fluencyScore >= 80
+                        ? ($isEn ? 'Effortless pacing with smooth transitions and structured arguments.' : 'Ritme bicara sangat lancar, minim jeda gumaman, dan struktur ide mengalir runtut.')
+                        : ($isEn ? 'Generally clear flow, occasional hesitations when organizing complex points.' : 'Alur cukup lancar, sesekali ada jeda saat menyusun argumen yang lebih kompleks.'),
+                ],
+                'lexical_resource' => [
+                    'label' => $isEn ? 'Lexical Resource' : 'Ketepatan Diksi & Kosa Kata',
+                    'score' => $lexicalScore,
+                    'band' => $toBand($lexicalScore),
+                    'assessment' => $lexicalScore >= 80
+                        ? ($isEn ? 'Precise, appropriate terminology tailored accurately to context.' : 'Penggunaan terminologi teknis dan diksi profesional sangat tepat sasaran.')
+                        : ($isEn ? 'Adequate vocabulary, could benefit from more specialized professional terminology.' : 'Kosa kata memadai, dapat diperkaya dengan istilah baku dan diksi ilmiah/profesional.'),
+                ],
+                'grammatical_accuracy' => [
+                    'label' => $isEn ? 'Grammar & Structure' : 'Ketepatan Struktur Kalimat',
+                    'score' => $grammarScore,
+                    'band' => $toBand($grammarScore),
+                    'assessment' => $grammarScore >= 80
+                        ? ($isEn ? 'Well-constructed spoken sentences without ambiguous phrasing.' : 'Kalimat tersusun utuh, kejelasan makna terjaga, dan bebas dari kalimat menggantung.')
+                        : ($isEn ? 'Clear message delivery with minor incomplete sentence endings.' : 'Maksud tersampaikan dengan baik, pertahankan kelengkapan subjek-predikat saat menjawab cepat.'),
+                ],
+                'pronunciation_presence' => [
+                    'label' => $isEn ? 'Delivery & Visual Poise' : 'Artikulasi Vokal & Kontak Mata',
+                    'score' => $presenceScore,
+                    'band' => $toBand($presenceScore),
+                    'assessment' => $presenceScore >= 80
+                        ? ($isEn ? 'Commanding eye contact into the lens with resonant, confident articulation.' : 'Kontak mata terfokus mantap ke lensa kamera dengan artikulasi vokal yang berwibawa.')
+                        : ($isEn ? 'Good vocal projection, maintain consistent gaze towards the camera.' : 'Artikulasi vokal terdengar jelas, biasakan menjaga tatapan ke lensa kamera secara konsisten.'),
+                ],
+            ],
+            'answer_polishing' => $polishing,
+        ];
     }
 }
