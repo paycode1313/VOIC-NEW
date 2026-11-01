@@ -7,7 +7,17 @@ echo ================================================================
 echo    VOIC - Voice ^& Optics Intelligent Coach (Innofest 2026)
 echo ================================================================
 echo.
-echo [1/4] Memeriksa status mesin AI Ollama...
+echo [1/5] Memeriksa status Database MySQL (Laragon)...
+netstat -ano | findstr /R ":3306 " >nul 2>&1
+if "%ERRORLEVEL%"=="0" (
+    echo   [OK] Database MySQL aktif di port 3306.
+) else (
+    echo   [!] PERHATIAN: MySQL belum terdeteksi aktif di port 3306.
+    echo       Pastikan Anda sudah mengklik tombol "Start All" di Laragon!
+)
+
+echo.
+echo [2/5] Memeriksa status mesin AI Ollama...
 netstat -ano | findstr /R ":11434 " >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo   [OK] Ollama sudah aktif dan siap melayani di port 11434.
@@ -22,7 +32,7 @@ if "%ERRORLEVEL%"=="0" (
 )
 
 echo.
-echo [2/4] Menjalankan AI Service Python (FastAPI + Qwen 2.5 + TTS)...
+echo [3/5] Menjalankan AI Service Python (FastAPI + voic-coach + TTS)...
 netstat -ano | findstr /R ":8001 " >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo   [OK] AI Service Python sudah aktif di http://127.0.0.1:8001.
@@ -32,12 +42,12 @@ if "%ERRORLEVEL%"=="0" (
 )
 
 echo.
-echo [3/4] Menjalankan Server Web Laravel (Port 8000)...
+echo [4/5] Menjalankan Server Web Laravel (Port 8000)...
 start "VOIC_LARAVEL_SERVER" /min cmd /c "php artisan serve --port=8000"
 echo   [OK] Laravel aktif di http://localhost:8000
 
 echo.
-echo [4/4] Membuka Browser Aplikasi VOIC...
+echo [5/5] Membuka Browser Aplikasi VOIC...
 ping 127.0.0.1 -n 4 >nul
 start http://localhost:8000/login
 
@@ -46,7 +56,7 @@ echo ================================================================
 echo  SEMUA LAYANAN VOIC TELAH BERJALAN!
 echo  - Web Application : http://localhost:8000
 echo  - AI FastAPI      : http://127.0.0.1:8001
-echo  - Ollama LLM      : http://127.0.0.1:11434 (Qwen 2.5)
+echo  - Ollama LLM      : http://127.0.0.1:11434 (voic-coach GoPrep Engine)
 echo.
 echo  Gunakan akun yang telah terdaftar atau buat akun baru di halaman register.
 echo ================================================================
