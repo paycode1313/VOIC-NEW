@@ -78,6 +78,45 @@
         .orb-thinking { animation: orb-thinking 2s linear infinite; }
         .ripple-ring { animation: ripple-wave 2s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
 
+        /* 2.5D Audio-Reactive Living Avatar System */
+        @keyframes floatBreathing {
+            0%, 100% {
+                transform: translateY(0) scale(1);
+            }
+            50% {
+                transform: translateY(-6px) scale(1.015);
+            }
+        }
+
+        @keyframes auraPulseSpeaking {
+            0%, 100% {
+                transform: scale(1.02);
+                opacity: 0.75;
+                filter: blur(28px);
+            }
+            50% {
+                transform: scale(1.18);
+                opacity: 1;
+                filter: blur(42px);
+            }
+        }
+
+        .avatar-25d-breathing {
+            animation: floatBreathing 3.8s ease-in-out infinite;
+            transform-origin: center bottom;
+            will-change: transform;
+        }
+
+        .aura-speaking-pulse {
+            animation: auraPulseSpeaking 1.6s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+
+        .avatar-vignette-mask {
+            mask-image: radial-gradient(ellipse 90% 90% at 50% 48%, black 60%, rgba(0, 0, 0, 0.7) 78%, transparent 98%);
+            -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 48%, black 60%, rgba(0, 0, 0, 0.7) 78%, transparent 98%);
+        }
+
         /* Fixed & Stable Portrait Camera Feed - No Shaking / No Zooms */
         .avatar-breathe-anim,
         .avatar-talking-anim,
@@ -1197,11 +1236,64 @@
                 },
 
                 get avatarImageUrl() {
-                    if (!this.selectedRole) return '/images/avatars/dosen.jpg';
-                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji') return '/images/avatars/dosen.jpg';
-                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'hrd') return '/images/avatars/hrd.jpg?v=3';
-                    if ((this.selectedRole?.role_type || 'dosen_penguji') === 'investor') return '/images/avatars/investor.jpg';
-                    return '/images/avatars/dosen.jpg';
+                    const type = this.selectedRole?.role_type || 'dosen_penguji';
+                    if (type === 'hrd') return '/images/avatars/hrd.png';
+                    if (type === 'investor') return '/images/avatars/investor.png';
+                    return '/images/avatars/dosen.png';
+                },
+
+                get avatarPersonaShortName() {
+                    const type = this.selectedRole?.role_type || 'dosen_penguji';
+                    if (type === 'hrd') return 'HRD Recruiter';
+                    if (type === 'investor') return 'Venture Investor';
+                    return 'Dosen Penguji';
+                },
+
+                get currentRoleAccent() {
+                    const type = this.selectedRole?.role_type || 'dosen_penguji';
+                    if (type === 'hrd') {
+                        return {
+                            color: '#10b981',
+                            ring: 'rgba(16, 185, 129, 0.45)',
+                            glow: 'rgba(16, 185, 129, 0.35)',
+                            border: 'rgba(16, 185, 129, 0.5)',
+                            bg: 'rgba(6, 78, 59, 0.3)'
+                        };
+                    }
+                    if (type === 'investor') {
+                        return {
+                            color: '#f59e0b',
+                            ring: 'rgba(245, 158, 11, 0.45)',
+                            glow: 'rgba(245, 158, 11, 0.35)',
+                            border: 'rgba(245, 158, 11, 0.5)',
+                            bg: 'rgba(120, 53, 15, 0.3)'
+                        };
+                    }
+                    return {
+                        color: '#3b82f6',
+                        ring: 'rgba(59, 130, 246, 0.45)',
+                        glow: 'rgba(59, 130, 246, 0.35)',
+                        border: 'rgba(59, 130, 246, 0.5)',
+                        bg: 'rgba(30, 58, 138, 0.3)'
+                    };
+                },
+
+                cyclePersona() {
+                    const rolesList = ['dosen_penguji', 'hrd', 'investor'];
+                    const currentType = this.selectedRole?.role_type || 'dosen_penguji';
+                    const nextIdx = (rolesList.indexOf(currentType) + 1) % rolesList.length;
+                    const nextType = rolesList[nextIdx];
+                    const found = (this.aiRoles || []).find(r => r.role_type === nextType);
+                    if (found) {
+                        this.selectedRole = found;
+                    } else {
+                        const fallbackRoles = {
+                            dosen_penguji: { name: 'VOIC - Dosen Penguji', role_type: 'dosen_penguji', description: 'Dosen Penguji Sidang Utama' },
+                            hrd: { name: 'VOIC - HRD', role_type: 'hrd', description: 'Senior HR Recruiter & Talent Acquisition' },
+                            investor: { name: 'VOIC - Investor', role_type: 'investor', description: 'Venture Capitalist & Angel Investor' }
+                        };
+                        this.selectedRole = fallbackRoles[nextType];
+                    }
                 },
 
                 get avatarPersonaName() {
@@ -4509,425 +4601,96 @@
                         </div>
                     </template>
 
-                    <!-- Ambient Studio Backdrop -->
-                    <template x-if="avatarStageMode === 'animated'">
-                        <div class="absolute inset-0 bg-gradient-to-b from-blue-950/40 via-slate-950/80 to-slate-950 pointer-events-none"></div>
-                    </template>
-                    <template x-if="avatarStageMode !== 'animated'">
-                        <img :src="avatarImageUrl"
-                             alt=""
-                             aria-hidden="true"
-                             class="absolute inset-0 w-full h-full object-cover filter blur-3xl opacity-35 scale-125 select-none pointer-events-none">
-                    </template>
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-slate-950/60 pointer-events-none"></div>
+                    <!-- ============================================================== -->
+                    <!-- 2.5D AUDIO-REACTIVE LIVING AVATAR SYSTEM (#0d1117 STUDIO STAGE) -->
+                    <!-- ============================================================== -->
+                    <div class="relative z-10 w-full h-full flex items-center justify-center select-none overflow-hidden"
+                         style="background-color: #0d1117;">
 
-                    <!-- Subtle Ambient Aura Glow (Active when AI speaks) -->
-                    <div x-show="orbState === 'ai_speaking'"
-                         class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 transition-opacity duration-500">
-                        <div class="absolute w-96 sm:w-[500px] h-96 sm:h-[500px] rounded-full bg-blue-500/20 blur-3xl"></div>
-                    </div>
+                        <!-- 1. Persona Ambient Accent Lighting Glow (Backdrop) -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 transition-all duration-700">
+                            <!-- Idle Ambient Glow matching character theme -->
+                            <div class="absolute w-[320px] sm:w-[500px] h-[320px] sm:h-[500px] rounded-full blur-3xl transition-all duration-700 pointer-events-none"
+                                 :style="`background: radial-gradient(circle, ${currentRoleAccent.glow} 0%, transparent 70%); opacity: ${orbState === 'ai_speaking' ? '0.9' : '0.45'};`"></div>
 
-                    <!-- 1. PURE PHOTOGRAPHIC PORTRAIT (When user explicitly toggles to Photo Mode) -->
-                    <template x-if="avatarStageMode === 'photo'">
-                        <div class="relative z-10 w-full h-full flex items-center justify-center pointer-events-none select-none overflow-hidden">
-                            <img :src="avatarImageUrl"
-                                 :alt="avatarPersonaName"
-                                 class="h-full w-auto max-w-full object-contain object-bottom sm:object-center select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.85)] transition-transform duration-500 ease-out"
-                                 :class="orbState === 'ai_speaking' ? 'scale-[1.02]' : 'scale-100'">
+                            <!-- AI Speaking Audio-Reactive Pulsing Aura Ring -->
+                            <div x-show="orbState === 'ai_speaking'"
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0 scale-90"
+                                 x-transition:enter-end="opacity-100 scale-100"
+                                 x-transition:leave="transition ease-in duration-200"
+                                 x-transition:leave-start="opacity-100 scale-100"
+                                 x-transition:leave-end="opacity-0 scale-90"
+                                 class="absolute w-[240px] sm:w-[380px] h-[240px] sm:h-[380px] rounded-full aura-speaking-pulse pointer-events-none"
+                                 :style="`box-shadow: 0 0 60px 20px ${currentRoleAccent.ring}, inset 0 0 40px ${currentRoleAccent.ring}; border: 2.5px solid ${currentRoleAccent.color};`"></div>
                         </div>
-                    </template>
 
-                    <!-- 2. ANIMATED 2D TALKING CHARACTERS (DEFAULT FOR ALL ROLES: LIVING AVATAR WITH MOVING MOUTH & LIP-SYNC) -->
-                    <template x-if="avatarStageMode === 'animated'">
-                        <div class="relative z-10 h-full max-h-[260px] sm:max-h-[330px] md:max-h-[360px] aspect-4/3 flex items-center justify-center p-1 sm:p-2">
-                            <div class="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 select-none flex items-center justify-center bg-slate-950 transition-all duration-300">
+                        <!-- 2. The 2.5D Living Character (Breathing & Dynamic Reactions) -->
+                        <div class="relative z-10 h-full w-full flex items-center justify-center">
+                            <!-- Container with continuous float/breathing animation -->
+                            <div class="relative h-full w-auto max-w-full flex items-center justify-center avatar-25d-breathing transition-transform duration-500 ease-out"
+                                 :class="orbState === 'ai_speaking' ? 'scale-[1.025]' : 'scale-100'">
 
-                                <!-- ROLE A: DOSEN PENGUJI (Prof. Dr. Ir. Hendra Kusuma, M.Kom) -->
-                                <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji'">
-                                    <svg viewBox="0 0 400 420" class="w-full h-full object-contain select-none" xmlns="http://www.w3.org/2000/svg">
-                                        <defs>
-                                            <linearGradient id="dosenStudioBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#070c17"/>
-                                                <stop offset="50%" stop-color="#0f172a"/>
-                                                <stop offset="100%" stop-color="#1e293b"/>
-                                            </linearGradient>
-                                            <linearGradient id="dosenSuitJacket" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#1e2433"/>
-                                                <stop offset="100%" stop-color="#0b0f17"/>
-                                            </linearGradient>
-                                            <linearGradient id="dosenSuitLapel" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stop-color="#334155"/>
-                                                <stop offset="100%" stop-color="#1e293b"/>
-                                            </linearGradient>
-                                            <linearGradient id="dosenSkinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                <stop offset="0%" stop-color="#f5cfb5"/>
-                                                <stop offset="100%" stop-color="#db9f7c"/>
-                                            </linearGradient>
-                                            <linearGradient id="dosenTieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#991b1b"/>
-                                                <stop offset="50%" stop-color="#7f1d1d"/>
-                                                <stop offset="100%" stop-color="#450a0a"/>
-                                            </linearGradient>
-                                            <linearGradient id="dosenHairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#334155"/>
-                                                <stop offset="50%" stop-color="#1e293b"/>
-                                                <stop offset="100%" stop-color="#0f172a"/>
-                                            </linearGradient>
-                                        </defs>
+                                <!-- Dosen Avatar Image (3D Render) -->
+                                <img src="/images/avatars/dosen.png"
+                                     alt="Dosen Penguji"
+                                     x-show="(selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji'"
+                                     x-transition:enter="transition-opacity ease-out duration-500"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition-opacity ease-in duration-300"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="h-full w-auto max-w-full object-contain object-bottom select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
 
-                                        <!-- Studio Backdrop -->
-                                        <rect width="400" height="420" fill="url(#dosenStudioBg)"/>
-                                        <circle cx="200" cy="140" r="140" fill="#3b82f6" opacity="0.07" filter="blur(25px)"/>
-                                        <path d="M 0 320 L 400 320" stroke="#334155" stroke-width="1" opacity="0.3"/>
+                                <!-- HRD Avatar Image (3D Render) -->
+                                <img src="/images/avatars/hrd.png"
+                                     alt="HRD Recruiter"
+                                     x-show="(selectedRole?.role_type || 'dosen_penguji') === 'hrd'"
+                                     x-transition:enter="transition-opacity ease-out duration-500"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition-opacity ease-in duration-300"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="h-full w-auto max-w-full object-contain object-bottom select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
 
-                                        <!-- Torso & Academic Suit -->
-                                        <path d="M 30 420 Q 55 325 125 305 L 275 305 Q 345 325 370 420 Z" fill="url(#dosenSuitJacket)"/>
-                                        <path d="M 155 255 L 245 255 L 230 385 L 170 385 Z" fill="#f8fafc"/>
-                                        <path d="M 200 275 L 200 385" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4,4"/>
+                                <!-- Investor Avatar Image (3D Render) -->
+                                <img src="/images/avatars/investor.png"
+                                     alt="Venture Investor"
+                                     x-show="(selectedRole?.role_type || 'dosen_penguji') === 'investor'"
+                                     x-transition:enter="transition-opacity ease-out duration-500"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition-opacity ease-in duration-300"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="h-full w-auto max-w-full object-contain object-bottom select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
+                            </div>
 
-                                        <!-- Professor Burgundy Tie with Gold Accent -->
-                                        <path d="M 191 264 L 209 264 L 205 282 L 195 282 Z" fill="url(#dosenTieGrad)"/>
-                                        <path d="M 195 282 L 205 282 L 200 286 Z" fill="#450a0a"/>
-                                        <path d="M 194 282 L 206 282 L 213 398 L 200 412 L 187 398 Z" fill="url(#dosenTieGrad)"/>
-                                        <path d="M 193 298 L 207 310" stroke="#f59e0b" stroke-width="1.2" opacity="0.7"/>
-                                        <path d="M 192 328 L 209 342" stroke="#f59e0b" stroke-width="1.2" opacity="0.7"/>
-                                        <path d="M 190 358 L 211 374" stroke="#f59e0b" stroke-width="1.2" opacity="0.7"/>
-                                        <rect x="190" y="336" width="22" height="4.5" rx="2" fill="#fbbf24"/>
-
-                                        <!-- Suit Lapels -->
-                                        <path d="M 120 305 L 164 262 L 180 350 L 132 390 Z" fill="url(#dosenSuitLapel)"/>
-                                        <path d="M 280 305 L 236 262 L 220 350 L 268 390 Z" fill="url(#dosenSuitLapel)"/>
-                                        <path d="M 120 305 L 164 262" stroke="#475569" stroke-width="1.5"/>
-                                        <path d="M 280 305 L 236 262" stroke="#475569" stroke-width="1.5"/>
-
-                                        <!-- Examiner Lapel Seal (Left Chest) -->
-                                        <g transform="translate(106, 335)">
-                                            <circle cx="16" cy="16" r="14" fill="#1e293b" stroke="#eab308" stroke-width="2"/>
-                                            <circle cx="16" cy="16" r="10" fill="#ca8a04"/>
-                                            <text x="16" y="19" font-size="6.5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">SIDANG</text>
-                                        </g>
-
-                                        <!-- Head & Face Group (Reactive Posture & Breathing) -->
-                                        <g :class="orbState === 'ai_speaking' ? 'vector-talking-head' : (orbState === 'user_speaking' ? 'vector-listening-head' : (orbState === 'thinking' ? 'vector-thinking-head' : 'vector-breathe-head'))">
-                                            <!-- Neck -->
-                                            <path d="M 176 210 L 224 210 L 228 266 L 172 266 Z" fill="url(#dosenSkinGrad)"/>
-                                            <path d="M 176 210 Q 200 225 224 210 Q 200 234 176 210 Z" fill="#b97858" opacity="0.6"/>
-
-                                            <!-- Shirt Collar Wings -->
-                                            <path d="M 164 260 L 192 264 L 178 290 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
-                                            <path d="M 236 260 L 208 264 L 222 290 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
-
-                                            <!-- Ears -->
-                                            <path d="M 130 172 C 120 172 118 194 130 204 Z" fill="url(#dosenSkinGrad)"/>
-                                            <path d="M 270 172 C 280 172 282 194 270 204 Z" fill="url(#dosenSkinGrad)"/>
-                                            <path d="M 127 180 C 123 184 123 192 128 195" stroke="#b97858" stroke-width="1.5" fill="none"/>
-                                            <path d="M 273 180 C 277 184 277 192 272 195" stroke="#b97858" stroke-width="1.5" fill="none"/>
-
-                                            <!-- Jaw & Head -->
-                                            <path d="M 130 162 C 130 100 270 100 270 162 C 270 205 236 230 200 230 C 164 230 130 205 130 162 Z" fill="url(#dosenSkinGrad)"/>
-
-                                            <!-- Distinguished Academic Hair with Silver Highlights -->
-                                            <path d="M 126 155 C 126 90 158 65 200 65 C 245 65 274 90 274 155 C 274 162 270 165 265 148 C 256 108 240 96 200 98 C 160 96 144 110 135 148 C 130 165 126 162 126 155 Z" fill="url(#dosenHairGrad)"/>
-                                            <path d="M 130 148 C 140 115 170 92 210 94 C 248 96 268 114 270 146 C 262 124 246 108 212 108 C 172 108 144 124 130 148 Z" fill="#475569"/>
-                                            <path d="M 128 152 C 132 136 138 126 146 118" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
-                                            <path d="M 272 152 C 268 136 262 126 254 118" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
-
-                                            <!-- Eyebrows -->
-                                            <path d="M 152 148 Q 170 142 184 148" stroke="#1e2433" stroke-width="3.2" stroke-linecap="round" fill="none"/>
-                                            <path d="M 216 148 Q 230 142 248 148" stroke="#1e2433" stroke-width="3.2" stroke-linecap="round" fill="none"/>
-
-                                            <!-- Eyes with Natural Blinking -->
-                                            <g class="vector-blink-eye">
-                                                <ellipse cx="168" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
-                                                <circle cx="168" cy="164" r="4.8" fill="#1e293b"/>
-                                                <circle cx="170" cy="162" r="1.6" fill="#ffffff"/>
-                                                <path d="M 158 161 Q 168 156 178 161" stroke="#1e2433" stroke-width="1.8" fill="none"/>
-
-                                                <ellipse cx="232" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
-                                                <circle cx="232" cy="164" r="4.8" fill="#1e293b"/>
-                                                <circle cx="234" cy="162" r="1.6" fill="#ffffff"/>
-                                                <path d="M 222 161 Q 232 156 242 161" stroke="#1e2433" stroke-width="1.8" fill="none"/>
-                                            </g>
-
-                                            <!-- Academic Glasses -->
-                                            <rect x="154" y="153" width="28" height="20" rx="3.5" fill="rgba(56, 189, 248, 0.08)" stroke="#38bdf8" stroke-width="1.8"/>
-                                            <rect x="218" y="153" width="28" height="20" rx="3.5" fill="rgba(56, 189, 248, 0.08)" stroke="#38bdf8" stroke-width="1.8"/>
-                                            <path d="M 182 161 Q 200 159 218 161" stroke="#38bdf8" stroke-width="2" fill="none"/>
-                                            <path d="M 154 162 L 132 166" stroke="#38bdf8" stroke-width="1.8"/>
-                                            <path d="M 246 162 L 268 166" stroke="#38bdf8" stroke-width="1.8"/>
-                                            <path d="M 158 156 L 168 156" stroke="#ffffff" stroke-width="1.2" opacity="0.6"/>
-                                            <path d="M 222 156 L 232 156" stroke="#ffffff" stroke-width="1.2" opacity="0.6"/>
-
-                                            <!-- Nose -->
-                                            <path d="M 197 166 Q 200 185 195 188 Q 200 190 205 188" stroke="#b97858" stroke-width="2" stroke-linecap="round" fill="none"/>
-
-                                            <!-- Dynamic Mouth: Resting vs Active Talking -->
-                                            <!-- Resting Composed State -->
-                                            <g x-show="orbState !== 'ai_speaking'">
-                                                <path d="M 184 206 Q 200 204 216 206" stroke="#783528" stroke-width="3" stroke-linecap="round" fill="none"/>
-                                                <path d="M 188 206 Q 200 209 212 206" stroke="#b97858" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
-                                            </g>
-
-                                            <!-- Active Speaking State (Mouth Opens, Articulates & Closes with Speech) -->
-                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk">
-                                                <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d14"/>
-                                                <path d="M 187 202 Q 200 205 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
-                                                <ellipse cx="200" cy="214" rx="10" ry="4" fill="#a83c48" opacity="0.85"/>
-                                                <path d="M 182 201 Q 200 197 218 201" stroke="#783528" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                                                <path d="M 185 216 Q 200 223 215 216" stroke="#783528" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                </template>
-
-                                <!-- ROLE B: HRD TALENT ACQUISITION (Nadia Putri, S.Psi., CHRP) -->
-                                <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'hrd'">
-                                    <svg viewBox="0 0 400 420" class="w-full h-full object-contain select-none" xmlns="http://www.w3.org/2000/svg">
-                                        <defs>
-                                            <linearGradient id="nadiaStudioBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#090d20"/>
-                                                <stop offset="50%" stop-color="#131b38"/>
-                                                <stop offset="100%" stop-color="#1e294f"/>
-                                            </linearGradient>
-                                            <linearGradient id="nadiaBlazer" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#1e1b4b"/>
-                                                <stop offset="100%" stop-color="#0f172a"/>
-                                            </linearGradient>
-                                            <linearGradient id="nadiaBlazerLapel" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stop-color="#312e81"/>
-                                                <stop offset="100%" stop-color="#1e1b4b"/>
-                                            </linearGradient>
-                                            <linearGradient id="nadiaSkinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                <stop offset="0%" stop-color="#ffe2d1"/>
-                                                <stop offset="100%" stop-color="#f2ad99"/>
-                                            </linearGradient>
-                                            <linearGradient id="nadiaHairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#262626"/>
-                                                <stop offset="50%" stop-color="#171717"/>
-                                                <stop offset="100%" stop-color="#0a0a0a"/>
-                                            </linearGradient>
-                                        </defs>
-
-                                        <!-- Studio Backdrop -->
-                                        <rect width="400" height="420" fill="url(#nadiaStudioBg)"/>
-                                        <circle cx="200" cy="140" r="140" fill="#818cf8" opacity="0.09" filter="blur(25px)"/>
-                                        <circle cx="200" cy="170" r="110" fill="#f43f5e" opacity="0.04" filter="blur(20px)"/>
-                                        <path d="M 0 320 L 400 320" stroke="#334155" stroke-width="1" opacity="0.3"/>
-
-                                        <!-- Torso & Corporate Blazer with Inner Blouse -->
-                                        <path d="M 40 420 Q 65 325 130 305 L 270 305 Q 335 325 360 420 Z" fill="url(#nadiaBlazer)"/>
-                                        <path d="M 162 258 L 238 258 L 222 385 L 178 385 Z" fill="#fff1f2"/>
-                                        <path d="M 200 270 L 200 385" stroke="#fbcfe8" stroke-width="1.2" stroke-dasharray="3,3"/>
-
-                                        <!-- Tailored Blazer Lapels -->
-                                        <path d="M 125 305 L 170 262 L 184 358 L 138 395 Z" fill="url(#nadiaBlazerLapel)"/>
-                                        <path d="M 275 305 L 230 262 L 216 358 L 262 395 Z" fill="url(#nadiaBlazerLapel)"/>
-                                        <path d="M 125 305 L 170 262" stroke="#4338ca" stroke-width="1.5"/>
-                                        <path d="M 275 305 L 230 262" stroke="#4338ca" stroke-width="1.5"/>
-
-                                        <!-- HR Lanyard ID Badge (Left Chest) - NADIA -->
-                                        <g transform="translate(98, 340)">
-                                            <path d="M 46 -48 L 22 0" stroke="#3b82f6" stroke-width="3" opacity="0.85"/>
-                                            <rect x="6" y="0" width="38" height="50" rx="4" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"/>
-                                            <rect x="6" y="0" width="38" height="11" rx="2" fill="#2563eb"/>
-                                            <text x="25" y="8" font-size="5" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">HR TALENT</text>
-                                            <circle cx="25" cy="23" r="7" fill="#fbcfe8"/>
-                                            <text x="25" y="36" font-size="5" font-weight="bold" fill="#1e293b" text-anchor="middle" font-family="sans-serif">VOIC</text>
-                                            <rect x="14" y="40" width="22" height="2" rx="1" fill="#94a3b8"/>
-                                        </g>
-
-                                        <!-- Hair Silhouette Behind Shoulders -->
-                                        <path d="M 124 165 C 115 220 118 290 145 320 L 160 320 C 135 270 134 220 138 175 Z" fill="#171717"/>
-                                        <path d="M 276 165 C 285 220 282 290 255 320 L 240 320 C 265 270 266 220 262 175 Z" fill="#171717"/>
-
-                                        <!-- Head & Face Group (Reactive Posture & Breathing) -->
-                                        <g :class="orbState === 'ai_speaking' ? 'vector-talking-head' : (orbState === 'user_speaking' ? 'vector-listening-head' : (orbState === 'thinking' ? 'vector-thinking-head' : 'vector-breathe-head'))">
-                                            <!-- Neck -->
-                                            <path d="M 180 210 L 220 210 L 224 266 L 176 266 Z" fill="url(#nadiaSkinGrad)"/>
-                                            <path d="M 180 210 Q 200 224 220 210 Q 200 232 180 210 Z" fill="#e0907c" opacity="0.6"/>
-
-                                            <!-- Delicate Necklace -->
-                                            <path d="M 184 252 Q 200 262 216 252" stroke="#fbbf24" stroke-width="1.2" fill="none"/>
-                                            <circle cx="200" cy="258" r="2.2" fill="#fbbf24"/>
-
-                                            <!-- Ears with Pearl Earrings -->
-                                            <path d="M 132 174 C 124 174 122 194 132 202 Z" fill="url(#nadiaSkinGrad)"/>
-                                            <path d="M 268 174 C 276 174 278 194 268 202 Z" fill="url(#nadiaSkinGrad)"/>
-                                            <circle cx="127" cy="190" r="2.8" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.8"/>
-                                            <circle cx="273" cy="190" r="2.8" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.8"/>
-
-                                            <!-- Soft Feminine Jaw & Face -->
-                                            <path d="M 134 162 C 134 104 266 104 266 162 C 266 202 234 228 200 228 C 166 228 134 202 134 162 Z" fill="url(#nadiaSkinGrad)"/>
-
-                                            <!-- Soft Rosy Blush Cheeks -->
-                                            <ellipse cx="152" cy="182" rx="9" ry="5.5" fill="#f43f5e" opacity="0.22"/>
-                                            <ellipse cx="248" cy="182" rx="9" ry="5.5" fill="#f43f5e" opacity="0.22"/>
-
-                                            <!-- Elegant Hair Styling -->
-                                            <path d="M 126 155 C 126 88 158 64 200 64 C 246 64 274 88 274 155 C 274 162 270 166 264 148 C 255 106 240 94 200 96 C 160 94 144 108 136 148 C 131 166 126 162 126 155 Z" fill="url(#nadiaHairGrad)"/>
-                                            <path d="M 134 146 C 146 106 176 86 218 88 C 252 90 270 108 270 138 C 262 116 244 102 216 102 C 174 102 148 118 134 146 Z" fill="#262626"/>
-                                            <path d="M 150 96 Q 190 82 232 94" stroke="#525252" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
-
-                                            <!-- Soft Arched Eyebrows -->
-                                            <path d="M 152 148 Q 170 140 184 146" stroke="#1f2937" stroke-width="2.6" stroke-linecap="round" fill="none"/>
-                                            <path d="M 216 146 Q 230 140 248 148" stroke="#1f2937" stroke-width="2.6" stroke-linecap="round" fill="none"/>
-
-                                            <!-- Expressive Eyes with Eyelashes & Natural Blinking -->
-                                            <g class="vector-blink-eye">
-                                                <ellipse cx="168" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
-                                                <circle cx="168" cy="164" r="4.8" fill="#1e293b"/>
-                                                <circle cx="170" cy="162" r="1.6" fill="#ffffff"/>
-                                                <path d="M 156 162 Q 168 156 180 161" stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-                                                <path d="M 178 159 L 182 157" stroke="#0f172a" stroke-width="1.8" stroke-linecap="round"/>
-
-                                                <ellipse cx="232" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
-                                                <circle cx="232" cy="164" r="4.8" fill="#1e293b"/>
-                                                <circle cx="234" cy="162" r="1.6" fill="#ffffff"/>
-                                                <path d="M 220 161 Q 232 156 244 162" stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-                                                <path d="M 242 159 L 246 157" stroke="#0f172a" stroke-width="1.8" stroke-linecap="round"/>
-                                            </g>
-
-                                            <!-- Delicate Nose -->
-                                            <path d="M 197 167 Q 200 184 196 186 Q 200 188 204 186" stroke="#d58673" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-
-                                            <!-- Dynamic Mouth: Warm HR Smile vs Active Articulated Talking Mouth -->
-                                            <!-- 1. Silent Resting State: Warm Empathetic HR Smile -->
-                                            <g x-show="orbState !== 'ai_speaking'">
-                                                <path d="M 183 204 Q 200 218 217 204" stroke="#be123c" stroke-width="3" stroke-linecap="round" fill="none"/>
-                                                <path d="M 186 205 Q 200 213 214 205 Q 200 215 186 205 Z" fill="#ffffff" opacity="0.85"/>
-                                                <circle cx="180" cy="203" r="1.6" fill="#f43f5e" opacity="0.7"/>
-                                                <circle cx="220" cy="203" r="1.6" fill="#f43f5e" opacity="0.7"/>
-                                            </g>
-
-                                            <!-- 2. Active Speaking State: Speech-Synchronized Talking Mouth -->
-                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk">
-                                                <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d18"/>
-                                                <path d="M 187 202 Q 200 206 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
-                                                <ellipse cx="200" cy="214" rx="10" ry="4" fill="#f43f5e" opacity="0.85"/>
-                                                <path d="M 182 201 Q 200 197 218 201" stroke="#be123c" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                                                <path d="M 185 216 Q 200 223 215 216" stroke="#be123c" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                </template>
-
-                                <!-- ROLE C: INVESTOR & VENTURE CAPITALIST (Raymond Chandra, B.Eng., MBA) -->
-                                <template x-if="(selectedRole?.role_type || 'dosen_penguji') === 'investor'">
-                                    <svg viewBox="0 0 400 420" class="w-full h-full object-contain select-none" xmlns="http://www.w3.org/2000/svg">
-                                        <defs>
-                                            <linearGradient id="invStudioBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#050811"/>
-                                                <stop offset="50%" stop-color="#0c1322"/>
-                                                <stop offset="100%" stop-color="#192438"/>
-                                            </linearGradient>
-                                            <linearGradient id="invJacket" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#1e293b"/>
-                                                <stop offset="100%" stop-color="#0b111e"/>
-                                            </linearGradient>
-                                            <linearGradient id="invLapel" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stop-color="#334155"/>
-                                                <stop offset="100%" stop-color="#1e293b"/>
-                                            </linearGradient>
-                                            <linearGradient id="invSkinGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                <stop offset="0%" stop-color="#f8d4bb"/>
-                                                <stop offset="100%" stop-color="#e09e79"/>
-                                            </linearGradient>
-                                            <linearGradient id="invHairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                                <stop offset="0%" stop-color="#1e293b"/>
-                                                <stop offset="100%" stop-color="#0f172a"/>
-                                            </linearGradient>
-                                        </defs>
-
-                                        <!-- Studio Backdrop (Modern Tech High-Rise Skyline) -->
-                                        <rect width="400" height="420" fill="url(#invStudioBg)"/>
-                                        <path d="M 60 0 L 140 420" stroke="#334155" stroke-width="0.8" opacity="0.25"/>
-                                        <path d="M 340 0 L 260 420" stroke="#334155" stroke-width="0.8" opacity="0.25"/>
-                                        <circle cx="200" cy="140" r="140" fill="#0ea5e9" opacity="0.08" filter="blur(25px)"/>
-                                        <path d="M 0 320 L 400 320" stroke="#334155" stroke-width="1" opacity="0.3"/>
-
-                                        <!-- Torso & Modern Tech VC Attire (Open Collar Oxford & Navy Blazer) -->
-                                        <path d="M 35 420 Q 60 325 125 305 L 275 305 Q 340 325 365 420 Z" fill="url(#invJacket)"/>
-                                        <path d="M 158 256 L 242 256 L 226 385 L 174 385 Z" fill="#e0f2fe"/>
-                                        <path d="M 200 278 L 200 385" stroke="#bae6fd" stroke-width="1.5" stroke-dasharray="4,4"/>
-
-                                        <!-- Open Collar Shirt Wings (No Tie - Modern VC Style) -->
-                                        <path d="M 166 260 L 190 268 L 174 294 Z" fill="#ffffff" stroke="#bae6fd" stroke-width="1"/>
-                                        <path d="M 234 260 L 210 268 L 226 294 Z" fill="#ffffff" stroke="#bae6fd" stroke-width="1"/>
-
-                                        <!-- Slim Modern Lapels -->
-                                        <path d="M 122 305 L 168 260 L 180 355 L 134 395 Z" fill="url(#invLapel)"/>
-                                        <path d="M 278 305 L 232 260 L 220 355 L 266 395 Z" fill="url(#invLapel)"/>
-                                        <path d="M 122 305 L 168 260" stroke="#475569" stroke-width="1.5"/>
-                                        <path d="M 278 305 L 232 260" stroke="#475569" stroke-width="1.5"/>
-
-                                        <!-- Geometric Gold Venture Fund Lapel Pin -->
-                                        <g transform="translate(138, 332)">
-                                            <polygon points="12,4 20,18 4,18" fill="#eab308" stroke="#ca8a04" stroke-width="1"/>
-                                            <circle cx="12" cy="14" r="2.5" fill="#ffffff"/>
-                                        </g>
-
-                                        <!-- Head & Face Group (Reactive Posture & Breathing) -->
-                                        <g :class="orbState === 'ai_speaking' ? 'vector-talking-head' : (orbState === 'user_speaking' ? 'vector-listening-head' : (orbState === 'thinking' ? 'vector-thinking-head' : 'vector-breathe-head'))">
-                                            <!-- Neck -->
-                                            <path d="M 176 210 L 224 210 L 228 266 L 172 266 Z" fill="url(#invSkinGrad)"/>
-                                            <path d="M 176 210 Q 200 226 224 210 Q 200 234 176 210 Z" fill="#b87858" opacity="0.6"/>
-
-                                            <!-- Ears -->
-                                            <path d="M 130 172 C 120 172 118 194 130 204 Z" fill="url(#invSkinGrad)"/>
-                                            <path d="M 270 172 C 280 172 282 194 270 204 Z" fill="url(#invSkinGrad)"/>
-                                            <path d="M 127 180 C 123 184 123 192 128 195" stroke="#b87858" stroke-width="1.5" fill="none"/>
-                                            <path d="M 273 180 C 277 184 277 192 272 195" stroke="#b87858" stroke-width="1.5" fill="none"/>
-
-                                            <!-- Sharp Modern Jawline -->
-                                            <path d="M 130 162 C 130 102 270 102 270 162 C 270 204 236 230 200 230 C 164 230 130 204 130 162 Z" fill="url(#invSkinGrad)"/>
-
-                                            <!-- Modern Styled Fade Hair -->
-                                            <path d="M 126 155 C 126 90 156 66 200 66 C 244 66 274 90 274 155 C 274 162 270 165 265 148 C 256 108 240 96 200 98 C 160 96 144 110 135 148 C 130 165 126 162 126 155 Z" fill="url(#invHairGrad)"/>
-                                            <path d="M 132 144 C 144 108 174 88 214 90 C 248 92 268 110 268 138 C 260 118 244 104 214 104 C 174 104 146 120 132 144 Z" fill="#334155"/>
-                                            <path d="M 170 82 Q 200 72 230 84" stroke="#475569" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-
-                                            <!-- Sharp Confident Eyebrows -->
-                                            <path d="M 152 148 Q 170 142 184 148" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round" fill="none"/>
-                                            <path d="M 216 148 Q 230 142 248 148" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round" fill="none"/>
-
-                                            <!-- Confident Eyes with Natural Blinking -->
-                                            <g class="vector-blink-eye">
-                                                <ellipse cx="168" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
-                                                <circle cx="168" cy="164" r="4.8" fill="#0f172a"/>
-                                                <circle cx="170" cy="162" r="1.6" fill="#ffffff"/>
-                                                <path d="M 158 160 Q 168 156 178 160" stroke="#0f172a" stroke-width="1.8" fill="none"/>
-
-                                                <ellipse cx="232" cy="164" rx="9.5" ry="6.2" fill="#ffffff"/>
-                                                <circle cx="232" cy="164" r="4.8" fill="#0f172a"/>
-                                                <circle cx="234" cy="162" r="1.6" fill="#ffffff"/>
-                                                <path d="M 222 160 Q 232 156 242 160" stroke="#0f172a" stroke-width="1.8" fill="none"/>
-                                            </g>
-
-                                            <!-- Nose -->
-                                            <path d="M 197 166 Q 200 185 195 188 Q 200 190 205 188" stroke="#b87858" stroke-width="2" stroke-linecap="round" fill="none"/>
-
-                                            <!-- Dynamic Mouth: Confident Rest vs Active Talking -->
-                                            <!-- 1. Silent Resting State: Confident Sharp Investor Smirk -->
-                                            <g x-show="orbState !== 'ai_speaking'">
-                                                <path d="M 184 205 Q 200 210 216 205" stroke="#7c2d12" stroke-width="3" stroke-linecap="round" fill="none"/>
-                                                <path d="M 187 206 Q 200 212 213 206" stroke="#b87858" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.7"/>
-                                            </g>
-
-                                            <!-- 2. Active Speaking State: Speech-Synchronized Talking Mouth -->
-                                            <g x-show="orbState === 'ai_speaking'" class="smooth-mouth-talk">
-                                                <ellipse cx="200" cy="208" rx="16" ry="11" fill="#2d0d14"/>
-                                                <path d="M 187 202 Q 200 205 213 202 Q 207 198 200 198 Q 193 198 187 202 Z" fill="#ffffff"/>
-                                                <ellipse cx="200" cy="214" rx="10" ry="4" fill="#a83c48" opacity="0.85"/>
-                                                <path d="M 182 201 Q 200 197 218 201" stroke="#7c2d12" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                                                <path d="M 185 216 Q 200 223 215 216" stroke="#7c2d12" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-                                            </g>
-                                        </g>
-                                    </svg>
-                                </template>
-
+                            <!-- 3. Dynamic Audio Wave Equalizer Overlay (Active when AI speaks) -->
+                            <div x-show="orbState === 'ai_speaking'"
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0 translate-y-2"
+                                 x-transition:enter-end="opacity-100 translate-y-0"
+                                 x-transition:leave="transition ease-in duration-200"
+                                 x-transition:leave-start="opacity-100 translate-y-0"
+                                 x-transition:leave-end="opacity-0 translate-y-2"
+                                 class="absolute bottom-6 sm:bottom-8 z-15 flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-slate-950/85 backdrop-blur-md border border-white/10 shadow-2xl">
+                                <span class="w-1.5 rounded-full animate-pulse" :style="`height: 14px; background-color: ${currentRoleAccent.color}; animation-duration: 0.6s;`"></span>
+                                <span class="w-1.5 rounded-full animate-pulse" :style="`height: 24px; background-color: ${currentRoleAccent.color}; animation-duration: 0.8s;`"></span>
+                                <span class="w-1.5 rounded-full animate-pulse" :style="`height: 30px; background-color: ${currentRoleAccent.color}; animation-duration: 0.5s;`"></span>
+                                <span class="w-1.5 rounded-full animate-pulse" :style="`height: 20px; background-color: ${currentRoleAccent.color}; animation-duration: 0.7s;`"></span>
+                                <span class="w-1.5 rounded-full animate-pulse" :style="`height: 26px; background-color: ${currentRoleAccent.color}; animation-duration: 0.6s;`"></span>
+                                <span class="w-1.5 rounded-full animate-pulse" :style="`height: 16px; background-color: ${currentRoleAccent.color}; animation-duration: 0.9s;`"></span>
+                                <span class="text-[10px] font-bold text-white ml-2 tracking-wide font-mono" x-text="orbState === 'ai_speaking' ? 'NEURAL SPEECH STREAM' : ''"></span>
                             </div>
                         </div>
-                    </template>
+
+                        <!-- 4. Frame Vignette Gradient to blend seamlessly with #0d1117 -->
+                        <div class="absolute inset-0 pointer-events-none bg-gradient-to-t from-[#0d1117] via-transparent to-[#0d1117]/60"></div>
+                        <div class="absolute inset-0 pointer-events-none bg-gradient-to-r from-[#0d1117]/80 via-transparent to-[#0d1117]/80"></div>
+                    </div>
 
                     <!-- Top Left: Turn Status Badge & Stream Quality -->
                     <div class="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-20 pointer-events-none flex items-center gap-1.5 sm:gap-2">
@@ -4960,16 +4723,18 @@
                     <!-- Bottom Right: Examiner Persona Watermark Badge & Mode Switcher Button -->
                     <div class="absolute bottom-2.5 right-2.5 sm:bottom-4 sm:right-4 z-20 flex flex-col items-end gap-1.5">
                         <button type="button"
-                                @click="avatarStageMode = (avatarStageMode === 'animated' ? 'photo' : 'animated')"
-                                class="pointer-events-auto px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-white/20 text-white text-[9px] sm:text-[11px] font-semibold flex items-center gap-1.5 hover:bg-slate-800 transition cursor-pointer shadow-lg active:scale-95"
-                                title="Ganti Mode Tampilan Karakter (Animasi Berbicara / Foto HD)">
-                            <span class="sm:hidden" x-text="avatarStageMode === 'animated' ? '🎭 Animasi' : '📷 Foto HD'"></span>
-                            <span class="hidden sm:inline" x-text="avatarStageMode === 'animated' ? '🎭 Mode: Karakter Animasi (Bicara)' : '📷 Mode: Foto Studio HD'"></span>
-                            <span class="text-blue-400 text-[9px] sm:text-[10px] font-bold">⇄</span>
+                                @click="cyclePersona()"
+                                class="pointer-events-auto px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-900/90 backdrop-blur-md border text-white text-[10px] sm:text-[11px] font-semibold flex items-center gap-2 hover:bg-slate-800 transition cursor-pointer shadow-xl active:scale-95"
+                                :style="`border-color: ${currentRoleAccent.border}; box-shadow: 0 4px 20px ${currentRoleAccent.glow};`"
+                                title="Klik untuk berganti Karakter Penguji (Dosen / HRD / Investor)">
+                            <span class="w-2 h-2 rounded-full animate-pulse" :style="`background-color: ${currentRoleAccent.color};`"></span>
+                            <span class="text-slate-300">Mode:</span>
+                            <span class="font-bold text-white" x-text="avatarPersonaShortName"></span>
+                            <span :style="`color: ${currentRoleAccent.color};`" class="text-xs font-bold">⇄</span>
                         </button>
-                        <div class="pointer-events-none px-3 py-1.5 rounded-xl bg-slate-900/75 backdrop-blur-md border border-white/10 text-right shadow-lg hidden sm:block">
+                        <div class="pointer-events-none px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md border border-white/10 text-right shadow-lg hidden sm:block">
                             <div class="text-[11px] font-bold text-white tracking-wide" x-text="avatarPersonaName"></div>
-                            <div class="text-[9px] text-blue-400 font-medium" x-text="avatarPersonaRole"></div>
+                            <div class="text-[9px] font-medium" :style="`color: ${currentRoleAccent.color};`" x-text="avatarPersonaRole"></div>
                         </div>
                     </div>
 
