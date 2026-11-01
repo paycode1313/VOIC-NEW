@@ -1316,35 +1316,41 @@
                     const type = this.selectedRole?.role_type || 'dosen_penguji';
                     if (type === 'dosen_penguji') {
                         return {
-                            mouthTop: '39.8%',
+                            mouthTop: '50.7%',
                             mouthLeft: '50.0%',
-                            mouthWidth: '10.8%',
-                            mouthSkinTone: '#99684f',
-                            mouthLipTone: '#773f34',
-                            eyeTop: '27.4%',
+                            mouthWidth: '12.2%',
+                            mouthSkinTone: '#b87c60',
+                            mouthLipTone: '#662624',
+                            mouthLipHighlight: '#c96b65',
+                            mouthCavity: '#260a0a',
+                            eyeTop: '38.0%',
                             eyeLeft: '50.0%',
                             eyeWidth: '22.0%'
                         };
                     } else if (type === 'hrd') {
                         return {
-                            mouthTop: '33.3%',
-                            mouthLeft: '50.0%',
-                            mouthWidth: '11.5%',
-                            mouthSkinTone: '#d1987d',
-                            mouthLipTone: '#b55858',
-                            eyeTop: '23.6%',
+                            mouthTop: '43.8%',
+                            mouthLeft: '49.8%',
+                            mouthWidth: '11.8%',
+                            mouthSkinTone: '#c99479',
+                            mouthLipTone: '#8a423b',
+                            mouthLipHighlight: '#d47368',
+                            mouthCavity: '#280c0e',
+                            eyeTop: '32.0%',
                             eyeLeft: '50.0%',
                             eyeWidth: '22.0%'
                         };
                     } else {
                         return {
-                            mouthTop: '48.1%',
-                            mouthLeft: '51.8%',
-                            mouthWidth: '10.5%',
-                            mouthSkinTone: '#96674b',
-                            mouthLipTone: '#6b3830',
-                            eyeTop: '35.2%',
-                            eyeLeft: '51.8%',
+                            mouthTop: '41.5%',
+                            mouthLeft: '49.8%',
+                            mouthWidth: '11.2%',
+                            mouthSkinTone: '#b57958',
+                            mouthLipTone: '#783832',
+                            mouthLipHighlight: '#c4685e',
+                            mouthCavity: '#240909',
+                            eyeTop: '30.0%',
+                            eyeLeft: '50.0%',
                             eyeWidth: '21.5%'
                         };
                     }
@@ -4625,11 +4631,12 @@
                                  :style="`box-shadow: 0 0 60px 20px ${currentRoleAccent.ring}, inset 0 0 40px ${currentRoleAccent.ring}; border: 2.5px solid ${currentRoleAccent.color};`"></div>
                         </div>
 
-                        <!-- 2. The 2.5D Living Character (Breathing & Dynamic Reactions) -->
+                                                <!-- 2. The 2.5D Living Character (Breathing & Dynamic Reactions) -->
                         <div class="relative z-10 h-full w-full flex items-center justify-center">
                             <!-- Container with continuous float/breathing animation -->
-                            <div class="relative h-full w-auto max-w-full flex items-center justify-center avatar-25d-breathing transition-transform duration-500 ease-out"
-                                 :class="orbState === 'ai_speaking' ? 'scale-[1.025]' : 'scale-100'">
+                            <div class="relative h-full aspect-square max-h-full max-w-full flex items-center justify-center avatar-25d-breathing transition-transform duration-500 ease-out"
+                                 :class="orbState === 'ai_speaking' ? 'scale-[1.025]' : 'scale-100'"
+                                 :style="orbState === 'ai_speaking' ? `transform: ${liveHeadTransform} scale(1.025);` : ''">
 
                                 <!-- Dosen Avatar Image (3D Render) -->
                                 <img src="/images/avatars/dosen.png"
@@ -4641,7 +4648,7 @@
                                      x-transition:leave="transition-opacity ease-in duration-300"
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0"
-                                     class="h-full w-auto max-w-full object-contain object-bottom select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
+                                     class="w-full h-full object-contain select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
 
                                 <!-- HRD Avatar Image (3D Render) -->
                                 <img src="/images/avatars/hrd.png"
@@ -4653,7 +4660,7 @@
                                      x-transition:leave="transition-opacity ease-in duration-300"
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0"
-                                     class="h-full w-auto max-w-full object-contain object-bottom select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
+                                     class="w-full h-full object-contain select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
 
                                 <!-- Investor Avatar Image (3D Render) -->
                                 <img src="/images/avatars/investor.png"
@@ -4665,7 +4672,95 @@
                                      x-transition:leave="transition-opacity ease-in duration-300"
                                      x-transition:leave-start="opacity-100"
                                      x-transition:leave-end="opacity-0"
-                                     class="h-full w-auto max-w-full object-contain object-bottom select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
+                                     class="w-full h-full object-contain select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)] avatar-vignette-mask">
+
+                                <!-- Real-Time Speech-Synchronized 2.5D Lip-Sync Mouth Mesh -->
+                                <div x-show="orbState === 'ai_speaking'"
+                                     x-transition:enter="transition-opacity ease-out duration-150"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition-opacity ease-in duration-200"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="absolute pointer-events-none select-none z-20"
+                                     :style="`top: ${roleFaceLayout.mouthTop}; left: ${roleFaceLayout.mouthLeft}; width: ${roleFaceLayout.mouthWidth}; transform: translate(-50%, -50%);`">
+
+                                    <div class="relative w-full aspect-[120/70] flex items-center justify-center transition-transform duration-75"
+                                         :style="`transform: scale(${liveMouthScaleX}, ${Math.max(0.18, liveMouthScaleY)}); transform-origin: 50% 48%;`">
+                                        <svg viewBox="0 0 120 70" class="w-full h-full overflow-visible drop-shadow-[0_2px_6px_rgba(0,0,0,0.65)]">
+                                            <defs>
+                                                <!-- Radial Dark Oral Cavity Depth -->
+                                                <radialGradient id="mouthCavityGrad" cx="50%" cy="40%" r="65%">
+                                                    <stop offset="0%" stop-color="#4a1518" />
+                                                    <stop offset="55%" :stop-color="roleFaceLayout.mouthCavity || '#23080a'" />
+                                                    <stop offset="100%" stop-color="#0a0203" />
+                                                </radialGradient>
+
+                                                <!-- Upper Lip Linear Gradient -->
+                                                <linearGradient id="upperLipGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                    <stop offset="0%" :stop-color="roleFaceLayout.mouthLipTone" stop-opacity="0.95" />
+                                                    <stop offset="60%" :stop-color="roleFaceLayout.mouthLipTone" />
+                                                    <stop offset="100%" :stop-color="roleFaceLayout.mouthCavity || '#1a0507'" />
+                                                </linearGradient>
+
+                                                <!-- Lower Lip Specular Gradient -->
+                                                <linearGradient id="lowerLipGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                    <stop offset="0%" :stop-color="roleFaceLayout.mouthCavity || '#1a0507'" />
+                                                    <stop offset="35%" :stop-color="roleFaceLayout.mouthLipHighlight || '#d16a62'" stop-opacity="0.9" />
+                                                    <stop offset="100%" :stop-color="roleFaceLayout.mouthLipTone" />
+                                                </linearGradient>
+
+                                                <!-- Upper Teeth Pearl Shading -->
+                                                <linearGradient id="upperTeethGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                    <stop offset="0%" stop-color="#ffffff" />
+                                                    <stop offset="70%" stop-color="#f2ece6" />
+                                                    <stop offset="100%" stop-color="#d4c9be" />
+                                                </linearGradient>
+
+                                                <!-- Tongue Soft Pinkish Red Shading -->
+                                                <radialGradient id="tongueGrad" cx="50%" cy="30%" r="60%">
+                                                    <stop offset="0%" stop-color="#e86e73" />
+                                                    <stop offset="70%" stop-color="#c4484d" />
+                                                    <stop offset="100%" stop-color="#8a2024" />
+                                                </radialGradient>
+                                            </defs>
+
+                                            <!-- 1. Ambient Skin Lip Occlusion Blur (Blends boundary with 3D Pixar face) -->
+                                            <ellipse cx="60" cy="35" rx="52" ry="18"
+                                                     :fill="roleFaceLayout.mouthSkinTone"
+                                                     opacity="0.25"
+                                                     class="filter blur-[3px]" />
+
+                                            <!-- 2. Dark Oral Cavity -->
+                                            <path d="M 16 35 C 28 27, 45 25, 60 25 C 75 25, 92 27, 104 35 C 96 49, 78 57, 60 57 C 42 57, 24 49, 16 35 Z"
+                                                  fill="url(#mouthCavityGrad)" />
+
+                                            <!-- 3. Upper Teeth Arch (Clean aesthetic curve) -->
+                                            <path d="M 30 27 C 42 26, 78 26, 90 27 L 87 36 C 75 38, 45 38, 33 36 Z"
+                                                  fill="url(#upperTeethGrad)" />
+                                            <!-- Tooth Separator Accents -->
+                                            <line x1="48" y1="27" x2="47" y2="36" stroke="#c0b3a7" stroke-width="0.8" opacity="0.6" />
+                                            <line x1="60" y1="27" x2="60" y2="37" stroke="#b0a094" stroke-width="1.0" opacity="0.75" />
+                                            <line x1="72" y1="27" x2="73" y2="36" stroke="#c0b3a7" stroke-width="0.8" opacity="0.6" />
+
+                                            <!-- 4. Tongue Mound in Lower Cavity -->
+                                            <path d="M 34 50 C 40 40, 50 38, 60 38 C 70 38, 80 40, 86 50 C 78 56, 68 57, 60 57 C 52 57, 42 56, 34 50 Z"
+                                                  fill="url(#tongueGrad)" />
+
+                                            <!-- 5. Upper Lip (Cupid's Bow) -->
+                                            <path d="M 14 35 C 28 25, 45 22, 54 25 C 57 26, 60 27, 63 26 C 66 25, 75 22, 92 25 C 106 28, 106 35, 106 35 C 92 31, 75 30, 60 31 C 45 30, 28 31, 14 35 Z"
+                                                  fill="url(#upperLipGrad)" />
+
+                                            <!-- 6. Lower Lip Contour with Rim Specular Highlight -->
+                                            <path d="M 14 35 C 28 48, 45 58, 60 58 C 75 58, 92 48, 106 35 C 94 51, 78 61, 60 61 C 42 61, 26 51, 14 35 Z"
+                                                  fill="url(#lowerLipGrad)" />
+
+                                            <!-- 7. Lip Corner Creases (Subtle Depth at commissures) -->
+                                            <circle cx="15" cy="35" r="2.2" :fill="roleFaceLayout.mouthCavity || '#180406'" opacity="0.85" />
+                                            <circle cx="105" cy="35" r="2.2" :fill="roleFaceLayout.mouthCavity || '#180406'" opacity="0.85" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- 3. Dynamic Audio Wave Equalizer Overlay (Active when AI speaks) -->
