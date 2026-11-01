@@ -130,6 +130,44 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
           <Text style={styles.conclusionText}>{aiConclusion}</Text>
         </View>
 
+        {/* GoPrep 4-Pillar Oral Diagnostic */}
+        {feedbackNotes.goprep_diagnostic?.criteria && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionTitleRow}>
+              <Feather name="award" size={18} color={colors.accentCyan} />
+              <Text style={styles.sectionTitle}>Diagnostik 4 Pilar GoPrep (Band {feedbackNotes.goprep_diagnostic.overall_band}/9.0)</Text>
+            </View>
+            {Object.values(feedbackNotes.goprep_diagnostic.criteria).map((crit, idx) => (
+              <View key={idx} style={{ marginTop: 10 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: 'bold' }}>{crit.label}</Text>
+                  <Text style={{ color: colors.accentCyan, fontSize: 12, fontWeight: 'bold' }}>Band {crit.band} ({crit.score}%)</Text>
+                </View>
+                <Text style={{ color: '#94A3B8', fontSize: 11, lineHeight: 16 }}>{crit.assessment}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* GoPrep Answer Polishing */}
+        {feedbackNotes.goprep_diagnostic?.answer_polishing && (
+          <View style={[styles.sectionCard, { borderColor: 'rgba(99, 102, 241, 0.4)' }]}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialCommunityIcons name="auto-fix" size={18} color="#818CF8" />
+              <Text style={styles.sectionTitle}>Rekomendasi Jawaban Emas (Answer Polishing)</Text>
+            </View>
+            <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', padding: 10, borderRadius: 8, marginTop: 8 }}>
+              <Text style={{ color: '#94A3B8', fontSize: 10, fontWeight: 'bold' }}>🗣️ UJARAN ASLI ANDA:</Text>
+              <Text style={{ color: '#CBD5E1', fontSize: 12, fontStyle: 'italic', marginTop: 2 }}>"{feedbackNotes.goprep_diagnostic.answer_polishing.original}"</Text>
+            </View>
+            <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: 10, borderRadius: 8, marginTop: 8, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+              <Text style={{ color: '#34D399', fontSize: 10, fontWeight: 'bold' }}>🌟 VERSI REKOMENDASI PENGUJI (SKOR 90+):</Text>
+              <Text style={{ color: '#ECFDF5', fontSize: 12, fontWeight: '500', marginTop: 2 }}>"{feedbackNotes.goprep_diagnostic.answer_polishing.polished}"</Text>
+            </View>
+            <Text style={{ color: '#FDE68A', fontSize: 11, marginTop: 8, lineHeight: 16 }}>💡 {feedbackNotes.goprep_diagnostic.answer_polishing.examiner_tip}</Text>
+          </View>
+        )}
+
         {/* Strengths */}
         {strengths.length > 0 && (
           <View style={styles.feedbackSection}>

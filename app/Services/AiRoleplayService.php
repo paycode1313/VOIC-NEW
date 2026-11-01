@@ -145,7 +145,7 @@ class AiRoleplayService
         $role = $session->aiRole;
         $roleType = $role?->role_type ?? 'dosen_penguji';
         $roleName = $role?->name ?? 'AI Evaluator';
-        $systemPrompt = $role?->system_prompt ?? 'Anda adalah evaluator profesional.';
+        $systemPrompt = $this->resolveGoPrepSystemPrompt($roleType, $roleName, $role?->system_prompt ?? 'Anda adalah evaluator profesional.');
 
         // 2. Format past conversation history (last 8 messages for richer context)
         $history = $session->messages()
@@ -481,7 +481,7 @@ class AiRoleplayService
         $role = $session->aiRole;
         $roleType = $role?->role_type ?? 'dosen_penguji';
         $roleName = $role?->name ?? 'Evaluator VOIC';
-        $systemPrompt = $role?->system_prompt ?? 'Anda adalah evaluator profesional.';
+        $systemPrompt = $this->resolveGoPrepSystemPrompt($roleType, $roleName, $role?->system_prompt ?? 'Anda adalah evaluator profesional.');
 
         // Attach GoPrep-style 4-pillar diagnostics and answer polishing
         $feedbackNotes['goprep_diagnostic'] = $this->buildGoprepDiagnostic($session, $faceScore, $voiceScore, $overallScore, $lang);
@@ -903,5 +903,21 @@ class AiRoleplayService
             ],
             'answer_polishing' => $polishing,
         ];
+    }
+
+    /**
+     * Ensure system prompt adheres to the GoPrep active listening examiner protocol.
+     */
+    protected function resolveGoPrepSystemPrompt(string $roleType, string $roleName, string $rawPrompt): string
+    {
+        if (str_contains($rawPrompt, 'DILARANG KERAS menggunakan kalimat pembuka klise')) {
+            return match ($roleType) {
+                'hrd' => "Anda adalah {$roleName}, AI Talent Acquisition Lead profesional yang ramah, hangat, komunikatif, dan mengadopsi protokol wawancara kerja lisan ala GoPrep. Terapkan Active Listening: sambut jawaban kandidat dengan apresiatif, lalu gali bukti perilaku nyata berbasis metode STAR (Situation, Task, Action, Result) dalam 2-3 kalimat lisan yang mengalir santai namun berbobot.",
+                'investor' => "Anda adalah {$roleName}, AI Partner Venture Capital dan juri pitching startup yang tajam, komunikatif, dan mengadopsi protokol pitching lisan ala GoPrep. Terapkan Active Listening: akui inovasi dan visi founder, lalu arahkan diskusi secara lugas dan elegan untuk menguji unit economics riil, traksi pasar, dan keunggulan kompetitif dalam 2-3 kalimat lisan.",
+                default => "Anda adalah {$roleName}, AI penguji utama sidang skripsi yang berwibawa, objektif, dan mengadopsi protokol penguji lisan ala GoPrep. Terapkan Active Listening: selalu akui dan apresiasi pemaparan mahasiswa terlebih dahulu, lalu lanjutkan dengan jembatan percakapan alami menuju 1 pertanyaan uji metodologis yang tajam dan konstruktif dalam 2-3 kalimat lisan.",
+            };
+        }
+
+        return $rawPrompt;
     }
 }
