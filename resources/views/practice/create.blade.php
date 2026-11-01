@@ -555,6 +555,7 @@
                 lipSyncAnimationId: null,
                 wordVisemeTimeouts: [],
                 synthFallbackTimer: null,
+                liveJawOffsetY: 0,
                 isBlinking: false,
                 blinkTimeout: null,
                 liveHeadTransform: 'translateY(0px) rotate(0deg)',
@@ -1329,6 +1330,13 @@
                     if ((this.selectedRole?.role_type || 'dosen_penguji') === 'hrd') return 'VOIC - HRD';
                     if ((this.selectedRole?.role_type || 'dosen_penguji') === 'investor') return 'VOIC - Investor';
                     return 'Panelis Penguji';
+                },
+
+                get currentCavityTop() {
+                    const type = this.selectedRole?.role_type || 'dosen_penguji';
+                    if (type === 'hrd') return '50.8%';
+                    if (type === 'investor') return '49.9%';
+                    return '50.6%';
                 },
 
                 get avatarPersonaRole() {
@@ -2766,6 +2774,14 @@
                         const headRot = Math.sin(time * 0.8) * 0.7;
                         this.liveHeadTransform = `translateY(${nodY.toFixed(1)}px) rotate(${headRot.toFixed(2)}deg)`;
 
+                        // Image-Slice Jaw Rigging: drive jaw drop smoothly from live speech volume/viseme
+                        let jawDrop = (this.liveMouthScaleY - 0.18) * 4.2;
+                        if (this.orbState === 'ai_speaking' && jawDrop < 0.6) {
+                            const jawTime = performance.now() * 0.008;
+                            jawDrop = Math.max(0, Math.sin(jawTime * 3.5) * 1.8 + 0.8);
+                        }
+                        this.liveJawOffsetY = Math.min(4.0, Math.max(0, Math.round(jawDrop * 10) / 10));
+
                         const baseIntensity = Math.min(1, Math.max(0.12, this.liveMouthScaleY));
                         this.vocalSpectrumBars = [
                             Math.min(95, Math.max(12, Math.round(baseIntensity * 70 + Math.sin(time * 3) * 20))),
@@ -2804,6 +2820,7 @@
                     this.currentViseme = 'closed';
                     this.currentSpokenWord = '';
                     this.liveHeadTransform = 'translateY(0px) rotate(0deg)';
+                    this.liveJawOffsetY = 0;
                     this.vocalSpectrumBars = [12, 12, 12, 12, 12, 12, 12, 12];
                 },
 
@@ -4658,13 +4675,14 @@
                                  :style="`box-shadow: 0 0 60px 20px ${currentRoleAccent.ring}, inset 0 0 40px ${currentRoleAccent.ring}; border: 2.5px solid ${currentRoleAccent.color};`"></div>
                         </div>
 
-                                                                        <!-- 2. The 2.5D Living Character (Natural Speaking Motion & Audio-Reactive Aura) -->
+                                                                        <!-- 2. The 2.5D Living Character (Image-Slice Jaw-Rigging & Audio-Reactive Aura) -->
                         <div class="relative z-10 h-full w-full flex items-center justify-center">
                             <!-- Container with natural breathing (idle) or articulate speaking motion (active) -->
                             <div class="relative h-full aspect-square max-h-full max-w-full flex items-center justify-center transition-all duration-500 ease-out"
                                  :class="orbState === 'ai_speaking' ? 'avatar-speaking-motion' : 'avatar-25d-breathing'">
 
-                                <!-- Dosen Avatar Image (3D Render) -->
+                                <!-- LAYER 2: Wajah Utuh (Main Base 3D Character Images) -->
+                                <!-- Dosen Avatar Image (Base 3D Render) -->
                                 <img src="/images/avatars/dosen.png"
                                      alt="Dosen Penguji"
                                      x-show="(selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji'"
@@ -4677,7 +4695,7 @@
                                      class="w-full h-full object-contain select-none pointer-events-none transition-all duration-300 avatar-vignette-mask"
                                      :class="orbState === 'ai_speaking' ? 'drop-shadow-[0_20px_60px_rgba(59,130,246,0.55)]' : 'drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]'">
 
-                                <!-- HRD Avatar Image (3D Render) -->
+                                <!-- HRD Avatar Image (Base 3D Render) -->
                                 <img src="/images/avatars/hrd.png"
                                      alt="HRD Recruiter"
                                      x-show="(selectedRole?.role_type || 'dosen_penguji') === 'hrd'"
@@ -4690,7 +4708,7 @@
                                      class="w-full h-full object-contain select-none pointer-events-none transition-all duration-300 avatar-vignette-mask"
                                      :class="orbState === 'ai_speaking' ? 'drop-shadow-[0_20px_60px_rgba(16,185,129,0.55)]' : 'drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]'">
 
-                                <!-- Investor Avatar Image (3D Render) -->
+                                <!-- Investor Avatar Image (Base 3D Render) -->
                                 <img src="/images/avatars/investor.png"
                                      alt="Venture Investor"
                                      x-show="(selectedRole?.role_type || 'dosen_penguji') === 'investor'"
@@ -4702,6 +4720,57 @@
                                      x-transition:leave-end="opacity-0"
                                      class="w-full h-full object-contain select-none pointer-events-none transition-all duration-300 avatar-vignette-mask"
                                      :class="orbState === 'ai_speaking' ? 'drop-shadow-[0_20px_60px_rgba(245,158,11,0.55)]' : 'drop-shadow-[0_20px_50px_rgba(0,0,0,0.9)]'">
+
+                                <!-- LAYER 1: Rongga Mulut Gelap (#1a0d0d) (Hanya terlihat saat dagu turun) -->
+                                <div class="absolute pointer-events-none rounded-full z-15"
+                                     :style="`top: ${currentCavityTop}; left: 50%; transform: translate(-50%, 0); width: 8.4%; height: 1.6%; background: #1a0d0d; box-shadow: inset 0 2px 4px rgba(0,0,0,0.95); opacity: ${orbState === 'ai_speaking' ? '1' : '0'}; transition: opacity 150ms ease;`">
+                                </div>
+
+                                <!-- LAYER 3: Potongan Rahang/Bibir Bawah (Duplikat Gambar Asli dengan clip-path & Jaw-Rigging) -->
+                                <!-- Dosen Jaw Slice -->
+                                <img src="/images/avatars/dosen.png"
+                                     alt=""
+                                     aria-hidden="true"
+                                     x-show="(selectedRole?.role_type || 'dosen_penguji') === 'dosen_penguji'"
+                                     x-transition:enter="transition-opacity ease-out duration-500"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition-opacity ease-in duration-300"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none z-20 will-change-transform"
+                                     style="clip-path: ellipse(13.5% 8.5% at 50% 59.1%); transition: transform 60ms linear, filter 120ms ease;"
+                                     :style="`transform: translateY(${orbState === 'ai_speaking' ? liveJawOffsetY : 0}px); filter: ${orbState === 'ai_speaking' && liveJawOffsetY > 0.4 ? 'drop-shadow(0 -2px 3px rgba(0,0,0,0.6))' : 'none'};`">
+
+                                <!-- HRD Jaw Slice -->
+                                <img src="/images/avatars/hrd.png"
+                                     alt=""
+                                     aria-hidden="true"
+                                     x-show="(selectedRole?.role_type || 'dosen_penguji') === 'hrd'"
+                                     x-transition:enter="transition-opacity ease-out duration-500"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition-opacity ease-in duration-300"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none z-20 will-change-transform"
+                                     style="clip-path: ellipse(13.5% 8.5% at 50% 59.3%); transition: transform 60ms linear, filter 120ms ease;"
+                                     :style="`transform: translateY(${orbState === 'ai_speaking' ? liveJawOffsetY : 0}px); filter: ${orbState === 'ai_speaking' && liveJawOffsetY > 0.4 ? 'drop-shadow(0 -2px 3px rgba(0,0,0,0.6))' : 'none'};`">
+
+                                <!-- Investor Jaw Slice -->
+                                <img src="/images/avatars/investor.png"
+                                     alt=""
+                                     aria-hidden="true"
+                                     x-show="(selectedRole?.role_type || 'dosen_penguji') === 'investor'"
+                                     x-transition:enter="transition-opacity ease-out duration-500"
+                                     x-transition:enter-start="opacity-0"
+                                     x-transition:enter-end="opacity-100"
+                                     x-transition:leave="transition-opacity ease-in duration-300"
+                                     x-transition:leave-start="opacity-100"
+                                     x-transition:leave-end="opacity-0"
+                                     class="absolute inset-0 w-full h-full object-contain select-none pointer-events-none z-20 will-change-transform"
+                                     style="clip-path: ellipse(13.5% 8.5% at 50% 58.4%); transition: transform 60ms linear, filter 120ms ease;"
+                                     :style="`transform: translateY(${orbState === 'ai_speaking' ? liveJawOffsetY : 0}px); filter: ${orbState === 'ai_speaking' && liveJawOffsetY > 0.4 ? 'drop-shadow(0 -2px 3px rgba(0,0,0,0.6))' : 'none'};`">
                             </div>
 
                             <!-- 3. Dynamic Audio Wave Equalizer Overlay: NEURAL SPEECH STREAM (Active when AI speaks) -->
