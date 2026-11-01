@@ -190,7 +190,7 @@
                         avatar: '{{ asset('images/avatars/investor.jpg') }}',
                         accent: 'indigo',
                         statusText: 'Menguji Validasi Finansial (Live Voice)',
-                        quote: 'Waduh, angkanya menarik, tapi berapa Customer Acquisition Cost Anda dan kapan target break-even point tercapai?',
+                        quote: 'Angkanya menarik, tapi berapa Customer Acquisition Cost riil Anda dan kapan target break-even point tercapai?',
                         candidateReply: 'CAC kami saat ini di Rp 45.000 dengan rasio LTV:CAC 3.8x, dan proyeksi break-even dicapai pada bulan ke-14...',
                         wpm: '142 WPM',
                         filler: '0',

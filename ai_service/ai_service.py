@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from ai_learner import ai_learner
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
-DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "voic-coach")
 AUDIO_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "audio_outputs")
 os.makedirs(AUDIO_OUTPUT_DIR, exist_ok=True)
 
@@ -297,20 +297,10 @@ def clean_spoken_output(text: str) -> str:
             sentences.append(s)
             i += 1
 
-    if len(sentences) > 2:
-        first_sentence = sentences[0]
-        questions = [s for s in sentences[1:] if s.endswith("?")]
-        if questions:
-            last_sentence = questions[-1]
-        else:
-            last_sentence = sentences[-1]
-            if not last_sentence.endswith("?"):
-                last_sentence = last_sentence.rstrip(".!") + "?"
-        text = f"{first_sentence} {last_sentence}"
-    elif len(sentences) == 2:
-        text = f"{sentences[0]} {sentences[1]}"
-    elif len(sentences) == 1:
-        text = sentences[0]
+    if len(sentences) > 3:
+        text = " ".join(sentences[:3])
+    else:
+        text = " ".join(sentences)
 
     return text.strip()
 
@@ -405,26 +395,26 @@ async def process_chat(req: ChatRequest):
         system_instruction = (
             f"{persona_map[role_key]} {stage_addon}\n"
             f"{context_addon}\n"
-            "ABSOLUTE LIVE VOICE CALL RULES (GROK/RUDY SPOKEN STYLE):\n"
-            "1. This is a real-time spoken phone call, NOT a formal text essay or chat!\n"
-            "2. MANDATORY OPENER: Always start your response with a spontaneous spoken reaction (e.g., 'Hmm...', 'Wait a second,', 'Look,', 'Fair enough, but', 'Hold on,', 'Oke, got it.').\n"
-            "3. STRICT LENGTH: Maximum 2 short sentences in a single paragraph! Never ramble.\n"
-            "4. STRICTLY FORBIDDEN: Never use bullet points, numbered lists, asterisks, or markdown formatting.\n"
-            "5. MANDATORY CLOSER: Directly address the candidate's latest sentence and always finish with exactly 1 sharp question!"
+            "LIVE CONVERSATION GUIDELINES (NATURAL & ADAPTIVE):\n"
+            "1. This is a real-time live spoken call: speak naturally, fluidly, and engagingly like a real human. Never be stiff.\n"
+            "2. Listen actively: connect your response directly to what the user just stated.\n"
+            "3. If they introduce themselves or greet you, greet them warmly by name. If they explain an idea or answer, engage with their actual substance.\n"
+            "4. Keep your answer focused in 2-3 spoken sentences, ending with a meaningful follow-up question or thought.\n"
+            "5. Do NOT use bullet points, numbered lists, asterisks, or markdown formatting."
         )
     else:
         persona_map = {
             "hrd": (
-                f"Kamu adalah {req.role_name}, HR Recruiter senior yang sedang menelepon langsung kandidat. "
+                f"Kamu adalah {req.role_name}, HR Recruiter senior pada panggilan suara langsung dengan kandidat. "
                 "Kepribadianmu: santai, luwes, ekspresif, tidak kaku, bicara blak-blakan tapi ramah, dan sangat jeli membongkar klaim kandidat lewat pertanyaan pancingan berbasis pengalaman nyata."
             ),
             "dosen_penguji": (
                 f"Kamu adalah {req.role_name}, Dosen Penguji Sidang yang menguji mahasiswa lewat panggilan suara langsung. "
-                "Kepribadianmu: kritis, to-the-point, blak-blakan, tidak sabar dengan basa-basi atau teori klise, dan langsung menyerang celah metodologi atau logika berpikir lawan bicara."
+                "Kepribadianmu: kritis, to-the-point, berwibawa, menghargai metodologi yang jelas, dan langsung menguji logika atau data mahasiswa dengan cara mengalir dan manusiawi."
             ),
             "investor": (
                 f"Kamu adalah {req.role_name}, Investor bisnis/Venture Capitalist kawakan pada sesi pitching langsung. "
-                "Kepribadianmu: skeptis tingkat tinggi, anti omong kosong, blak-blakan, benci janji manis tanpa bukti, dan langsung menagih angka nyata, traksi pasar, serta cara menghasilkan uang."
+                "Kepribadianmu: tajam, to-the-point, fokus pada validasi pasar nyata, traksi, dan unit economics, namun tetap mengalir luwes dan komunikatif."
             ),
         }
         stage_addon = (
@@ -436,38 +426,31 @@ async def process_chat(req: ChatRequest):
         system_instruction = (
             f"{persona_map[role_key]} {stage_addon}\n"
             f"{context_addon}\n"
-            "ATURAN MUTLAK SUARA LISAN (GAYA OBROLAN LANGSUNG GROK/RUDY):\n"
-            "1. Ini panggilan suara langsung, BUKAN chat teks atau artikel formal!\n"
-            "2. AWALAN WAJIB: Setiap respon wajib diawali reaksi lisan spontan (seperti: 'Hmm...', 'Wah, bentar deh...', 'Waduh,', 'Oke, paham.', 'Tunggu dulu,', 'Lho,').\n"
-            "3. BATASAN PANJANG: Maksimal 2 kalimat pendek dalam SATU paragraf langsung! Dilarang bertele-tele.\n"
-            "4. DILARANG KERAS menggunakan bullet points, tanda strip, penomoran, atau format markdown apa pun.\n"
-            "5. AKHIRAN WAJIB: Selalu tanggapi poin kalimat terakhir lawan bicara dan tutup dengan TEPAT 1 pertanyaan tajam yang nyambung!"
+            "PEDOMAN PERCAKAPAN LISAN ALAMI & NYAMBUNG:\n"
+            "1. Ini percakapan suara langsung: bicaralah luwes, santai, hidup, dan alami layaknya manusia sungguhan. Jangan kaku.\n"
+            "2. Selalu mendengarkan aktif: sambungkan responmu langsung dengan apa yang baru saja diucapkan pengguna.\n"
+            "3. Jika pengguna menyapa atau memperkenalkan diri, sambut ramah dan sebut namanya. Jika memaparkan materi, tanggapi substansinya secara spesifik.\n"
+            "4. Jawab dalam 2 hingga 3 kalimat lisan yang mengalir padat, lalu akhiri dengan 1 pertanyaan lanjutan yang relevan untuk menjaga alur diskusi.\n"
+            "5. Dilarang menggunakan bullet points, penomoran, atau format markdown apa pun."
         )
 
-    # 5. Bangun Array Messages: System + Few-Shot Pancingan + Sliding Window History (Maks 6 pesan)
+    # 5. Bangun Array Messages: System + Sliding Window History (Maks 8 pesan)
     messages = [{"role": "system", "content": system_instruction.strip()}]
 
-    few_shots = FEW_SHOT_EN.get(role_key, FEW_SHOT_EN["hrd"]) if is_en else FEW_SHOT_ID.get(role_key, FEW_SHOT_ID["hrd"])
-    messages.extend(few_shots)
+    is_greeting = len(req.user_message.split()) <= 4 and any(
+        w in req.user_message.lower() for w in ["halo", "hai", "pagi", "siang", "sore", "malam", "assalamualaikum", "hello", "hi"]
+    )
+    if not is_greeting and not req.conversation_history:
+        few_shots = FEW_SHOT_EN.get(role_key, FEW_SHOT_EN["hrd"]) if is_en else FEW_SHOT_ID.get(role_key, FEW_SHOT_ID["hrd"])
+        messages.extend(few_shots[:2])
 
-    for msg in (req.conversation_history or [])[-6:]:
+    for msg in (req.conversation_history or [])[-8:]:
         role_label = "assistant" if msg.role in ("assistant", "ai") else "user"
         messages.append({"role": role_label, "content": msg.content})
 
-    # 6. Trik Injeksi Pengingat di Pesan Terakhir User (Anti-Ngelantur 100% Nyambung)
+    # 6. Pesan Pengguna Bersih & Kontekstual
     camera_hint = f" (Catatan visual: {facial_note})" if facial_note and req.stage == "pressure_test" else ""
-    if is_en:
-        injected_user_msg = (
-            f"{req.user_message}{camera_hint}\n\n"
-            f"[REMINDER: Spoken call mode. Start with spontaneous reaction (Hmm/Look/Wait a second), react to the latest statement in max 2 sentences (1 paragraph, NO bullets), end with 1 sharp question!]"
-        )
-    else:
-        injected_user_msg = (
-            f"{req.user_message}{camera_hint}\n\n"
-            f"[INGAT: Mode obrolan telepon langsung. Wajib awali reaksi lisan spontan (Hmm.../Wah, bentar deh.../Waduh,/Oke, paham./Tunggu dulu,), tanggapi kalimat terakhir user maks 2 kalimat pendek (1 paragraf, TANPA bullet point atau markdown), dan tutup dengan 1 pertanyaan tajam!]"
-        )
-
-    messages.append({"role": "user", "content": injected_user_msg})
+    messages.append({"role": "user", "content": f"{req.user_message}{camera_hint}".strip()})
 
     # 7. Panggil Ollama (Tanpa '\n\n' di stop token & num_predict=125 agar pertanyaan tidak terpotong!)
     ai_reply_text = ""

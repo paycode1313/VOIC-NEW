@@ -312,6 +312,7 @@
                 showChatDrawer: false,
                 showHelpModal: false,
                 hardwarePermissionError: null,
+                speechRecognitionStatus: 'ready', // 'ready' | 'listening' | 'unsupported' | 'network_error' | 'permission_denied'
 
                 toggleMic() {
                     this.isMicMuted = !this.isMicMuted;
@@ -330,6 +331,15 @@
                 // Custom Topic / Target Context & Modes
                 customTopic: '',
                 contextMaterial: '',
+                loadContextFile(e) {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        this.contextMaterial = (evt.target.result || '').slice(0, 3000);
+                    };
+                    reader.readAsText(file);
+                },
                 timelineEvents: [],
                 simulationMode: 'standard', // 'standard' | 'sprint'
                 sprintRemaining: 60,
@@ -375,9 +385,11 @@
                 livePitchDynamicsScore: 78,
                 pitchSamples: [],
 
-                // Candidate Audio Recording (MediaRecorder + IndexedDB)
+                // Candidate Audio & Video Recording (MediaRecorder + IndexedDB)
                 mediaRecorder: null,
+                recordedMediaChunks: [],
                 recordedAudioChunks: [],
+                hasRecordedVideo: false,
 
                 // Ollama Engine Status
                 ollamaStatus: { checked: false, active: false, model: 'qwen2.5:3b' },
@@ -905,7 +917,7 @@
                     return pitch;
                 },
 
-                saveAudioToIndexedDb(sessionId, blob) {
+                saveMediaToIndexedDb(sessionId, blob, isVideo = false, mimeType = null) {
                     return new Promise((resolve, reject) => {
                         try {
                             const req = indexedDB.open('VoicTelemetryDB', 1);
@@ -919,8 +931,17 @@
                                 const db = e.target.result;
                                 const tx = db.transaction('recordings', 'readwrite');
                                 const store = tx.objectStore('recordings');
-                                store.put({ sessionId: String(sessionId), blob: blob, audioBlob: blob, timestamp: Date.now() });
-                                store.put({ sessionId: 'session_' + sessionId, blob: blob, audioBlob: blob, timestamp: Date.now() });
+                                const record = {
+                                    sessionId: String(sessionId),
+                                    blob: blob,
+                                    audioBlob: blob,
+                                    videoBlob: isVideo ? blob : null,
+                                    isVideo: isVideo,
+                                    mimeType: mimeType || (isVideo ? 'video/webm' : 'audio/webm'),
+                                    timestamp: Date.now()
+                                };
+                                store.put(record);
+                                store.put(Object.assign({}, record, { sessionId: 'session_' + sessionId }));
                                 tx.oncomplete = () => resolve(true);
                                 tx.onerror = () => reject(tx.error);
                             };
@@ -929,6 +950,10 @@
                             reject(err);
                         }
                     });
+                },
+
+                saveAudioToIndexedDb(sessionId, blob) {
+                    return this.saveMediaToIndexedDb(sessionId, blob, false, 'audio/webm');
                 },
 
                 recordTimelineBookmark(sec, type, label, note) {
@@ -1494,30 +1519,60 @@
                         this.setupSpeechRecognition();
                         this.initMediaPipeIrisTracker();
 
-                        // Local Candidate Audio Recording (MediaRecorder)
+                        // Local Candidate Video & Audio Recording (MediaRecorder + IndexedDB)
                         try {
+                            this.recordedMediaChunks = [];
                             this.recordedAudioChunks = [];
                             const audioTracks = stream.getAudioTracks();
+                            const videoTracks = stream.getVideoTracks();
+
                             if (audioTracks && audioTracks.length > 0 && typeof MediaRecorder !== 'undefined') {
-                                const audioStream = new MediaStream(audioTracks);
+                                let recStream = null;
                                 let recOptions = {};
-                                if (typeof MediaRecorder.isTypeSupported === 'function') {
-                                    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-                                        recOptions = { mimeType: 'audio/webm;codecs=opus' };
-                                    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-                                        recOptions = { mimeType: 'audio/webm' };
-                                    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                                        recOptions = { mimeType: 'audio/mp4' };
+                                let isVideoRec = false;
+
+                                // 1. Attempt combined Video + Audio recording if camera track is active and not disabled
+                                if (videoTracks && videoTracks.length > 0 && !this.isCameraOff && typeof MediaRecorder.isTypeSupported === 'function') {
+                                    const combinedStream = new MediaStream([...videoTracks, ...audioTracks]);
+                                    if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
+                                        recOptions = { mimeType: 'video/webm;codecs=vp8,opus' };
+                                        recStream = combinedStream;
+                                        isVideoRec = true;
+                                    } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                                        recOptions = { mimeType: 'video/webm' };
+                                        recStream = combinedStream;
+                                        isVideoRec = true;
+                                    } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+                                        recOptions = { mimeType: 'video/mp4' };
+                                        recStream = combinedStream;
+                                        isVideoRec = true;
                                     }
                                 }
-                                const recorder = new MediaRecorder(audioStream, recOptions);
+
+                                // 2. Fallback to Audio-Only recording
+                                if (!recStream) {
+                                    recStream = new MediaStream(audioTracks);
+                                    if (typeof MediaRecorder.isTypeSupported === 'function') {
+                                        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+                                            recOptions = { mimeType: 'audio/webm;codecs=opus' };
+                                        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+                                            recOptions = { mimeType: 'audio/webm' };
+                                        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                                            recOptions = { mimeType: 'audio/mp4' };
+                                        }
+                                    }
+                                }
+
+                                const recorder = new MediaRecorder(recStream, recOptions);
                                 recorder.ondataavailable = (e) => {
                                     if (e.data && e.data.size > 0) {
+                                        this.recordedMediaChunks.push(e.data);
                                         this.recordedAudioChunks.push(e.data);
                                     }
                                 };
                                 recorder.start(1000);
                                 this.mediaRecorder = recorder;
+                                this.hasRecordedVideo = isVideoRec;
                             }
                         } catch (recErr) {
                             console.warn('Candidate MediaRecorder not available:', recErr);
@@ -1535,24 +1590,39 @@
                 async initMediaPipeIrisTracker() {
                     try {
                         const mpWasm = 'https://cdn.jsdelivr.net/npm/' + '@mediapipe/tasks-vision@0.10.14/wasm';
-                        const visionModule = await import(mpWasm + '/vision_bundle.mjs').catch(() => null)
-                            || await import('https://esm.sh/' + '@mediapipe/tasks-vision@0.10.14').catch(() => null);
+                        const loadPromise = new Promise(async (resolve, reject) => {
+                            const timer = setTimeout(() => reject(new Error('MediaPipe timeout')), 3500);
+                            try {
+                                const visionModule = await import(mpWasm + '/vision_bundle.mjs').catch(() => null)
+                                    || await import('https://esm.sh/' + '@mediapipe/tasks-vision@0.10.14').catch(() => null);
 
-                        if (visionModule && visionModule.FilesetResolver && visionModule.FaceLandmarker) {
-                            const vision = await visionModule.FilesetResolver.forVisionTasks(mpWasm);
-                            this.faceLandmarker = await visionModule.FaceLandmarker.createFromOptions(vision, {
-                                baseOptions: {
-                                    modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
-                                    delegate: "GPU"
-                                },
-                                runningMode: "VIDEO",
-                                numFaces: 1
-                            });
-                            this.faceLandmarkerReady = true;
-                            this.eyeTrackingEngine = 'mediapipe_iris';
-                        }
+                                if (visionModule && visionModule.FilesetResolver && visionModule.FaceLandmarker) {
+                                    const vision = await visionModule.FilesetResolver.forVisionTasks(mpWasm);
+                                    const landmarker = await visionModule.FaceLandmarker.createFromOptions(vision, {
+                                        baseOptions: {
+                                            modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+                                            delegate: "GPU"
+                                        },
+                                        runningMode: "VIDEO",
+                                        numFaces: 1
+                                    });
+                                    clearTimeout(timer);
+                                    resolve(landmarker);
+                                } else {
+                                    clearTimeout(timer);
+                                    reject(new Error('MediaPipe visionModule incomplete'));
+                                }
+                            } catch (err) {
+                                clearTimeout(timer);
+                                reject(err);
+                            }
+                        });
+
+                        this.faceLandmarker = await loadPromise;
+                        this.faceLandmarkerReady = true;
+                        this.eyeTrackingEngine = 'mediapipe_iris';
                     } catch (e) {
-                        // Smoothly fallback to high-speed canvas gaze tracker
+                        // Smoothly and immediately fallback to high-speed canvas gaze tracker
                         this.faceLandmarkerReady = false;
                         this.eyeTrackingEngine = 'canvas_gaze';
                     }
@@ -1666,13 +1736,22 @@
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                     if (!SpeechRecognition) {
                         console.warn('Web Speech API not supported in this browser.');
+                        this.speechRecognitionStatus = 'unsupported';
+                        this.showTextInput = true;
                         return;
                     }
 
+                    this.speechRecognitionStatus = 'ready';
                     this.recognition = new SpeechRecognition();
                     this.recognition.continuous = true;
                     this.recognition.interimResults = true;
                     this.recognition.lang = this.simulationLanguage === 'en' ? 'en-US' : 'id-ID';
+
+                    this.recognition.onstart = () => {
+                        if (this.speechRecognitionStatus !== 'unsupported') {
+                            this.speechRecognitionStatus = 'listening';
+                        }
+                    };
 
                     this.recognition.onresult = (event) => {
                         // Do not listen while AI is speaking
@@ -1778,6 +1857,13 @@
 
                     this.recognition.onerror = (e) => {
                         console.warn('Speech recognition warning:', e.error);
+                        if (e.error === 'network') {
+                            this.speechRecognitionStatus = 'network_error';
+                            this.showTextInput = true;
+                        } else if (e.error === 'not-allowed') {
+                            this.speechRecognitionStatus = 'permission_denied';
+                            this.showTextInput = true;
+                        }
                     };
 
                     this.recognition.onend = () => {
@@ -2965,16 +3051,22 @@
                         window.speechSynthesis.cancel();
                     }
 
-                    // Stop candidate audio recorder and persist to local IndexedDB (Zero Cloud)
+                    // Stop candidate media recorder and persist to local IndexedDB (Zero Cloud)
                     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
                         try {
                             this.mediaRecorder.stop();
                         } catch(e) {}
                     }
-                    if (this.recordedAudioChunks && this.recordedAudioChunks.length > 0) {
+                    const chunksToSave = (this.recordedMediaChunks && this.recordedMediaChunks.length > 0)
+                        ? this.recordedMediaChunks
+                        : this.recordedAudioChunks;
+
+                    if (chunksToSave && chunksToSave.length > 0) {
                         try {
-                            const audioBlob = new Blob(this.recordedAudioChunks, { type: 'audio/webm' });
-                            await this.saveAudioToIndexedDb(this.currentSessionId, audioBlob);
+                            const mimeType = this.mediaRecorder?.mimeType || (this.hasRecordedVideo ? 'video/webm' : 'audio/webm');
+                            const mediaBlob = new Blob(chunksToSave, { type: mimeType });
+                            const isVideo = mimeType.startsWith('video/');
+                            await this.saveMediaToIndexedDb(this.currentSessionId, mediaBlob, isVideo, mimeType);
                         } catch (recErr) {
                             console.warn('Could not save local recording to IndexedDB:', recErr);
                         }
@@ -3433,6 +3525,7 @@
                                 $rBadgeLabel = $rType === 'dosen_penguji' ? 'Akademik' : ($rType === 'hrd' ? 'Karier' : 'Bisnis');
                             @endphp
                             <div @click="selectRoleById({{ $rId }})"
+                                 data-role="VOIC-{{ $rType === 'dosen_penguji' ? 'Dosen Penguji' : ($rType === 'hrd' ? 'HRD' : 'Investor') }}"
                                  :class="selectedRole?.id === {{ $rId }}
                                     ? 'border-blue-600 ring-4 ring-blue-500/20 bg-blue-50/70 dark:bg-navy-950/70 dark:border-blue-500 shadow-lg'
                                     : 'border-slate-200/80 dark:border-slate-800 glass-subcard hover:border-blue-300 dark:hover:border-slate-700 hover:shadow-md'"
@@ -3600,15 +3693,50 @@
                         </button>
 
                         <div x-show="showAdvancedOptions" x-transition class="mt-4 p-4 rounded-2xl glass-subcard space-y-4">
-                            <!-- Abstrak -->
+                            <!-- Abstrak & Dokumen Konteks -->
                             <div>
-                                <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-                                    Abstrak Skripsi / Ringkasan Materi (Opsional):
-                                </label>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label class="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                                        Abstrak Skripsi / CV / Materi Konteks (Opsional):
+                                    </label>
+                                    <label class="text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                        </svg>
+                                        <span>Unggah Berkas (.txt / .md)</span>
+                                        <input type="file" accept=".txt,.md,.text" class="hidden" @change="loadContextFile($event)">
+                                    </label>
+                                </div>
                                 <textarea x-model="contextMaterial"
                                           rows="3"
-                                          placeholder="Tempelkan abstrak skripsi atau deskripsi lowongan di sini..."
+                                          placeholder="Tempelkan abstrak skripsi, resume CV, atau premis bisnis pitch deck di sini agar respon penguji semakin tajam..."
                                           class="w-full text-xs rounded-xl glass-input text-slate-900 dark:text-white px-3 py-2.5 focus:ring-2 focus:ring-blue-500 placeholder-slate-400"></textarea>
+
+                                <!-- Pilihan Cepat Template Materi Konteks -->
+                                <div class="flex flex-wrap items-center gap-1.5 pt-1.5">
+                                    <span class="text-[11px] text-slate-400 me-1">Pilihan Cepat:</span>
+                                    <button type="button"
+                                            @click="contextMaterial = 'Penelitian ini mengembangkan sistem deteksi keaslian citra berbasis Vision Transformer dengan dataset 2.500 sampel. Akurasi pengujian mencapai 92.4% dengan evaluasi validasi silang 5-fold.'"
+                                            class="px-2 py-0.5 rounded-lg text-[10px] font-medium glass-pill text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950/60 cursor-pointer">
+                                        🎓 Abstrak Skripsi AI
+                                    </button>
+                                    <button type="button"
+                                            @click="contextMaterial = 'Software Engineer berpengalaman 2 tahun di ekosistem Laravel & Vue. Berhasil memimpin refaktorisasi query database yang memangkas response time hingga 40%.'"
+                                            class="px-2 py-0.5 rounded-lg text-[10px] font-medium glass-pill text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/60 cursor-pointer">
+                                        💼 Profil CV Software Engineer
+                                    </button>
+                                    <button type="button"
+                                            @click="contextMaterial = 'Platform EdTech SaaS AI untuk mahasiswa dengan target market 8 juta pengguna di Indonesia. Model monetisasi freemium subscription dengan unit economics CAC Rp 45.000 dan LTV Rp 350.000.'"
+                                            class="px-2 py-0.5 rounded-lg text-[10px] font-medium glass-pill text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/60 cursor-pointer">
+                                        🚀 Premis Pitch Startup
+                                    </button>
+                                    <button type="button"
+                                            x-show="contextMaterial"
+                                            @click="contextMaterial = ''"
+                                            class="px-2 py-0.5 rounded-lg text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                        ✕ Reset
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Mode & Bahasa -->
@@ -4189,6 +4317,34 @@
                                 @click="initHardware()"
                                 class="shrink-0 px-3.5 py-2 text-xs font-bold rounded-xl bg-amber-600 hover:bg-amber-500 text-white shadow-md shadow-amber-600/30 transition cursor-pointer">
                             🔄 Coba Sambungkan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Speech Recognition Fallback Helper Banner -->
+                <div x-show="speechRecognitionStatus === 'unsupported' || speechRecognitionStatus === 'network_error'" x-cloak
+                     class="p-4 rounded-2xl bg-sky-500/10 dark:bg-sky-500/20 border-2 border-sky-500/40 text-sky-950 dark:text-sky-200 shadow-lg backdrop-blur-md transition-all">
+                    <div class="flex items-start gap-3">
+                        <div class="p-2 rounded-xl bg-sky-500 text-white shrink-0 shadow-md">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-bold text-sky-950 dark:text-sky-100 flex items-center gap-2">
+                                <span x-text="speechRecognitionStatus === 'unsupported' ? 'Pengenalan Suara Tidak Didukung di Browser Ini' : 'Koneksi Suara STT Terputus'"></span>
+                                <span class="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-sky-200 dark:bg-sky-900 text-sky-800 dark:text-sky-200">Mode Teks Tersedia</span>
+                            </h4>
+                            <p class="text-xs text-sky-900/90 dark:text-sky-300/90 mt-1 leading-relaxed"
+                               x-text="speechRecognitionStatus === 'unsupported'
+                                   ? 'Browser ini tidak mendukung Web Speech API bawaan (umum di Firefox atau Safari non-Chromium). Jangan khawatir! Anda tetap dapat berlatih dengan lancar menggunakan Mode Ketik Manual.'
+                                   : 'Koneksi pengenalan suara Google terputus sementara. Anda tetap dapat melanjutkan simulasi menggunakan Mode Ketik Manual di bawah.'">
+                            </p>
+                        </div>
+                        <button type="button"
+                                @click="showTextInput = true; $nextTick(() => document.getElementById('manualMessageInput')?.focus())"
+                                class="shrink-0 px-3.5 py-2 text-xs font-bold rounded-xl bg-sky-600 hover:bg-sky-500 text-white shadow-md shadow-sky-600/30 transition cursor-pointer">
+                            ✍️ Buka Kotak Ketik
                         </button>
                     </div>
                 </div>
@@ -5041,6 +5197,7 @@
                      x-transition
                      class="glass-panel p-3 rounded-2xl flex items-center gap-2 border border-slate-200/80 dark:border-slate-800 shadow-md">
                     <input type="text"
+                           id="manualMessageInput"
                            x-model="manualInputText"
                            @keydown.enter.prevent="submitManualTurn()"
                            placeholder="Ketik jawaban Anda di sini lalu tekan Enter..."

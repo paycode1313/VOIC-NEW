@@ -317,6 +317,32 @@ class AiRoleplayService
         $hasMetric = (bool) preg_match('/\b(?:\d+%?|\d+\s*(?:bulan|tahun|hari|persen|ribu|juta|miliar|user|sampel|accuracy|margin|cac|ltv))\b/i', $userMessage);
         $hasTech = (bool) preg_match('/\b(algoritma|metode|model|sistem|database|arsitektur|framework|dataset|validasi|akurasi|klasifikasi|regresi|api|testing|code|benchmark|random forest|cnn|yolo)\b/i', $msgLower);
         $hasTeam = (bool) preg_match('/\b(tim|rekan|atasan|konflik|komunikasi|inisiatif|diskusi|klien|meeting|proyek|sprint|retrospective|deadline|prioritas)\b/i', $msgLower);
+        $isGreeting = (bool) preg_match('/\b(halo|hai|selamat|assalamualaikum|pagi|siang|sore|malam|perkenalkan|nama saya|namaku|i am|my name)\b/i', $msgLower);
+        preg_match('/\b(?:nama\s+saya|namaku|perkenalkan\s+saya|i am|my name is)\s+([A-Za-z]+)/i', $userMessage, $nameMatch);
+        $candidateName = $nameMatch[1] ?? null;
+
+        if ($isGreeting && $stage !== 'pressure_test') {
+            $nameStr = $candidateName ? " {$candidateName}" : '';
+            if ($language === 'en') {
+                $greetings = [
+                    'dosen_penguji' => "Welcome to the examination room{$nameStr}. Please sit upright, look directly into the camera, and introduce your core research topic.",
+                    'hrd' => "Hello{$nameStr}, pleasure to meet you! Take a calm breath and tell me a bit about your background and motivation for this role.",
+                    'investor' => "Welcome{$nameStr}. Straight to the point: what urgent market problem does your startup solve and who is your target customer?",
+                ];
+            } else {
+                $greetings = [
+                    'dosen_penguji' => "Salam kenal Saudara{$nameStr}. Silakan atur posisi duduk tegak dan mulai jelaskan apa rumusan masalah serta metode utama penelitian Anda.",
+                    'hrd' => "Halo{$nameStr}, senang berkenalan dengan Anda! Boleh ceritakan latar belakang Anda dan apa motivasi terbesar Anda melamar untuk posisi ini?",
+                    'investor' => "Salam kenal{$nameStr}. Langsung ke intinya saja: problem mendesak apa di pasar yang ingin diselesaikan oleh startup Anda?",
+                ];
+            }
+
+            return [
+                'text' => $greetings[$roleType] ?? $greetings['dosen_penguji'],
+                'critique' => $critique,
+                'entities' => $extractedEntities,
+            ];
+        }
 
         if ($language === 'en') {
             if ($stage === 'pressure_test') {
@@ -491,6 +517,10 @@ class AiRoleplayService
             if ($response->successful()) {
                 $conclusion = $response->json('conclusion');
                 if (! empty($conclusion)) {
+                    if (! str_contains($conclusion, 'Hasil Evaluasi') && ! str_contains($conclusion, 'Evaluation Verdict')) {
+                        return ($lang === 'en' ? "Evaluation Verdict from {$roleName}: " : "Hasil Evaluasi {$roleName}: ").$conclusion;
+                    }
+
                     return $conclusion;
                 }
             }

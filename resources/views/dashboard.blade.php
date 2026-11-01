@@ -346,7 +346,7 @@
                                 <img src="{{ asset('images/avatars/dosen.jpg') }}" alt="Sidang Skripsi" width="40" height="40" class="w-10 h-10 rounded-xl object-cover object-top border border-slate-200 dark:border-white/10">
                                 <div>
                                     <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">Sidang Skripsi</h4>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC - Dosen Penguji</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC-Dosen Penguji</span>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
@@ -366,7 +366,7 @@
                                 <img src="{{ asset('images/avatars/hrd.jpg') }}?v=3" alt="Wawancara Kerja" width="40" height="40" class="w-10 h-10 rounded-xl object-cover object-top border border-slate-200 dark:border-white/10">
                                 <div>
                                     <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-sky-600 dark:group-hover:text-sky-400 transition">Wawancara Kerja</h4>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC - HRD</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC-HRD</span>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">
@@ -386,7 +386,7 @@
                                 <img src="{{ asset('images/avatars/investor.jpg') }}" alt="Pitching Startup" width="40" height="40" class="w-10 h-10 rounded-xl object-cover object-top border border-slate-200 dark:border-white/10">
                                 <div>
                                     <h4 class="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">Pitching Startup</h4>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC - Investor</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">VOIC-Investor</span>
                                 </div>
                             </div>
                             <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-4">

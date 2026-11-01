@@ -343,12 +343,15 @@
                 </div>
             @endif
 
-            <!-- Candidate Voice Audio Playback from Local IndexedDB with Interactive Bookmarks -->
+            <!-- Candidate Media Playback (Video + Audio) from Local IndexedDB with Interactive Bookmarks -->
             <div x-data="{
                     hasLocalAudio: false,
+                    hasLocalVideo: false,
+                    showVideoView: true,
                     audioUrl: null,
                     isPlaying: false,
                     audioElement: null,
+                    videoElement: null,
                     currentTime: '00:00',
                     duration: '00:00',
                     playbackRate: 1.0,
@@ -365,24 +368,41 @@
                                 const getReq = store.get(key);
                                 getReq.onsuccess = () => {
                                     const res = getReq.result;
-                                    const blob = res ? (res.audioBlob || res.blob) : null;
+                                    const blob = res ? (res.videoBlob || res.blob || res.audioBlob) : null;
+                                    const isVideo = Boolean(res && (res.isVideo || res.videoBlob || (res.mimeType && res.mimeType.startsWith('video/'))));
+
                                     if (blob && !this.audioUrl) {
                                         this.audioUrl = URL.createObjectURL(blob);
                                         this.hasLocalAudio = true;
+                                        this.hasLocalVideo = isVideo;
+
                                         this.$nextTick(() => {
                                             this.audioElement = document.getElementById('candidateVoicePlayer');
-                                            if (this.audioElement) {
-                                                this.audioElement.onloadedmetadata = () => {
-                                                    const mins = String(Math.floor(this.audioElement.duration / 60)).padStart(2, '0');
-                                                    const secs = String(Math.floor(this.audioElement.duration % 60)).padStart(2, '0');
+                                            this.videoElement = document.getElementById('candidateVideoPlayer');
+                                            const activeEl = (this.hasLocalVideo && this.videoElement) ? this.videoElement : this.audioElement;
+
+                                            if (activeEl) {
+                                                const handleMetadata = () => {
+                                                    const mins = String(Math.floor(activeEl.duration / 60)).padStart(2, '0');
+                                                    const secs = String(Math.floor(activeEl.duration % 60)).padStart(2, '0');
                                                     this.duration = `${mins}:${secs}`;
                                                 };
-                                                this.audioElement.ontimeupdate = () => {
-                                                    const mins = String(Math.floor(this.audioElement.currentTime / 60)).padStart(2, '0');
-                                                    const secs = String(Math.floor(this.audioElement.currentTime % 60)).padStart(2, '0');
+                                                const handleTime = () => {
+                                                    const mins = String(Math.floor(activeEl.currentTime / 60)).padStart(2, '0');
+                                                    const secs = String(Math.floor(activeEl.currentTime % 60)).padStart(2, '0');
                                                     this.currentTime = `${mins}:${secs}`;
                                                 };
-                                                this.audioElement.onended = () => { this.isPlaying = false; };
+                                                const handleEnded = () => { this.isPlaying = false; };
+
+                                                activeEl.onloadedmetadata = handleMetadata;
+                                                activeEl.ontimeupdate = handleTime;
+                                                activeEl.onended = handleEnded;
+
+                                                if (this.audioElement && this.audioElement !== activeEl) {
+                                                    this.audioElement.onloadedmetadata = handleMetadata;
+                                                    this.audioElement.ontimeupdate = handleTime;
+                                                    this.audioElement.onended = handleEnded;
+                                                }
                                             }
                                         });
                                     } else if (!this.audioUrl && key === 'session_' + sessionId) {
@@ -393,33 +413,36 @@
                             tryLoad('session_' + sessionId);
                         };
                     },
-                    togglePlay() {
-                        if (!this.audioElement) {
-                            this.audioElement = document.getElementById('candidateVoicePlayer');
+                    getActivePlayer() {
+                        if (this.hasLocalVideo && this.showVideoView) {
+                            return document.getElementById('candidateVideoPlayer') || document.getElementById('candidateVoicePlayer');
                         }
-                        if (!this.audioElement) return;
+                        return document.getElementById('candidateVoicePlayer') || document.getElementById('candidateVideoPlayer');
+                    },
+                    togglePlay() {
+                        const el = this.getActivePlayer();
+                        if (!el) return;
                         if (this.isPlaying) {
-                            this.audioElement.pause();
+                            el.pause();
                             this.isPlaying = false;
                         } else {
-                            this.audioElement.playbackRate = this.playbackRate;
-                            this.audioElement.play();
+                            el.playbackRate = this.playbackRate;
+                            el.play();
                             this.isPlaying = true;
                         }
                     },
                     seekTo(seconds) {
-                        if (!this.audioElement) {
-                            this.audioElement = document.getElementById('candidateVoicePlayer');
-                        }
-                        if (this.audioElement) {
-                            this.audioElement.currentTime = Math.max(0, seconds);
-                            this.audioElement.playbackRate = this.playbackRate;
-                            this.audioElement.play();
+                        const el = this.getActivePlayer();
+                        if (el) {
+                            el.currentTime = Math.max(0, seconds);
+                            el.playbackRate = this.playbackRate;
+                            el.play();
                             this.isPlaying = true;
                         }
                     },
                     setSpeed(rate) {
                         this.playbackRate = rate;
+                        if (this.videoElement) this.videoElement.playbackRate = rate;
                         if (this.audioElement) this.audioElement.playbackRate = rate;
                     }
                 }"
@@ -430,23 +453,32 @@
                     <div class="flex items-center gap-3">
                         <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-navy-950/70 border border-blue-200 dark:border-navy-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                             </svg>
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Rekaman Suara Anda (Candidate Voice Replay)</h3>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white" x-text="hasLocalVideo ? 'Putar Ulang Video & Suara Sesi (Session Playback)' : 'Rekaman Suara Anda (Candidate Voice Replay)'"></h3>
                                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300">
                                     100% On-Device IndexedDB
                                 </span>
                             </div>
                             <p class="text-xs text-slate-500 dark:text-slate-400">
-                                Putar ulang suara jawaban Anda secara utuh atau klik penanda bookmark untuk langsung menuju detik terjadinya kesalahan.
+                                Putar ulang rekaman jawaban Anda secara utuh atau klik penanda bookmark untuk langsung menuju detik terjadinya kesalahan gestur atau nada bicara.
                             </p>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2">
+                        <!-- Toggle Video Mode button if video is present -->
+                        <template x-if="hasLocalVideo">
+                            <button type="button"
+                                    @click="showVideoView = !showVideoView"
+                                    class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 transition cursor-pointer">
+                                <span x-text="showVideoView ? '🎙️ Mode Audio' : '📹 Mode Video'"></span>
+                            </button>
+                        </template>
+
                         <button type="button"
                                 @click="togglePlay()"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-blue-700 to-navy-900 hover:from-blue-500 hover:to-navy-800 shadow-md shadow-blue-600/25 transition cursor-pointer">
@@ -465,15 +497,25 @@
                         </button>
                         <template x-if="audioUrl">
                             <a :href="audioUrl"
-                               :download="'rekaman_sesi_{{ $session->id }}.webm'"
+                               :download="hasLocalVideo ? 'rekaman_kamera_sesi_{{ $session->id }}.webm' : 'rekaman_audio_sesi_{{ $session->id }}.webm'"
                                 class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition cursor-pointer"
-                                title="Unduh File Audio">
+                                :title="hasLocalVideo ? 'Unduh Rekaman Video & Audio' : 'Unduh Rekaman Audio'">
                                 <svg class="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                 </svg>
-                                <span>Unduh Audio</span>
+                                <span x-text="hasLocalVideo ? 'Unduh Video' : 'Unduh Audio'"></span>
                             </a>
                         </template>
+                    </div>
+                </div>
+
+                <!-- Video Player Preview Container if Video Recording was Captured -->
+                <div x-show="hasLocalVideo && showVideoView" x-transition class="pt-2">
+                    <div class="relative rounded-2xl overflow-hidden bg-black aspect-video max-w-xl mx-auto shadow-xl border border-slate-700/60 flex items-center justify-center">
+                        <video id="candidateVideoPlayer"
+                               :src="audioUrl"
+                               playsinline
+                               class="w-full h-full object-contain -scale-x-100"></video>
                     </div>
                 </div>
 
@@ -502,7 +544,7 @@
                         <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                         </svg>
-                        <span>Privasi 100% lokal di browser Anda. Tidak ada audio mentah yang diunggah ke server.</span>
+                        <span>Privasi 100% lokal di browser Anda. Tidak ada video/audio mentah yang diunggah ke server.</span>
                     </div>
                 </div>
 
