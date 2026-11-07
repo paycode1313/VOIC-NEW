@@ -33,6 +33,32 @@ HARVEST_FILE = os.path.join(os.path.dirname(__file__), "datasets", "harvest", "e
 
 router = APIRouter(prefix="/exam", tags=["exam"])
 
+_model_cache = {"name": None, "checked": 0.0}
+
+
+async def resolve_model() -> str:
+    """Pakai EXAM_MODEL jika ada di Ollama; jika belum dibuat, pakai model qwen/llama yang tersedia.
+
+    Tanpa ini, lupa menjalankan `ollama create voic-coach` membuat semua giliran gagal diam-diam.
+    """
+    now = time.time()
+    if _model_cache["name"] and now - _model_cache["checked"] < 60:
+        return _model_cache["name"]
+    chosen = EXAM_MODEL
+    try:
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            res = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+            names = [m["name"] for m in res.json().get("models", [])] if res.status_code == 200 else []
+        if names and not any(n == EXAM_MODEL or n.startswith(EXAM_MODEL + ":") for n in names):
+            preferred = [n for n in names if n.startswith(("qwen2.5:7b", "qwen2.5:3b", "qwen", "llama3", "gemma"))]
+            chosen = (preferred or names)[0]
+            print(f"[VOIC] Model '{EXAM_MODEL}' belum ada di Ollama, memakai '{chosen}'. "
+                  "Buat dengan: ollama create voic-coach -f Modelfile")
+    except Exception:
+        pass
+    _model_cache.update(name=chosen, checked=now)
+    return chosen
+
 STOPWORDS = set(
     """yang dan di ke dari ini itu untuk dengan pada adalah saya aku kami kita anda kamu juga akan ada tidak bisa sudah atau
     jadi karena dalam seperti lebih sangat tersebut oleh agar bahwa sebagai ya nya lah kan pun saja lagi mau apa bagaimana
@@ -181,7 +207,7 @@ async def ollama_chat(messages: List[Dict[str, str]], num_predict: int, temperat
         response = await client.post(
             f"{OLLAMA_BASE_URL}/api/chat",
             json={
-                "model": EXAM_MODEL,
+                "model": await resolve_model(),
                 "messages": messages,
                 "stream": False,
                 "keep_alive": "60m",
@@ -375,7 +401,7 @@ async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temper
             "POST",
             f"{OLLAMA_BASE_URL}/api/chat",
             json={
-                "model": EXAM_MODEL,
+                "model": await resolve_model(),
                 "messages": messages,
                 "stream": True,
                 "keep_alive": "60m",

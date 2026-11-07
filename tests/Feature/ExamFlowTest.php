@@ -6,6 +6,7 @@ use App\Models\PracticeSession;
 use App\Models\User;
 use App\Services\Exam\ExamFlowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -318,6 +319,47 @@ class ExamFlowTest extends TestCase
         $this->assertSame('audio/wav', $response->headers->get('Content-Type'));
 
         $this->get('/latihan/audio/..%2F.env')->assertNotFound();
+    }
+
+    public function test_status_explains_why_the_ai_is_offline(): void
+    {
+        Http::fake(['*/voice/status' => Http::response(['llm' => ['available' => false, 'models' => []], 'stt' => ['available' => false], 'tts' => ['local' => false]])]);
+
+        $this->getJson(route('exam.status'))->assertOk()->assertJson([
+            'engine' => 'offline_composer',
+            'reason' => 'Ollama tidak berjalan.',
+        ]);
+    }
+
+    public function test_status_flags_missing_voic_coach_but_keeps_local_ai_on(): void
+    {
+        Http::fake(['*/voice/status' => Http::response(['llm' => ['available' => true, 'models' => ['qwen2.5:3b'], 'exam_model_ready' => false], 'stt' => ['available' => false], 'tts' => ['local' => false]])]);
+
+        $status = $this->getJson(route('exam.status'))->assertOk()->json();
+        $this->assertSame('local_llm', $status['engine']);
+        $this->assertSame('qwen2.5:3b', $status['model']);
+        $this->assertStringContainsString('ollama create voic-coach', $status['fix']);
+    }
+
+    public function test_status_detects_an_ai_service_started_before_the_update(): void
+    {
+        Http::fake([
+            '*/voice/status' => Http::response(['detail' => 'Not Found'], 404),
+            '*/health/ollama' => Http::response(['ollama_active' => true, 'available_models' => ['voic-coach:latest']]),
+        ]);
+
+        $status = $this->getJson(route('exam.status'))->assertOk()->json();
+        $this->assertSame('local_llm', $status['engine']);
+        $this->assertStringContainsString('versi lama', $status['reason']);
+    }
+
+    public function test_doctor_reports_unreachable_ai_service(): void
+    {
+        Http::fake(fn () => throw new ConnectionException('Connection refused'));
+
+        $this->artisan('voic:doctor')
+            ->expectsOutputToContain('tidak bisa dihubungi')
+            ->assertFailed();
     }
 
     public function test_other_visitors_cannot_answer_someone_elses_session(): void

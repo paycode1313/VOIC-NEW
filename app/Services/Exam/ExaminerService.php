@@ -243,37 +243,72 @@ class ExaminerService
     }
 
     /**
-     * Which engine will most likely answer the next turn, cached briefly.
+     * Which engine will most likely answer the next turn, cached briefly, with the reason
+     * when the local AI is not usable so the booth operator knows what to fix.
      *
-     * @return array{engine: string, model: ?string, stt_local: bool, tts_local: bool}
+     * @return array{engine: string, model: ?string, stt_local: bool, tts_local: bool, reason: ?string, fix: ?string}
      */
     public function availability(): array
     {
-        return Cache::remember('voic.examiner.availability', 15, function (): array {
-            $status = ['engine' => 'offline_composer', 'model' => null, 'stt_local' => false, 'tts_local' => false];
+        return Cache::remember('voic.examiner.availability', 10, fn (): array => $this->diagnose());
+    }
 
-            try {
-                $response = Http::connectTimeout(1.0)->timeout(3)->get($this->baseUrl().'/voice/status');
-                if ($response->successful()) {
-                    $models = (array) $response->json('llm.models', []);
-                    $status['stt_local'] = (bool) $response->json('stt.available');
-                    $status['tts_local'] = (bool) $response->json('tts.local');
-                    if ($response->json('llm.available') && $models !== []) {
-                        $preferred = collect($models)->first(fn ($name) => str_starts_with((string) $name, 'voic-coach'));
+    /**
+     * Probe the local AI service and Ollama (uncached).
+     *
+     * @return array{engine: string, model: ?string, stt_local: bool, tts_local: bool, reason: ?string, fix: ?string}
+     */
+    public function diagnose(): array
+    {
+        $status = ['engine' => 'offline_composer', 'model' => null, 'stt_local' => false, 'tts_local' => false, 'reason' => null, 'fix' => null];
+        $url = $this->baseUrl();
 
-                        return ['engine' => 'local_llm', 'model' => (string) ($preferred ?? $models[0])] + $status;
+        try {
+            $response = Http::connectTimeout(1.0)->timeout(3)->get($url.'/voice/status');
+
+            if ($response->status() === 404) {
+                // An ai_service.py started before the update has no /voice/status yet.
+                $legacy = Http::connectTimeout(1.0)->timeout(3)->get($url.'/health/ollama');
+                $status['reason'] = 'AI service masih versi lama (dijalankan sebelum update).';
+                $status['fix'] = 'Tutup jendela VOIC_AI_SERVICE, lalu jalankan ulang: python ai_service\\ai_service.py';
+                if ($legacy->successful() && $legacy->json('ollama_active')) {
+                    $status['engine'] = 'local_llm';
+                    $status['model'] = (string) (((array) $legacy->json('available_models', []))[0] ?? '');
+                }
+            } elseif ($response->successful()) {
+                $models = (array) $response->json('llm.models', []);
+                $status['stt_local'] = (bool) $response->json('stt.available');
+                $status['tts_local'] = (bool) $response->json('tts.local');
+
+                if (! $response->json('llm.available')) {
+                    $status['reason'] = 'Ollama tidak berjalan.';
+                    $status['fix'] = 'Buka aplikasi Ollama (atau jalankan: ollama serve).';
+                } elseif ($models === []) {
+                    $status['reason'] = 'Belum ada model AI di Ollama.';
+                    $status['fix'] = 'Jalankan: ollama pull qwen2.5:3b lalu cd ai_service && ollama create voic-coach -f Modelfile';
+                } else {
+                    $preferred = collect($models)->first(fn ($name) => str_starts_with((string) $name, 'voic-coach'));
+                    $status['engine'] = 'local_llm';
+                    $status['model'] = (string) ($preferred ?? $models[0]);
+                    if (! $response->json('llm.exam_model_ready', $preferred !== null)) {
+                        $status['reason'] = 'Model voic-coach belum dibuat, sementara memakai '.$status['model'].'.';
+                        $status['fix'] = 'cd ai_service && ollama create voic-coach -f Modelfile';
                     }
                 }
-            } catch (\Throwable) {
-                // Fall through to the next engine.
+            } else {
+                $status['reason'] = 'AI service merespons dengan error '.$response->status().'.';
+                $status['fix'] = 'Lihat jendela VOIC_AI_SERVICE untuk pesan error-nya.';
             }
+        } catch (\Throwable) {
+            $status['reason'] = "AI service (ai_service.py) tidak bisa dihubungi di {$url}.";
+            $status['fix'] = 'Jalankan: pip install -r ai_service\\requirements.txt lalu python ai_service\\ai_service.py (lihat error di jendelanya).';
+        }
 
-            if ((string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '') {
-                $status['engine'] = 'cloud_llm';
-            }
+        if ($status['engine'] !== 'local_llm' && ((string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '')) {
+            $status['engine'] = 'cloud_llm';
+        }
 
-            return $status;
-        });
+        return $status;
     }
 
     /**

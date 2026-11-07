@@ -647,18 +647,40 @@ def get_audio(filename: str):
     raise HTTPException(status_code=404, detail="File audio tidak ditemukan")
 
 
-@app.post("/stt")
-async def speech_to_text(audio: UploadFile = File(...), language: str = Form("id"), prompt: Optional[str] = Form(None)):
-    """Speech-to-text lokal (faster-whisper). Dipakai Laravel saat peserta menjawab dengan suara."""
-    if not voice_engine.stt_available():
-        raise HTTPException(status_code=503, detail="STT lokal belum terpasang. Jalankan: python setup_models.py")
-    data = await audio.read()
-    if len(data) < 1000:
-        return {"text": "", "duration": 0, "latency_ms": 0, "engine": "faster-whisper"}
+# python-multipart dibutuhkan FastAPI untuk upload file. Jika belum terpasang, service TETAP jalan
+# (otak AI tetap aktif); hanya STT lokal yang nonaktif. Dulu ini membuat service crash saat start.
+try:
+    import python_multipart  # noqa: F401
+    HAS_MULTIPART = True
+except ImportError:
     try:
-        return await asyncio.to_thread(voice_engine.transcribe, data, language, prompt)
-    except Exception as exc:
-        raise HTTPException(status_code=503, detail=f"STT gagal: {exc}")
+        import multipart  # noqa: F401
+        HAS_MULTIPART = True
+    except ImportError:
+        HAS_MULTIPART = False
+
+if HAS_MULTIPART:
+
+    @app.post("/stt")
+    async def speech_to_text(audio: UploadFile = File(...), language: str = Form("id"), prompt: Optional[str] = Form(None)):
+        """Speech-to-text lokal (faster-whisper). Dipakai Laravel saat peserta menjawab dengan suara."""
+        if not voice_engine.stt_available():
+            raise HTTPException(status_code=503, detail="STT lokal belum terpasang. Jalankan: python setup_models.py")
+        data = await audio.read()
+        if len(data) < 1000:
+            return {"text": "", "duration": 0, "latency_ms": 0, "engine": "faster-whisper"}
+        try:
+            return await asyncio.to_thread(voice_engine.transcribe, data, language, prompt)
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail=f"STT gagal: {exc}")
+
+else:
+    print("[VOIC] PERINGATAN: paket python-multipart belum terpasang, STT lokal nonaktif. "
+          "Jalankan: pip install -r requirements.txt")
+
+    @app.post("/stt")
+    async def speech_to_text_unavailable():
+        raise HTTPException(status_code=503, detail="python-multipart belum terpasang: pip install -r requirements.txt")
 
 
 @app.get("/voice/status")
@@ -673,7 +695,23 @@ async def voice_status():
                 ollama_ok = True
     except Exception:
         pass
-    return {"llm": {"available": ollama_ok, "models": models, "local": True}, **voice_engine.status()}
+    from exam_engine import EXAM_MODEL
+
+    voice = voice_engine.status()
+    if not HAS_MULTIPART:
+        voice["stt"]["available"] = False
+        voice["stt"]["error"] = "python-multipart belum terpasang"
+    exam_model_ready = any(m == EXAM_MODEL or m.startswith(EXAM_MODEL + ":") for m in models)
+    return {
+        "llm": {
+            "available": ollama_ok,
+            "models": models,
+            "exam_model": EXAM_MODEL,
+            "exam_model_ready": exam_model_ready,
+            "local": True,
+        },
+        **voice,
+    }
 
 
 @app.post("/tts")

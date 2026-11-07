@@ -90,6 +90,11 @@
                             <span class="h-1.5 w-1.5 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-500' : 'bg-emerald-500'"></span>
                             <span x-text="{ local_llm: t('AI lokal aktif', 'Local AI on'), cloud_llm: t('AI cloud aktif', 'Cloud AI on'), offline_composer: t('AI offline · mode cadangan', 'AI offline · fallback mode') }[engine]"></span>
                         </span>
+                        <div x-show="aiStatus?.reason" x-cloak class="mt-2 max-w-md rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-left text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200">
+                            <p class="font-semibold" x-text="aiStatus?.reason"></p>
+                            <p class="mt-0.5 font-mono text-[11px]" x-show="aiStatus?.fix" x-text="aiStatus?.fix"></p>
+                            <button type="button" class="mt-1 font-semibold underline" @click="checkEngine()">{{ $isEn ? 'Check again' : 'Cek ulang' }}</button>
+                        </div>
                         <span x-show="aiStatus" x-cloak class="mt-1 text-[11px] text-slate-500"
                               x-text="t('Telinga: ', 'Ears: ') + (voiceMode === 'local' ? t('Whisper lokal', 'local Whisper') : voiceMode === 'browser' ? t('browser (online)', 'browser (online)') : t('ketik', 'typing'))
                                 + ' · ' + t('Suara: ', 'Voice: ') + (aiStatus?.tts_local ? t('Piper lokal', 'local Piper') : t('cadangan', 'fallback'))

@@ -40,12 +40,15 @@ if not "%ERRORLEVEL%"=="0" (
     echo       Tanpa model ini, sistem memakai cadangan (suara browser / jawaban cadangan).
 )
 echo.
+echo     Memastikan paket Python lengkap...
+python -m pip install -q -r ai_service\requirements.txt
 echo     Menjalankan AI Service Python (Ollama + Whisper + Piper)...
 netstat -ano | findstr /R ":8001 " >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo   [OK] AI Service Python sudah aktif di http://127.0.0.1:8001.
 ) else (
-    start "VOIC_AI_SERVICE" /min cmd /c "python ai_service\ai_service.py"
+    rem cmd /k: jendela tetap terbuka jika service error, agar pesannya bisa dibaca
+start "VOIC_AI_SERVICE" /min cmd /k "python ai_service\ai_service.py"
     echo   [OK] Menjalankan AI Service di http://127.0.0.1:8001
 )
 
@@ -55,8 +58,9 @@ start "VOIC_LARAVEL_SERVER" /min cmd /c "php artisan serve --port=8000"
 echo   [OK] Laravel aktif di http://localhost:8000
 
 echo.
-echo [5/5] Membuka Browser Aplikasi VOIC...
-ping 127.0.0.1 -n 4 >nul
+echo [5/5] Mengecek kesiapan AI lalu membuka browser...
+ping 127.0.0.1 -n 8 >nul
+php artisan voic:doctor
 start http://localhost:8000/latihan
 
 echo.

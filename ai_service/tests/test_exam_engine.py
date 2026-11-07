@@ -104,3 +104,28 @@ class RespondEndpointTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ResolveModelTest(unittest.TestCase):
+    def setUp(self):
+        exam_engine._model_cache.update(name=None, checked=0.0)
+
+    def tearDown(self):
+        exam_engine._model_cache.update(name=None, checked=0.0)
+
+    def resolve_with(self, names):
+        import asyncio
+
+        response = mock.Mock(status_code=200)
+        response.json.return_value = {"models": [{"name": n} for n in names]}
+        client = mock.AsyncMock()
+        client.get.return_value = response
+        client.__aenter__.return_value = client
+        with mock.patch.object(exam_engine.httpx, "AsyncClient", return_value=client):
+            return asyncio.run(exam_engine.resolve_model())
+
+    def test_uses_voic_coach_when_created(self):
+        self.assertEqual(self.resolve_with(["qwen2.5:3b", "voic-coach:latest"]), exam_engine.EXAM_MODEL)
+
+    def test_falls_back_to_available_qwen_when_voic_coach_missing(self):
+        self.assertEqual(self.resolve_with(["nomic-embed-text", "qwen2.5:3b"]), "qwen2.5:3b")
