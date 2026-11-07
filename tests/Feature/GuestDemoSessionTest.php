@@ -33,11 +33,10 @@ class GuestDemoSessionTest extends TestCase
 
     public function test_guest_can_access_demo_page_without_authentication(): void
     {
-        $response = $this->get(route('demo.create'));
-
-        $response->assertOk();
-        $response->assertSee('Sesi Uji Coba Tamu');
-        $response->assertSee('VOIC-Dosen Penguji');
+        // The booth demo now opens the three-part mock exam, which guests can take without an account.
+        $this->get(route('demo.create'))->assertRedirect(route('exam.index'));
+        $this->get(route('demo.create', ['role' => 'hrd']))->assertRedirect(route('exam.setup', 'wawancara'));
+        $this->get(route('exam.index'))->assertOk()->assertSee('Wawancara Kerja');
     }
 
     public function test_guest_can_start_demo_session_with_custom_name_and_institution(): void

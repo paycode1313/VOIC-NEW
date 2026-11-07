@@ -42,7 +42,9 @@ class ExamReportService
             ->where('sender', 'user')
             ->whereNotNull('exam_part')
             ->orderBy('id')
-            ->get();
+            ->get()
+            ->reject(fn (SessionMessage $message) => ($message->meta['kind'] ?? null) === 'clarification')
+            ->values();
 
         $items = $answers->map(fn (SessionMessage $message, int $index) => $this->assessAnswer($message, $mode, $language, $index))->values()->all();
 

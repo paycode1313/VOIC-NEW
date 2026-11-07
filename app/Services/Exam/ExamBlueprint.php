@@ -41,6 +41,20 @@ class ExamBlueprint
     }
 
     /**
+     * Map a legacy AI role type (dosen_penguji, hrd, investor) to an exam mode slug.
+     */
+    public function modeForRoleType(?string $roleType): ?string
+    {
+        foreach ($this->modes() as $key => $mode) {
+            if ($roleType !== null && ($mode['role_type'] ?? null) === $roleType) {
+                return $key;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Get a single mode definition.
      *
      * @return array<string, mixed>

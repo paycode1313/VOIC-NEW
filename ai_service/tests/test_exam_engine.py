@@ -45,6 +45,18 @@ class QualityGateTest(unittest.TestCase):
         self.assertIn("follow_up_without_question", exam_engine.quality_issues("YOLOv8 pilihan yang masuk akal untuk pabrik.", ANSWER, "follow_up", "id"))
         self.assertIn("multiple_questions", exam_engine.quality_issues("YOLOv8 ya? Kenapa? Bagaimana datanya?", ANSWER, "follow_up", "id"))
 
+    def test_next_turn_must_ask_the_next_topic(self):
+        good = "YOLOv8 untuk pabrik tekstil itu pilihan yang praktis. Ngomong-ngomong, apa yang membuat Anda tertarik meneliti cacat kain?"
+        self.assertEqual(exam_engine.quality_issues(good, ANSWER, "next", "id"), [])
+        self.assertIn("follow_up_without_question", exam_engine.quality_issues("YOLOv8 untuk pabrik tekstil itu praktis.", ANSWER, "next", "id"))
+
+    def test_clarify_does_not_need_grounding(self):
+        reply = "Maksud saya, kenapa Anda memilih metode itu dan bukan metode lain?"
+        self.assertEqual(exam_engine.quality_issues(reply, "Maaf Prof, maksud pertanyaan Bapak bagaimana ya kalau boleh tahu?", "clarify", "id"), [])
+
+    def test_react_must_not_ask(self):
+        self.assertIn("react_with_question", exam_engine.quality_issues("Kecepatan YOLOv8 di pabrik tekstil masuk akal ya?", ANSWER, "react", "id"))
+
     def test_clean_reply_strips_markdown_and_labels(self):
         self.assertEqual(exam_engine.clean_reply("Prof. Hendra: **Baik**, saya paham. [catatan]"), "Baik, saya paham.")
 

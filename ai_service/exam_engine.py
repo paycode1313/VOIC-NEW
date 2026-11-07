@@ -6,8 +6,10 @@ Prinsip desain:
   Service ini hanya menjalankan model, membersihkan output, dan menjaga kualitas.
   Dengan begitu data training (diekspor oleh `php artisan voic:export-training-data`)
   memakai format yang persis sama dengan saat inferensi.
-- Struktur ujian (pertanyaan berikutnya, transisi bagian) dibacakan oleh Laravel.
-  Model cukup menulis bagian "manusiawi": tanggapan spesifik atau 1 pertanyaan lanjutan.
+- Model menulis seluruh giliran dengan kata-katanya sendiri: menanggapi jawaban, lalu
+  menggali lebih dalam (follow_up), membawa topik berikutnya dari rencana ujian (next),
+  atau menjelaskan ulang pertanyaan yang belum dipahami (clarify). Rencana ujian hanya
+  panduan topik; naskah Laravel dipakai sebagai cadangan jika model gagal.
 - Setiap balasan dicek oleh quality gate. Balasan yang lolos dipanen ke
   datasets/harvest/exam_turns.jsonl sebagai kandidat data latih (perlu direview).
 """
@@ -65,7 +67,7 @@ class RespondRequest(BaseModel):
     mode: str
     role_type: str
     language: str = "id"
-    directive: str = "react"  # react | follow_up
+    directive: str = "react"  # react | follow_up | next | clarify
     part: int = 1
     question: str = ""
     answer: str = ""
@@ -138,15 +140,18 @@ def quality_issues(reply: str, answer: str, directive: str, language: str) -> Li
         issues.append("banned_template")
 
     question_count = reply.count("?")
-    if directive == "follow_up" and question_count == 0:
+    asks = directive in ("follow_up", "next", "clarify")
+    if asks and question_count == 0:
         issues.append("follow_up_without_question")
-    if directive == "follow_up" and question_count > 1:
+    if asks and question_count > (2 if directive == "next" else 1):
         issues.append("multiple_questions")
+    if directive == "react" and question_count > 0:
+        issues.append("react_with_question")
 
     # Active listening: tanggapan harus menyentuh isi jawaban, kecuali jawabannya sangat pendek
     # atau peserta bilang tidak tahu (balasan yang tepat justru menenangkan, bukan mengutip).
     answer_words = content_words(answer)
-    if len(answer_words) >= 4 and not UNSURE_PATTERN.search(answer):
+    if len(answer_words) >= 4 and directive != "clarify" and not UNSURE_PATTERN.search(answer):
         overlap = answer_words & content_words(reply)
         # Toleransi imbuhan Indonesia: cocokkan 5 huruf terakhir.
         if not overlap:
@@ -201,22 +206,22 @@ async def respond(req: RespondRequest):
     """Jalankan model untuk satu giliran penguji. Retry sekali jika gagal quality gate."""
     started = time.time()
     messages = [m.model_dump() for m in req.messages]
-    is_follow_up = req.directive == "follow_up"
-    max_sentences = 2 if is_follow_up else 1
+    max_sentences = {"next": 3, "follow_up": 2, "clarify": 2}.get(req.directive, 1)
+    num_predict = {"next": 120, "follow_up": 90, "clarify": 100}.get(req.directive, 55)
 
     best_reply, best_issues = "", ["empty"]
     for attempt in range(2):
         try:
             raw = await ollama_chat(
                 messages,
-                num_predict=90 if is_follow_up else 55,
+                num_predict=num_predict,
                 temperature=0.7 if attempt == 0 else 0.55,
             )
         except Exception as exc:  # Ollama mati / model belum di-pull
             print(f"Exam model error: {exc}")
             break
 
-        reply = clean_reply(raw, max_sentences=max_sentences + (1 if is_follow_up else 0))
+        reply = clean_reply(raw, max_sentences=max_sentences + (1 if req.directive != "react" else 0))
         issues = quality_issues(reply, req.answer, req.directive, req.language)
         if len(issues) < len(best_issues):
             best_reply, best_issues = reply, issues

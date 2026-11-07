@@ -98,7 +98,19 @@ class ExportExamTrainingData extends Command
 
                 $history[] = ['role' => 'assistant', 'content' => $examinerLine];
 
-                $turns[] = $this->turn($blueprint, $dialogue['mode'], $dialogue['language'] ?? 'id', $dialogue['topic'] ?? null, $dialogue['context_material'] ?? null, (int) $seedTurn['part'], $seedTurn['directive'], $examinerLine, $seedTurn['answer'], $history, $seedTurn['reply'], $index);
+                // A reaction followed by the next question of the same part is exactly what the
+                // live flow asks the model to write in one go (directive "next").
+                $directive = $seedTurn['directive'];
+                $target = $seedTurn['reply'];
+                $planned = $seedTurn['planned_question'] ?? null;
+                $following = $dialogue['turns'][$index + 1] ?? null;
+                if ($directive === ExaminerService::DIRECTIVE_REACT && $following !== null && (int) $following['part'] === (int) $seedTurn['part'] && ! str_contains($seedTurn['reply'], $following['question'])) {
+                    $directive = ExaminerService::DIRECTIVE_NEXT;
+                    $planned = $following['question'];
+                    $target = $seedTurn['reply'].' '.$following['question'];
+                }
+
+                $turns[] = $this->turn($blueprint, $dialogue['mode'], $dialogue['language'] ?? 'id', $dialogue['topic'] ?? null, $dialogue['context_material'] ?? null, (int) $seedTurn['part'], $directive, $examinerLine, $seedTurn['answer'], $history, $target, $index, 0, $planned);
 
                 $history[] = ['role' => 'user', 'content' => $seedTurn['answer']];
                 $previous = $seedTurn;
@@ -158,6 +170,8 @@ class ExportExamTrainingData extends Command
                                 (string) $message->meta['reply'],
                                 $position,
                                 $session->id,
+                                $message->meta['planned_question'] ?? null,
+                                $message->meta['transition'] ?? null,
                             ),
                             $source,
                         ];
@@ -175,7 +189,7 @@ class ExportExamTrainingData extends Command
     {
         $meta = $message->meta ?? [];
 
-        if ($message->sender !== 'ai' || ! in_array($meta['kind'] ?? null, [ExaminerService::DIRECTIVE_REACT, ExaminerService::DIRECTIVE_FOLLOW_UP], true) || empty($meta['reply'])) {
+        if ($message->sender !== 'ai' || ! in_array($meta['kind'] ?? null, [ExaminerService::DIRECTIVE_REACT, ExaminerService::DIRECTIVE_FOLLOW_UP, ExaminerService::DIRECTIVE_NEXT, ExaminerService::DIRECTIVE_CLARIFY], true) || empty($meta['reply'])) {
             return null;
         }
 
@@ -195,7 +209,7 @@ class ExportExamTrainingData extends Command
      * @param  list<array{role: string, content: string}>  $history
      * @return array<string, mixed>
      */
-    protected function turn(ExamBlueprint $blueprint, string $mode, string $language, ?string $topic, ?string $context, int $part, string $directive, string $question, string $answer, array $history, string $reply, int $index, int $sessionId = 0): array
+    protected function turn(ExamBlueprint $blueprint, string $mode, string $language, ?string $topic, ?string $context, int $part, string $directive, string $question, string $answer, array $history, string $reply, int $index, int $sessionId = 0, ?string $plannedQuestion = null, ?string $transition = null): array
     {
         $definition = $blueprint->mode($mode);
 
@@ -213,6 +227,8 @@ class ExportExamTrainingData extends Command
             'answer' => $answer,
             'history' => $history,
             'scripted' => '',
+            'planned_question' => $plannedQuestion,
+            'transition' => $transition,
             'turn' => $index,
             'session_id' => $sessionId,
             'target' => $reply,

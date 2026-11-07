@@ -7,6 +7,7 @@ use App\Models\AiRole;
 use App\Models\PracticeSession;
 use App\Services\AiRoleplayService;
 use App\Services\CredentialVerificationService;
+use App\Services\Exam\ExamBlueprint;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -17,81 +18,15 @@ use Illuminate\Support\Str;
 class DemoSessionController extends Controller
 {
     /**
-     * Show the Innofest demo/guest practice setup interface.
+     * The practice room now runs the three-part mock exam flow; keep the old URL working.
      */
-    public function create(Request $request): View
+    public function create(Request $request, ExamBlueprint $blueprint): RedirectResponse
     {
-        $aiRoles = AiRole::where('is_active', true)->orderBy('id')->get();
+        $mode = $blueprint->modeForRoleType($request->query('role'));
 
-        $roleQuery = $request->query('role');
-        $matchedRole = $roleQuery ? $aiRoles->firstWhere('role_type', $roleQuery) : null;
-
-        $defaultRole = $matchedRole ?? $aiRoles->first() ?? [
-            'id' => 1,
-            'name' => 'VOIC - Dosen Penguji',
-            'role_type' => 'dosen_penguji',
-            'difficulty_level' => 'Sulit',
-            'voice_id' => 'id-ID-ArdiNeural',
-            'description' => 'Dosen Penguji Sidang Skripsi senior di bidang informatika.',
-            'personality_traits' => ['kritis & berwibawa', 'fokus metodologi'],
-        ];
-
-        $scenarios = [
-            [
-                'id' => 'sidang-skripsi',
-                'name' => 'Sidang Skripsi',
-                'icon' => '🎓',
-                'badge' => 'Akademik',
-                'badge_color' => 'indigo',
-                'role_type' => 'dosen_penguji',
-                'description' => 'Simulasi presentasi tugas akhir/skripsi bersama Dosen Penguji senior. Fokus pada ketenangan, metodologi, dan argumentasi ilmiah.',
-                'prompt_guide' => 'Jelaskan latar belakang, rumusan masalah, serta kebaruan (novelty) dari penelitian Anda dalam waktu 2-3 menit.',
-                'target_duration' => '120 detik',
-            ],
-            [
-                'id' => 'wawancara-kerja',
-                'name' => 'Wawancara Kerja',
-                'icon' => '💼',
-                'badge' => 'Karier',
-                'badge_color' => 'amber',
-                'role_type' => 'hrd',
-                'description' => 'Simulasi menjawab pertanyaan interview bersama HRD Recruiter dengan metode STAR. Fokus pada ekspresi ramah, kontak mata, dan kejelasan jawaban.',
-                'prompt_guide' => 'Ceritakan pengalaman nyata saat menghadapi tantangan besar dalam tim dan bagaimana Anda mengatasinya.',
-                'target_duration' => '90 detik',
-            ],
-            [
-                'id' => 'pitching-startup',
-                'name' => 'Pitching Startup',
-                'icon' => '🚀',
-                'badge' => 'Bisnis',
-                'badge_color' => 'purple',
-                'role_type' => 'investor',
-                'description' => 'Simulasi presentasi elevator pitch di hadapan Venture Capitalist/Angel Investor. Fokus pada problem-solution fit, bisnis model, dan daya tarik pasar.',
-                'prompt_guide' => 'Sampaikan elevator pitch: masalah pasar, keunikan solusi produk Anda, dan model bisnis dalam 1-2 menit.',
-                'target_duration' => '90 detik',
-            ],
-            [
-                'id' => 'presentasi-umum',
-                'name' => 'Presentasi Kilat',
-                'icon' => '🎙️',
-                'badge' => 'Demo Booth',
-                'badge_color' => 'emerald',
-                'role_type' => 'dosen_penguji',
-                'description' => 'Uji coba kilat berbicara 60-90 detik untuk pengunjung pameran Innofest 2026.',
-                'prompt_guide' => 'Perkenalkan diri Anda dan jelaskan inovasi atau hal paling membanggakan yang pernah Anda ciptakan.',
-                'target_duration' => '60 detik',
-            ],
-        ];
-
-        return view('practice.create', [
-            'aiRoles' => $aiRoles,
-            'defaultRole' => $defaultRole,
-            'scenarios' => $scenarios,
-            'userLearningProfile' => null,
-            'isDemo' => true,
-            'defaultGuestName' => session('guest_name', 'Pengunjung Booth'),
-            'defaultGuestInstitution' => session('guest_institution', ''),
-        ]);
+        return $mode
+            ? redirect()->route('exam.setup', $mode)
+            : redirect()->route('exam.index');
     }
 
     /**

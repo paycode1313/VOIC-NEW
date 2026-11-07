@@ -146,10 +146,11 @@ class ExamFlowTest extends TestCase
             ->assertStatus(409);
     }
 
-    public function test_local_model_reply_is_used_and_scripted_question_appended(): void
+    public function test_model_asks_the_next_question_in_its_own_words(): void
     {
+        $modelReply = 'Menarik, YOLOv8 untuk cacat kain dengan 2000 gambar itu cukup besar. Ngomong-ngomong, apa yang awalnya bikin Anda tertarik ke topik ini, apakah dari pengalaman di pabrik?';
         Http::fake([
-            '*/exam/respond' => Http::response(['reply' => 'Menarik, jadi Anda memakai YOLOv8 untuk deteksi cacat kain. Kenapa begitu?']),
+            '*/exam/respond' => Http::response(['reply' => $modelReply]),
             '*/tts' => Http::response(['audio_file' => 'abc.mp3']),
             '*' => Http::response([], 503),
         ]);
@@ -162,13 +163,72 @@ class ExamFlowTest extends TestCase
             'timestamp_seconds' => 15,
         ])->assertOk();
 
-        $text = $response->json('examiner_message.text');
+        // The model's own wording is spoken as-is; no scripted question is bolted on.
+        $this->assertSame($modelReply, $response->json('examiner_message.text'));
         $this->assertSame('local_llm', $response->json('examiner_message.engine'));
-        $this->assertStringStartsWith('Menarik, jadi Anda memakai YOLOv8', $text);
-        // The model's own question is stripped on a "react" turn, the planned question follows.
-        $this->assertStringNotContainsString('Kenapa begitu?', $text);
-        $this->assertStringEndsWith('?', $text);
         $this->assertStringEndsWith('/audio/abc.mp3', $response->json('examiner_message.audio_url'));
+        $this->assertSame(1, $session->refresh()->exam_state['question_index']);
+
+        // The model was told which topic comes next, as guidance rather than a script.
+        Http::assertSent(function ($request) {
+            if (! str_ends_with($request->url(), '/exam/respond')) {
+                return false;
+            }
+            $messages = $request['messages'];
+            $instruction = $messages[count($messages) - 1]['content'];
+
+            return $request['directive'] === 'next' && str_contains($instruction, 'dengan kata-katamu sendiri');
+        });
+    }
+
+    public function test_model_reaction_without_question_falls_back_to_the_planned_question(): void
+    {
+        Http::fake([
+            '*/exam/respond' => Http::response(['reply' => 'Baik, YOLOv8 dengan 2000 gambar, saya catat.']),
+            '*' => Http::response([], 503),
+        ]);
+
+        $session = $this->startExam('sidang', [1]);
+        $response = $this->postJson(route('exam.answer', $session), [
+            'answer' => 'Judul penelitian saya deteksi cacat kain menggunakan YOLOv8 dengan dataset 2000 gambar dari pabrik tekstil.',
+            'duration_seconds' => 12,
+            'timestamp_seconds' => 12,
+        ])->assertOk();
+
+        $text = $response->json('examiner_message.text');
+        $this->assertStringStartsWith('Baik, YOLOv8 dengan 2000 gambar, saya catat.', $text);
+        $this->assertStringEndsWith('?', $text);
+    }
+
+    public function test_candidate_can_ask_back_without_the_exam_moving_on(): void
+    {
+        $this->offline();
+        $session = $this->startExam('wawancara', [1]);
+        $before = $session->exam_state;
+
+        $response = $this->postJson(route('exam.answer', $session), [
+            'answer' => 'Maaf kak, maksudnya gimana ya?',
+            'duration_seconds' => 3,
+            'timestamp_seconds' => 3,
+        ])->assertOk();
+
+        $this->assertStringContainsString('Maksud saya', $response->json('examiner_message.text'));
+        $after = $session->refresh()->exam_state;
+        $this->assertSame($before['question_index'], $after['question_index']);
+        $this->assertSame($before['followups_used'], $after['followups_used']);
+        $this->assertSame('clarification', $session->messages()->where('sender', 'user')->first()->meta['kind']);
+    }
+
+    public function test_status_reports_which_ai_engine_is_answering(): void
+    {
+        Http::fake(['*/health/ollama' => Http::response(['ollama_active' => true, 'available_models' => ['voic-coach:latest']])]);
+        $this->getJson(route('exam.status'))->assertOk()->assertJson(['engine' => 'local_llm', 'model' => 'voic-coach:latest']);
+    }
+
+    public function test_status_reports_offline_fallback_when_no_ai_is_reachable(): void
+    {
+        $this->offline();
+        $this->getJson(route('exam.status'))->assertOk()->assertJson(['engine' => 'offline_composer']);
     }
 
     public function test_other_visitors_cannot_answer_someone_elses_session(): void

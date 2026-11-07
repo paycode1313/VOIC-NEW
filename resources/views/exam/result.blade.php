@@ -173,7 +173,7 @@
             @endif
             <div class="mt-4 space-y-3 text-sm">
                 @foreach ($transcript as $line)
-                    @php $rateable = $canRate && $line->sender === 'ai' && in_array($line->meta['kind'] ?? null, ['react', 'follow_up'], true); @endphp
+                    @php $rateable = $canRate && $line->sender === 'ai' && in_array($line->meta['kind'] ?? null, ['react', 'follow_up', 'next', 'clarify'], true); @endphp
                     <div class="flex gap-3" @if ($rateable) x-data="{ rating: @js($line->meta['rating'] ?? null), async rate(value) { this.rating = value; await fetch(@js(route('exam.rate', [$session, $line->id])), { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content }, body: JSON.stringify({ rating: value }) }) } }" @endif>
                         <span class="w-24 shrink-0 font-semibold {{ $line->sender === 'user' ? '' : 'text-slate-500' }}">{{ $line->sender === 'user' ? ($isEn ? 'You' : 'Kamu') : $mode['examiner']['name'] }}</span>
                         <p class="flex-1 leading-relaxed">{{ $line->message }}</p>

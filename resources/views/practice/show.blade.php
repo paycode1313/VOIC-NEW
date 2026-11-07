@@ -2457,7 +2457,7 @@
                 'CALSCALE:GREGORIAN',
                 'BEGIN:VEVENT',
                 `SUMMARY:🎙️ ${title}`,
-                `DESCRIPTION:${description}\\n\\nBuka sesi latihan di: ${window.location.origin}/practice/create`,
+                `DESCRIPTION:${description}\\n\\nBuka sesi latihan di: ${window.location.origin}/latihan`,
                 `DTSTART:${toIcs(tomorrow)}`,
                 `DTEND:${toIcs(tomorrowEnd)}`,
                 'STATUS:CONFIRMED',

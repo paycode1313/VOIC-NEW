@@ -7,6 +7,7 @@
         'transcript' => $transcript->map(fn ($m) => ['id' => $m->id, 'sender' => $m->sender, 'message' => $m->message, 'exam_part' => $m->exam_part])->values(),
         'answerUrl' => route('exam.answer', $session),
         'finishUrl' => route('exam.finish', $session),
+        'statusUrl' => route('exam.status'),
     ];
 @endphp
 
@@ -82,6 +83,12 @@
                                  :class="status === 'speaking' ? 'ring-emerald-400' : 'ring-transparent'">
                         </div>
                         <p class="mt-3 text-sm font-semibold">{{ $mode['examiner']['name'] }}</p>
+                        <span x-show="engine" x-cloak class="mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                              :class="engine === 'offline_composer' ? 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300'"
+                              :title="engine === 'offline_composer' ? t('Ollama / ai_service.py belum aktif dan tidak ada API key cloud. Penguji memakai jawaban cadangan berbasis aturan.', 'Ollama / ai_service.py is not running and no cloud key is set. The examiner uses rule-based fallback replies.') : ''">
+                            <span class="h-1.5 w-1.5 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-500' : 'bg-emerald-500'"></span>
+                            <span x-text="{ local_llm: t('AI lokal aktif', 'Local AI on'), cloud_llm: t('AI cloud aktif', 'Cloud AI on'), offline_composer: t('AI offline · mode cadangan', 'AI offline · fallback mode') }[engine]"></span>
+                        </span>
                         <p class="text-xs text-slate-500" x-text="{
                             speaking: t('Sedang berbicara…', 'Speaking…'),
                             listening: t('Mendengarkan kamu', 'Listening to you'),

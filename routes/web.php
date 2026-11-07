@@ -23,6 +23,7 @@ Route::get('/verify/{practiceSession}', [PracticeSessionController::class, 'veri
 // Three-part mock exam (interview, thesis defense, startup pitch). Open to guests for the booth.
 Route::prefix('latihan')->name('exam.')->controller(ExamController::class)->group(function () {
     Route::get('/', 'index')->name('index');
+    Route::get('/status-ai', 'status')->middleware('throttle:30,1')->name('status');
     Route::get('/sesi/{practiceSession}', 'room')->name('room');
     Route::post('/sesi/{practiceSession}/jawab', 'answer')->middleware('throttle:40,1')->name('answer');
     Route::post('/sesi/{practiceSession}/selesai', 'finish')->name('finish');

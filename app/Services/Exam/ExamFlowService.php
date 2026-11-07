@@ -85,6 +85,8 @@ class ExamFlowService
         $question = $this->lastExaminerQuestion($session);
         $isLongTurn = $state['phase'] === self::PHASE_CUE_CARD;
 
+        $isClarification = ! $isLongTurn && $this->asksForClarification($answer);
+
         $session->messages()->create([
             'sender' => 'user',
             'message' => $answer,
@@ -94,27 +96,30 @@ class ExamFlowService
             'meta' => [
                 'question' => $question,
                 'duration_seconds' => $durationSeconds,
-                'kind' => $isLongTurn ? 'long_turn' : 'answer',
+                // Clarification requests are conversation, not answers, so they are not scored.
+                'kind' => $isLongTurn ? 'long_turn' : ($isClarification ? 'clarification' : 'answer'),
             ],
         ]);
 
         $state['turn'] = (int) $state['turn'] + 1;
         $partDefinition = $this->blueprint->part($mode, $part);
         $maxFollowups = (int) ($partDefinition['followups'] ?? 1);
+        $step = ['scripted' => '', 'planned_question' => null, 'transition' => null];
 
-        if ($isLongTurn) {
+        if ($isClarification) {
+            // Explain and re-ask; the exam does not move on.
+            $directive = ExaminerService::DIRECTIVE_CLARIFY;
+        } elseif ($isLongTurn) {
             // After the uninterrupted talk, ask one rounding-off question.
             $state['phase'] = self::PHASE_ANSWERING;
             $state['followups_used'] = 1;
             $directive = ExaminerService::DIRECTIVE_FOLLOW_UP;
-            $scripted = '';
         } elseif ($this->shouldFollowUp($answer, $part, (int) $state['followups_used'], $maxFollowups, $mode)) {
             $state['followups_used'] = (int) $state['followups_used'] + 1;
             $directive = ExaminerService::DIRECTIVE_FOLLOW_UP;
-            $scripted = '';
         } else {
-            $directive = ExaminerService::DIRECTIVE_REACT;
-            $scripted = $this->advance($state);
+            $step = $this->advance($state);
+            $directive = $step['directive'];
         }
 
         $definition = $this->blueprint->mode($mode);
@@ -131,14 +136,19 @@ class ExamFlowService
             'question' => $question,
             'answer' => $answer,
             'history' => $this->history($session),
-            'scripted' => $scripted,
+            'scripted' => $step['scripted'],
+            'planned_question' => $step['planned_question'],
+            'transition' => $step['transition'],
             'turn' => (int) $state['turn'],
             'session_id' => $session->id,
         ]);
 
         $session->forceFill(['exam_state' => $state])->save();
 
-        $message = $this->recordExaminerMessage($session, $reply['text'], $reply['audio_url'], $state, $directive, $timestampSeconds + 1, $reply['engine'], $reply['reply'], $part);
+        $message = $this->recordExaminerMessage($session, $reply['text'], $reply['audio_url'], $state, $directive, $timestampSeconds + 1, $reply['engine'], $reply['reply'], $part, [
+            'planned_question' => $step['planned_question'],
+            'transition' => $step['transition'],
+        ]);
 
         return $this->payload($session->refresh(), $message);
     }
@@ -215,11 +225,17 @@ class ExamFlowService
     }
 
     /**
-     * Move to the next planned question or part, returning the scripted line.
+     * Move to the next planned question or part.
+     *
+     * Returns what the examiner should cover next. For a normal next question
+     * the model asks it in its own words (directive "next"); the scripted
+     * wording is only the fallback. Cue-card rules and the closing are fixed
+     * announcements (directive "react").
      *
      * @param  array<string, mixed>  $state
+     * @return array{directive: string, scripted: string, planned_question: ?string, transition: ?string}
      */
-    protected function advance(array &$state): string
+    protected function advance(array &$state): array
     {
         $part = (int) $state['part'];
         $state['followups_used'] = 0;
@@ -231,7 +247,12 @@ class ExamFlowService
             if ($nextIndex < count($planned)) {
                 $state['question_index'] = $nextIndex;
 
-                return $this->bridge($state).' '.$this->currentQuestion($state);
+                return [
+                    'directive' => ExaminerService::DIRECTIVE_NEXT,
+                    'scripted' => $this->bridge($state).' '.$this->currentQuestion($state),
+                    'planned_question' => $this->currentQuestion($state),
+                    'transition' => null,
+                ];
             }
         }
 
@@ -241,16 +262,48 @@ class ExamFlowService
         if ($nextPart === null) {
             $state['phase'] = self::PHASE_COMPLETED;
 
-            return $state['language'] === 'en'
-                ? 'That brings us to the end of the session. Thank you, you did well to get through all of it. Your feedback report is ready.'
-                : 'Baik, itu tadi pertanyaan terakhir. Terima kasih, sesi latihan sudah selesai. Laporan evaluasi Anda sudah siap.';
+            return [
+                'directive' => ExaminerService::DIRECTIVE_REACT,
+                'scripted' => $state['language'] === 'en'
+                    ? 'That brings us to the end of the session. Thank you, you did well to get through all of it. Your feedback report is ready.'
+                    : 'Baik, itu tadi pertanyaan terakhir. Terima kasih, sesi latihan sudah selesai. Laporan evaluasi Anda sudah siap.',
+                'planned_question' => null,
+                'transition' => null,
+            ];
         }
 
         $state['part'] = $nextPart;
         $state['question_index'] = 0;
         $state['phase'] = $nextPart === 2 ? self::PHASE_CUE_CARD : self::PHASE_ANSWERING;
 
-        return $this->partIntro($state);
+        if ($nextPart === 2) {
+            return ['directive' => ExaminerService::DIRECTIVE_REACT, 'scripted' => $this->partIntro($state), 'planned_question' => null, 'transition' => null];
+        }
+
+        $title = $this->blueprint->text($this->blueprint->part($state['mode'], $nextPart)['title'] ?? '', $state['language']);
+
+        return [
+            'directive' => ExaminerService::DIRECTIVE_NEXT,
+            'scripted' => $this->partIntro($state),
+            'planned_question' => $this->currentQuestion($state),
+            'transition' => ($state['language'] === 'en' ? 'Part ' : 'Bagian ').$nextPart.', '.$title,
+        ];
+    }
+
+    /**
+     * Detect the candidate asking back ("maksudnya gimana?", "bisa diulang?").
+     */
+    protected function asksForClarification(string $answer): bool
+    {
+        $text = trim(mb_strtolower($answer));
+        $wordCount = count(preg_split('/\s+/u', $text) ?: []);
+
+        if (preg_match('/\b(maksudnya|maksud(nya)? (bapak|ibu|kakak|kak|prof|pak|anda)|bisa diulang|tolong diulang|ulangi (lagi )?pertanyaan|kurang paham|nggak paham|tidak paham|gak paham|belum paham|what do you mean|can you repeat|could you repeat|pardon|sorry\?|i don\'?t understand)\b/u', $text)) {
+            return $wordCount <= 25;
+        }
+
+        // A short reply that is itself a question is usually a question back.
+        return str_ends_with($text, '?') && $wordCount <= 12;
     }
 
     /**
@@ -374,7 +427,11 @@ class ExamFlowService
      *
      * @param  array<string, mixed>  $state
      */
-    protected function recordExaminerMessage(PracticeSession $session, string $text, ?string $audioUrl, array $state, string $kind, int $timestampSeconds = 0, ?string $engine = null, ?string $reply = null, ?int $answeredPart = null): SessionMessage
+    /**
+     * @param  array<string, mixed>  $state
+     * @param  array<string, mixed>  $extra
+     */
+    protected function recordExaminerMessage(PracticeSession $session, string $text, ?string $audioUrl, array $state, string $kind, int $timestampSeconds = 0, ?string $engine = null, ?string $reply = null, ?int $answeredPart = null, array $extra = []): SessionMessage
     {
         return $session->messages()->create([
             'sender' => 'ai',
@@ -389,7 +446,7 @@ class ExamFlowService
                 'reply' => $reply,
                 // The part the candidate was answering, which differs from exam_part after a transition.
                 'answered_part' => $answeredPart,
-            ], fn ($value) => $value !== null),
+            ] + $extra, fn ($value) => $value !== null),
         ]);
     }
 }

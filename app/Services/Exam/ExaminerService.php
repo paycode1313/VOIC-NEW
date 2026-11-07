@@ -2,6 +2,7 @@
 
 namespace App\Services\Exam;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -10,17 +11,27 @@ use Illuminate\Support\Str;
 /**
  * Produces what the examiner says on each turn.
  *
- * The exam structure (which question comes next, when a part ends) is
- * scripted by ExamFlowService. This class only writes the human part:
- * a short reaction that proves the examiner listened, or a follow-up
- * probe built from the candidate's own words. It tries the local model
- * first, then an optional cloud model, then a rule-based composer.
+ * The language model writes the whole turn in its own words: it reacts to
+ * what the candidate actually said and then moves the conversation on,
+ * either by digging deeper (follow_up), by bringing up the next planned
+ * topic (next), or by re-explaining a question the candidate did not get
+ * (clarify). The exam plan only tells the model *what* to cover next; the
+ * scripted wording is a fallback used when no model is reachable or the
+ * model output fails validation. Order: local model, cloud model, offline.
  */
 class ExaminerService
 {
+    /** Dig deeper into the current answer. */
     public const DIRECTIVE_FOLLOW_UP = 'follow_up';
 
+    /** React, then raise the next planned topic in the model's own words. */
+    public const DIRECTIVE_NEXT = 'next';
+
+    /** React only; a fixed announcement follows (cue card rules, closing). */
     public const DIRECTIVE_REACT = 'react';
+
+    /** The candidate asked what the question means: explain and ask again. */
+    public const DIRECTIVE_CLARIFY = 'clarify';
 
     public function __construct(protected SpeakingAnalyzer $analyzer) {}
 
@@ -41,6 +52,8 @@ class ExaminerService
      *     answer: string,
      *     history: list<array{role: string, content: string}>,
      *     scripted: string,
+     *     planned_question?: ?string,
+     *     transition?: ?string,
      *     turn: int,
      *     session_id: int
      * }  $turn
@@ -49,30 +62,50 @@ class ExaminerService
     public function respond(array $turn): array
     {
         $messages = $this->buildMessages($turn);
+        $baseUrl = (string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001');
 
         $local = $this->callLocalModel($turn, $messages);
-        if ($local !== null) {
-            return $local;
-        }
-
-        $cloud = $this->callCloudModel($messages);
-        if ($cloud !== null) {
-            return [
-                'text' => $this->compose($cloud, $turn),
-                'reply' => $this->finalizeReply($cloud, $turn),
-                'audio_url' => null,
-                'engine' => 'cloud_llm',
+        if ($local !== null && ($resolved = $this->resolveModelReply($local, $turn)) !== null) {
+            return $resolved + [
+                'audio_url' => $this->synthesize($baseUrl, $resolved['text'], $turn),
+                'engine' => 'local_llm',
             ];
         }
 
-        $offline = $this->offlineReply($turn);
+        $cloud = $this->callCloudModel($messages);
+        if ($cloud !== null && ($resolved = $this->resolveModelReply($cloud, $turn)) !== null) {
+            return $resolved + ['audio_url' => null, 'engine' => 'cloud_llm'];
+        }
 
-        return [
-            'text' => $this->compose($offline, $turn),
-            'reply' => $this->finalizeReply($offline, $turn),
-            'audio_url' => null,
-            'engine' => 'offline_composer',
-        ];
+        return $this->offlineTurn($turn) + ['audio_url' => null, 'engine' => 'offline_composer'];
+    }
+
+    /**
+     * Which engine will most likely answer the next turn, cached briefly.
+     *
+     * @return array{engine: string, model: ?string}
+     */
+    public function availability(): array
+    {
+        return Cache::remember('voic.examiner.availability', 20, function (): array {
+            $baseUrl = (string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001');
+
+            try {
+                $response = Http::connectTimeout(1.0)->timeout(2)->get("{$baseUrl}/health/ollama");
+                $models = (array) $response->json('available_models', []);
+                if ($response->successful() && $response->json('ollama_active') && $models !== []) {
+                    return ['engine' => 'local_llm', 'model' => (string) $models[0]];
+                }
+            } catch (\Throwable) {
+                // Fall through to the next engine.
+            }
+
+            if ((string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '') {
+                return ['engine' => 'cloud_llm', 'model' => null];
+            }
+
+            return ['engine' => 'offline_composer', 'model' => null];
+        });
     }
 
     /**
@@ -85,7 +118,7 @@ class ExaminerService
     {
         $messages = [['role' => 'system', 'content' => $this->systemPrompt($turn)]];
 
-        foreach (array_slice($turn['history'], -10) as $item) {
+        foreach (array_slice($turn['history'], -12) as $item) {
             $messages[] = [
                 'role' => $item['role'] === 'user' ? 'user' : 'assistant',
                 'content' => Str::limit($item['content'], 700),
@@ -111,31 +144,31 @@ class ExaminerService
 
         $persona = match ($turn['role_type']) {
             'hrd' => $isEn
-                ? "You are {$name}, a warm and relaxed senior HR recruiter. You make candidates feel at ease, you sound like a real person chatting, and you are curious about their real experiences."
-                : "Kamu adalah {$name}, HR recruiter senior yang hangat dan santai. Kamu bikin kandidat nyaman, bicaramu seperti orang sungguhan yang sedang ngobrol, dan kamu penasaran dengan pengalaman nyata mereka. Panggil kandidat dengan 'kamu'.",
+                ? "You are {$name}, a warm and relaxed senior HR recruiter. You make candidates feel at ease, you sound like a real person chatting, and you are genuinely curious about their real experiences."
+                : "Kamu adalah {$name}, HR recruiter senior yang hangat dan santai. Kamu bikin kandidat nyaman, bicaramu seperti orang sungguhan yang sedang ngobrol santai, dan kamu benar-benar penasaran dengan pengalaman nyata mereka. Panggil kandidat dengan 'kamu'.",
             'investor' => $isEn
-                ? "You are {$name}, a sharp but friendly venture capital partner. You are direct, you love concrete numbers, and you test every claim."
-                : "Kamu adalah {$name}, partner venture capital yang tajam tapi bersahabat. Kamu lugas, suka angka konkret, dan menguji setiap klaim. Panggil founder dengan 'Anda'.",
+                ? "You are {$name}, a sharp but friendly venture capital partner. You are direct, a bit playful, you love concrete numbers, and you test every claim."
+                : "Kamu adalah {$name}, partner venture capital yang tajam tapi bersahabat dan sedikit jenaka. Kamu lugas, suka angka konkret, dan menguji setiap klaim. Panggil founder dengan 'Anda'.",
             default => $isEn
-                ? "You are {$name}, a calm and fair lead thesis examiner. You respect the student, you speak formally, and you test methodology and reasoning."
-                : "Kamu adalah {$name}, dosen penguji utama yang tenang dan adil. Kamu menghargai mahasiswa, bicara dengan bahasa formal yang santun, dan menguji metodologi serta logika penelitian. Panggil mahasiswa dengan 'Anda'.",
+                ? "You are {$name}, a calm and fair lead thesis examiner. You respect the student, you speak formally but warmly, and you test methodology and reasoning."
+                : "Kamu adalah {$name}, dosen penguji utama yang tenang, adil, dan tetap hangat. Kamu menghargai mahasiswa, bicara dengan bahasa formal yang santun, dan menguji metodologi serta logika penelitian. Panggil mahasiswa dengan 'Anda'.",
         };
 
         $rules = $isEn
             ? [
-                'You are speaking out loud in a live mock exam. Plain spoken sentences only: no lists, no markdown, no emoji, no speaker labels.',
-                'Always react to something specific the candidate just said, in your own words. Never use generic praise alone.',
-                'Never repeat a question that was already asked in this conversation.',
+                'You are talking out loud in a live mock exam. Plain spoken sentences only: no lists, no markdown, no emoji, no speaker labels.',
+                'This is a real conversation, not a script. Always react to something specific the candidate just said, in your own words, and connect your next question to it when you can.',
+                'Ask at most one question per turn and never repeat a question already asked.',
                 'If the answer is vague or very short, gently ask for a concrete example, a number, or the reason behind it.',
-                'If the candidate says they do not know, reassure them in one short sentence and help them reason it out.',
+                'If the candidate is nervous, jokes, or says they do not know, respond like a kind human in one short sentence, then keep going.',
                 'Never give the full model answer and never score the candidate during the exam.',
             ]
             : [
-                'Kamu sedang berbicara langsung dalam simulasi ujian lisan. Gunakan kalimat lisan biasa: tanpa daftar, tanpa markdown, tanpa emoji, tanpa label nama.',
-                'Selalu tanggapi hal spesifik yang baru saja dikatakan peserta dengan kata-katamu sendiri. Jangan hanya memuji secara umum.',
-                'Jangan pernah mengulang pertanyaan yang sudah ditanyakan di percakapan ini.',
+                'Kamu sedang ngobrol langsung dalam simulasi ujian lisan. Gunakan kalimat lisan biasa: tanpa daftar, tanpa markdown, tanpa emoji, tanpa label nama.',
+                'Ini percakapan sungguhan, bukan naskah. Selalu tanggapi hal spesifik yang baru saja dikatakan peserta dengan kata-katamu sendiri, dan kaitkan pertanyaan berikutnya dengan jawaban itu bila memungkinkan.',
+                'Ajukan paling banyak satu pertanyaan per giliran dan jangan mengulang pertanyaan yang sudah ditanyakan.',
                 'Kalau jawabannya kabur atau sangat singkat, minta contoh konkret, angka, atau alasannya dengan sopan.',
-                'Kalau peserta bilang tidak tahu, tenangkan dalam satu kalimat pendek lalu bantu mereka berpikir.',
+                'Kalau peserta gugup, bercanda, atau bilang tidak tahu, tanggapi seperti manusia yang ramah dalam satu kalimat pendek, lalu lanjutkan.',
                 'Jangan memberikan contoh jawaban lengkap dan jangan memberi nilai selama ujian berlangsung.',
             ];
 
@@ -161,14 +194,24 @@ class ExaminerService
     {
         $isEn = $turn['language'] === 'en';
         $answer = trim((string) $turn['answer']) !== '' ? trim((string) $turn['answer']) : ($isEn ? '(no answer)' : '(tidak menjawab)');
+        $planned = trim((string) ($turn['planned_question'] ?? ''));
+        $transition = trim((string) ($turn['transition'] ?? ''));
 
-        $task = $turn['directive'] === self::DIRECTIVE_FOLLOW_UP
-            ? ($isEn
+        $task = match ($turn['directive']) {
+            self::DIRECTIVE_FOLLOW_UP => $isEn
                 ? 'Reply in at most 2 sentences: a short specific reaction, then exactly ONE follow-up question that digs deeper into this answer (why, how, an example, or a number).'
-                : 'Balas maksimal 2 kalimat: tanggapan singkat yang spesifik, lalu tepat SATU pertanyaan lanjutan yang menggali jawaban ini lebih dalam (kenapa, bagaimana, contoh, atau angka).')
-            : ($isEn
-                ? 'Reply with ONE short sentence reacting specifically to this answer. Do not ask any question, the next question is read by the system.'
-                : 'Balas dengan SATU kalimat pendek yang menanggapi jawaban ini secara spesifik. Jangan bertanya apa pun, pertanyaan berikutnya dibacakan oleh sistem.');
+                : 'Balas maksimal 2 kalimat: tanggapan singkat yang spesifik, lalu tepat SATU pertanyaan lanjutan yang menggali jawaban ini lebih dalam (kenapa, bagaimana, contoh, atau angka).',
+            self::DIRECTIVE_NEXT => ($isEn
+                ? 'Reply in at most 3 sentences: react specifically to this answer, then move on naturally and ask about this next topic in your own words, linking it to what they said if it fits: "'.$planned.'"'
+                : 'Balas maksimal 3 kalimat: tanggapi jawaban ini secara spesifik, lalu beralih dengan luwes dan tanyakan topik berikut dengan kata-katamu sendiri, kaitkan dengan jawaban peserta bila cocok: "'.$planned.'"')
+                .($transition !== '' ? ($isEn ? ' Mention that we are now moving to '.$transition.'.' : ' Sebutkan bahwa kita sekarang masuk ke '.$transition.'.') : ''),
+            self::DIRECTIVE_CLARIFY => $isEn
+                ? 'The candidate did not understand or asked something back. In at most 2 sentences, answer or explain the question more simply, maybe with a small example, then ask it again in different words.'
+                : 'Peserta belum paham atau balik bertanya. Dalam maksimal 2 kalimat, jawab atau jelaskan maksud pertanyaannya dengan lebih sederhana, boleh dengan contoh kecil, lalu tanyakan lagi dengan kata-kata berbeda.',
+            default => $isEn
+                ? 'Reply with ONE short sentence reacting specifically to this answer. Do not ask any question, an announcement follows.'
+                : 'Balas dengan SATU kalimat pendek yang menanggapi jawaban ini secara spesifik. Jangan bertanya apa pun, setelah ini ada pengumuman.',
+        };
 
         return ($isEn ? 'Question: ' : 'Pertanyaan: ').$turn['question']."\n"
             .($isEn ? 'Candidate answer: ' : 'Jawaban peserta: ').$answer."\n"
@@ -176,38 +219,121 @@ class ExaminerService
     }
 
     /**
-     * Append the scripted continuation (next question, part transition, closing).
+     * Validate a model reply for the directive and build the spoken text.
+     * Returns null when the reply is unusable, so the next engine is tried.
+     *
+     * @param  array<string, mixed>  $turn
+     * @return array{text: string, reply: string}|null
+     */
+    public function resolveModelReply(string $raw, array $turn): ?array
+    {
+        $reply = $this->clean($raw);
+        if ($reply === '' || mb_strlen($reply) < 8) {
+            return null;
+        }
+
+        $scripted = trim((string) ($turn['scripted'] ?? ''));
+
+        switch ($turn['directive']) {
+            case self::DIRECTIVE_FOLLOW_UP:
+            case self::DIRECTIVE_CLARIFY:
+                if (! str_contains($reply, '?')) {
+                    return null;
+                }
+                $reply = $this->upToFirstQuestion($reply);
+
+                return ['text' => $reply, 'reply' => $reply];
+
+            case self::DIRECTIVE_NEXT:
+                if (str_contains($reply, '?')) {
+                    $reply = $this->ensureTransition($this->upToFirstQuestion($reply), $turn);
+
+                    return ['text' => $reply, 'reply' => $reply];
+                }
+
+                // No question: keep the model's reaction and let the plan ask the question.
+                $reaction = $this->stripQuestions($reply);
+
+                return $reaction === '' ? null : ['text' => trim($reaction.' '.$scripted), 'reply' => $reaction];
+
+            default:
+                $reaction = $this->stripQuestions($reply);
+
+                return $reaction === '' ? null : ['text' => trim($reaction.' '.$scripted), 'reply' => $reaction];
+        }
+    }
+
+    /**
+     * Rule-based turn used when no model is reachable.
+     *
+     * @param  array<string, mixed>  $turn
+     * @return array{text: string, reply: string}
+     */
+    public function offlineTurn(array $turn): array
+    {
+        $scripted = trim((string) ($turn['scripted'] ?? ''));
+
+        return match ($turn['directive']) {
+            self::DIRECTIVE_FOLLOW_UP => ['text' => $reply = $this->offlineReply($turn), 'reply' => $reply],
+            self::DIRECTIVE_CLARIFY => ['text' => $reply = $this->offlineClarify($turn), 'reply' => $reply],
+            default => ['text' => trim(($reaction = $this->offlineReaction($turn)).' '.$scripted), 'reply' => $reaction],
+        };
+    }
+
+    /**
+     * Keep a scripted continuation after a model reaction (used by tests and the export).
      *
      * @param  array<string, mixed>  $turn
      */
     public function compose(string $reply, array $turn): string
     {
-        $reply = $this->finalizeReply($reply, $turn);
-        $scripted = trim((string) ($turn['scripted'] ?? ''));
-
-        return trim($reply.($scripted !== '' ? ' '.$scripted : ''));
+        return ($this->resolveModelReply($reply, $turn) ?? $this->offlineTurn($turn))['text'];
     }
 
     /**
-     * Clean a model reply and enforce the directive: no question on a reaction, exactly one on a follow-up.
+     * Cut anything after the first question so the turn ends on the question.
+     */
+    protected function upToFirstQuestion(string $text): string
+    {
+        $position = mb_strpos($text, '?');
+
+        return $position === false ? $text : trim(mb_substr($text, 0, $position + 1));
+    }
+
+    /**
+     * Make sure a part change is announced, so the stepper and the voice agree.
      *
      * @param  array<string, mixed>  $turn
      */
-    public function finalizeReply(string $reply, array $turn): string
+    protected function ensureTransition(string $reply, array $turn): string
     {
-        $reply = $this->clean($reply);
-
-        if ($turn['directive'] === self::DIRECTIVE_REACT) {
-            // A reaction must not carry its own question; the script supplies it.
-            $reply = $this->stripQuestions($reply);
-            if ($reply === '') {
-                $reply = $this->offlineReaction($turn);
-            }
-        } elseif (! str_contains($reply, '?')) {
-            $reply = trim($reply.' '.$this->offlineProbe($turn));
+        $transition = trim((string) ($turn['transition'] ?? ''));
+        if ($transition === '' || preg_match('/\b(bagian|part)\s*\d/iu', $reply)) {
+            return $reply;
         }
 
-        return $reply;
+        $announcement = $turn['language'] === 'en' ? "Let's move on to {$transition}." : "Sekarang kita masuk ke {$transition}.";
+        $sentences = preg_split('/(?<=[.!?])\s+/u', $reply) ?: [$reply];
+        $question = array_pop($sentences);
+
+        return trim(implode(' ', $sentences).' '.$announcement.' '.$question);
+    }
+
+    /**
+     * Re-explain the current question without a model.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function offlineClarify(array $turn): string
+    {
+        $isEn = $turn['language'] === 'en';
+        $sentences = preg_split('/(?<=[.!?])\s+/u', trim((string) $turn['question'])) ?: [];
+        $questions = array_values(array_filter($sentences, fn ($sentence) => str_ends_with(trim($sentence), '?')));
+        $question = $questions !== [] ? end($questions) : (string) end($sentences);
+
+        $lead = $isEn ? 'No problem, let me put it another way. What I mean is, ' : 'Tidak apa-apa, saya ulangi dengan cara lain. Maksud saya, ';
+
+        return $lead.Str::lcfirst(trim($question));
     }
 
     /**
@@ -242,9 +368,8 @@ class ExaminerService
      *
      * @param  array<string, mixed>  $turn
      * @param  list<array{role: string, content: string}>  $messages
-     * @return array{text: string, reply: string, audio_url: ?string, engine: string}|null
      */
-    protected function callLocalModel(array $turn, array $messages): ?array
+    protected function callLocalModel(array $turn, array $messages): ?string
     {
         $baseUrl = (string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001');
 
@@ -264,18 +389,8 @@ class ExaminerService
                 ]);
 
             $reply = trim((string) $response->json('reply', ''));
-            if (! $response->successful() || $reply === '') {
-                return null;
-            }
 
-            $text = $this->compose($reply, $turn);
-
-            return [
-                'text' => $text,
-                'reply' => $this->finalizeReply($reply, $turn),
-                'audio_url' => $this->synthesize($baseUrl, $text, $turn),
-                'engine' => 'local_llm',
-            ];
+            return $response->successful() && $reply !== '' ? $reply : null;
         } catch (\Throwable $exception) {
             Log::info('Local examiner model unavailable: '.$exception->getMessage());
 

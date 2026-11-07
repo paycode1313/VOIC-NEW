@@ -41,6 +41,7 @@ export default function examRoom(config) {
         faceSamples: { total: 0, visible: 0, looking: 0 },
         faceLoop: null,
         currentAudio: null,
+        engine: null,
 
         get isEn() {
             return this.config.language === 'en';
@@ -62,12 +63,20 @@ export default function examRoom(config) {
 
         init() {
             this.typingMode = !this.speechSupported;
+            this.checkEngine();
             this.$watch('transcript', () => this.$nextTick(() => this.scrollTranscript()));
             window.addEventListener('beforeunload', () => this.teardown());
         },
 
         t(id, en) {
             return this.isEn ? en : id;
+        },
+
+        async checkEngine() {
+            try {
+                const response = await fetch(this.config.statusUrl, { headers: { Accept: 'application/json' } });
+                if (response.ok) this.engine = (await response.json()).engine;
+            } catch (e) { /* the badge simply stays hidden */ }
         },
 
         // ----- Start & mic check -------------------------------------------
@@ -279,6 +288,7 @@ export default function examRoom(config) {
                 });
                 this.state = response;
                 const message = response.examiner_message;
+                if (message?.engine) this.engine = message.engine;
                 if (message) this.transcript.push({ id: message.id, sender: 'ai', message: message.text, exam_part: response.part });
                 this.finalText = '';
                 this.typed = '';

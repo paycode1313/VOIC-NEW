@@ -28,12 +28,12 @@ class PracticeSessionFeatureTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get('/practice');
+        $this->actingAs($user)->get('/practice')->assertRedirect(route('exam.index'));
 
-        $response->assertOk();
-        $response->assertViewIs('practice.create');
-        $response->assertSee('Sidang Skripsi');
-        $response->assertSee('Pitching Startup');
+        $this->actingAs($user)->get(route('exam.index'))
+            ->assertOk()
+            ->assertSee('Sidang Skripsi')
+            ->assertSee('Pitching Startup');
     }
 
     /**

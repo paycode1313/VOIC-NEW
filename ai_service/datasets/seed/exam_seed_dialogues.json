@@ -341,5 +341,56 @@
         "reply": "Ten campuses, five thousand monthly orders and a positive contribution margin are concrete milestones I can actually hold you to."
       }
     ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "Data Analyst",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Apa yang bikin kamu tertarik melamar posisi Data Analyst ini?",
+        "answer": "Maksudnya tertarik dari sisi apa ya kak?",
+        "directive": "clarify",
+        "reply": "Bebas kok, bisa dari pekerjaannya, bidangnya, atau perusahaannya. Intinya, apa yang bikin kamu pengen kerja sebagai Data Analyst di sini?"
+      },
+      {
+        "part": 1,
+        "question": "Bebas kok, bisa dari pekerjaannya, bidangnya, atau perusahaannya. Intinya, apa yang bikin kamu pengen kerja sebagai Data Analyst di sini?",
+        "answer": "Oh, saya suka banget nyari pola dari data. Waktu skripsi saya analisis data penjualan koperasi dan nemu kalau stok minyak goreng selalu habis tiap akhir bulan.",
+        "directive": "next",
+        "planned_question": "Kalau teman dekatmu diminta menggambarkan kamu dalam tiga kata, kira-kira apa jawabannya?",
+        "reply": "Wah, nemu pola stok minyak goreng habis tiap akhir bulan itu insight yang konkret banget. Orang yang suka nyari pola begitu biasanya punya karakter khas, nih, kalau teman dekatmu disuruh menggambarkan kamu dalam tiga kata, kira-kira mereka bilang apa?"
+      },
+      {
+        "part": 1,
+        "question": "Wah, nemu pola stok minyak goreng habis tiap akhir bulan itu insight yang konkret banget. Orang yang suka nyari pola begitu biasanya punya karakter khas, nih, kalau teman dekatmu disuruh menggambarkan kamu dalam tiga kata, kira-kira mereka bilang apa?",
+        "answer": "Hehe deg-degan nih kak. Mungkin kepo, rapi, sama agak perfeksionis.",
+        "directive": "follow_up",
+        "reply": "Santai aja, kamu udah jawab dengan bagus kok. Agak perfeksionis itu menarik, pernah nggak sifat itu justru bikin kerjaanmu jadi lambat?"
+      }
+    ]
+  },
+  {
+    "mode": "sidang",
+    "language": "id",
+    "topic": "Sistem rekomendasi buku perpustakaan",
+    "turns": [
+      {
+        "part": 3,
+        "question": "Bagaimana Anda memastikan data yang digunakan cukup dan representatif?",
+        "answer": "Representatif itu maksudnya seperti apa ya, Prof?",
+        "directive": "clarify",
+        "reply": "Maksud saya, apakah data peminjaman yang Anda pakai sudah mewakili seluruh jenis pengguna perpustakaan, misalnya mahasiswa semua angkatan dan dosen. Bagaimana Anda memastikan hal itu?"
+      },
+      {
+        "part": 3,
+        "question": "Maksud saya, apakah data peminjaman yang Anda pakai sudah mewakili seluruh jenis pengguna perpustakaan, misalnya mahasiswa semua angkatan dan dosen. Bagaimana Anda memastikan hal itu?",
+        "answer": "Saya memakai data peminjaman tiga tahun, sekitar lima belas ribu transaksi dari semua fakultas, tapi memang data dosen hanya sekitar tiga persen.",
+        "directive": "next",
+        "planned_question": "Apa keterbatasan terbesar penelitian ini, dan bagaimana pengaruhnya terhadap kesimpulan?",
+        "reply": "Lima belas ribu transaksi dari semua fakultas cukup kuat, dan Anda jujur soal data dosen yang hanya tiga persen. Justru itu menarik, kalau begitu menurut Anda apa keterbatasan terbesar penelitian ini, dan bagaimana pengaruhnya terhadap rekomendasi untuk dosen?"
+      }
+    ]
   }
 ]

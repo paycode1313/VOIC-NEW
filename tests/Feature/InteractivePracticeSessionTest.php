@@ -21,13 +21,13 @@ class InteractivePracticeSessionTest extends TestCase
         $this->seed(AiRoleSeeder::class);
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('practice.create'));
+        $this->actingAs($user)->get(route('practice.create'))->assertRedirect(route('exam.index'));
 
-        $response->assertOk();
-        $response->assertViewIs('practice.create');
-        $response->assertSee('VOIC-Dosen Penguji');
-        $response->assertSee('VOIC-HRD');
-        $response->assertSee('VOIC-Investor');
+        $this->actingAs($user)->get(route('exam.index'))
+            ->assertOk()
+            ->assertSee('Prof. Hendra')
+            ->assertSee('Kak Nadia')
+            ->assertSee('Pak William');
     }
 
     /**
@@ -319,9 +319,7 @@ class InteractivePracticeSessionTest extends TestCase
         $this->seed(AiRoleSeeder::class);
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('practice.create', ['role' => 'investor']));
-
-        $response->assertOk();
-        $response->assertSee('VOIC-Investor');
+        $this->actingAs($user)->get(route('practice.create', ['role' => 'investor']))
+            ->assertRedirect(route('exam.setup', 'pitching'));
     }
 }

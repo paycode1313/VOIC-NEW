@@ -57,7 +57,13 @@ Halaman `/latihan` di Laravel memakai dua endpoint baru:
 - `POST /exam/respond`: menjalankan model untuk satu giliran penguji. Prompt lengkap (persona, riwayat, instruksi giliran) dibuat oleh Laravel (`App\Services\Exam\ExaminerService`); service ini hanya menjalankan Ollama, membersihkan output, dan menjalankan *quality gate*. Jika balasan gagal, model diminta ulang sekali. Jika tetap gagal, Laravel memakai composer offline.
 - `POST /exam/improve`: menulis ulang 3 jawaban terlemah menjadi versi yang lebih kuat untuk rapor.
 
-Pertanyaan berikutnya dan transisi antarbagian dibacakan oleh Laravel. Model cukup menulis bagian yang "manusiawi" (tanggapan spesifik atau satu pertanyaan lanjutan), sehingga model 3B pun tetap nyambung.
+Model menyusun seluruh giliran penguji dengan kata-katanya sendiri. Laravel hanya memberi tahu *apa* yang perlu dibahas lewat `directive`:
+- `next`: tanggapi jawaban, lalu bawa topik berikutnya dari rencana ujian (dikirim sebagai panduan, bukan naskah).
+- `follow_up`: gali jawaban lebih dalam dengan satu pertanyaan.
+- `clarify`: peserta balik bertanya ("maksudnya gimana?"), jadi jelaskan lalu tanyakan ulang. Sesi tidak maju dan jawaban ini tidak dinilai.
+- `react`: satu kalimat tanggapan, lalu Laravel membacakan pengumuman tetap (aturan kartu topik Bagian 2 atau penutup).
+
+Naskah pertanyaan hanya dipakai bila model tidak tersedia atau balasannya gagal validasi. Ruang ujian menampilkan badge **AI lokal aktif / AI cloud aktif / AI offline · mode cadangan** (`GET /latihan/status-ai`). Kalau badge kuning, percakapan masih memakai jawaban cadangan berbasis aturan: jalankan Ollama dan `python ai_service.py`, atau isi `GROQ_API_KEY` di `.env`.
 
 Kalau ingin memakai model selain `voic-coach`, set `VOIC_EXAM_MODEL=qwen2.5:7b` sebelum menjalankan service.
 

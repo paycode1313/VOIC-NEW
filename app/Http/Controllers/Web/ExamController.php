@@ -10,6 +10,7 @@ use App\Models\PracticeSession;
 use App\Models\SessionMessage;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExamFlowService;
+use App\Services\Exam\ExaminerService;
 use App\Services\Exam\ExamReportService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -197,6 +198,14 @@ class ExamController extends Controller
             'transcript' => $practiceSession->messages()->orderBy('id')->get(['id', 'sender', 'message', 'exam_part', 'meta']),
             'canRate' => Gate::allows('update', $practiceSession),
         ]);
+    }
+
+    /**
+     * Report which AI engine is answering, so the room can show it honestly.
+     */
+    public function status(ExaminerService $examiner): JsonResponse
+    {
+        return response()->json($examiner->availability());
     }
 
     /**
