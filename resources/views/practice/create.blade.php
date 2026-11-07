@@ -497,13 +497,32 @@
                 voicedPitchBuffer: [],
                 isCurrentlyInHesitationDrone: false,
 
-                // Scenario Milestone Stages
+                // GoPrep.gg Exam Mode & Cue Card Engine State
+                examMode: 'full_mock', // 'full_mock' (Standard 3-Part GoPrep) | 'express_drill'
+                showCueCardModal: false,
+                cueCardPhase: 'prep', // 'prep' (60s countdown) | 'speech' (120s countdown) | 'completed'
+                cueCardPrepSeconds: 60,
+                cueCardSpeechSeconds: 120,
+                cueCardTimer: null,
+                cueCardNotes: '',
+                hasCompletedCueCard: false,
+                cueCardPinnedView: false,
+
+                // Pre-flight Live Hardware Calibration on Selection Hub
+                preflightMicActive: false,
+                preflightMicLevel: 0,
+                preflightStream: null,
+                preflightAudioCtx: null,
+                preflightAnalyser: null,
+                preflightInterval: null,
+
+                // Scenario Milestone Stages (GoPrep 3-Part Speaking Protocol)
                 currentStage: 'opening', // 'opening' | 'core' | 'pressure_test' | 'closing'
                 stageMilestones: [
-                    { id: 'opening', step: 1, label: 'Pembukaan', badge: 'Hook & Profil' },
-                    { id: 'core', step: 2, label: 'Tanya Jawab Inti', badge: 'Metodologi & Solusi' },
-                    { id: 'pressure_test', step: 3, label: 'Uji Tekanan', badge: 'Skenario Kritis' },
-                    { id: 'closing', step: 4, label: 'Kesimpulan', badge: 'Pernyataan Akhir' }
+                    { id: 'opening', step: 1, label: 'Babak 1: Pemanasan', badge: 'Perkenalan & Latar Belakang' },
+                    { id: 'core', step: 2, label: 'Babak 2: Cue Card Topik', badge: '1m Persiapan + 2m Monolog' },
+                    { id: 'pressure_test', step: 3, label: 'Babak 3: Uji Kritis', badge: 'Cross-Exam & Diskusi' },
+                    { id: 'closing', step: 4, label: 'Evaluasi & Rapor', badge: '4 Pilar Diagnostik GoPrep' }
                 ],
 
                 // Conversational Dynamism & Barge-In Interruption State
@@ -1232,6 +1251,24 @@
                             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
                             osc.start(now);
                             osc.stop(now + 0.08);
+                        } else if (type === 'chime') {
+                            // GoPrep Cue Card Attention Chime: 523Hz -> 659Hz -> 784Hz
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(523.25, now);
+                            osc.frequency.setValueAtTime(659.25, now + 0.12);
+                            osc.frequency.setValueAtTime(783.99, now + 0.24);
+                            gain.gain.setValueAtTime(0.12, now);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                            osc.start(now);
+                            osc.stop(now + 0.5);
+                        } else if (type === 'ding') {
+                            // Crystal Bell Ding for Part 2 completion: 880Hz
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(880, now);
+                            gain.gain.setValueAtTime(0.15, now);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+                            osc.start(now);
+                            osc.stop(now + 0.75);
                         }
                     } catch (e) {
                         // Ignore audio autoplay restrictions silently
@@ -1248,6 +1285,178 @@
                             this.isFullscreen = false;
                         }).catch(() => {});
                     }
+                },
+
+                // GoPrep Cue Card & Exam Protocol Methods
+                getCueCardForRole() {
+                    const roleType = this.selectedRole?.role_type || 'dosen_penguji';
+                    if (roleType === 'hrd') {
+                        return {
+                            persona: 'Sarah Anggraini, S.Psi, CHRP (HRD Recruiter)',
+                            roleType: 'hrd',
+                            accentColor: '#10b981',
+                            badge: 'Behavioral & STAR Method',
+                            topicTitle: 'Tantangan Proyek Terberat, Resolusi Masalah, dan Pencapaian Terbesar',
+                            instructions: 'Anda diberikan waktu 1 menit untuk membaca topik di bawah dan mencatat poin-poin penting pada kotak coretan. Setelah itu, sampaikan jawaban Anda secara lisan selama 1 hingga 2 menit.',
+                            bulletPoints: [
+                                { label: 'S (Situation)', desc: 'Ceritakan latar belakang proyek, peran Anda, dan tantangan atau konflik tersulit yang dihadapi tim.' },
+                                { label: 'T (Task)', desc: 'Apa tanggung jawab krusial serta target spesifik yang harus diselesaikan dalam situasi tersebut?' },
+                                { label: 'A (Action)', desc: 'Langkah taktis, inisiatif kepemimpinan, dan komunikasi konkret apa yang Anda ambil sendiri?' },
+                                { label: 'R (Result)', desc: 'Apa hasil akhir terukur, dampak positif bagi tim/perusahaan, dan apa pembelajaran penting bagi Anda?' }
+                            ],
+                            tip: '💡 Tip GoPrep: Alokasikan 60% waktu bicara pada bagian ACTION (tindakan spesifik Anda) dan RESULT dengan angka konkret.'
+                        };
+                    }
+                    if (roleType === 'investor') {
+                        return {
+                            persona: 'Kevin Wijaya, MBA (Venture Partner)',
+                            roleType: 'investor',
+                            accentColor: '#f59e0b',
+                            badge: '2-Minute Elevator Pitch',
+                            topicTitle: 'Elevator Pitch, Model Monetisasi, dan Traksi Pasar Startup Anda',
+                            instructions: 'Anda memiliki waktu 1 menit untuk menyiapkan catatan pitch Anda. Kemudian lakukan pemaparan terstruktur selama 2 menit di hadapan dewan investor.',
+                            bulletPoints: [
+                                { label: 'Problem & Solution', desc: 'Masalah riil apa yang dialami pelanggan dan mengapa solusi produk Anda 10x lebih baik?' },
+                                { label: 'Target Market & Traksi', desc: 'Siapa profil konsumen ideal (ICP), estimasi TAM/SAM, dan data validasi/traksi terkini?' },
+                                { label: 'Unit Economics', desc: 'Bagaimana cara Anda memonetisasi, struktur harga, estimasi CAC, dan proyeksi LTV?' },
+                                { label: 'Competitive Moat', desc: 'Mengapa kompetitor besar tidak bisa menduplikasi keunggulan teknologi atau ekosistem Anda?' }
+                            ],
+                            tip: '💡 Tip GoPrep: Investor menghargai data konkret, kalkulasi unit economics yang masuk akal, dan penyampaian percaya diri.'
+                        };
+                    }
+                    // Default: Dosen Penguji
+                    return {
+                        persona: 'Prof. Dr. Ir. Bambang, M.Eng (Ketua Dewan Penguji)',
+                        roleType: 'dosen_penguji',
+                        accentColor: '#3b82f6',
+                        badge: 'Metodologi & Novelty Riset',
+                        topicTitle: 'Arsitektur Metodologi, Validasi Dataset, dan Kebaruan Ilmiah (Novelty)',
+                        instructions: 'Anda diberikan waktu 1 menit untuk menyusun poin pembelaan pada kotak coretan di bawah. Setelah itu, paparkan metodologi penelitian Anda secara sistematis selama 2 menit.',
+                        bulletPoints: [
+                            { label: 'Rumusan Masalah', desc: 'Jelaskan kesenjangan riset (research gap) dan urgensi masalah ilmiah yang Anda teliti.' },
+                            { label: 'Metodologi & Algoritma', desc: 'Mengapa Anda memilih pendekatan/algoritma tersebut dibandingkan baseline standar?' },
+                            { label: 'Dataset & Evaluasi', desc: 'Jelaskan sumber data, teknik pra-pemrosesan, serta metrik pengujian (akurasi, F1, latency, dll).' },
+                            { label: 'Novelty & Keterbatasan', desc: 'Apa kebaruan utama yang Anda tawarkan dan apa batasan ruang lingkup penelitian ini?' }
+                        ],
+                        tip: '💡 Tip GoPrep: Dewan penguji menilai ketelitian metodologis dan kemampuan mahasiswa mempertanggungjawabkan pilihan teknisnya.'
+                    };
+                },
+
+                triggerCueCardPhase() {
+                    this.showCueCardModal = true;
+                    this.cueCardPhase = 'prep';
+                    this.cueCardPrepSeconds = 60;
+                    this.cueCardSpeechSeconds = 120;
+                    this.playSfx('chime');
+                    this.startCueCardPrepTimer();
+                },
+
+                startCueCardPrepTimer() {
+                    if (this.cueCardTimer) clearInterval(this.cueCardTimer);
+                    this.cueCardTimer = setInterval(() => {
+                        if (this.cueCardPrepSeconds > 0) {
+                            this.cueCardPrepSeconds--;
+                            if (this.cueCardPrepSeconds <= 5 && this.cueCardPrepSeconds > 0) {
+                                this.playSfx('countdown');
+                            }
+                        } else {
+                            clearInterval(this.cueCardTimer);
+                            this.startCueCardSpeechPhase();
+                        }
+                    }, 1000);
+                },
+
+                startCueCardSpeechPhase() {
+                    if (this.cueCardTimer) clearInterval(this.cueCardTimer);
+                    this.cueCardPhase = 'speech';
+                    this.cueCardSpeechSeconds = 120;
+                    this.playSfx('ding');
+
+                    // Resume Speech Recognition if paused
+                    if (this.recognition) {
+                        try { this.recognition.start(); } catch(e) {}
+                    }
+
+                    this.cueCardTimer = setInterval(() => {
+                        if (this.cueCardSpeechSeconds > 0) {
+                            this.cueCardSpeechSeconds--;
+                            if (this.cueCardSpeechSeconds <= 5 && this.cueCardSpeechSeconds > 0) {
+                                this.playSfx('countdown');
+                            }
+                        } else {
+                            clearInterval(this.cueCardTimer);
+                            this.finishCueCardSpeechPhase();
+                        }
+                    }, 1000);
+                },
+
+                finishCueCardSpeechPhase() {
+                    if (this.cueCardTimer) clearInterval(this.cueCardTimer);
+                    this.cueCardTimer = null;
+                    this.hasCompletedCueCard = true;
+                    this.showCueCardModal = false;
+                    this.playSfx('ding');
+
+                    const cueData = this.getCueCardForRole();
+                    const spoken = (this.liveInterimTranscript || '').trim() || (this.manualInputText || '').trim();
+                    this.liveInterimTranscript = '';
+                    this.manualInputText = '';
+
+                    const turnContent = spoken
+                        ? `[Babak 2: Pemaparan Mandiri Cue Card - ${cueData.topicTitle}]\nCatatan Inti: ${this.cueCardNotes || 'Sesuai poin paparan'}\n\nPemaparan Lisan: ${spoken}`
+                        : `[Babak 2: Pemaparan Mandiri Cue Card - ${cueData.topicTitle}]\nCatatan Inti: ${this.cueCardNotes || 'Kandidat telah menyelesaikan pemaparan mandiri sesuai struktur cue card.'}`;
+
+                    this.sendTurn(turnContent);
+                },
+
+                async togglePreflightMicTest() {
+                    if (this.preflightMicActive) {
+                        this.stopPreflightMicTest();
+                        return;
+                    }
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        this.preflightStream = stream;
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        this.preflightAudioCtx = new AudioCtx();
+                        const source = this.preflightAudioCtx.createMediaStreamSource(stream);
+                        this.preflightAnalyser = this.preflightAudioCtx.createAnalyser();
+                        this.preflightAnalyser.fftSize = 256;
+                        source.connect(this.preflightAnalyser);
+
+                        const data = new Uint8Array(this.preflightAnalyser.frequencyBinCount);
+                        this.preflightMicActive = true;
+
+                        this.preflightInterval = setInterval(() => {
+                            if (!this.preflightAnalyser) return;
+                            this.preflightAnalyser.getByteFrequencyData(data);
+                            let sum = 0;
+                            for (let i = 0; i < data.length; i++) {
+                                sum += data[i];
+                            }
+                            const avg = sum / data.length;
+                            this.preflightMicLevel = Math.min(100, Math.round((avg / 90) * 100));
+                        }, 80);
+                    } catch (e) {
+                        console.error('Error starting preflight mic test:', e);
+                        this.showToast('Gagal mengakses mikrofon untuk uji suara. Pastikan izin mikrofon telah diberikan di browser.', 'warning');
+                    }
+                },
+
+                stopPreflightMicTest() {
+                    if (this.preflightInterval) {
+                        clearInterval(this.preflightInterval);
+                        this.preflightInterval = null;
+                    }
+                    if (this.preflightStream) {
+                        this.preflightStream.getTracks().forEach(t => t.stop());
+                        this.preflightStream = null;
+                    }
+                    if (this.preflightAudioCtx && this.preflightAudioCtx.state !== 'closed') {
+                        try { this.preflightAudioCtx.close(); } catch(e) {}
+                    }
+                    this.preflightMicActive = false;
+                    this.preflightMicLevel = 0;
                 },
 
                 get formattedTime() {
@@ -1578,6 +1787,7 @@
                 },
 
                 async enterInterviewRoom() {
+                    this.stopPreflightMicTest();
                     this.closeCalibrationModal();
                     this.isStarting = true;
 
@@ -2676,6 +2886,11 @@
                             }
                             if (data.stage) {
                                 this.currentStage = data.stage;
+                                if (this.currentStage === 'core' && this.examMode === 'full_mock' && !this.hasCompletedCueCard && !this.showCueCardModal) {
+                                    setTimeout(() => {
+                                        this.triggerCueCardPhase();
+                                    }, 1200);
+                                }
                             }
                             this.messages.push(data.ai_message);
                             this.scrollToBottom();
@@ -3604,56 +3819,163 @@
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
 
-            <!-- STEP 1: AI ROLE SELECTION (Clean, Sederhana & Ramah) -->
+            <!-- STEP 1: GOPREP-STYLE ORAL EXAM PROTOCOL HUB -->
             <div x-show="!sessionState || sessionState === 'selection'" class="space-y-6">
                 <div class="glass-panel rounded-3xl p-6 sm:p-8">
-                    <!-- Title & Overview -->
+                    <!-- Title & Overview Header (GoPrep Style) -->
                     <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold glass-pill text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-900/60 mb-2">
                                 <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-                                Pilih Skenario Wawancara
+                                🎙️ GOPREP-STYLE ORAL EXAM PROTOCOL
                             </div>
                             <h3 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                                Pilih Penguji & Mulai Latihan
+                                Simulasi Ujian Lisan & Wawancara (GoPrep Engine)
                             </h3>
                             <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                                Pilih salah satu mode latihan di bawah ini, lalu klik <span class="font-semibold text-slate-700 dark:text-slate-300">Mulai Simulasi</span> untuk berlatih tatap muka langsung.
+                                Standar format ujian lisan 3 babak resmi untuk melatih kelancaran, struktur argumentasi, dan kesiapan mental Anda berhadapan langsung dengan panelis penguji.
                             </p>
                         </div>
                         <button type="button"
                                 @click="showHelpModal = true"
                                 class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50/80 dark:bg-navy-950/80 hover:bg-blue-100 dark:hover:bg-navy-900 border border-blue-200 dark:border-navy-800 shadow-xs transition cursor-pointer w-fit">
-                            <span>💡 Panduan Cepat (Cara Pakai)</span>
+                            <span>💡 Panduan Format GoPrep</span>
                         </button>
                     </div>
 
-                    <!-- 3-Step Orientation Cards for New Users -->
+                    <!-- 3-Part Exam Overview Banner -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 p-4 rounded-2xl bg-slate-50/80 dark:bg-navy-950/60 border border-slate-200/80 dark:border-navy-800 text-xs">
                         <div class="flex items-start gap-3">
                             <span class="w-6 h-6 rounded-xl bg-blue-600 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">1</span>
                             <div>
-                                <span class="font-bold text-slate-900 dark:text-white block">Pilih Penguji</span>
-                                <span class="text-slate-500 dark:text-slate-400">Pilih salah satu dari 3 karakter AI (Dosen, HRD, atau Investor).</span>
+                                <span class="font-bold text-slate-900 dark:text-white block">Babak 1: Pemanasan</span>
+                                <span class="text-slate-500 dark:text-slate-400">Pertanyaan pembuka, profil, dan motivasi dasar (target 30-45s per jawaban).</span>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
-                            <span class="w-6 h-6 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">2</span>
+                            <span class="w-6 h-6 rounded-xl bg-amber-600 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">2</span>
                             <div>
-                                <span class="font-bold text-slate-900 dark:text-white block">Bicara Hands-Free</span>
-                                <span class="text-slate-500 dark:text-slate-400">Tatap kamera & bicaralah santai. AI otomatis menjawab saat jeda hening.</span>
+                                <span class="font-bold text-slate-900 dark:text-white block">Babak 2: Cue Card Topik</span>
+                                <span class="text-slate-500 dark:text-slate-400">1 Menit persiapan + kotak catatan, dilanjutkan 2 Menit pemaparan mandiri.</span>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
                             <span class="w-6 h-6 rounded-xl bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">3</span>
                             <div>
-                                <span class="font-bold text-slate-900 dark:text-white block">Rapor & Sertifikat</span>
-                                <span class="text-slate-500 dark:text-slate-400">Klik "Akhiri Sesi" kapan pun untuk cetak transkrip & scan QR sertifikat.</span>
+                                <span class="font-bold text-slate-900 dark:text-white block">Babak 3: Uji Kritis</span>
+                                <span class="text-slate-500 dark:text-slate-400">Tanya jawab kritis 2 arah dan evaluasi diagnostik 4 pilar GoPrep.</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 3 Clean Scenario Cards -->
+                    <!-- EXAM FORMAT SELECTOR (Pilih Format Simulasi) -->
+                    <div class="mb-7 space-y-2.5">
+                        <label class="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                            PILIH FORMAT SIMULASI LISAN:
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                            <!-- Option A: Full Mock Exam (Recommended) -->
+                            <div @click="examMode = 'full_mock'"
+                                 :class="examMode === 'full_mock'
+                                    ? 'border-blue-600 ring-4 ring-blue-500/20 bg-blue-50/70 dark:bg-navy-950/70 dark:border-blue-500 shadow-md'
+                                    : 'border-slate-200/80 dark:border-slate-800 glass-subcard hover:border-blue-300 dark:hover:border-slate-700'"
+                                 class="p-4 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">🎯</span>
+                                            <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">Simulasi Penuh 3 Babak (Full Mock Exam)</h4>
+                                        </div>
+                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-600 text-white shadow-2xs">
+                                            STANDAR GOPREP
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                                        Format resmi lengkap: Babak 1 (Pemanasan), Babak 2 (Cue Card Topik Mandiri 2 Menit), dan Babak 3 (Uji Kritis 2 Arah).
+                                    </p>
+                                    <div class="grid grid-cols-2 gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span>Cue Card + Kotak Catatan</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span>Timer Lisan 120 Detik</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span>Cross-Exam Penguji</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                            <span>Diagnostik 4 Pilar</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                    <span class="text-[11px] font-bold" :class="examMode === 'full_mock' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'">
+                                        <span x-show="examMode === 'full_mock'">✓ Format Aktif</span>
+                                        <span x-show="examMode !== 'full_mock'">Pilih Format Ini</span>
+                                    </span>
+                                    <span class="text-[10px] text-slate-400">Durasi: ±5-8 Menit</span>
+                                </div>
+                            </div>
+
+                            <!-- Option B: Express Drill -->
+                            <div @click="examMode = 'express_drill'"
+                                 :class="examMode === 'express_drill'
+                                    ? 'border-blue-600 ring-4 ring-blue-500/20 bg-blue-50/70 dark:bg-navy-950/70 dark:border-blue-500 shadow-md'
+                                    : 'border-slate-200/80 dark:border-slate-800 glass-subcard hover:border-blue-300 dark:hover:border-slate-700'"
+                                 class="p-4 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-lg">⚡</span>
+                                            <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">Latihan Kilat Bebas (Express Drill)</h4>
+                                        </div>
+                                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                            FLEKSIBEL
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                                        Tanya jawab lisan langsung tanpa kartu soal dan timer monolog ketat. Cocok untuk menguji artikulasi cepat dan pemanasan santai.
+                                    </p>
+                                    <div class="grid grid-cols-2 gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                            <span>Tanya Jawab Langsung</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                            <span>Bebas Waktu Monolog</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                            <span>Deteksi Filler Words</span>
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                            <span>Laporan Skor Akhir</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                    <span class="text-[11px] font-bold" :class="examMode === 'express_drill' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'">
+                                        <span x-show="examMode === 'express_drill'">✓ Format Aktif</span>
+                                        <span x-show="examMode !== 'express_drill'">Pilih Format Ini</span>
+                                    </span>
+                                    <span class="text-[10px] text-slate-400">Durasi: Fleksibel</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3 Clean Persona Cards (GoPrep Style) -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">
+                            PILIH KARAKTER PANELIS PENGUJI:
+                        </label>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                         @forelse($aiRoles as $role)
                             @php
@@ -3662,9 +3984,11 @@
                                 $rName = $role->name ?? 'AI Coach';
                                 $rDesc = $role->description ?? '';
                                 $rDiff = $role->difficulty_level ?? 'Sedang';
-                                $rAvatar = $rType === 'dosen_penguji' ? asset('images/avatars/dosen.jpg') : ($rType === 'hrd' ? asset('images/avatars/hrd.jpg') . '?v=3' : asset('images/avatars/investor.jpg'));
-                                $rBadgeClass = $rType === 'dosen_penguji' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : ($rType === 'hrd' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300');
+                                $rAvatar = $rType === 'dosen_penguji' ? asset('images/avatars/dosen.png') : ($rType === 'hrd' ? asset('images/avatars/hrd.png') : asset('images/avatars/investor.png'));
+                                $rBadgeClass = $rType === 'dosen_penguji' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300' : ($rType === 'hrd' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300');
                                 $rBadgeLabel = $rType === 'dosen_penguji' ? 'Akademik' : ($rType === 'hrd' ? 'Karier' : 'Bisnis');
+                                $rRoleTitle = $rType === 'dosen_penguji' ? 'Ketua Dewan Penguji Sidang' : ($rType === 'hrd' ? 'Senior Talent Acquisition Lead' : 'Partner Venture Capital');
+                                $rDiffBadge = $rType === 'dosen_penguji' ? 'Kritis & Metodologis' : ($rType === 'hrd' ? 'Standar Industri & STAR' : 'Tajam & To-The-Point');
                             @endphp
                             <div @click="selectRoleById({{ $rId }})"
                                  data-role="VOIC-{{ $rType === 'dosen_penguji' ? 'Dosen Penguji' : ($rType === 'hrd' ? 'HRD' : 'Investor') }}"
@@ -3675,7 +3999,7 @@
 
                                 <div>
                                     <div class="flex items-center gap-3.5 mb-3.5">
-                                        <div class="relative w-14 h-14 rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 shrink-0">
+                                        <div class="relative w-14 h-14 rounded-2xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-900">
                                             <img src="{{ $rAvatar }}"
                                                  alt="{{ $rName }}"
                                                  width="56"
@@ -3685,10 +4009,16 @@
                                                  class="w-full h-full object-cover">
                                         </div>
                                         <div>
-                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider {{ $rBadgeClass }}">
-                                                {{ $rBadgeLabel }}
-                                            </span>
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider {{ $rBadgeClass }}">
+                                                    {{ $rBadgeLabel }}
+                                                </span>
+                                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                                    {{ $rDiffBadge }}
+                                                </span>
+                                            </div>
                                             <h4 class="font-extrabold text-base text-slate-900 dark:text-white mt-1">{{ $rName }}</h4>
+                                            <span class="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">{{ $rRoleTitle }}</span>
                                         </div>
                                     </div>
 
@@ -3697,15 +4027,33 @@
                                             <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span>
                                             <span>🎙️ Suara Dosen Killer (Bariton, Tegas & Berbobot)</span>
                                         </div>
+                                        <!-- Competencies Pills -->
+                                        <div class="flex flex-wrap gap-1 mb-3">
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Metodologi Riset</span>
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Novelty Skripsi</span>
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Validasi Data</span>
+                                        </div>
                                     @elseif($rType === 'hrd')
-                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-50/80 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 mb-2.5">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
+                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50/80 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 mb-2.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
                                             <span>🎙️ Suara HRD Ramah (Hangat, Empatik & Komunikatif)</span>
                                         </div>
+                                        <!-- Competencies Pills -->
+                                        <div class="flex flex-wrap gap-1 mb-3">
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Metode STAR</span>
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Culture Fit</span>
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Resolusi Konflik</span>
+                                        </div>
                                     @else
-                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-purple-50/80 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60 mb-2.5">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse"></span>
+                                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-50/80 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 mb-2.5">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
                                             <span>🎙️ Suara Pitch Bisnis (Cepat, Dinamis & To-The-Point)</span>
+                                        </div>
+                                        <!-- Competencies Pills -->
+                                        <div class="flex flex-wrap gap-1 mb-3">
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Elevator Pitch</span>
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Unit Economics</span>
+                                            <span class="px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Traction & Moat</span>
                                         </div>
                                     @endif
 
@@ -3864,12 +4212,12 @@
                                     </button>
                                     <button type="button"
                                             @click="contextMaterial = 'Software Engineer berpengalaman 2 tahun di ekosistem Laravel & Vue. Berhasil memimpin refaktorisasi query database yang memangkas response time hingga 40%.'"
-                                            class="px-2 py-0.5 rounded-lg text-[10px] font-medium glass-pill text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/60 cursor-pointer">
+                                            class="px-2 py-0.5 rounded-lg text-[10px] font-medium glass-pill text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/60 cursor-pointer">
                                         💼 Profil CV Software Engineer
                                     </button>
                                     <button type="button"
                                             @click="contextMaterial = 'Platform EdTech SaaS AI untuk mahasiswa dengan target market 8 juta pengguna di Indonesia. Model monetisasi freemium subscription dengan unit economics CAC Rp 45.000 dan LTV Rp 350.000.'"
-                                            class="px-2 py-0.5 rounded-lg text-[10px] font-medium glass-pill text-purple-700 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-950/60 cursor-pointer">
+                                            class="px-2 py-0.5 rounded-lg text-[10px] font-medium glass-pill text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/60 cursor-pointer">
                                         🚀 Premis Pitch Startup
                                     </button>
                                     <button type="button"
@@ -3926,6 +4274,67 @@
                         </div>
                     </div>
 
+                    <!-- PRE-FLIGHT HARDWARE CALIBRATION BAR (GoPrep Signature Mic & Camera Test) -->
+                    <div class="mt-6 p-4 rounded-2xl bg-gradient-to-r from-slate-50 via-blue-50/40 to-slate-50 dark:from-navy-950/70 dark:via-blue-950/30 dark:to-navy-950/70 border border-slate-200/80 dark:border-navy-800 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center text-sm shrink-0">
+                                    🎙️
+                                </span>
+                                <div>
+                                    <h4 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span>Kalibrasi Perangkat Mandiri (Pre-Flight Check)</span>
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                                            Browser Ready
+                                        </span>
+                                    </h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                        Pastikan suara Anda tertangkap jelas oleh Web Speech API sebelum memulai babak ujian.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 shrink-0">
+                                <!-- Mic Test Toggle Button -->
+                                <button type="button"
+                                        @click="togglePreflightMicTest()"
+                                        :class="preflightMicActive ? 'bg-rose-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:bg-slate-50'"
+                                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition cursor-pointer shadow-2xs">
+                                    <span class="w-2 h-2 rounded-full" :class="preflightMicActive ? 'bg-white animate-ping' : 'bg-blue-600'"></span>
+                                    <span x-text="preflightMicActive ? 'Hentikan Uji Suara' : 'Uji Suara Mikrofon'"></span>
+                                </button>
+                                <!-- Camera Deep Calibration Modal Button -->
+                                <button type="button"
+                                        @click="openCalibrationModal()"
+                                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition cursor-pointer shadow-2xs">
+                                    <span>📷 Uji Kamera</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Live VU Meter Bar -->
+                        <div x-show="preflightMicActive" x-transition class="pt-2 border-t border-slate-200/60 dark:border-slate-800 space-y-1.5">
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Sensitivitas Suara Mikrofon:</span>
+                                <span class="font-mono font-bold" :class="preflightMicLevel > 20 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'" x-text="preflightMicLevel + '%'"></span>
+                            </div>
+                            <!-- Segmented VU Meter -->
+                            <div class="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex items-center p-0.5 gap-0.5">
+                                <div class="h-full rounded-full transition-all duration-75"
+                                     :style="`width: ${preflightMicLevel}%; background: linear-gradient(90deg, #10b981 0%, #3b82f6 60%, #f59e0b 85%, #ef4444 100%);`"></div>
+                            </div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-400">
+                                <span x-show="preflightMicLevel > 15" class="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                                    <span>✓ Suara Anda terdeteksi dengan jelas dan siap untuk pengenalan wicara.</span>
+                                </span>
+                                <span x-show="preflightMicLevel <= 15" class="text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                                    <span>Berbicaralah ke mikrofon untuk melihat gelombang suara...</span>
+                                </span>
+                                <span>Ideal: 35% - 75%</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Direct Launch CTA Section -->
                     <div class="mt-8 pt-6 border-t border-slate-200/70 dark:border-slate-700/60 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -3934,16 +4343,6 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                            <!-- Optional Camera & Mic Test -->
-                            <button type="button"
-                                    @click="openCalibrationModal()"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-3 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700/80 transition cursor-pointer shadow-xs">
-                                <svg class="w-4 h-4 me-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                                </svg>
-                                <span>Uji Kamera & Mic</span>
-                            </button>
-
                             <!-- Primary Direct Start Button -->
                             <button type="button"
                                     @click="enterInterviewRoom()"
@@ -3953,7 +4352,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span x-text="isStarting ? 'Menyiapkan Ruangan...' : 'Mulai Simulasi Sekarang'"></span>
+                                <span x-text="isStarting ? 'Menyiapkan Ruangan...' : '🚀 Masuk Ruang Ujian (Start Mock Interview)'"></span>
                             </button>
                         </div>
                     </div>
@@ -4560,6 +4959,178 @@
                     </div>
                 </div>
 
+                <!-- GOPREP SIGNATURE CUE CARD INTERACTIVE MODAL (BABAK 2) -->
+                <div x-show="showCueCardModal"
+                     x-cloak
+                     class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto"
+                     @keydown.escape.window="if(cueCardPhase === 'speech') { finishCueCardSpeechPhase(); } else { showCueCardModal = false; }">
+                    <div class="glass-panel rounded-3xl max-w-3xl w-full border border-white/20 dark:border-slate-800 shadow-2xl bg-white/95 dark:bg-slate-900/95 overflow-hidden my-auto flex flex-col transition-all"
+                         @click.away="/* keep focused during cue card */">
+                        
+                        <!-- Header -->
+                        <div class="p-4 sm:p-5 border-b border-slate-200/70 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0 bg-slate-50/70 dark:bg-navy-950/70">
+                            <div class="flex items-center gap-3">
+                                <div class="relative w-11 h-11 rounded-2xl overflow-hidden shadow-xs border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-900">
+                                    <img :src="avatarImageUrl"
+                                         :alt="avatarPersonaName"
+                                         width="44"
+                                         height="44"
+                                         class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                                            BABAK 2 • CUE CARD
+                                        </span>
+                                        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400" x-text="getCueCardForRole().badge"></span>
+                                    </div>
+                                    <h3 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white mt-0.5" x-text="getCueCardForRole().partTitle"></h3>
+                                </div>
+                            </div>
+
+                            <!-- Timer Badges -->
+                            <div class="flex items-center gap-2 shrink-0">
+                                <!-- Prep Phase Countdown (60s) -->
+                                <template x-if="cueCardPhase === 'prep'">
+                                    <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-300">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></span>
+                                        <div class="text-right">
+                                            <span class="text-[9px] uppercase font-bold block text-slate-500 dark:text-slate-400 leading-none">WAKTU PERSIAPAN</span>
+                                            <span class="font-mono text-base font-black tracking-tight" x-text="'00:' + (cueCardPrepSeconds < 10 ? '0' : '') + cueCardPrepSeconds"></span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Speech Phase Countdown (120s) -->
+                                <template x-if="cueCardPhase === 'speech'">
+                                    <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-600 dark:text-emerald-300">
+                                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <div class="text-right">
+                                            <span class="text-[9px] uppercase font-bold block text-slate-500 dark:text-slate-400 leading-none">WAKTU BICARA ANDA</span>
+                                            <span class="font-mono text-base font-black tracking-tight" x-text="Math.floor(cueCardSpeechSeconds / 60) + ':' + ((cueCardSpeechSeconds % 60) < 10 ? '0' : '') + (cueCardSpeechSeconds % 60)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <button type="button"
+                                        @click="showCueCardModal = false"
+                                        class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                                        title="Tutup Modal (Penyampaian Tetap Berjalan)">
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <div class="p-4 sm:p-6 space-y-4 max-h-[72vh] overflow-y-auto">
+                            <!-- 1. The Cue Card Box -->
+                            <div class="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-blue-50/60 via-slate-50 to-indigo-50/40 dark:from-navy-950/80 dark:via-slate-900/80 dark:to-navy-900/60 border border-blue-200/80 dark:border-blue-900/50 shadow-xs space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white shadow-2xs">
+                                        TOPIC CARD
+                                    </span>
+                                    <span class="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                                        Format Lisan: 1-2 Menit Monolog Terarah
+                                    </span>
+                                </div>
+                                <div>
+                                    <h4 class="text-base sm:text-lg font-black text-slate-900 dark:text-white" x-text="getCueCardForRole().topicTitle"></h4>
+                                    <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed" x-text="getCueCardForRole().instructions"></p>
+                                </div>
+
+                                <!-- Structured Talking Points -->
+                                <div class="pt-2 border-t border-slate-200/70 dark:border-slate-800/80">
+                                    <span class="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-2">
+                                        Poin-Poin yang Harus Anda Sampaikan:
+                                    </span>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <template x-for="(bp, idx) in getCueCardForRole().bulletPoints" :key="idx">
+                                            <div class="p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/60 flex items-start gap-2 shadow-2xs">
+                                                <span class="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 shrink-0 mt-0.5" x-text="bp.label"></span>
+                                                <span class="text-xs text-slate-700 dark:text-slate-300 leading-snug" x-text="bp.desc"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-300" x-text="getCueCardForRole().tip"></div>
+                            </div>
+
+                            <!-- 2. Interactive Scratchpad Notes (Kotak Coretan & Ide) -->
+                            <div class="space-y-2">
+                                <!-- If in Prep Phase: Editable Textarea -->
+                                <template x-if="cueCardPhase === 'prep'">
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <label class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                                <span>📝 Kotak Catatan / Coretan Poin Kunci (Scratchpad):</span>
+                                                <span class="text-[10px] font-normal text-slate-500">(Otomatis tersimpan & tampil saat waktu bicara)</span>
+                                            </label>
+                                            <span class="text-[10px] text-slate-400" x-text="cueCardNotes.length + ' karakter'"></span>
+                                        </div>
+                                        <textarea x-model="cueCardNotes"
+                                                  rows="3"
+                                                  placeholder="Ketik poin-poin ide, argumen kunci, atau kata kunci di sini selama 60 detik sebagai pegangan saat berbicara..."
+                                                  class="w-full text-xs sm:text-sm rounded-xl glass-input text-slate-900 dark:text-white px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 placeholder-slate-400 font-mono"></textarea>
+                                    </div>
+                                </template>
+
+                                <!-- If in Speech Phase: Pinned Notes + Live Speech Monitor -->
+                                <template x-if="cueCardPhase === 'speech'">
+                                    <div class="space-y-3">
+                                        <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+                                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 block mb-1">
+                                                📌 CATATAN POIN KUNCI ANDA (SCRATCHPAD NOTES):
+                                            </span>
+                                            <p class="text-xs font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap" x-text="cueCardNotes || 'Anda tidak menulis catatan khusus. Paparkan secara mengalir mengikuti 4 poin di kartu soal.'"></p>
+                                        </div>
+
+                                        <!-- Live Speech Monitor -->
+                                        <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-2.5 text-xs">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0"></span>
+                                            <span class="font-bold text-emerald-700 dark:text-emerald-300 shrink-0">Ucapan Anda:</span>
+                                            <span class="text-slate-700 dark:text-slate-300 truncate" x-text="liveInterimTranscript || 'Sedang mendengarkan... Bicaralah secara jelas dan terstruktur.'"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Footer Action Controls -->
+                        <div class="p-4 sm:p-5 border-t border-slate-200/70 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 dark:bg-navy-950/70 shrink-0">
+                            <!-- Prep Phase Controls -->
+                            <template x-if="cueCardPhase === 'prep'">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="text-xs text-slate-500 dark:text-slate-400">
+                                        <span>Waktu persiapan otomatis selesai dalam </span>
+                                        <span class="font-bold font-mono text-amber-600 dark:text-amber-400" x-text="cueCardPrepSeconds + 's'"></span>
+                                    </div>
+                                    <button type="button"
+                                            @click="startCueCardSpeechPhase()"
+                                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md shadow-emerald-600/25 transition cursor-pointer">
+                                        <span>⚡ Saya Siap Memaparkan Sekarang (Mulai Bicara)</span>
+                                    </button>
+                                </div>
+                            </template>
+
+                            <!-- Speech Phase Controls -->
+                            <template x-if="cueCardPhase === 'speech'">
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="text-xs text-slate-500 dark:text-slate-400">
+                                        <span>Waktu bicara tersisa: </span>
+                                        <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400" x-text="Math.floor(cueCardSpeechSeconds / 60) + ':' + ((cueCardSpeechSeconds % 60) < 10 ? '0' : '') + (cueCardSpeechSeconds % 60)"></span>
+                                    </div>
+                                    <button type="button"
+                                            @click="finishCueCardSpeechPhase()"
+                                            class="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-navy-900 hover:from-blue-500 hover:to-indigo-500 shadow-md shadow-blue-600/25 transition cursor-pointer">
+                                        <span>✓ Selesai Memaparkan (Kirim & Masuk Babak 3)</span>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 4-Stage Scenario Milestone Progress Stepper -->
                 <div class="glass-panel px-3.5 py-1.5 sm:py-2 rounded-2xl shadow-xs border border-slate-200/80 dark:border-slate-800">
                     <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
@@ -4588,6 +5159,13 @@
                                         <div class="text-[11px] font-bold tracking-tight leading-none" x-text="stage.label"></div>
                                         <div class="text-[9px] opacity-80 mt-0.5 leading-none" x-text="stage.badge"></div>
                                     </div>
+                                    <template x-if="isStageActive(stage.id) && stage.id === 'core' && examMode === 'full_mock'">
+                                        <button type="button"
+                                                @click.stop="triggerCueCardPhase()"
+                                                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-amber-400 text-slate-900 animate-pulse cursor-pointer shadow-xs hover:bg-amber-300">
+                                            <span>📋 BUKA CUE CARD</span>
+                                        </button>
+                                    </template>
                                     <template x-if="isStageActive(stage.id) && stage.id === 'pressure_test'">
                                         <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-rose-500 text-white animate-pulse">
                                             🔥 STRESS TEST
@@ -4933,10 +5511,15 @@
                      class="p-3 sm:p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-2.5 sm:gap-3 shadow-xs">
                     <div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
                         <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping shrink-0"></span>
-                        <div class="text-xs sm:text-sm font-medium truncate">
+                        <div class="text-xs sm:text-sm font-medium truncate flex-1">
                             <span class="font-bold text-emerald-700 dark:text-emerald-300">Suara Anda: </span>
                             <span x-text="liveInterimTranscript || 'Sedang mendengarkan ucapan Anda... Bicaralah secara alami.'"></span>
                         </div>
+                        <template x-if="examMode === 'full_mock'">
+                            <span class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                                <span>🎯 Target Pacing: 30-45s</span>
+                            </span>
+                        </template>
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
