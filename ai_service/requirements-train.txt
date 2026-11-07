@@ -1,0 +1,4 @@
+# Hanya untuk fine-tuning (butuh GPU NVIDIA, mis. Google Colab T4). Tidak perlu untuk menjalankan ai_service.py.
+unsloth>=2025.1
+trl>=0.12
+datasets>=3.0

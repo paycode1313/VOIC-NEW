@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\DemoSessionController;
+use App\Http\Controllers\Web\ExamController;
 use App\Http\Controllers\Web\OnboardingController;
 use App\Http\Controllers\Web\PracticeSessionController;
 use App\Http\Controllers\Web\ProfileController;
@@ -18,6 +19,18 @@ Route::get('/dashboard', DashboardController::class)
 // Public Digital Certificate Verification (Accessible via QR Code scan)
 Route::get('/verify/{practiceSession}', [PracticeSessionController::class, 'verify'])
     ->name('practice.verify');
+
+// Three-part mock exam (interview, thesis defense, startup pitch). Open to guests for the booth.
+Route::prefix('latihan')->name('exam.')->controller(ExamController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('/sesi/{practiceSession}', 'room')->name('room');
+    Route::post('/sesi/{practiceSession}/jawab', 'answer')->middleware('throttle:40,1')->name('answer');
+    Route::post('/sesi/{practiceSession}/selesai', 'finish')->name('finish');
+    Route::get('/sesi/{practiceSession}/hasil', 'result')->name('result');
+    Route::post('/sesi/{practiceSession}/pesan/{message}/nilai', 'rate')->scopeBindings()->middleware('throttle:60,1')->name('rate');
+    Route::get('/{mode}', 'setup')->whereIn('mode', array_keys(config('exam.modes')))->name('setup');
+    Route::post('/{mode}/mulai', 'start')->whereIn('mode', array_keys(config('exam.modes')))->middleware('throttle:10,1')->name('start');
+});
 
 // Guest / Demo Mode for Innofest Exhibition Booth (No Registration Required)
 Route::prefix('demo')->name('demo.')->group(function () {

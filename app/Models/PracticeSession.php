@@ -13,12 +13,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'user_id',
     'ai_role_id',
     'scenario_type',
+    'exam_mode',
     'duration_seconds',
     'face_score',
     'voice_score',
     'overall_score',
     'ai_conclusion',
     'feedback_notes',
+    'exam_state',
 ])]
 class PracticeSession extends Model
 {
@@ -37,6 +39,7 @@ class PracticeSession extends Model
             'face_score' => 'float',
             'voice_score' => 'float',
             'overall_score' => 'float',
+            'exam_state' => 'array',
             'feedback_notes' => 'array',
         ];
     }
@@ -69,6 +72,14 @@ class PracticeSession extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(SessionMessage::class);
+    }
+
+    /**
+     * Determine if this session uses the three-part mock exam flow.
+     */
+    public function isExam(): bool
+    {
+        return $this->exam_mode !== null;
     }
 
     /**

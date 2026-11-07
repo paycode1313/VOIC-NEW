@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from ai_learner import ai_learner
+from exam_engine import router as exam_router, quality_issues
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "voic-coach")
@@ -66,7 +67,8 @@ async def lifespan(app: FastAPI):
     task.cancel()
 
 
-app = FastAPI(title="VOIC AI Service", version="1.2.0", lifespan=lifespan)
+app = FastAPI(title="VOIC AI Service", version="1.3.0", lifespan=lifespan)
+app.include_router(exam_router)
 
 # CORS middleware agar Laravel frontend/backend bisa request tanpa halangan
 app.add_middleware(
@@ -490,8 +492,12 @@ async def process_chat(req: ChatRequest):
     if not ai_reply_text:
         ai_reply_text = generate_natural_fallback(req)
 
-    # 8. Rekam ke Dataset Deep Learning Berkelanjutan
+    # 8. Rekam ke Dataset Deep Learning Berkelanjutan (hanya balasan yang lolos quality gate,
+    #    agar balasan template/fallback tidak ikut "dipelajari")
+    harvest_issues = quality_issues(ai_reply_text, req.user_message, "follow_up", req.language or "id")
     try:
+        if harvest_issues:
+            raise ValueError(f"skip harvest: {', '.join(harvest_issues)}")
         f_dict = (
             req.facial_status.model_dump()
             if req.facial_status and hasattr(req.facial_status, "model_dump")

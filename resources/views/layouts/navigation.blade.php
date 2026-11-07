@@ -15,6 +15,10 @@
                            class="transition {{ request()->routeIs('dashboard') ? 'text-blue-600 dark:text-white font-bold' : 'hover:text-slate-900 dark:hover:text-white' }}">
                             Dashboard
                         </a>
+                        <a href="{{ route('exam.index') }}"
+                           class="transition {{ request()->routeIs('exam.*') ? 'text-blue-600 dark:text-white font-bold' : 'hover:text-slate-900 dark:hover:text-white' }}">
+                            Latihan Ujian
+                        </a>
                         <a href="{{ route('practice.create') }}" 
                            class="transition {{ request()->routeIs('practice.create') ? 'text-blue-600 dark:text-white font-bold' : 'hover:text-slate-900 dark:hover:text-white' }}">
                             Simulasi AI
@@ -27,6 +31,10 @@
                         <a href="{{ url('/') }}" 
                            class="transition {{ request()->is('/') ? 'text-blue-600 dark:text-white font-bold' : 'hover:text-slate-900 dark:hover:text-white' }}">
                             Beranda
+                        </a>
+                        <a href="{{ route('exam.index') }}"
+                           class="transition {{ request()->routeIs('exam.*') ? 'text-blue-600 dark:text-white font-bold' : 'hover:text-slate-900 dark:hover:text-white' }}">
+                            Latihan Ujian
                         </a>
                         <a href="{{ route('demo.create') }}" 
                            class="transition {{ request()->routeIs('demo.*') ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'hover:text-slate-900 dark:hover:text-white' }}">

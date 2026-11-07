@@ -1,0 +1,345 @@
+[
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "Frontend Developer di startup fintech",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Boleh perkenalkan diri dulu? Ceritakan singkat latar belakang pendidikan dan pengalamanmu.",
+        "answer": "Halo Kak, saya Dimas, lulusan informatika Universitas Brawijaya. Dua tahun terakhir saya kerja sebagai web developer di agensi digital, kebanyakan pegang proyek e-commerce pakai React.",
+        "directive": "react",
+        "reply": "Wah, dua tahun pegang proyek e-commerce pakai React itu pengalaman yang relevan banget buat posisi ini."
+      },
+      {
+        "part": 1,
+        "question": "Apa yang bikin kamu tertarik melamar posisi Frontend Developer di startup fintech ini?",
+        "answer": "Jujur karena saya pengen kerja di produk yang dipakai terus-menerus, bukan proyek yang selesai lalu ditinggal.",
+        "directive": "follow_up",
+        "reply": "Masuk akal, capek juga ya kalau proyeknya selalu putus di tengah jalan. Dari produk fintech yang pernah kamu pakai, bagian mana yang menurutmu paling perlu diperbaiki dari sisi tampilan?"
+      },
+      {
+        "part": 1,
+        "question": "Dari produk fintech yang pernah kamu pakai, bagian mana yang menurutmu paling perlu diperbaiki dari sisi tampilan?",
+        "answer": "Halaman riwayat transaksi. Biasanya susah dicari, filternya ribet, dan di HP sering kepotong.",
+        "directive": "react",
+        "reply": "Setuju, riwayat transaksi yang susah difilter di HP itu keluhan klasik, bagus kamu langsung kepikiran ke situ."
+      },
+      {
+        "part": 2,
+        "question": "Topiknya: Ceritakan saat kamu menghadapi tantangan besar dalam sebuah tim.",
+        "answer": "Waktu itu kami harus rilis aplikasi toko online dalam dua minggu, tapi backend developer kami sakit di minggu pertama. Tugas saya sebenarnya cuma frontend, tapi saya ambil inisiatif pelajari API-nya, lalu saya rapat sama klien untuk memilah fitur mana yang wajib ada saat rilis. Kami potong fitur voucher ke fase dua. Hasilnya aplikasi tetap rilis tepat waktu dengan sekitar sembilan puluh persen fitur, dan klien malah perpanjang kontrak. Dari situ saya belajar pentingnya bicara jujur ke klien lebih awal.",
+        "directive": "follow_up",
+        "reply": "Keputusan menunda fitur voucher ke fase dua itu berani, dan ternyata klien malah memperpanjang kontrak. Waktu kamu menyampaikan pemotongan fitur itu, bagaimana reaksi awal klien dan cara kamu meyakinkan mereka?"
+      },
+      {
+        "part": 3,
+        "question": "Kalau ada rekan satu tim yang terus telat menyelesaikan bagiannya, apa yang akan kamu lakukan?",
+        "answer": "Saya ajak ngobrol empat mata dulu, mungkin dia ada masalah yang nggak kelihatan.",
+        "directive": "follow_up",
+        "reply": "Ngobrol empat mata dulu itu pendekatan yang dewasa. Seandainya ternyata dia kewalahan karena bebannya terlalu banyak, langkah konkret apa yang akan kamu ambil setelah itu?"
+      },
+      {
+        "part": 3,
+        "question": "Seandainya ternyata dia kewalahan karena bebannya terlalu banyak, langkah konkret apa yang akan kamu ambil setelah itu?",
+        "answer": "Saya bawa ke stand-up dan usulkan pembagian ulang tugas, tapi tanpa menyalahkan dia di depan tim. Kalau perlu saya ambil satu tiketnya.",
+        "directive": "react",
+        "reply": "Membawa ke stand-up tanpa menyalahkan dia di depan tim itu menjaga rasa aman di tim, nice."
+      },
+      {
+        "part": 3,
+        "question": "Berapa ekspektasi gaji kamu, dan apa dasar angka tersebut?",
+        "answer": "Hmm, saya nggak tahu harus jawab berapa.",
+        "directive": "react",
+        "reply": "Santai saja, pertanyaan gaji memang sering bikin ragu, kita bisa bahas pelan-pelan."
+      }
+    ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "Management Trainee bank",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Boleh perkenalkan diri dulu? Ceritakan singkat latar belakang pendidikan dan pengalamanmu.",
+        "answer": "Saya Salsa, baru lulus manajemen dari UNPAD.",
+        "directive": "follow_up",
+        "reply": "Halo Salsa, selamat ya atas kelulusannya. Selama kuliah, kegiatan apa di luar kelas yang paling membentuk kamu?"
+      },
+      {
+        "part": 1,
+        "question": "Selama kuliah, kegiatan apa di luar kelas yang paling membentuk kamu?",
+        "answer": "Saya jadi bendahara himpunan dua periode, ngurus anggaran sekitar delapan puluh juta per tahun dan bikin laporan ke fakultas.",
+        "directive": "react",
+        "reply": "Mengelola anggaran delapan puluh juta per tahun selama dua periode itu tanggung jawab yang nggak kecil untuk mahasiswa."
+      },
+      {
+        "part": 1,
+        "question": "Kalau teman dekatmu diminta menggambarkan kamu dalam tiga kata, kira-kira apa jawabannya?",
+        "answer": "Teliti, cerewet, dan bisa diandalkan.",
+        "directive": "follow_up",
+        "reply": "Cerewet itu jujur sekali, saya suka. Ada momen kapan sifat cerewet itu justru membantu tim kamu?"
+      },
+      {
+        "part": 2,
+        "question": "Topiknya: Ceritakan saat kamu membuat kesalahan di pekerjaan atau organisasi.",
+        "answer": "Waktu jadi bendahara, saya pernah salah input satu nota sehingga laporan pertanggungjawaban selisih tiga juta. Saya baru sadar waktu fakultas minta revisi H-2 deadline. Saya langsung cek ulang semua nota satu per satu semalaman, ketemu kesalahannya, lalu saya jelaskan terbuka ke ketua dan fakultas. Sejak itu saya bikin sistem double check, setiap nota diinput dua orang di spreadsheet yang berbeda.",
+        "directive": "follow_up",
+        "reply": "Selisih tiga juta di H-2 deadline pasti bikin panik, tapi kamu memilih terbuka dan bahkan membuat sistem double check. Setelah sistem itu jalan, apakah pernah ada kesalahan lagi yang berhasil tertangkap?"
+      },
+      {
+        "part": 3,
+        "question": "Bagaimana caramu mengatur prioritas kalau ada tiga tenggat penting di minggu yang sama?",
+        "answer": "Saya tulis semua, lalu saya urutkan berdasarkan dampaknya ke orang lain. Yang paling banyak orang menunggu, saya kerjakan duluan. Kalau tetap nggak mungkin, saya negosiasi salah satu tenggatnya dari awal, bukan di hari terakhir.",
+        "directive": "follow_up",
+        "reply": "Negosiasi tenggat dari awal, bukan di hari terakhir, itu kebiasaan yang jarang dimiliki fresh graduate. Pernah kejadian kamu harus menegosiasikan tenggat ke atasan atau dosen, dan bagaimana kamu menyampaikannya?"
+      }
+    ]
+  },
+  {
+    "mode": "sidang",
+    "language": "id",
+    "topic": "Deteksi cacat kain menggunakan YOLOv8",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Silakan perkenalkan diri dan sebutkan judul penelitian Anda.",
+        "answer": "Selamat pagi, Prof. Saya Andi Pratama, NIM 2001. Judul penelitian saya Deteksi Cacat Kain pada Industri Tekstil Menggunakan YOLOv8.",
+        "directive": "react",
+        "reply": "Baik, Saudara Andi, topik deteksi cacat kain dengan YOLOv8 ini cukup dekat dengan kebutuhan industri."
+      },
+      {
+        "part": 1,
+        "question": "Coba jelaskan dengan bahasa sederhana, masalah apa yang ingin diselesaikan penelitian ini?",
+        "answer": "Di pabrik, pengecekan cacat kain masih dilakukan manual oleh operator, jadi lambat dan banyak cacat kecil yang lolos.",
+        "directive": "follow_up",
+        "reply": "Jadi masalah intinya adalah inspeksi manual yang lambat dan meloloskan cacat kecil. Apakah Anda punya data seberapa besar cacat yang lolos pada proses manual tersebut?"
+      },
+      {
+        "part": 1,
+        "question": "Apakah Anda punya data seberapa besar cacat yang lolos pada proses manual tersebut?",
+        "answer": "Dari wawancara dengan kepala QC, sekitar dua belas persen cacat kecil lolos ke tahap pengemasan.",
+        "directive": "react",
+        "reply": "Angka dua belas persen dari kepala QC itu memberi dasar yang jelas untuk urgensi penelitian Anda."
+      },
+      {
+        "part": 2,
+        "question": "Topiknya: Paparkan inti penelitian Anda di hadapan dewan penguji.",
+        "answer": "Rumusan masalah penelitian ini adalah bagaimana mendeteksi lima jenis cacat kain secara otomatis dengan akurasi tinggi dan waktu inferensi yang cukup cepat untuk lini produksi. Saya mengumpulkan dua ribu gambar dari pabrik di Bandung, lalu dianotasi bersama operator QC. Data dibagi tujuh puluh, dua puluh, sepuluh untuk latih, validasi, dan uji. Model YOLOv8n dilatih seratus epoch. Hasilnya mAP lima puluh sebesar delapan puluh tujuh persen dengan kecepatan tiga puluh dua FPS di GPU kelas menengah. Kontribusinya adalah dataset cacat kain lokal dan prototipe yang bisa dipasang di atas conveyor.",
+        "directive": "follow_up",
+        "reply": "Paparan Anda runtut, dari dua ribu gambar hingga mAP delapan puluh tujuh persen pada tiga puluh dua FPS. Dari lima jenis cacat tersebut, jenis mana yang performanya paling rendah dan mengapa?"
+      },
+      {
+        "part": 3,
+        "question": "Kenapa Anda memilih metode tersebut dan bukan alternatif lain?",
+        "answer": "Karena YOLOv8 cepat.",
+        "directive": "follow_up",
+        "reply": "Kecepatan memang penting untuk lini produksi. Namun dibandingkan alternatif seperti Faster R-CNN atau YOLOv5, apakah Anda melakukan uji perbandingan yang membuktikan YOLOv8 lebih tepat?"
+      },
+      {
+        "part": 3,
+        "question": "Namun dibandingkan alternatif seperti Faster R-CNN atau YOLOv5, apakah Anda melakukan uji perbandingan yang membuktikan YOLOv8 lebih tepat?",
+        "answer": "Saya membandingkan dengan YOLOv5s pada data yang sama. YOLOv8n lebih unggul tiga persen mAP dan lebih ringan, tapi Faster R-CNN tidak saya uji karena keterbatasan GPU.",
+        "directive": "react",
+        "reply": "Perbandingan dengan YOLOv5s sudah memadai, dan keterbatasan GPU untuk Faster R-CNN sebaiknya Anda tuliskan secara eksplisit di bab keterbatasan."
+      },
+      {
+        "part": 3,
+        "question": "Apa keterbatasan terbesar penelitian ini, dan bagaimana pengaruhnya terhadap kesimpulan?",
+        "answer": "Saya kurang tahu, Prof.",
+        "directive": "react",
+        "reply": "Tidak apa-apa, coba kita pikirkan bersama dari sisi data yang hanya berasal dari satu pabrik."
+      }
+    ]
+  },
+  {
+    "mode": "sidang",
+    "language": "id",
+    "topic": "Pengaruh kualitas layanan terhadap kepuasan pelanggan kedai kopi",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Apa yang membuat Anda tertarik meneliti topik pengaruh kualitas layanan terhadap kepuasan pelanggan kedai kopi ini?",
+        "answer": "Karena kedai kopi di Yogyakarta tumbuh sangat cepat tapi banyak yang tutup dalam setahun, dan saya penasaran apakah layanan berpengaruh pada pelanggan yang kembali.",
+        "directive": "react",
+        "reply": "Fenomena kedai kopi yang tumbuh cepat namun banyak tutup dalam setahun merupakan latar yang menarik untuk diteliti."
+      },
+      {
+        "part": 2,
+        "question": "Topiknya: Jelaskan alur metodologi penelitian Anda dari awal sampai akhir.",
+        "answer": "Penelitian ini kuantitatif. Saya menyebar kuesioner SERVQUAL ke seratus lima puluh responden di lima kedai kopi dengan teknik purposive sampling. Instrumen diuji validitas dan reliabilitasnya, semua item valid dan Cronbach alpha di atas nol koma tujuh. Analisis menggunakan regresi linear berganda. Hasilnya dimensi responsiveness dan assurance berpengaruh signifikan, sedangkan tangibles tidak signifikan.",
+        "directive": "follow_up",
+        "reply": "Temuan bahwa tangibles tidak signifikan cukup menarik, mengingat banyak kedai kopi berinvestasi besar pada interior. Bagaimana Anda menjelaskan hasil tersebut, dan apakah sejalan dengan penelitian terdahulu?"
+      },
+      {
+        "part": 3,
+        "question": "Bagaimana Anda memastikan data yang digunakan cukup dan representatif?",
+        "answer": "Jumlah seratus lima puluh saya hitung dengan rumus Hair, yaitu lima sampai sepuluh kali jumlah indikator. Indikator saya dua puluh dua, jadi minimal seratus sepuluh.",
+        "directive": "follow_up",
+        "reply": "Penggunaan rumus Hair dengan dua puluh dua indikator sudah tepat untuk ukuran sampel. Namun karena teknik sampling Anda purposive, sejauh mana hasil ini bisa digeneralisasi ke kedai kopi di luar lima lokasi tersebut?"
+      },
+      {
+        "part": 3,
+        "question": "Kalau penelitian ini dilanjutkan, saran apa yang Anda berikan untuk peneliti berikutnya?",
+        "answer": "Saya sarankan menambah variabel harga dan lokasi, serta memakai sampel dari beberapa kota supaya lebih representatif.",
+        "directive": "react",
+        "reply": "Menambah variabel harga dan lokasi serta memperluas sampel lintas kota adalah saran yang konkret dan menjawab keterbatasan Anda sendiri."
+      }
+    ]
+  },
+  {
+    "mode": "pitching",
+    "language": "id",
+    "topic": "KasirKu, aplikasi kasir untuk UMKM",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Perkenalkan diri dan tim Anda. Kenapa kalian orang yang tepat membangun KasirKu, aplikasi kasir untuk UMKM?",
+        "answer": "Saya Raka, CEO. Co-founder saya Mila, CTO, mantan engineer di startup POS. Orang tua saya punya warung sembako selama dua puluh tahun, jadi saya tahu betul ribetnya pencatatan manual.",
+        "directive": "react",
+        "reply": "Kombinasi pengalaman langsung dari warung keluarga dan CTO yang pernah membangun POS itu founder-market fit yang kuat."
+      },
+      {
+        "part": 1,
+        "question": "Masalah apa yang Anda selesaikan, dan seberapa sakit masalah itu bagi pelanggan?",
+        "answer": "Pemilik warung nggak tahu untung ruginya.",
+        "directive": "follow_up",
+        "reply": "Itu masalah yang sangat umum. Seberapa besar kerugiannya dalam rupiah atau waktu, apakah Anda pernah mengukurnya langsung di warung?"
+      },
+      {
+        "part": 1,
+        "question": "Seberapa besar kerugiannya dalam rupiah atau waktu, apakah Anda pernah mengukurnya langsung di warung?",
+        "answer": "Kami survei empat puluh warung di Malang. Rata-rata pemilik menghabiskan satu setengah jam per hari untuk rekap, dan sekitar tujuh persen stok hilang tanpa tercatat.",
+        "directive": "react",
+        "reply": "Satu setengah jam per hari dan tujuh persen stok hilang dari empat puluh warung, itu angka yang jauh lebih meyakinkan."
+      },
+      {
+        "part": 2,
+        "question": "Topiknya: Sampaikan pitch startup Anda seolah sedang demo day.",
+        "answer": "Tiga koma enam juta warung di Indonesia masih mencatat pakai buku. KasirKu adalah aplikasi kasir offline-first yang jalan di HP Android murah, dengan scan barcode dan laporan untung rugi otomatis. Kami pakai model langganan dua puluh lima ribu per bulan. Dalam enam bulan kami punya tiga ratus warung berbayar, MRR tujuh setengah juta, dan churn bulanan empat persen. Akuisisi kami lewat agen distributor sembako, jadi CAC hanya sekitar enam puluh ribu. Kami mencari pendanaan pre-seed tiga miliar untuk ekspansi ke lima kota di Jawa Timur dan membangun fitur kredit stok.",
+        "directive": "follow_up",
+        "reply": "Akuisisi lewat agen distributor dengan CAC enam puluh ribu itu cerdas, dan churn empat persen cukup sehat untuk tahap ini. Apa insentif yang membuat agen distributor mau terus menawarkan KasirKu ke warung?"
+      },
+      {
+        "part": 3,
+        "question": "Siapa kompetitor terdekat Anda, dan kenapa pelanggan memilih Anda?",
+        "answer": "Kompetitornya Moka dan Majoo, tapi mereka lebih ke kafe dan restoran. Warung kecil pilih kami karena bisa offline dan harganya seperlima.",
+        "directive": "follow_up",
+        "reply": "Fokus ke warung kecil dengan harga seperlima dan mode offline memang membedakan Anda dari Moka dan Majoo. Kalau suatu hari mereka meluncurkan paket murah khusus warung, apa yang membuat pelanggan Anda tetap bertahan?"
+      },
+      {
+        "part": 3,
+        "question": "Kalau suatu hari mereka meluncurkan paket murah khusus warung, apa yang membuat pelanggan Anda tetap bertahan?",
+        "answer": "Data stok dan riwayat transaksi mereka sudah ada di kami, plus jaringan agen distributor yang ketemu mereka tiap minggu. Itu yang sulit ditiru.",
+        "directive": "react",
+        "reply": "Kombinasi data historis dan agen yang bertemu warung setiap minggu memang membentuk moat distribusi yang nyata."
+      }
+    ]
+  },
+  {
+    "mode": "pitching",
+    "language": "id",
+    "topic": "AgriSense, sensor tanah untuk petani cabai",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Siapa pelanggan pertama Anda, dan bagaimana mereka mengatasi masalah ini sebelum ada produk Anda?",
+        "answer": "Pelanggan pertama kami kelompok tani cabai di Temanggung. Sebelumnya mereka menyiram dan memupuk berdasarkan feeling dan kebiasaan turun-temurun.",
+        "directive": "follow_up",
+        "reply": "Menyiram berdasarkan feeling memang masih jadi kebiasaan di banyak sentra cabai. Setelah memakai AgriSense, perubahan apa yang terukur di panen mereka?"
+      },
+      {
+        "part": 1,
+        "question": "Setelah memakai AgriSense, perubahan apa yang terukur di panen mereka?",
+        "answer": "Pada musim tanam kemarin, hasil panen naik sekitar delapan belas persen dan pemakaian pupuk turun seperempat dibanding lahan sebelah yang tidak pakai sensor.",
+        "directive": "react",
+        "reply": "Panen naik delapan belas persen sekaligus pupuk turun seperempat, dengan pembanding lahan sebelah, itu bukti awal yang kuat."
+      },
+      {
+        "part": 3,
+        "question": "Berapa biaya akuisisi satu pelanggan, dan berapa nilai yang dihasilkan pelanggan itu?",
+        "answer": "Untuk sekarang kami belum menghitung itu secara detail.",
+        "directive": "follow_up",
+        "reply": "Wajar di tahap awal, tapi ini akan jadi pertanyaan pertama investor mana pun. Kira-kira berapa biaya yang Anda keluarkan untuk mendapatkan kelompok tani di Temanggung itu, termasuk waktu tim di lapangan?"
+      },
+      {
+        "part": 3,
+        "question": "Apa risiko terbesar yang bisa membuat startup ini gagal?",
+        "answer": "Risikonya petani tidak mau bayar langganan karena harga cabai sangat fluktuatif, jadi saat harga jatuh mereka berhenti berlangganan.",
+        "directive": "follow_up",
+        "reply": "Itu jawaban yang jujur, risiko churn yang mengikuti harga cabai memang nyata. Pernahkah Anda mempertimbangkan model bagi hasil saat panen, bukan langganan bulanan?"
+      }
+    ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "en",
+    "topic": "Product Designer",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Could you start by introducing yourself and your background?",
+        "answer": "Hi, I'm Laras. I studied visual communication design and I've been a UI designer at a travel app for three years, mostly working on the booking flow.",
+        "directive": "react",
+        "reply": "Three years on a travel booking flow is great, that is one of the trickiest flows to get right."
+      },
+      {
+        "part": 2,
+        "question": "Your topic is: Describe the achievement you are most proud of.",
+        "answer": "I redesigned the hotel checkout. Our data showed forty percent of users dropped off at the payment step. I ran five usability sessions, found that people did not trust the price because taxes appeared at the very end, so I moved the full price breakdown to the first screen. After launch the drop-off fell to twenty-six percent.",
+        "directive": "follow_up",
+        "reply": "Dropping checkout abandonment from forty to twenty-six percent just by showing taxes earlier is a clear, measurable win. How did you convince the business team, who probably worried that showing the higher price earlier would scare people away?"
+      },
+      {
+        "part": 3,
+        "question": "What separates a group that works together from a truly strong team?",
+        "answer": "Honestly, trust.",
+        "directive": "follow_up",
+        "reply": "Trust is a good place to start. What does trust actually look like day to day in a design team you have been part of?"
+      }
+    ]
+  },
+  {
+    "mode": "sidang",
+    "language": "en",
+    "topic": "Sentiment analysis of e-commerce reviews with IndoBERT",
+    "turns": [
+      {
+        "part": 1,
+        "question": "In plain words, what problem does this research solve?",
+        "answer": "Online sellers get thousands of reviews and cannot read them all, so my model automatically labels Indonesian reviews as positive, negative or neutral.",
+        "directive": "react",
+        "reply": "Automatically labelling thousands of Indonesian reviews is a very practical problem for sellers."
+      },
+      {
+        "part": 3,
+        "question": "How do you know your data is sufficient and representative?",
+        "answer": "I used twelve thousand reviews from three marketplaces, balanced across the three classes, and two annotators labelled them with a Cohen's kappa of zero point eight one.",
+        "directive": "follow_up",
+        "reply": "Twelve thousand balanced reviews with a kappa of zero point eight one is a solid annotation basis. Since real reviews are rarely balanced, how does your model perform on the natural, imbalanced distribution?"
+      }
+    ]
+  },
+  {
+    "mode": "pitching",
+    "language": "en",
+    "topic": "LaundryGo, on-demand laundry for students",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Why now? What changed that makes this the right time?",
+        "answer": "Student housing near campuses has doubled in five years and most new rooms are too small for a washing machine.",
+        "directive": "follow_up",
+        "reply": "Smaller rooms in fast-growing student housing is a nice structural tailwind. How many students around your first campus actually pay for laundry today?"
+      },
+      {
+        "part": 3,
+        "question": "If I invest today, what milestones will you hit in 12 months?",
+        "answer": "We will grow from two to ten campuses, reach five thousand monthly orders, and get our contribution margin per order above three thousand rupiah.",
+        "directive": "react",
+        "reply": "Ten campuses, five thousand monthly orders and a positive contribution margin are concrete milestones I can actually hold you to."
+      }
+    ]
+  }
+]

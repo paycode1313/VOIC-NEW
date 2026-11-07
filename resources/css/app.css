@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+
     /* Accessibility & Focus Indicators (WCAG 2.2 AA) */
     :focus-visible {
         outline: 2px solid #2563eb;
