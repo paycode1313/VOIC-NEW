@@ -50,11 +50,42 @@ Tes percakapan singkat di terminal untuk memastikan model sudah terpasang.
 
 ---
 
-## 4. Mode Ujian 3 Bagian (`/latihan`)
+## 4. Persiapan Laptop Pameran (100% Lokal, Tanpa Internet)
+
+Saat ada internet (sekali saja, sebelum hari H):
+```bash
+cd ai_service
+pip install -r requirements.txt
+python setup_models.py          # laptop CPU biasa
+python setup_models.py --gpu    # laptop dengan GPU NVIDIA
+```
+Skrip ini mengunduh semua yang dibutuhkan agar booth bisa jalan tanpa internet:
+
+| Bagian | Model | Catatan |
+|---|---|---|
+| Otak | Ollama `qwen2.5:3b` (CPU) / `qwen2.5:7b` (GPU) → `voic-coach` | 7B jauh lebih nyambung, butuh GPU ±6 GB VRAM |
+| Telinga (STT) | faster-whisper `small` (CPU) / `large-v3-turbo` (GPU) | menggantikan pengenal suara Chrome/Edge yang sebenarnya online |
+| Suara (TTS) | Piper `id_ID-news_tts-medium` | ±0,2 detik per kalimat; edge-tts (online) hanya cadangan |
+| Mata | MediaPipe Face Landmarker → `public/vendor/mediapipe` | kontak mata di browser tanpa CDN |
+
+Cek kesiapan kapan saja: `python setup_models.py --check`. Di ruang ujian, label kecil di bawah nama penguji menampilkan **Telinga / Suara / waktu respon** yang sedang dipakai.
+
+### Kenapa terasa lebih "ngobrol"
+- **Akhir bicara dideteksi lokal** (jeda ±1 detik, lebih sabar jika jawaban masih pendek), tidak menunggu 2,6 detik.
+- **Satu kali kirim**: rekaman suara → Whisper → model, dalam satu request.
+- **Streaming per kalimat**: kalimat pertama penguji sudah diucapkan selagi model menulis kalimat berikutnya. Audio dikirim di dalam stream (penting di Windows karena `php artisan serve` hanya punya satu worker).
+- **Boleh menyela** (centang di ruang ujian, wajib pakai headset): bicara saat penguji bicara akan memotongnya.
+
+### Variabel lingkungan (opsional)
+`VOIC_EXAM_MODEL` (default `voic-coach`), `VOIC_STT_MODEL` (`small`), `VOIC_STT_DEVICE` (`auto`/`cuda`/`cpu`), `VOIC_STT_COMPUTE` (`int8`, atau `float16` untuk GPU), `VOIC_PIPER_VOICE_ID` (path `.onnx`).
+
+## 5. Mode Ujian 3 Bagian (`/latihan`)
 
 Halaman `/latihan` di Laravel memakai dua endpoint baru:
 
 - `POST /exam/respond`: menjalankan model untuk satu giliran penguji. Prompt lengkap (persona, riwayat, instruksi giliran) dibuat oleh Laravel (`App\Services\Exam\ExaminerService`); service ini hanya menjalankan Ollama, membersihkan output, dan menjalankan *quality gate*. Jika balasan gagal, model diminta ulang sekali. Jika tetap gagal, Laravel memakai composer offline.
+- `POST /exam/respond/stream`: sama, tetapi NDJSON per kalimat beserta audionya (dipakai ruang ujian).
+- `POST /stt`: speech-to-text lokal (faster-whisper). `GET /voice/status`: status otak, telinga, dan suara.
 - `POST /exam/improve`: menulis ulang 3 jawaban terlemah menjadi versi yang lebih kuat untuk rapor.
 
 Model menyusun seluruh giliran penguji dengan kata-katanya sendiri. Laravel hanya memberi tahu *apa* yang perlu dibahas lewat `directive`:
@@ -67,7 +98,7 @@ Naskah pertanyaan hanya dipakai bila model tidak tersedia atau balasannya gagal 
 
 Kalau ingin memakai model selain `voic-coach`, set `VOIC_EXAM_MODEL=qwen2.5:7b` sebelum menjalankan service.
 
-## 5. Melatih AI Lokal agar Lebih Nyambung
+## 6. Melatih AI Lokal agar Lebih Nyambung
 
 Siklusnya: **kumpulkan data → export → fine-tune → evaluasi → pasang**.
 

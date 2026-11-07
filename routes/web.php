@@ -26,6 +26,8 @@ Route::prefix('latihan')->name('exam.')->controller(ExamController::class)->grou
     Route::get('/status-ai', 'status')->middleware('throttle:30,1')->name('status');
     Route::get('/sesi/{practiceSession}', 'room')->name('room');
     Route::post('/sesi/{practiceSession}/jawab', 'answer')->middleware('throttle:40,1')->name('answer');
+    Route::post('/sesi/{practiceSession}/jawab-stream', 'answerStream')->middleware('throttle:40,1')->name('answer.stream');
+    Route::get('/audio/{file}', 'audio')->middleware('throttle:240,1')->name('audio');
     Route::post('/sesi/{practiceSession}/selesai', 'finish')->name('finish');
     Route::get('/sesi/{practiceSession}/hasil', 'result')->name('result');
     Route::post('/sesi/{practiceSession}/pesan/{message}/nilai', 'rate')->scopeBindings()->middleware('throttle:60,1')->name('rate');

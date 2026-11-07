@@ -24,6 +24,7 @@ from typing import Dict, List, Optional
 
 import httpx
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
@@ -313,3 +314,165 @@ async def improve(req: ImproveRequest):
             results.append({"key": item.key, "improved": text})
 
     return {"items": results, "model": EXAM_MODEL}
+
+
+# ---------------------------------------------------------------------------
+# Streaming: kalimat pertama sudah bisa diucapkan selagi model masih menulis
+# ---------------------------------------------------------------------------
+
+class RespondStreamRequest(RespondRequest):
+    generate_voice: bool = True
+    # Kirim audio di dalam stream (base64) agar browser tidak perlu request tambahan.
+    # Penting di Windows: `php artisan serve` hanya punya satu worker.
+    inline_audio: bool = False
+
+
+def audio_payload(filename: Optional[str], inline: bool) -> Dict:
+    if not filename:
+        return {"audio_file": None}
+    if not inline:
+        return {"audio_file": filename}
+    import base64
+    import voice_engine
+
+    path = os.path.join(voice_engine.AUDIO_OUTPUT_DIR, os.path.basename(filename))
+    try:
+        with open(path, "rb") as handle:
+            encoded = base64.b64encode(handle.read()).decode("ascii")
+        os.unlink(path)
+    except OSError:
+        return {"audio_file": filename}
+    mime = "audio/wav" if filename.endswith(".wav") else "audio/mpeg"
+    return {"audio_file": None, "audio_data": f"data:{mime};base64,{encoded}"}
+
+
+_ABBREVIATIONS = re.compile(r"\b(prof|dr|ir|pak|bu|bpk|dll|dsb|dst|no|vs|mr|mrs|ms|st|jl|tbk|pt)\.$", re.IGNORECASE)
+
+
+def split_sentences(buffer: str, final: bool = False):
+    """Ambil kalimat utuh dari buffer streaming. Sisanya dikembalikan untuk ditunggu."""
+    sentences = []
+    position = 0
+    for match in re.finditer(r"[.!?…]+[\"')\]]?(?=\s)", buffer):
+        candidate = buffer[position:match.end()].strip()
+        # Jangan memotong singkatan ("Prof.") atau kalimat yang terlalu pendek ("Oke.").
+        if len(candidate) < 14 or _ABBREVIATIONS.search(candidate):
+            continue
+        sentences.append(candidate)
+        position = match.end()
+    rest = buffer[position:].lstrip()
+    if final and rest.strip():
+        sentences.append(rest.strip())
+        rest = ""
+    return sentences, rest
+
+
+async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temperature: float):
+    """Token-by-token dari Ollama (NDJSON)."""
+    timeout = httpx.Timeout(30.0, connect=2.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        async with client.stream(
+            "POST",
+            f"{OLLAMA_BASE_URL}/api/chat",
+            json={
+                "model": EXAM_MODEL,
+                "messages": messages,
+                "stream": True,
+                "keep_alive": "60m",
+                "options": {"temperature": temperature, "top_p": 0.9, "repeat_penalty": 1.12, "num_predict": num_predict, "num_ctx": 4096},
+            },
+        ) as response:
+            response.raise_for_status()
+            async for line in response.aiter_lines():
+                if not line.strip():
+                    continue
+                data = json.loads(line)
+                chunk = data.get("message", {}).get("content", "")
+                if chunk:
+                    yield chunk
+                if data.get("done"):
+                    break
+
+
+def _line(payload: Dict) -> str:
+    return json.dumps(payload, ensure_ascii=False) + "\n"
+
+
+@router.post("/respond/stream")
+async def respond_stream(req: RespondStreamRequest):
+    """
+    Seperti /respond, tetapi mengirim NDJSON per kalimat:
+      {"type": "sentence", "text": "...", "audio_file": "tts_x.wav"}
+      ...
+      {"type": "done", "reply": "...", "issues": [...], "first_sentence_ms": 640}
+    Untuk directive yang bertanya, generasi berhenti di pertanyaan pertama.
+    """
+    # Import di sini agar exam_engine tetap bisa dites tanpa dependensi suara.
+    import voice_engine
+
+    messages = [m.model_dump() for m in req.messages]
+    asks = req.directive in ("follow_up", "next", "clarify")
+    max_sentences = {"next": 3, "follow_up": 2, "clarify": 2}.get(req.directive, 1)
+    num_predict = {"next": 120, "follow_up": 90, "clarify": 100}.get(req.directive, 55)
+    temperature = 0.8 if req.role_type in ("hrd", "investor") else 0.7
+
+    async def generate():
+        started = time.time()
+        first_ms = None
+        spoken: List[str] = []
+        buffer = ""
+        finished = False
+
+        async def emit(sentence: str):
+            nonlocal first_ms
+            # A chunk can hold a short fragment glued to the next sentence ("Oke. Lalu ...?"); keep all of it.
+            text = clean_reply(sentence, max_sentences=3)
+            if not text or (req.directive == "react" and text.endswith("?")):
+                return None
+            spoken.append(text)
+            audio = await voice_engine.synthesize(text, req.role_type, req.language) if req.generate_voice else None
+            if first_ms is None:
+                first_ms = int((time.time() - started) * 1000)
+            return _line({"type": "sentence", "text": text, **audio_payload(audio, req.inline_audio)})
+
+        try:
+            async for chunk in ollama_stream(messages, num_predict, temperature):
+                buffer += chunk
+                sentences, buffer = split_sentences(buffer)
+                for sentence in sentences:
+                    line = await emit(sentence)
+                    if line:
+                        yield line
+                    if (asks and spoken and spoken[-1].endswith("?")) or len(spoken) >= max_sentences:
+                        finished = True
+                        break
+                if finished:
+                    break
+            if not finished:
+                for sentence in split_sentences(buffer, final=True)[0]:
+                    if len(spoken) >= max_sentences:
+                        break
+                    line = await emit(sentence)
+                    if line:
+                        yield line
+        except Exception as exc:  # Ollama mati / putus di tengah
+            yield _line({"type": "error", "message": str(exc)})
+
+        reply = " ".join(spoken)
+        issues = quality_issues(reply, req.answer, req.directive, req.language)
+        if reply and not issues:
+            harvest({
+                "ts": int(time.time()), "session_id": req.session_id, "mode": req.mode, "role_type": req.role_type,
+                "language": req.language, "directive": req.directive, "part": req.part, "messages": messages,
+                "reply": reply, "model": EXAM_MODEL, "reviewed": False,
+            })
+        yield _line({
+            "type": "done",
+            "reply": reply,
+            "issues": issues,
+            "model": EXAM_MODEL,
+            "first_sentence_ms": first_ms,
+            "latency_ms": int((time.time() - started) * 1000),
+        })
+
+    return StreamingResponse(generate(), media_type="application/x-ndjson")

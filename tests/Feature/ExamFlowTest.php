@@ -6,6 +6,7 @@ use App\Models\PracticeSession;
 use App\Models\User;
 use App\Services\Exam\ExamFlowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -221,14 +222,102 @@ class ExamFlowTest extends TestCase
 
     public function test_status_reports_which_ai_engine_is_answering(): void
     {
-        Http::fake(['*/health/ollama' => Http::response(['ollama_active' => true, 'available_models' => ['voic-coach:latest']])]);
-        $this->getJson(route('exam.status'))->assertOk()->assertJson(['engine' => 'local_llm', 'model' => 'voic-coach:latest']);
+        Http::fake(['*/voice/status' => Http::response([
+            'llm' => ['available' => true, 'models' => ['qwen2.5:3b', 'voic-coach:latest']],
+            'stt' => ['available' => true],
+            'tts' => ['engine' => 'piper', 'local' => true],
+        ])]);
+        $this->getJson(route('exam.status'))->assertOk()->assertJson([
+            'engine' => 'local_llm',
+            'model' => 'voic-coach:latest',
+            'stt_local' => true,
+            'tts_local' => true,
+        ]);
     }
 
     public function test_status_reports_offline_fallback_when_no_ai_is_reachable(): void
     {
         $this->offline();
         $this->getJson(route('exam.status'))->assertOk()->assertJson(['engine' => 'offline_composer']);
+    }
+
+    public function test_voice_answer_is_transcribed_locally_and_reply_streams_sentence_by_sentence(): void
+    {
+        $ndjson = implode("\n", [
+            json_encode(['type' => 'sentence', 'text' => 'Dua ribu gambar dari pabrik itu dataset yang lumayan.', 'audio_file' => 'tts_1_a.wav']),
+            json_encode(['type' => 'sentence', 'text' => 'Ngomong-ngomong, apa yang bikin Anda tertarik ke topik ini?', 'audio_file' => null, 'audio_data' => 'data:audio/wav;base64,UklGRg==']),
+            json_encode(['type' => 'done', 'reply' => '...', 'issues' => []]),
+        ])."\n";
+        Http::fake([
+            '*/stt' => Http::response(['text' => 'Judul penelitian saya deteksi cacat kain dengan YOLOv8 memakai 2000 gambar dari pabrik tekstil.', 'engine' => 'faster-whisper:small']),
+            '*/exam/respond/stream' => Http::response($ndjson, 200, ['Content-Type' => 'application/x-ndjson']),
+            '*' => Http::response([], 503),
+        ]);
+
+        $session = $this->startExam('sidang', [1]);
+        $response = $this->post(route('exam.answer.stream', $session), [
+            'audio' => UploadedFile::fake()->create('answer.webm', 40, 'audio/webm'),
+            'duration_seconds' => 9,
+            'timestamp_seconds' => 9,
+        ])->assertOk();
+
+        $events = array_map(fn ($line) => json_decode($line, true), array_values(array_filter(explode("\n", $response->streamedContent()))));
+        $this->assertSame(['transcript', 'sentence', 'sentence', 'done'], array_column($events, 'type'));
+        $this->assertStringContainsString('YOLOv8', $events[0]['text']);
+        $this->assertSame(route('exam.audio', 'tts_1_a.wav'), $events[1]['audio_url']);
+        $this->assertSame('data:audio/wav;base64,UklGRg==', $events[2]['audio_url']);
+        $this->assertSame(1, $events[3]['state']['part']);
+
+        $ai = $session->messages()->where('sender', 'ai')->latest('id')->first();
+        $this->assertSame('Dua ribu gambar dari pabrik itu dataset yang lumayan. Ngomong-ngomong, apa yang bikin Anda tertarik ke topik ini?', $ai->message);
+        $this->assertSame('local_llm', $ai->meta['engine']);
+        $this->assertSame(route('exam.audio', 'tts_1_a.wav'), $ai->audio_url);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/exam/respond/stream') && $request['inline_audio'] === true);
+        $this->assertStringContainsString('YOLOv8', $session->messages()->where('sender', 'user')->first()->message);
+    }
+
+    public function test_stream_falls_back_to_one_offline_sentence_when_no_model_runs(): void
+    {
+        $this->offline();
+        $session = $this->startExam('wawancara', [1]);
+
+        $response = $this->post(route('exam.answer.stream', $session), [
+            'answer' => 'Saya lulusan informatika dan dua tahun jadi web developer di agensi digital yang pegang proyek klien e-commerce.',
+            'duration_seconds' => 12,
+            'timestamp_seconds' => 12,
+        ])->assertOk();
+
+        $events = array_map(fn ($line) => json_decode($line, true), array_values(array_filter(explode("\n", $response->streamedContent()))));
+        $this->assertSame(['sentence', 'done'], array_column($events, 'type'));
+        $this->assertStringEndsWith('?', $events[0]['text']);
+        $this->assertNull($events[0]['audio_url']);
+    }
+
+    public function test_silent_recording_asks_the_candidate_to_repeat_without_recording_anything(): void
+    {
+        Http::fake(['*/stt' => Http::response(['text' => '']), '*' => Http::response([], 503)]);
+        $session = $this->startExam('wawancara', [1]);
+
+        $response = $this->post(route('exam.answer.stream', $session), [
+            'audio' => UploadedFile::fake()->create('answer.webm', 10, 'audio/webm'),
+            'duration_seconds' => 3,
+            'timestamp_seconds' => 3,
+        ])->assertOk();
+
+        $events = array_map(fn ($line) => json_decode($line, true), array_values(array_filter(explode("\n", $response->streamedContent()))));
+        $this->assertSame(['transcript', 'retry'], array_column($events, 'type'));
+        $this->assertSame(0, $session->messages()->where('sender', 'user')->count());
+    }
+
+    public function test_audio_proxy_only_serves_generated_voice_files(): void
+    {
+        Http::fake(['*/audio/tts_1_a.wav' => Http::response('RIFF-fake-wav', 200)]);
+
+        $response = $this->get(route('exam.audio', 'tts_1_a.wav'))->assertOk();
+        $this->assertSame('RIFF-fake-wav', $response->streamedContent());
+        $this->assertSame('audio/wav', $response->headers->get('Content-Type'));
+
+        $this->get('/latihan/audio/..%2F.env')->assertNotFound();
     }
 
     public function test_other_visitors_cannot_answer_someone_elses_session(): void

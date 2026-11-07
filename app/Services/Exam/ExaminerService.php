@@ -57,54 +57,222 @@ class ExaminerService
      *     turn: int,
      *     session_id: int
      * }  $turn
+     * @param  (callable(string, ?string): void)|null  $onSentence  Receives each sentence (text, audio URL) as soon as it can be spoken.
      * @return array{text: string, reply: string, audio_url: ?string, engine: string}
      */
-    public function respond(array $turn): array
+    public function respond(array $turn, ?callable $onSentence = null): array
     {
         $messages = $this->buildMessages($turn);
-        $baseUrl = (string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001');
+        $baseUrl = $this->baseUrl();
 
+        // Streaming: sentences are spoken while the model is still writing. A pure reaction
+        // is followed by a fixed announcement, so it is not worth streaming.
+        if ($onSentence !== null && $turn['directive'] !== self::DIRECTIVE_REACT) {
+            $streamed = $this->streamLocalModel($turn, $messages, $onSentence);
+            if ($streamed !== null) {
+                return $streamed;
+            }
+        }
+
+        $result = null;
         $local = $this->callLocalModel($turn, $messages);
         if ($local !== null && ($resolved = $this->resolveModelReply($local, $turn)) !== null) {
-            return $resolved + [
-                'audio_url' => $this->synthesize($baseUrl, $resolved['text'], $turn),
-                'engine' => 'local_llm',
-            ];
+            $result = $resolved + ['audio_url' => $this->synthesize($baseUrl, $resolved['text'], $turn), 'engine' => 'local_llm'];
         }
 
-        $cloud = $this->callCloudModel($messages);
-        if ($cloud !== null && ($resolved = $this->resolveModelReply($cloud, $turn)) !== null) {
-            return $resolved + ['audio_url' => null, 'engine' => 'cloud_llm'];
+        if ($result === null) {
+            $cloud = $this->callCloudModel($messages);
+            if ($cloud !== null && ($resolved = $this->resolveModelReply($cloud, $turn)) !== null) {
+                $result = $resolved + ['audio_url' => null, 'engine' => 'cloud_llm'];
+            }
         }
 
-        return $this->offlineTurn($turn) + ['audio_url' => null, 'engine' => 'offline_composer'];
+        $result ??= $this->offlineTurn($turn) + ['audio_url' => null, 'engine' => 'offline_composer'];
+
+        if ($onSentence !== null) {
+            $audio = $result['audio_url'] ?? $this->synthesize($baseUrl, $result['text'], $turn, inline: true);
+            $onSentence($result['text'], $audio);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Stream the turn from the local model sentence by sentence.
+     * Returns null when nothing was spoken, so the caller can fall back.
+     *
+     * @param  array<string, mixed>  $turn
+     * @param  list<array{role: string, content: string}>  $messages
+     * @return array{text: string, reply: string, audio_url: ?string, engine: string}|null
+     */
+    protected function streamLocalModel(array $turn, array $messages, callable $onSentence): ?array
+    {
+        $spoken = [];
+        $firstAudio = null;
+
+        try {
+            $response = Http::connectTimeout(1.5)
+                ->timeout((int) Config::get('services.ai_service.timeout', 35))
+                ->withOptions(['stream' => true])
+                ->post($this->baseUrl().'/exam/respond/stream', [
+                    'session_id' => $turn['session_id'],
+                    'mode' => $turn['mode'],
+                    'role_type' => $turn['role_type'],
+                    'language' => $turn['language'],
+                    'directive' => $turn['directive'],
+                    'part' => $turn['part'],
+                    'question' => $turn['question'],
+                    'answer' => $turn['answer'],
+                    'messages' => $messages,
+                    'generate_voice' => true,
+                    // Audio travels inside the stream: no extra request while the stream is open.
+                    'inline_audio' => true,
+                ]);
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $body = $response->toPsrResponse()->getBody();
+            $buffer = '';
+            while (! $body->eof()) {
+                $buffer .= $body->read(1024);
+                while (($newline = strpos($buffer, "\n")) !== false) {
+                    $event = json_decode(substr($buffer, 0, $newline), true);
+                    $buffer = substr($buffer, $newline + 1);
+
+                    if (($event['type'] ?? null) === 'sentence' && trim((string) $event['text']) !== '') {
+                        $text = $this->clean((string) $event['text']);
+                        $audioUrl = $this->audioSource($event['audio_data'] ?? null, $event['audio_file'] ?? null);
+                        if ($audioUrl !== null && ! str_starts_with($audioUrl, 'data:')) {
+                            $firstAudio ??= $audioUrl;
+                        }
+                        $spoken[] = $text;
+                        $onSentence($text, $audioUrl);
+                    }
+                }
+            }
+        } catch (\Throwable $exception) {
+            Log::info('Local examiner stream unavailable: '.$exception->getMessage());
+        }
+
+        if ($spoken === []) {
+            return null;
+        }
+
+        $reply = trim(implode(' ', $spoken));
+
+        // The model must end an asking turn with a question; if it did not, finish it for it.
+        if (! str_contains($reply, '?')) {
+            $tail = match ($turn['directive']) {
+                self::DIRECTIVE_NEXT => trim((string) ($turn['planned_question'] ?? '')) ?: trim((string) $turn['scripted']),
+                self::DIRECTIVE_CLARIFY => $this->offlineClarify($turn),
+                default => $this->offlineProbe($turn),
+            };
+            if ($tail !== '') {
+                $onSentence($tail, $this->synthesize($this->baseUrl(), $tail, $turn, inline: true));
+                $reply = trim($reply.' '.$tail);
+            }
+        }
+
+        return ['text' => $reply, 'reply' => $reply, 'audio_url' => $firstAudio, 'engine' => 'local_llm'];
+    }
+
+    /**
+     * Voice a fixed line (opening greeting) with the local TTS, if available.
+     */
+    public function speak(string $text, string $roleType, string $language): ?string
+    {
+        return $this->synthesize($this->baseUrl(), $text, ['role_type' => $roleType, 'language' => $language]);
+    }
+
+    /**
+     * Playable source for generated audio: an inline data URI, or a proxied file URL.
+     */
+    protected function audioSource(?string $data, ?string $file): ?string
+    {
+        if ($data !== null && str_starts_with($data, 'data:audio/')) {
+            return $data;
+        }
+
+        return $file ? $this->audioUrl($file) : null;
+    }
+
+    /**
+     * Base URL of the local FastAPI service.
+     */
+    protected function baseUrl(): string
+    {
+        return rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/');
+    }
+
+    /**
+     * Public URL for a generated audio file, proxied through Laravel so phones on the booth
+     * Wi-Fi or a tunnel can play it too.
+     */
+    public function audioUrl(string $file): string
+    {
+        return route('exam.audio', ['file' => basename($file)]);
+    }
+
+    /**
+     * Transcribe a recorded answer with the local Whisper model.
+     *
+     * @return array{text: string, engine: string}|null
+     */
+    public function transcribe(string $audioPath, string $language, ?string $topic = null): ?array
+    {
+        try {
+            $response = Http::connectTimeout(1.5)->timeout(40)
+                ->attach('audio', (string) file_get_contents($audioPath), 'answer.webm')
+                ->post($this->baseUrl().'/stt', array_filter([
+                    'language' => $language,
+                    'prompt' => $topic,
+                ]));
+
+            if (! $response->successful()) {
+                return null;
+            }
+
+            return ['text' => trim((string) $response->json('text', '')), 'engine' => (string) $response->json('engine', 'whisper')];
+        } catch (\Throwable $exception) {
+            Log::info('Local STT unavailable: '.$exception->getMessage());
+
+            return null;
+        }
     }
 
     /**
      * Which engine will most likely answer the next turn, cached briefly.
      *
-     * @return array{engine: string, model: ?string}
+     * @return array{engine: string, model: ?string, stt_local: bool, tts_local: bool}
      */
     public function availability(): array
     {
-        return Cache::remember('voic.examiner.availability', 20, function (): array {
-            $baseUrl = (string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001');
+        return Cache::remember('voic.examiner.availability', 15, function (): array {
+            $status = ['engine' => 'offline_composer', 'model' => null, 'stt_local' => false, 'tts_local' => false];
 
             try {
-                $response = Http::connectTimeout(1.0)->timeout(2)->get("{$baseUrl}/health/ollama");
-                $models = (array) $response->json('available_models', []);
-                if ($response->successful() && $response->json('ollama_active') && $models !== []) {
-                    return ['engine' => 'local_llm', 'model' => (string) $models[0]];
+                $response = Http::connectTimeout(1.0)->timeout(3)->get($this->baseUrl().'/voice/status');
+                if ($response->successful()) {
+                    $models = (array) $response->json('llm.models', []);
+                    $status['stt_local'] = (bool) $response->json('stt.available');
+                    $status['tts_local'] = (bool) $response->json('tts.local');
+                    if ($response->json('llm.available') && $models !== []) {
+                        $preferred = collect($models)->first(fn ($name) => str_starts_with((string) $name, 'voic-coach'));
+
+                        return ['engine' => 'local_llm', 'model' => (string) ($preferred ?? $models[0])] + $status;
+                    }
                 }
             } catch (\Throwable) {
                 // Fall through to the next engine.
             }
 
             if ((string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '') {
-                return ['engine' => 'cloud_llm', 'model' => null];
+                $status['engine'] = 'cloud_llm';
             }
 
-            return ['engine' => 'offline_composer', 'model' => null];
+            return $status;
         });
     }
 
@@ -403,18 +571,24 @@ class ExaminerService
      *
      * @param  array<string, mixed>  $turn
      */
-    protected function synthesize(string $baseUrl, string $text, array $turn): ?string
+    protected function synthesize(string $baseUrl, string $text, array $turn, bool $inline = false): ?string
     {
         try {
             $response = Http::connectTimeout(1.0)->timeout(5)->post("{$baseUrl}/tts", [
                 'text' => $text,
                 'role_type' => $turn['role_type'],
                 'language' => $turn['language'],
+                'inline' => $inline,
             ]);
 
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $data = $response->json('audio_data');
             $file = $response->json('audio_file');
 
-            return $response->successful() && $file ? "{$baseUrl}/audio/{$file}" : null;
+            return $this->audioSource(is_string($data) ? $data : null, is_string($file) ? $file : null);
         } catch (\Throwable) {
             return null;
         }

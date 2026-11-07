@@ -39,3 +39,7 @@ mobile/flutter/build/
 /ai_service/datasets/harvest/
 /ai_service/datasets/sft/
 /ai_service/outputs/
+
+/ai_service/models/
+/ai_service/Modelfile.local
+/public/vendor/mediapipe/

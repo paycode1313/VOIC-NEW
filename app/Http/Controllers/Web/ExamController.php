@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExamAnswerRequest;
+use App\Http\Requests\ExamStreamAnswerRequest;
 use App\Http\Requests\StartExamRequest;
 use App\Models\AiRole;
 use App\Models\PracticeSession;
@@ -16,8 +17,11 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExamController extends Controller
 {
@@ -152,6 +156,91 @@ class ExamController extends Controller
         );
 
         return response()->json($payload);
+    }
+
+    /**
+     * Same as answer(), but streams NDJSON so the browser can speak each examiner sentence
+     * as soon as it exists. Accepts a recorded answer (transcribed by local Whisper) or text.
+     *
+     * Events: transcript, sentence (text + audio_url), done (exam state), retry, error.
+     */
+    public function answerStream(ExamStreamAnswerRequest $request, PracticeSession $practiceSession, ExamFlowService $flow, ExaminerService $examiner): StreamedResponse|JsonResponse
+    {
+        abort_unless($practiceSession->isExam(), 404);
+
+        if (($practiceSession->exam_state['phase'] ?? null) === ExamFlowService::PHASE_COMPLETED) {
+            return response()->json(['message' => 'Sesi sudah selesai.'], 409);
+        }
+
+        $audioPath = $request->file('audio')?->getRealPath();
+        $typed = trim((string) $request->validated('answer', ''));
+        $state = $practiceSession->exam_state;
+
+        return response()->stream(function () use ($request, $practiceSession, $flow, $examiner, $audioPath, $typed, $state) {
+            $send = function (array $event): void {
+                echo json_encode($event, JSON_UNESCAPED_UNICODE)."\n";
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+            };
+
+            $answer = $typed;
+            if ($audioPath !== null && $answer === '') {
+                $transcript = $examiner->transcribe($audioPath, $state['language'] ?? 'id', $state['topic'] ?? null);
+                if ($transcript === null) {
+                    $send(['type' => 'error', 'code' => 'stt_unavailable', 'message' => 'Pengenal suara lokal tidak aktif.']);
+
+                    return;
+                }
+                $answer = $transcript['text'];
+                $send(['type' => 'transcript', 'text' => $answer, 'engine' => $transcript['engine']]);
+
+                if ($answer === '') {
+                    $send(['type' => 'retry', 'message' => 'Suaramu belum terdengar jelas, coba ulangi ya.']);
+
+                    return;
+                }
+            }
+
+            $payload = $flow->answer(
+                $practiceSession,
+                $answer,
+                (int) $request->validated('duration_seconds'),
+                $request->validated('facial'),
+                (int) $request->validated('timestamp_seconds'),
+                fn (string $text, ?string $audioUrl) => $send(['type' => 'sentence', 'text' => $text, 'audio_url' => $audioUrl]),
+            );
+
+            $send(['type' => 'done', 'state' => $payload]);
+        }, 200, [
+            'Content-Type' => 'application/x-ndjson; charset=UTF-8',
+            'Cache-Control' => 'no-cache, no-store',
+            'X-Accel-Buffering' => 'no',
+        ]);
+    }
+
+    /**
+     * Proxy a generated voice file from the local AI service, so remote devices can play it.
+     */
+    public function audio(string $file): StreamedResponse
+    {
+        abort_unless(preg_match('/^tts_[A-Za-z0-9_]+\.(wav|mp3)$/', $file) === 1, 404);
+
+        $response = Http::timeout(10)->withOptions(['stream' => true])
+            ->get(rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/').'/audio/'.$file);
+        abort_unless($response->successful(), 404);
+
+        $body = $response->toPsrResponse()->getBody();
+
+        return response()->stream(function () use ($body) {
+            while (! $body->eof()) {
+                echo $body->read(8192);
+            }
+        }, 200, [
+            'Content-Type' => str_ends_with($file, '.wav') ? 'audio/wav' : 'audio/mpeg',
+            'Cache-Control' => 'private, max-age=3600',
+        ]);
     }
 
     /**

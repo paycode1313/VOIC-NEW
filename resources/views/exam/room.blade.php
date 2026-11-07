@@ -8,6 +8,7 @@
         'answerUrl' => route('exam.answer', $session),
         'finishUrl' => route('exam.finish', $session),
         'statusUrl' => route('exam.status'),
+        'streamUrl' => route('exam.answer.stream', $session),
     ];
 @endphp
 
@@ -89,6 +90,10 @@
                             <span class="h-1.5 w-1.5 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-500' : 'bg-emerald-500'"></span>
                             <span x-text="{ local_llm: t('AI lokal aktif', 'Local AI on'), cloud_llm: t('AI cloud aktif', 'Cloud AI on'), offline_composer: t('AI offline · mode cadangan', 'AI offline · fallback mode') }[engine]"></span>
                         </span>
+                        <span x-show="aiStatus" x-cloak class="mt-1 text-[11px] text-slate-500"
+                              x-text="t('Telinga: ', 'Ears: ') + (voiceMode === 'local' ? t('Whisper lokal', 'local Whisper') : voiceMode === 'browser' ? t('browser (online)', 'browser (online)') : t('ketik', 'typing'))
+                                + ' · ' + t('Suara: ', 'Voice: ') + (aiStatus?.tts_local ? t('Piper lokal', 'local Piper') : t('cadangan', 'fallback'))
+                                + (firstSentenceMs ? ' · ' + t('respon ', 'reply ') + (firstSentenceMs / 1000).toFixed(1) + t(' dtk', 's') : '')"></span>
                         <p class="text-xs text-slate-500" x-text="{
                             speaking: t('Sedang berbicara…', 'Speaking…'),
                             listening: t('Mendengarkan kamu', 'Listening to you'),
@@ -145,9 +150,23 @@
                         <template x-if="!typingMode">
                             <div class="flex items-center gap-3">
                                 <div class="min-h-[3rem] flex-1 rounded-2xl bg-[#f6f6f3] px-4 py-3 text-[15px] dark:bg-white/5">
-                                    <span x-show="liveAnswer" x-text="finalText"></span>
-                                    <span x-show="interim" class="text-slate-400" x-text="' ' + interim"></span>
-                                    <span x-show="!liveAnswer" class="text-slate-400" x-text="(status === 'listening' || status === 'long_turn') ? t('Silakan mulai bicara…', 'Start speaking…') : t('Mikrofon aktif setelah penguji selesai bicara', 'The mic opens after the examiner finishes')"></span>
+                                    <template x-if="voiceMode === 'local' && isListening">
+                                        <div class="flex items-center gap-3">
+                                            <span class="flex h-6 items-end gap-0.5" aria-hidden="true">
+                                                <template x-for="i in 5" :key="i">
+                                                    <span class="w-1 rounded-full bg-rose-500 transition-all duration-75" :style="`height: ${Math.max(4, Math.min(24, micLevel * (0.4 + (i % 3) * 0.3)))}px`"></span>
+                                                </template>
+                                            </span>
+                                            <span class="text-slate-500" x-text="vad.speaking ? t('Merekam jawabanmu… ', 'Recording your answer… ') + recordSeconds + t(' dtk', 's') : t('Silakan mulai bicara…', 'Start speaking…')"></span>
+                                        </div>
+                                    </template>
+                                    <template x-if="voiceMode !== 'local' || !isListening">
+                                        <div>
+                                            <span x-show="liveAnswer" x-text="finalText"></span>
+                                            <span x-show="interim" class="text-slate-400" x-text="' ' + interim"></span>
+                                            <span x-show="!liveAnswer" class="text-slate-400" x-text="hint || (isListening ? t('Silakan mulai bicara…', 'Start speaking…') : status === 'thinking' ? t('Mendengarkan ulang jawabanmu…', 'Processing your answer…') : t('Mikrofon aktif setelah penguji selesai bicara', 'The mic opens after the examiner finishes'))"></span>
+                                        </div>
+                                    </template>
                                 </div>
                                 <button type="button" @click="submitAnswer()" :disabled="!(status === 'listening' || status === 'long_turn')"
                                         class="relative inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white transition disabled:opacity-40"
@@ -174,11 +193,17 @@
                         <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                             <div class="flex items-center gap-3">
                                 <button type="button" @click="repeatQuestion()" :disabled="status !== 'listening'" class="font-semibold hover:text-slate-900 disabled:opacity-40 dark:hover:text-white">↻ {{ $isEn ? 'Repeat question' : 'Ulangi pertanyaan' }}</button>
-                                <button type="button" x-show="speechSupported" @click="typingMode = !typingMode; if (!typingMode && status === 'listening') startListening()" class="font-semibold hover:text-slate-900 dark:hover:text-white"
+                                <button type="button" x-show="speechSupported || aiStatus?.stt_local"
+                                        @click="stopListening(true); voiceMode = typingMode ? ((aiStatus?.stt_local && micReady) ? 'local' : (speechSupported ? 'browser' : 'typing')) : 'typing'; if (status === 'listening') startListening()"
+                                        class="font-semibold hover:text-slate-900 dark:hover:text-white"
                                         x-text="typingMode ? t('🎙️ Jawab dengan suara', '🎙️ Answer by voice') : t('⌨️ Ketik saja', '⌨️ Type instead')"></button>
+                                <label class="inline-flex cursor-pointer items-center gap-1.5 font-semibold" :title="t('Bicara saat penguji berbicara akan memotongnya. Pakai headset agar suara penguji tidak terdengar mic.', 'Speaking while the examiner talks interrupts them. Use a headset so the mic does not hear the examiner.')">
+                                    <input type="checkbox" x-model="bargeIn" class="h-3.5 w-3.5 rounded border-black/20 text-slate-900 focus:ring-0">
+                                    {{ $isEn ? 'Allow interrupting (headset)' : 'Boleh menyela (headset)' }}
+                                </label>
                             </div>
                             <span x-show="status === 'long_turn' && !typingMode">{{ $isEn ? 'Tap the mic when you are done' : 'Tekan mikrofon jika sudah selesai' }}</span>
-                            <span x-show="status === 'listening' && !typingMode">{{ $isEn ? 'Pause ~3s or tap the mic to send' : 'Diam ~3 detik atau tekan mikrofon untuk kirim' }}</span>
+                            <span x-show="status === 'listening' && !typingMode">{{ $isEn ? 'Pause for a second or tap the mic to send' : 'Jeda sebentar atau tekan mikrofon untuk kirim' }}</span>
                         </div>
                     </div>
                 </div>

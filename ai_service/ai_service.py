@@ -13,17 +13,17 @@ import asyncio
 from contextlib import asynccontextmanager
 import httpx
 from typing import List, Optional, Dict, Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from ai_learner import ai_learner
 from exam_engine import router as exam_router, quality_issues
+import voice_engine
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 DEFAULT_MODEL = os.getenv("OLLAMA_MODEL", "voic-coach")
-AUDIO_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "audio_outputs")
-os.makedirs(AUDIO_OUTPUT_DIR, exist_ok=True)
+AUDIO_OUTPUT_DIR = voice_engine.AUDIO_OUTPUT_DIR
 
 
 def cleanup_old_audio_files(max_age_seconds: int = 7200):
@@ -63,6 +63,9 @@ async def periodic_warmup_and_cleanup():
 async def lifespan(app: FastAPI):
     """Lifespan context manager modern (menggantikan @app.on_event('startup') yang deprecated)."""
     task = asyncio.create_task(periodic_warmup_and_cleanup())
+    # Muat Whisper & Piper di latar belakang agar giliran pertama peserta tidak lambat.
+    asyncio.get_running_loop().run_in_executor(None, voice_engine.warmup_stt)
+    asyncio.get_running_loop().run_in_executor(None, voice_engine.warmup_tts)
     yield
     task.cancel()
 
@@ -139,6 +142,7 @@ class TTSRequest(BaseModel):
     text: str
     role_type: Optional[str] = "dosen_penguji"
     language: Optional[str] = "id"
+    inline: Optional[bool] = False
 
 
 # =====================================================================
@@ -634,22 +638,56 @@ async def process_conclude(req: ConcludeRequest):
 
 @app.get("/audio/{filename}")
 def get_audio(filename: str):
-    """Mengambil file audio suara balasan AI."""
-    file_path = os.path.join(AUDIO_OUTPUT_DIR, filename)
-    if os.path.exists(file_path):
-        return FileResponse(file_path, media_type="audio/mpeg")
+    """Mengambil file audio suara balasan AI (MP3 dari edge-tts atau WAV dari Piper)."""
+    safe_name = os.path.basename(filename)
+    file_path = os.path.join(AUDIO_OUTPUT_DIR, safe_name)
+    if safe_name == filename and os.path.exists(file_path):
+        media_type = "audio/wav" if safe_name.endswith(".wav") else "audio/mpeg"
+        return FileResponse(file_path, media_type=media_type)
     raise HTTPException(status_code=404, detail="File audio tidak ditemukan")
+
+
+@app.post("/stt")
+async def speech_to_text(audio: UploadFile = File(...), language: str = Form("id"), prompt: Optional[str] = Form(None)):
+    """Speech-to-text lokal (faster-whisper). Dipakai Laravel saat peserta menjawab dengan suara."""
+    if not voice_engine.stt_available():
+        raise HTTPException(status_code=503, detail="STT lokal belum terpasang. Jalankan: python setup_models.py")
+    data = await audio.read()
+    if len(data) < 1000:
+        return {"text": "", "duration": 0, "latency_ms": 0, "engine": "faster-whisper"}
+    try:
+        return await asyncio.to_thread(voice_engine.transcribe, data, language, prompt)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"STT gagal: {exc}")
+
+
+@app.get("/voice/status")
+async def voice_status():
+    """Status mesin suara & otak AI, untuk badge di ruang ujian."""
+    ollama_ok, models = False, []
+    try:
+        async with httpx.AsyncClient(timeout=1.5) as client:
+            res = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
+            if res.status_code == 200:
+                models = [m["name"] for m in res.json().get("models", [])]
+                ollama_ok = True
+    except Exception:
+        pass
+    return {"llm": {"available": ollama_ok, "models": models, "local": True}, **voice_engine.status()}
 
 
 @app.post("/tts")
 async def process_tts(req: TTSRequest):
-    """Sintesis suara instan berbasis karakter peran AI."""
+    """Sintesis suara (Piper lokal, cadangan edge-tts). `inline=true` mengembalikan audio base64."""
+    from exam_engine import audio_payload
+
     audio_file = await generate_tts_audio(req.text, req.role_type or "dosen_penguji", req.language or "id")
     if audio_file:
+        payload = audio_payload(audio_file, bool(req.inline))
         return {
             "success": True,
-            "audio_file": audio_file,
-            "audio_url": f"/audio/{audio_file}",
+            **payload,
+            "audio_url": f"/audio/{audio_file}" if payload.get("audio_file") else None,
         }
     return {
         "success": False,
@@ -659,35 +697,8 @@ async def process_tts(req: TTSRequest):
 
 
 async def generate_tts_audio(text: str, role_type: str, language: str = "id") -> Optional[str]:
-    """Menghasilkan file audio MP3 menggunakan edge-tts dengan prosodi karakter peran unik & nama anti-bentrok."""
-    try:
-        import edge_tts
-
-        if language == "en":
-            if role_type == "dosen_penguji":
-                voice, pitch, rate = "en-US-GuyNeural", "-5Hz", "-5%"
-            elif role_type == "hrd":
-                voice, pitch, rate = "en-US-JennyNeural", "+0Hz", "-4%"
-            else:
-                voice, pitch, rate = "en-US-BrianNeural", "+0Hz", "+12%"
-        else:
-            if role_type == "dosen_penguji":
-                voice, pitch, rate = "id-ID-ArdiNeural", "-4Hz", "-4%"
-            elif role_type == "hrd":
-                voice, pitch, rate = "id-ID-GadisNeural", "-1Hz", "-5%"
-            else:
-                voice, pitch, rate = "id-ID-ArdiNeural", "-1Hz", "+12%"
-
-        # Nama unik dengan milidetik + UUID pendek untuk mencegah race condition / cache browser
-        filename = f"tts_{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}.mp3"
-        output_path = os.path.join(AUDIO_OUTPUT_DIR, filename)
-
-        communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
-        await communicate.save(output_path)
-        return filename
-    except Exception as e:
-        print(f"TTS Generation notice: {e}")
-        return None
+    """TTS untuk semua endpoint: Piper lokal lebih dulu, edge-tts online sebagai cadangan."""
+    return await voice_engine.synthesize(text, role_type or "dosen_penguji", language or "id", AUDIO_OUTPUT_DIR)
 
 
 def generate_natural_fallback(req: ChatRequest) -> str:

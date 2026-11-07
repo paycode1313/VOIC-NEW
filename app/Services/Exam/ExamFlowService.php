@@ -66,7 +66,8 @@ class ExamFlowService
 
         $session->forceFill(['exam_state' => $state])->save();
 
-        $message = $this->recordExaminerMessage($session, $opening, null, $state, 'opening');
+        $audioUrl = $this->examiner->speak($opening, $definition['role_type'], $language);
+        $message = $this->recordExaminerMessage($session, $opening, $audioUrl, $state, 'opening');
 
         return $this->payload($session->refresh(), $message);
     }
@@ -75,9 +76,10 @@ class ExamFlowService
      * Record a candidate answer and produce the examiner's next turn.
      *
      * @param  array<string, mixed>|null  $facial
+     * @param  (callable(string, ?string): void)|null  $onSentence  Called with each examiner sentence as soon as it is ready.
      * @return array<string, mixed>
      */
-    public function answer(PracticeSession $session, string $answer, int $durationSeconds, ?array $facial, int $timestampSeconds): array
+    public function answer(PracticeSession $session, string $answer, int $durationSeconds, ?array $facial, int $timestampSeconds, ?callable $onSentence = null): array
     {
         $state = $session->exam_state;
         $mode = $state['mode'];
@@ -141,7 +143,7 @@ class ExamFlowService
             'transition' => $step['transition'],
             'turn' => (int) $state['turn'],
             'session_id' => $session->id,
-        ]);
+        ], $onSentence);
 
         $session->forceFill(['exam_state' => $state])->save();
 
@@ -436,7 +438,8 @@ class ExamFlowService
         return $session->messages()->create([
             'sender' => 'ai',
             'message' => $text,
-            'audio_url' => $audioUrl,
+            // Inline (data:) audio was already played from the stream and is too large to store.
+            'audio_url' => $audioUrl !== null && ! str_starts_with($audioUrl, 'data:') ? $audioUrl : null,
             'timestamp_seconds' => $timestampSeconds,
             'exam_part' => (int) $state['part'],
             'meta' => array_filter([

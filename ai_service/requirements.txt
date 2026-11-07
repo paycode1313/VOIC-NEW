@@ -2,4 +2,9 @@ fastapi>=0.110.0
 uvicorn>=0.28.0
 pydantic>=2.6.0
 httpx>=0.27.0
+python-multipart>=0.0.9
+# Suara lokal (offline): telinga & mulut AI
+faster-whisper>=1.1.0
+piper-tts>=1.3.0
+# Cadangan TTS online jika suara Piper belum diunduh
 edge-tts>=6.1.10

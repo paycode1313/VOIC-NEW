@@ -32,7 +32,15 @@ if "%ERRORLEVEL%"=="0" (
 )
 
 echo.
-echo [3/5] Menjalankan AI Service Python (FastAPI + voic-coach + TTS)...
+echo [3/5] Memeriksa model lokal (otak, telinga, suara, mata)...
+python ai_service\setup_models.py --check
+if not "%ERRORLEVEL%"=="0" (
+    echo   [!] Ada model lokal yang belum siap. Saat masih ada internet, jalankan:
+    echo       python ai_service\setup_models.py
+    echo       Tanpa model ini, sistem memakai cadangan (suara browser / jawaban cadangan).
+)
+echo.
+echo     Menjalankan AI Service Python (Ollama + Whisper + Piper)...
 netstat -ano | findstr /R ":8001 " >nul 2>&1
 if "%ERRORLEVEL%"=="0" (
     echo   [OK] AI Service Python sudah aktif di http://127.0.0.1:8001.
@@ -49,16 +57,17 @@ echo   [OK] Laravel aktif di http://localhost:8000
 echo.
 echo [5/5] Membuka Browser Aplikasi VOIC...
 ping 127.0.0.1 -n 4 >nul
-start http://localhost:8000/login
+start http://localhost:8000/latihan
 
 echo.
 echo ================================================================
 echo  SEMUA LAYANAN VOIC TELAH BERJALAN!
 echo  - Web Application : http://localhost:8000
-echo  - AI FastAPI      : http://127.0.0.1:8001
+echo  - Latihan ujian   : http://localhost:8000/latihan
+echo  - AI FastAPI      : http://127.0.0.1:8001  (status: /voice/status)
 echo  - Ollama LLM      : http://127.0.0.1:11434 (voic-coach GoPrep Engine)
 echo.
-echo  Gunakan akun yang telah terdaftar atau buat akun baru di halaman register.
+echo  Pengunjung bisa langsung latihan tanpa akun. Pakai headset agar fitur menyela berfungsi.
 echo ================================================================
 echo.
 echo Tekan tombol apa saja untuk menutup jendela launcher ini...
