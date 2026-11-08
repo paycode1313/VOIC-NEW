@@ -52,6 +52,43 @@
             </div>
         </section>
 
+        {{-- Take it home: QR to a signed, read-only copy of this report --}}
+        @unless ($shared)
+            <section class="mt-4 flex flex-col items-center gap-5 rounded-3xl border border-black/5 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03] sm:flex-row">
+                <div id="report-qr" data-url="{{ $shareUrl }}" class="h-32 w-32 shrink-0 rounded-xl bg-white p-1.5 [&_svg]:h-full [&_svg]:w-full" aria-label="{{ $isEn ? 'QR code to this report' : 'QR code rapor ini' }}"></div>
+                <div class="text-center sm:text-left">
+                    <p class="font-bold">{{ $isEn ? 'Take your report home' : 'Bawa pulang rapormu' }}</p>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                        {{ $isEn ? 'Scan with your phone camera. The link works for 7 days, no account needed.' : 'Pindai dengan kamera HP. Tautan berlaku 7 hari, tanpa perlu akun.' }}
+                    </p>
+                    @if (str_contains($shareUrl, '://localhost') || str_contains($shareUrl, '://127.0.0.1'))
+                        <p class="mt-2 rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
+                            {{ $isEn ? 'Operator: set VOIC_PUBLIC_URL (LAN IP or tunnel) so phones can open this.' : 'Operator: isi VOIC_PUBLIC_URL di .env (IP LAN atau tunnel) agar QR bisa dibuka di HP.' }}
+                        </p>
+                    @endif
+                    @if ($canManage)
+                        <form method="POST" action="{{ route('exam.destroy', $session) }}" class="mt-3"
+                              onsubmit="return confirm('{{ $isEn ? 'Delete this session, transcript and recordings permanently?' : 'Hapus sesi, transkrip, dan rekaman ini secara permanen?' }}')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-xs font-semibold text-rose-600 hover:underline">{{ $isEn ? 'Delete my data' : 'Hapus data saya' }}</button>
+                        </form>
+                    @endif
+                </div>
+            </section>
+            <script src="{{ asset('js/qrcode.min.js') }}"></script>
+            <script>
+                (function () {
+                    var box = document.getElementById('report-qr');
+                    if (!box || typeof qrcode !== 'function') return;
+                    var qr = qrcode(0, 'M');
+                    qr.addData(box.dataset.url);
+                    qr.make();
+                    box.innerHTML = qr.createSvgTag(3, 2);
+                })();
+            </script>
+        @endunless
+
         {{-- Criteria --}}
         <section class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($report['criteria'] as $criterion)

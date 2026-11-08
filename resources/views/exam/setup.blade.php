@@ -62,6 +62,22 @@
                 <template x-for="p in parts" :key="p"><input type="hidden" name="parts[]" :value="p"></template>
             </fieldset>
 
+            <label class="flex items-start gap-3 rounded-2xl border border-black/5 bg-white p-4 text-sm dark:border-white/10 dark:bg-white/[0.03]">
+                <input type="checkbox" name="consent" value="1" required @checked(old('consent'))
+                       class="mt-0.5 h-4 w-4 rounded border-black/20 text-slate-900 focus:ring-slate-900">
+                <span class="text-slate-600 dark:text-slate-400">
+                    {{ $isEn
+                        ? 'I agree that my voice is processed by the AI on this laptop (not sent to the internet), and that my answers are stored to build the report.'
+                        : 'Saya setuju suara saya diproses oleh AI di laptop ini (tidak dikirim ke internet) dan jawaban saya disimpan untuk membuat rapor.' }}
+                    @guest
+                        {{ $isEn
+                            ? 'Guest data is deleted automatically after '.config('exam.retention_days').' days.'
+                            : 'Data tamu dihapus otomatis setelah '.config('exam.retention_days').' hari.' }}
+                    @endguest
+                </span>
+            </label>
+            <x-input-error :messages="$errors->get('consent')" class="-mt-3" />
+
             <button type="submit" :disabled="submitting"
                     class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-4 text-base font-bold text-white transition hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
                 <span x-show="!submitting">{{ $isEn ? 'Enter the exam room' : 'Masuk ruang ujian' }}</span>

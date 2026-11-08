@@ -19,6 +19,17 @@ return [
 
     'prep_seconds' => 60,
 
+    /*
+    | Public base URL for QR codes (LAN IP or tunnel), because "localhost" cannot be
+    | opened from a visitor's phone. Example: http://192.168.1.50:8000
+    */
+    'public_url' => env('VOIC_PUBLIC_URL'),
+
+    /*
+    | Guest sessions and recorded answers are deleted after this many days (voic:prune).
+    */
+    'retention_days' => (int) env('VOIC_RETENTION_DAYS', 7),
+
     'long_turn_seconds' => 120,
 
     'modes' => [

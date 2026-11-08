@@ -10,6 +10,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ExamFlowTest extends TestCase
@@ -51,6 +52,7 @@ class ExamFlowTest extends TestCase
             'language' => 'id',
             'parts' => [1, 2, 3],
             'guest_name' => 'Rina',
+            'consent' => '1',
         ]);
 
         $session = PracticeSession::firstOrFail();
@@ -362,6 +364,86 @@ class ExamFlowTest extends TestCase
             ->assertFailed();
     }
 
+    public function test_exam_cannot_start_without_consent(): void
+    {
+        $this->offline();
+
+        $this->post(route('exam.start', 'sidang'), ['topic' => 'x', 'parts' => [1]])
+            ->assertSessionHasErrors('consent');
+        $this->assertSame(0, PracticeSession::count());
+    }
+
+    public function test_report_has_a_qr_link_that_opens_on_a_phone_without_login(): void
+    {
+        $this->offline();
+        config(['exam.public_url' => 'http://192.168.1.50:8000']);
+        $session = $this->finishedSession();
+
+        $page = $this->get(route('exam.result', $session))->assertOk()->assertSee('Bawa pulang rapormu');
+        preg_match('/data-url="([^"]+)"/', $page->getContent(), $match);
+        $shareUrl = html_entity_decode($match[1]);
+        $this->assertStringStartsWith('http://192.168.1.50:8000/latihan/hasil/'.$session->id.'?expires=', $shareUrl);
+
+        // A different browser (the phone) with no session can open the signed link, read-only.
+        $this->flushSession();
+        $path = substr($shareUrl, strlen('http://192.168.1.50:8000'));
+        $this->get($path)->assertOk()->assertSee('Masukan per jawaban')->assertDontSee('Hapus data saya');
+
+        // Tampering with the link is rejected.
+        $this->get(str_replace('expires=', 'expires=1', $path))->assertForbidden();
+    }
+
+    public function test_candidate_can_delete_their_session(): void
+    {
+        $this->offline();
+        $session = $this->finishedSession();
+        Storage::fake('local');
+        Storage::disk('local')->put($session->recordingsDirectory().'/1.webm', 'audio');
+
+        $this->delete(route('exam.destroy', $session))->assertRedirect(route('exam.index'));
+
+        $this->assertModelMissing($session);
+        Storage::disk('local')->assertMissing($session->recordingsDirectory().'/1.webm');
+    }
+
+    public function test_prune_removes_old_guest_sessions_and_old_recordings(): void
+    {
+        $this->offline();
+        Storage::fake('local');
+        $oldGuest = $this->finishedSession();
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $oldUser = $this->finishedSession();
+        $fresh = $this->finishedSession();
+        foreach ([$oldGuest, $oldUser, $fresh] as $session) {
+            Storage::disk('local')->put($session->recordingsDirectory().'/1.webm', 'audio');
+        }
+        PracticeSession::whereKey([$oldGuest->id, $oldUser->id])->update(['created_at' => now()->subDays(10)]);
+
+        $this->artisan('voic:prune')->assertSuccessful();
+
+        $this->assertModelMissing($oldGuest);
+        $this->assertModelExists($oldUser);
+        Storage::disk('local')->assertMissing($oldUser->recordingsDirectory().'/1.webm');
+        Storage::disk('local')->assertExists($fresh->recordingsDirectory().'/1.webm');
+    }
+
+    /**
+     * Start and immediately finish a one-part exam with one answer.
+     */
+    private function finishedSession(): PracticeSession
+    {
+        $session = $this->startExam('sidang', [1]);
+        $this->postJson(route('exam.answer', $session), [
+            'answer' => 'Penelitian saya memakai YOLOv8 dengan 2000 gambar dari pabrik tekstil karena butuh deteksi cepat.',
+            'duration_seconds' => 12,
+            'timestamp_seconds' => 12,
+        ])->assertOk();
+        $this->postJson(route('exam.finish', $session), ['duration_seconds' => 60])->assertOk();
+
+        return $session->refresh();
+    }
+
     public function test_other_visitors_cannot_answer_someone_elses_session(): void
     {
         $this->offline();
@@ -447,6 +529,7 @@ class ExamFlowTest extends TestCase
             'topic' => 'Topik uji',
             'language' => 'id',
             'parts' => $parts,
+            'consent' => '1',
         ])->assertRedirect();
 
         return PracticeSession::latest('id')->firstOrFail();

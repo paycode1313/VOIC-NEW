@@ -30,6 +30,8 @@ Route::prefix('latihan')->name('exam.')->controller(ExamController::class)->grou
     Route::get('/audio/{file}', 'audio')->middleware('throttle:240,1')->name('audio');
     Route::post('/sesi/{practiceSession}/selesai', 'finish')->name('finish');
     Route::get('/sesi/{practiceSession}/hasil', 'result')->name('result');
+    Route::get('/hasil/{practiceSession}', 'shared')->middleware(['signed:relative', 'throttle:60,1'])->name('shared');
+    Route::delete('/sesi/{practiceSession}', 'destroy')->name('destroy');
     Route::post('/sesi/{practiceSession}/pesan/{message}/nilai', 'rate')->scopeBindings()->middleware('throttle:60,1')->name('rate');
     Route::get('/{mode}', 'setup')->whereIn('mode', array_keys(config('exam.modes')))->name('setup');
     Route::post('/{mode}/mulai', 'start')->whereIn('mode', array_keys(config('exam.modes')))->middleware('throttle:10,1')->name('start');

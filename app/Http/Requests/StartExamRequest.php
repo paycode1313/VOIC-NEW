@@ -29,6 +29,19 @@ class StartExamRequest extends FormRequest
             'parts' => ['nullable', 'array', 'min:1'],
             'parts.*' => ['integer', 'in:1,2,3'],
             'guest_name' => ['nullable', 'string', 'max:100'],
+            'consent' => ['accepted'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'consent.accepted' => 'Centang persetujuan pemrosesan suara terlebih dahulu.',
         ];
     }
 

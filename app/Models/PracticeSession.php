@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 #[Fillable([
     'user_id',
@@ -95,6 +96,23 @@ class PracticeSession extends Model
         }
 
         return $this->isGuest() ? route('demo.show', $this) : route('practice.show', $this);
+    }
+
+    /**
+     * Delete the session, its messages and any recorded answer audio.
+     */
+    public function deleteWithRecordings(): void
+    {
+        Storage::disk('local')->deleteDirectory($this->recordingsDirectory());
+        $this->delete();
+    }
+
+    /**
+     * Private storage folder holding this session's recorded answers.
+     */
+    public function recordingsDirectory(): string
+    {
+        return 'exam-recordings/'.$this->id;
     }
 
     /**

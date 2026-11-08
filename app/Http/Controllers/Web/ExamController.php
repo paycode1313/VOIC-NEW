@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -272,10 +273,39 @@ class ExamController extends Controller
         abort_unless($practiceSession->isExam(), 404);
         Gate::authorize('view', $practiceSession);
 
-        $report = $practiceSession->feedback_notes['exam_report'] ?? null;
-        if (! $report) {
+        if (! isset($practiceSession->feedback_notes['exam_report'])) {
             return redirect()->route('exam.room', $practiceSession);
         }
+
+        return $this->resultView($practiceSession, Gate::allows('update', $practiceSession));
+    }
+
+    /**
+     * Read-only report opened from the QR code on a phone (signed link, no login needed).
+     */
+    public function shared(PracticeSession $practiceSession): View
+    {
+        abort_unless($practiceSession->isExam() && isset($practiceSession->feedback_notes['exam_report']), 404);
+
+        return $this->resultView($practiceSession, false, shared: true);
+    }
+
+    /**
+     * Delete a session and its recordings at the candidate's request.
+     */
+    public function destroy(PracticeSession $practiceSession): RedirectResponse
+    {
+        abort_unless($practiceSession->isExam(), 404);
+        Gate::authorize('update', $practiceSession);
+
+        $practiceSession->deleteWithRecordings();
+
+        return redirect()->route('exam.index')->with('status', 'Data sesi latihan sudah dihapus.');
+    }
+
+    protected function resultView(PracticeSession $practiceSession, bool $canManage, bool $shared = false): View
+    {
+        $report = $practiceSession->feedback_notes['exam_report'];
 
         return view('exam.result', [
             'session' => $practiceSession,
@@ -285,8 +315,22 @@ class ExamController extends Controller
             'language' => $report['language'] ?? 'id',
             'report' => $report,
             'transcript' => $practiceSession->messages()->orderBy('id')->get(['id', 'sender', 'message', 'exam_part', 'meta']),
-            'canRate' => Gate::allows('update', $practiceSession),
+            'canRate' => $canManage,
+            'canManage' => $canManage,
+            'shared' => $shared,
+            'shareUrl' => $this->shareUrl($practiceSession),
         ]);
+    }
+
+    /**
+     * Signed link to the report that a phone can open, using the booth's public address.
+     */
+    protected function shareUrl(PracticeSession $practiceSession): string
+    {
+        $signed = URL::temporarySignedRoute('exam.shared', now()->addDays(7), ['practiceSession' => $practiceSession], absolute: false);
+        $base = rtrim((string) (config('exam.public_url') ?: url('/')), '/');
+
+        return $base.$signed;
     }
 
     /**
