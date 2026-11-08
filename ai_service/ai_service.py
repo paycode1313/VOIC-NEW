@@ -36,22 +36,23 @@ def cleanup_old_audio_files(max_age_seconds: int = 7200):
 
 
 async def periodic_warmup_and_cleanup():
-    """Background task: menjaga model tetap hangat di RAM/VRAM & membersihkan file audio lama setiap 15 menit."""
+    """Muat model ujian saat start lalu jaga tetap hangat; bersihkan audio lama setiap 15 menit.
+
+    Memakai exam_engine.warmup() agar opsi (num_ctx, keep_alive) sama persis dengan permintaan ujian;
+    opsi yang berbeda membuat Ollama memuat ulang model dan peserta menunggu lama.
+    """
+    from exam_engine import warmup
+
     while True:
         try:
             cleanup_old_audio_files()
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                await client.post(
-                    f"{OLLAMA_BASE_URL}/api/chat",
-                    json={
-                        "model": DEFAULT_MODEL,
-                        "messages": [{"role": "user", "content": "hi"}],
-                        "stream": False,
-                        "keep_alive": "60m",
-                    },
-                )
-        except Exception:
-            pass
+            result = await warmup()
+            if result.get("ok"):
+                print(f"[VOIC] Model {result['model']} siap ({result['seconds']} dtk).")
+            else:
+                print(f"[VOIC] Warmup model gagal: {result.get('error')}")
+        except Exception as exc:
+            print(f"[VOIC] Warmup notice: {exc}")
         await asyncio.sleep(900)  # 15 menit
 
 

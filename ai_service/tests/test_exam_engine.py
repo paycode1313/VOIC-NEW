@@ -129,3 +129,33 @@ class ResolveModelTest(unittest.TestCase):
 
     def test_falls_back_to_available_qwen_when_voic_coach_missing(self):
         self.assertEqual(self.resolve_with(["nomic-embed-text", "qwen2.5:3b"]), "qwen2.5:3b")
+
+
+class SlowModelTest(unittest.TestCase):
+    def test_timeout_is_reported_with_a_clear_reason(self):
+        import httpx
+
+        with mock.patch.object(exam_engine, "ollama_chat", mock.AsyncMock(side_effect=httpx.ReadTimeout("slow"))):
+            data = client.post("/exam/respond", json={
+                "mode": "sidang", "role_type": "dosen_penguji", "language": "id", "directive": "follow_up",
+                "part": 1, "question": "Q", "answer": ANSWER, "messages": MESSAGES,
+            }).json()
+        self.assertEqual(data["reply"], "")
+        self.assertTrue(data["error"].startswith("timeout"))
+
+    def test_warmup_reports_load_time(self):
+        async def fake_chat(messages, num_predict, temperature, stats=None):
+            stats.update({"load_ms": 12000, "tokens_per_second": 14.2})
+            return "Hai"
+
+        with mock.patch.object(exam_engine, "ollama_chat", fake_chat), \
+                mock.patch.object(exam_engine, "resolve_model", mock.AsyncMock(return_value="voic-coach")):
+            data = client.post("/exam/warmup").json()
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["stats"]["load_ms"], 12000)
+
+    def test_ollama_stats_converts_nanoseconds(self):
+        stats = exam_engine.ollama_stats({"load_duration": 2_000_000_000, "eval_count": 40, "eval_duration": 4_000_000_000, "prompt_eval_count": 600, "prompt_eval_duration": 3_000_000_000})
+        self.assertEqual(stats["load_ms"], 2000)
+        self.assertEqual(stats["tokens_per_second"], 10.0)
+        self.assertEqual(stats["prompt_ms"], 3000)

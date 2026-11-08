@@ -31,6 +31,12 @@ OLLAMA_BASE_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
 EXAM_MODEL = os.getenv("VOIC_EXAM_MODEL", os.getenv("OLLAMA_MODEL", "voic-coach"))
 HARVEST_FILE = os.path.join(os.path.dirname(__file__), "datasets", "harvest", "exam_turns.jsonl")
 
+# Laptop CPU bisa butuh 10-30 detik hanya untuk MEMUAT model pertama kali; jangan menyerah terlalu cepat.
+LLM_TIMEOUT = float(os.getenv("VOIC_LLM_TIMEOUT", "90"))
+# Konteks lebih kecil = prompt diproses lebih cepat di CPU. 2048 cukup untuk ±10 giliran terakhir.
+NUM_CTX = int(os.getenv("VOIC_NUM_CTX", "2048"))
+KEEP_ALIVE = os.getenv("VOIC_KEEP_ALIVE", "2h")
+
 router = APIRouter(prefix="/exam", tags=["exam"])
 
 _model_cache = {"name": None, "checked": 0.0}
@@ -107,6 +113,8 @@ class RespondResponse(BaseModel):
     issues: List[str] = Field(default_factory=list)
     model: str
     latency_ms: int
+    error: Optional[str] = None
+    stats: Dict = Field(default_factory=dict)
 
 
 class ImproveItem(BaseModel):
@@ -202,26 +210,56 @@ def harvest(record: Dict) -> None:
         print(f"Harvest notice: {exc}")
 
 
-async def ollama_chat(messages: List[Dict[str, str]], num_predict: int, temperature: float) -> str:
-    async with httpx.AsyncClient(timeout=25.0) as client:
+def ollama_stats(data: Dict) -> Dict:
+    """Ringkas statistik waktu Ollama (nanodetik -> milidetik) untuk diagnosa kecepatan."""
+    ms = lambda key: int((data.get(key) or 0) / 1_000_000)  # noqa: E731
+    eval_count = int(data.get("eval_count") or 0)
+    eval_ms = ms("eval_duration")
+    return {
+        "load_ms": ms("load_duration"),
+        "prompt_tokens": int(data.get("prompt_eval_count") or 0),
+        "prompt_ms": ms("prompt_eval_duration"),
+        "output_tokens": eval_count,
+        "output_ms": eval_ms,
+        "tokens_per_second": round(eval_count / (eval_ms / 1000), 1) if eval_ms else None,
+    }
+
+
+async def ollama_chat(messages: List[Dict[str, str]], num_predict: int, temperature: float, stats: Optional[Dict] = None) -> str:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(LLM_TIMEOUT, connect=3.0)) as client:
         response = await client.post(
             f"{OLLAMA_BASE_URL}/api/chat",
             json={
                 "model": await resolve_model(),
                 "messages": messages,
                 "stream": False,
-                "keep_alive": "60m",
+                "keep_alive": KEEP_ALIVE,
                 "options": {
                     "temperature": temperature,
                     "top_p": 0.9,
                     "repeat_penalty": 1.12,
                     "num_predict": num_predict,
-                    "num_ctx": 4096,
+                    "num_ctx": NUM_CTX,
                 },
             },
         )
         response.raise_for_status()
-        return response.json().get("message", {}).get("content", "")
+        data = response.json()
+        if stats is not None:
+            stats.update(ollama_stats(data))
+        return data.get("message", {}).get("content", "")
+
+
+def describe_error(exc: Exception) -> str:
+    """Pesan error yang bisa ditindaklanjuti operator booth."""
+    if isinstance(exc, httpx.TimeoutException):
+        return f"timeout: model belum selesai menjawab dalam {int(LLM_TIMEOUT)} detik (model terlalu besar untuk laptop ini, atau masih dimuat)"
+    if isinstance(exc, httpx.ConnectError):
+        return "ollama_unreachable: Ollama tidak berjalan di " + OLLAMA_BASE_URL
+    if isinstance(exc, httpx.HTTPStatusError):
+        body = exc.response.text[:200] if exc.response is not None else ""
+        return f"ollama_http_{exc.response.status_code}: {body}"
+    return f"{type(exc).__name__}: {exc}"
 
 
 # ---------------------------------------------------------------------------
@@ -237,15 +275,20 @@ async def respond(req: RespondRequest):
     num_predict = {"next": 120, "follow_up": 90, "clarify": 100}.get(req.directive, 55)
 
     best_reply, best_issues = "", ["empty"]
+    error: Optional[str] = None
+    stats: Dict = {}
     for attempt in range(2):
+        attempt_started = time.time()
         try:
             raw = await ollama_chat(
                 messages,
                 num_predict=num_predict,
                 temperature=0.7 if attempt == 0 else 0.55,
+                stats=stats,
             )
-        except Exception as exc:  # Ollama mati / model belum di-pull
-            print(f"Exam model error: {exc}")
+        except Exception as exc:  # Ollama mati / model belum di-pull / terlalu lambat
+            error = describe_error(exc)
+            print(f"Exam model error: {error}")
             break
 
         reply = clean_reply(raw, max_sentences=max_sentences + (1 if req.directive != "react" else 0))
@@ -253,6 +296,9 @@ async def respond(req: RespondRequest):
         if len(issues) < len(best_issues):
             best_reply, best_issues = reply, issues
         if not issues:
+            break
+        # Di laptop yang lambat, mengulang membuat peserta menunggu dua kali; pakai hasil terbaik saja.
+        if time.time() - attempt_started > 8:
             break
 
     # Balasan kosong = biarkan Laravel memakai composer offline.
@@ -279,9 +325,23 @@ async def respond(req: RespondRequest):
         reply=best_reply,
         passed_quality=bool(best_reply) and not best_issues,
         issues=best_issues,
-        model=EXAM_MODEL,
+        model=await resolve_model(),
         latency_ms=int((time.time() - started) * 1000),
+        error=error,
+        stats=stats,
     )
+
+
+@router.post("/warmup")
+async def warmup():
+    """Muat model ke RAM/VRAM sekarang, supaya peserta pertama tidak menunggu model dimuat."""
+    stats: Dict = {}
+    started = time.time()
+    try:
+        await ollama_chat([{"role": "user", "content": "Halo"}], num_predict=1, temperature=0.1, stats=stats)
+        return {"ok": True, "model": await resolve_model(), "seconds": round(time.time() - started, 1), "stats": stats}
+    except Exception as exc:
+        return {"ok": False, "model": await resolve_model(), "seconds": round(time.time() - started, 1), "error": describe_error(exc)}
 
 
 IMPROVE_GUIDE = {
@@ -395,7 +455,7 @@ def split_sentences(buffer: str, final: bool = False):
 
 async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temperature: float):
     """Token-by-token dari Ollama (NDJSON)."""
-    timeout = httpx.Timeout(30.0, connect=2.0)
+    timeout = httpx.Timeout(LLM_TIMEOUT, connect=3.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
         async with client.stream(
             "POST",
@@ -404,8 +464,8 @@ async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temper
                 "model": await resolve_model(),
                 "messages": messages,
                 "stream": True,
-                "keep_alive": "60m",
-                "options": {"temperature": temperature, "top_p": 0.9, "repeat_penalty": 1.12, "num_predict": num_predict, "num_ctx": 4096},
+                "keep_alive": KEEP_ALIVE,
+                "options": {"temperature": temperature, "top_p": 0.9, "repeat_penalty": 1.12, "num_predict": num_predict, "num_ctx": NUM_CTX},
             },
         ) as response:
             response.raise_for_status()
@@ -481,8 +541,8 @@ async def respond_stream(req: RespondStreamRequest):
                     line = await emit(sentence)
                     if line:
                         yield line
-        except Exception as exc:  # Ollama mati / putus di tengah
-            yield _line({"type": "error", "message": str(exc)})
+        except Exception as exc:  # Ollama mati / putus di tengah / terlalu lambat
+            yield _line({"type": "error", "message": describe_error(exc)})
 
         reply = " ".join(spoken)
         issues = quality_issues(reply, req.answer, req.directive, req.language)
