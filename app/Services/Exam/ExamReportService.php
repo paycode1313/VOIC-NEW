@@ -122,6 +122,8 @@ class ExamReportService
 
         return [
             'index' => $index + 1,
+            'message_id' => $message->id,
+            'has_recording' => isset($meta['recording']),
             'part' => (int) $message->exam_part,
             'kind' => $meta['kind'] ?? 'answer',
             'question' => $this->questionOnly($question),

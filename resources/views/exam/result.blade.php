@@ -158,6 +158,11 @@
                         <div class="space-y-4 px-5 pb-5 sm:pl-[4.75rem]">
                             <div>
                                 <p class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ $isEn ? 'Your answer' : 'Jawabanmu' }}</p>
+                                @if ($canManage && ! empty($item['has_recording']) && ! empty($item['message_id']))
+                                    <audio controls preload="none" class="mt-2 h-9 w-full max-w-md" src="{{ route('exam.recording', [$session, $item['message_id']]) }}">
+                                        {{ $isEn ? 'Your browser cannot play this recording.' : 'Browser tidak bisa memutar rekaman ini.' }}
+                                    </audio>
+                                @endif
                                 <p class="mt-1 leading-relaxed">{!! $item['answer'] !== '' ? $highlight($item['answer']) : '<span class="text-slate-400">'.($isEn ? '(no answer)' : '(tidak menjawab)').'</span>' !!}</p>
                                 <p class="mt-2 text-xs text-slate-500">
                                     {{ $item['metrics']['word_count'] }} {{ $isEn ? 'words' : 'kata' }}

@@ -246,6 +246,7 @@ class ExamFlowTest extends TestCase
 
     public function test_voice_answer_is_transcribed_locally_and_reply_streams_sentence_by_sentence(): void
     {
+        Storage::fake('local');
         $ndjson = implode("\n", [
             json_encode(['type' => 'sentence', 'text' => 'Dua ribu gambar dari pabrik itu dataset yang lumayan.', 'audio_file' => 'tts_1_a.wav']),
             json_encode(['type' => 'sentence', 'text' => 'Ngomong-ngomong, apa yang bikin Anda tertarik ke topik ini?', 'audio_file' => null, 'audio_data' => 'data:audio/wav;base64,UklGRg==']),
@@ -296,8 +297,39 @@ class ExamFlowTest extends TestCase
         $this->assertNull($events[0]['audio_url']);
     }
 
+    public function test_recorded_answer_can_be_replayed_by_its_owner_only(): void
+    {
+        Storage::fake('local');
+        Http::fake([
+            '*/stt' => Http::response(['text' => 'Penelitian saya memakai YOLOv8 dengan 2000 gambar dari pabrik tekstil karena perlu cepat.']),
+            '*' => Http::response([], 503),
+        ]);
+        $session = $this->startExam('sidang', [1]);
+
+        $this->post(route('exam.answer.stream', $session), [
+            'audio' => UploadedFile::fake()->createWithContent('answer.webm', str_repeat('A', 3000)),
+            'duration_seconds' => 9,
+            'timestamp_seconds' => 9,
+        ])->assertOk()->streamedContent();
+
+        $answer = $session->messages()->where('sender', 'user')->first();
+        $this->assertSame($session->recordingsDirectory().'/'.$answer->id.'.webm', $answer->meta['recording']);
+        Storage::disk('local')->assertExists($answer->meta['recording']);
+        $this->assertEmpty(array_filter(Storage::disk('local')->files($session->recordingsDirectory()), fn ($file) => str_contains($file, 'pending-')));
+
+        $this->get(route('exam.recording', [$session, $answer]))->assertOk();
+
+        $this->postJson(route('exam.finish', $session))->assertOk();
+        $this->get(route('exam.result', $session))->assertSee(route('exam.recording', [$session, $answer]), false);
+
+        // Someone else (new browser session, not the guest who recorded it) cannot listen.
+        $this->flushSession();
+        $this->get(route('exam.recording', [$session, $answer]))->assertForbidden();
+    }
+
     public function test_silent_recording_asks_the_candidate_to_repeat_without_recording_anything(): void
     {
+        Storage::fake('local');
         Http::fake(['*/stt' => Http::response(['text' => '']), '*' => Http::response([], 503)]);
         $session = $this->startExam('wawancara', [1]);
 

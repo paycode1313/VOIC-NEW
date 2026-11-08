@@ -20,8 +20,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExamController extends Controller
@@ -173,11 +175,18 @@ class ExamController extends Controller
             return response()->json(['message' => 'Sesi sudah selesai.'], 409);
         }
 
-        $audioPath = $request->file('audio')?->getRealPath();
         $typed = trim((string) $request->validated('answer', ''));
         $state = $practiceSession->exam_state;
 
-        return response()->stream(function () use ($request, $practiceSession, $flow, $examiner, $audioPath, $typed, $state) {
+        // Keep the recording so the candidate can replay it in the report (removed by voic:prune).
+        $pending = $request->file('audio')?->storeAs(
+            $practiceSession->recordingsDirectory(),
+            'pending-'.Str::random(12).'.webm',
+            'local'
+        );
+        $audioPath = $pending ? Storage::disk('local')->path($pending) : null;
+
+        return response()->stream(function () use ($request, $practiceSession, $flow, $examiner, $audioPath, $pending, $typed, $state) {
             $send = function (array $event): void {
                 echo json_encode($event, JSON_UNESCAPED_UNICODE)."\n";
                 if (ob_get_level() > 0) {
@@ -190,6 +199,7 @@ class ExamController extends Controller
             if ($audioPath !== null && $answer === '') {
                 $transcript = $examiner->transcribe($audioPath, $state['language'] ?? 'id', $state['topic'] ?? null);
                 if ($transcript === null) {
+                    Storage::disk('local')->delete($pending);
                     $send(['type' => 'error', 'code' => 'stt_unavailable', 'message' => 'Pengenal suara lokal tidak aktif.']);
 
                     return;
@@ -198,6 +208,7 @@ class ExamController extends Controller
                 $send(['type' => 'transcript', 'text' => $answer, 'engine' => $transcript['engine']]);
 
                 if ($answer === '') {
+                    Storage::disk('local')->delete($pending);
                     $send(['type' => 'retry', 'message' => 'Suaramu belum terdengar jelas, coba ulangi ya.']);
 
                     return;
@@ -213,11 +224,49 @@ class ExamController extends Controller
                 fn (string $text, ?string $audioUrl) => $send(['type' => 'sentence', 'text' => $text, 'audio_url' => $audioUrl]),
             );
 
+            if ($pending !== null) {
+                $this->attachRecording($practiceSession, $pending);
+            }
+
             $send(['type' => 'done', 'state' => $payload]);
         }, 200, [
             'Content-Type' => 'application/x-ndjson; charset=UTF-8',
             'Cache-Control' => 'no-cache, no-store',
             'X-Accel-Buffering' => 'no',
+        ]);
+    }
+
+    /**
+     * Rename the pending upload after the answer it belongs to and remember it on the message.
+     */
+    protected function attachRecording(PracticeSession $practiceSession, string $pending): void
+    {
+        $message = $practiceSession->messages()->where('sender', 'user')->latest('id')->first();
+        if ($message === null) {
+            Storage::disk('local')->delete($pending);
+
+            return;
+        }
+
+        $path = $practiceSession->recordingsDirectory().'/'.$message->id.'.webm';
+        Storage::disk('local')->move($pending, $path);
+        $message->update(['meta' => array_merge($message->meta ?? [], ['recording' => $path])]);
+    }
+
+    /**
+     * Play back a recorded answer to its owner.
+     */
+    public function recording(PracticeSession $practiceSession, SessionMessage $message): BinaryFileResponse
+    {
+        abort_unless($practiceSession->isExam() && $message->sender === 'user', 404);
+        Gate::authorize('update', $practiceSession);
+
+        $path = $message->meta['recording'] ?? null;
+        abort_unless(is_string($path) && Storage::disk('local')->exists($path), 404);
+
+        return response()->file(Storage::disk('local')->path($path), [
+            'Content-Type' => 'audio/webm',
+            'Cache-Control' => 'private, max-age=600',
         ]);
     }
 
