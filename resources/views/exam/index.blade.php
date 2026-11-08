@@ -72,6 +72,12 @@
             @endforeach
         </section>
 
+        @if ($progress)
+            <section class="mt-14">
+                @include('exam.partials.progress', ['progress' => $progress, 'drill' => fn ($criterion) => app(\App\Services\Exam\ExamProgressService::class)->drillUrl($lastMode, $criterion)])
+            </section>
+        @endif
+
         @if ($recentSessions->isNotEmpty())
             <section class="mt-14">
                 <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">{{ $isEn ? 'Recent sessions' : 'Sesi terakhir' }}</h2>

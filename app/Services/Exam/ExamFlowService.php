@@ -33,7 +33,7 @@ class ExamFlowService
      * @param  list<int>  $parts
      * @return array<string, mixed>
      */
-    public function start(PracticeSession $session, string $mode, array $parts, string $language, ?string $topic, ?int $seed = null): array
+    public function start(PracticeSession $session, string $mode, array $parts, string $language, ?string $topic, ?int $seed = null, ?string $focus = null): array
     {
         sort($parts);
         $parts = array_values(array_unique(array_filter($parts, fn ($part) => in_array($part, [1, 2, 3], true))));
@@ -50,6 +50,7 @@ class ExamFlowService
             'followups_used' => 0,
             'phase' => $parts[0] === 2 ? self::PHASE_CUE_CARD : self::PHASE_ANSWERING,
             'turn' => 0,
+            'focus' => $focus,
         ];
 
         $definition = $this->blueprint->mode($mode);
@@ -163,6 +164,7 @@ class ExamFlowService
             'transition' => $step['transition'],
             'turn' => (int) $state['turn'],
             'session_id' => $session->id,
+            'focus' => $state['focus'] ?? null,
         ], $onSentence);
 
         $session->forceFill(['exam_state' => $state])->save();

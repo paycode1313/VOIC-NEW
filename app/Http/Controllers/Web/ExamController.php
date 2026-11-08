@@ -12,6 +12,7 @@ use App\Models\SessionMessage;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExamFlowService;
 use App\Services\Exam\ExaminerService;
+use App\Services\Exam\ExamProgressService;
 use App\Services\Exam\ExamReportService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -41,11 +42,15 @@ class ExamController extends Controller
             ? $request->user()->practiceSessions()->whereNotNull('exam_mode')->latest()->take(4)->get()
             : collect();
 
+        $progress = $request->user() ? app(ExamProgressService::class)->forUser($request->user()) : null;
+
         return view('exam.index', [
             'modes' => $this->blueprint->modes(),
             'blueprint' => $this->blueprint,
             'language' => $language,
             'recentSessions' => $recent,
+            'progress' => $progress && $progress['points'] !== [] ? $progress : null,
+            'lastMode' => $recent->first()?->exam_mode ?? 'wawancara',
         ]);
     }
 
@@ -56,11 +61,16 @@ class ExamController extends Controller
     {
         abort_unless($this->blueprint->hasMode($mode), 404);
 
+        $parts = array_values(array_intersect([1, 2, 3], array_map('intval', (array) $request->query('parts', [1, 2, 3]))));
+        $focus = in_array($request->query('focus'), ExamReportService::CRITERIA, true) ? $request->query('focus') : null;
+
         return view('exam.setup', [
             'modeKey' => $mode,
             'mode' => $this->blueprint->mode($mode),
             'blueprint' => $this->blueprint,
             'language' => $this->language($request),
+            'selectedParts' => $parts === [] ? [1, 2, 3] : $parts,
+            'focus' => $focus,
         ]);
     }
 
@@ -107,7 +117,7 @@ class ExamController extends Controller
             $request->session()->put('pending_claim_session_id', $session->id);
         }
 
-        $flow->start($session, $mode, $request->parts(), $language, $topic);
+        $flow->start($session, $mode, $request->parts(), $language, $topic, focus: $request->validated('focus'));
 
         return redirect()->route('exam.room', $session);
     }
@@ -368,6 +378,7 @@ class ExamController extends Controller
             'canManage' => $canManage,
             'shared' => $shared,
             'shareUrl' => $this->shareUrl($practiceSession),
+            'drill' => fn (string $criterion) => app(ExamProgressService::class)->drillUrl($practiceSession->exam_mode, $criterion),
         ]);
     }
 

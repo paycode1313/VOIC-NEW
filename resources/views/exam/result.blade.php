@@ -130,6 +130,9 @@
                             <div>
                                 <p class="font-bold">{{ $focus['title'] }}</p>
                                 <p class="mt-1 text-sm opacity-80">{{ $focus['drill'] }}</p>
+                                @unless ($shared)
+                                    <a href="{{ $drill($focus['criterion']) }}" class="mt-2 inline-block text-sm font-semibold underline">{{ $isEn ? 'Practise this now →' : 'Latih ini sekarang →' }}</a>
+                                @endunless
                             </div>
                         </div>
                     @endforeach

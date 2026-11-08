@@ -8,7 +8,7 @@
 <x-exam-layout :title="$blueprint->text($mode['title'], $language)" :back="route('exam.index', $isEn ? ['lang' => 'en'] : [])">
     <div class="mx-auto grid max-w-5xl gap-8 px-4 pb-20 pt-8 sm:px-6 lg:grid-cols-[1fr_340px] lg:pt-12">
         <form method="POST" action="{{ route('exam.start', $modeKey) }}" class="space-y-6"
-              x-data="{ parts: [1, 2, 3], submitting: false, toggle(n) { this.parts.includes(n) ? (this.parts.length > 1 && (this.parts = this.parts.filter(p => p !== n))) : this.parts.push(n) } }"
+              x-data="{ parts: @js($selectedParts), submitting: false, toggle(n) { this.parts.includes(n) ? (this.parts.length > 1 && (this.parts = this.parts.filter(p => p !== n))) : this.parts.push(n) } }"
               @submit="submitting = true">
             @csrf
             <input type="hidden" name="language" value="{{ $language }}">
@@ -21,6 +21,19 @@
                 <h1 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $isEn ? 'Set up your session' : 'Siapkan sesi latihanmu' }}</h1>
                 <p class="mt-2 text-slate-600 dark:text-slate-400">{{ $blueprint->text($mode['tagline'], $language) }}</p>
             </div>
+
+            @if ($focus)
+                <input type="hidden" name="focus" value="{{ $focus }}">
+                <div class="rounded-2xl bg-slate-900 px-5 py-4 text-sm text-white dark:bg-white dark:text-slate-900">
+                    <p class="font-bold">{{ $isEn ? 'Targeted practice' : 'Latihan terarah' }}: {{ [
+                        'fluency' => $isEn ? 'Fluency & Coherence' : 'Kelancaran & Alur',
+                        'vocabulary' => $isEn ? 'Vocabulary' : 'Kosakata & Istilah',
+                        'structure' => $isEn ? 'Content & Structure' : 'Isi & Struktur',
+                        'delivery' => $isEn ? 'Delivery & Presence' : 'Delivery & Kepercayaan Diri',
+                    ][$focus] }}</p>
+                    <p class="mt-1 opacity-80">{{ $isEn ? 'The parts that train this are pre-selected, and the examiner will give you room to practise it.' : 'Bagian yang melatih kriteria ini sudah dipilih, dan penguji akan memberi ruang untuk melatihnya.' }}</p>
+                </div>
+            @endif
 
             <div class="rounded-3xl border border-black/5 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
                 <label for="topic" class="block text-sm font-semibold">{{ $blueprint->text($mode['topic_label'], $language) }}</label>

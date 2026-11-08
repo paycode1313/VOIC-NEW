@@ -383,6 +383,16 @@ class ExaminerService
             $lines[] = ($isEn ? 'Background from the candidate: ' : 'Latar dari peserta: ').$context;
         }
         $lines[] = ($isEn ? 'Current section: Part ' : 'Bagian saat ini: Bagian ').$turn['part'].' - '.$turn['part_title'];
+        $focusHints = [
+            'fluency' => [$isEn ? 'speaking longer without long pauses' : 'bicara lebih panjang tanpa jeda lama', ''],
+            'vocabulary' => [$isEn ? 'using precise, field-specific words' : 'memakai istilah yang tepat sesuai bidang', ''],
+            'structure' => [$isEn ? 'answering with a clear point, a reason and a concrete example' : 'menjawab dengan poin jelas, alasan, dan contoh konkret', ''],
+            'delivery' => [$isEn ? 'staying calm and confident' : 'tampil tenang dan percaya diri', ''],
+        ];
+        if (! empty($turn['focus']) && isset($focusHints[$turn['focus']])) {
+            $lines[] = ($isEn ? 'The candidate is practising ' : 'Peserta sedang melatih ').$focusHints[$turn['focus']][0]
+                .($isEn ? '. Ask questions that give them room to practise it.' : '. Ajukan pertanyaan yang memberi ruang untuk melatih hal itu.');
+        }
         $lines[] = implode("\n", array_map(fn ($rule, $i) => ($i + 1).'. '.$rule, $rules, array_keys($rules)));
 
         return implode("\n", $lines);

@@ -476,6 +476,32 @@ class ExamFlowTest extends TestCase
         return $session->refresh();
     }
 
+    public function test_progress_chart_and_targeted_practice(): void
+    {
+        $this->offline();
+        $this->actingAs(User::factory()->create());
+        $this->finishedSession();
+        $this->finishedSession();
+
+        $this->get(route('exam.index'))->assertOk()
+            ->assertSee('Perkembangan band keseluruhan')
+            ->assertSee('Lihat sebagai tabel')
+            ->assertSee('Latih ini');
+
+        $this->get(route('exam.result', PracticeSession::latest('id')->first()))->assertSee('Latih ini sekarang');
+
+        // The drill link pre-selects parts and carries the focus to the examiner.
+        $this->get(route('exam.setup', ['mode' => 'sidang', 'parts' => [3], 'focus' => 'structure']))
+            ->assertOk()->assertSee('Latihan terarah')->assertSee('name="focus" value="structure"', false);
+
+        Http::fake(['*/exam/respond' => Http::response(['reply' => 'Baik, metode itu masuk akal. Kenapa Anda tidak memilih metode lain?']), '*' => Http::response([], 503)]);
+        $this->post(route('exam.start', 'sidang'), ['parts' => [3], 'focus' => 'structure', 'consent' => '1'])->assertRedirect();
+        $session = PracticeSession::latest('id')->first();
+        $this->assertSame('structure', $session->exam_state['focus']);
+        $this->postJson(route('exam.answer', $session), ['answer' => 'Saya memakai regresi linear karena datanya numerik dan hubungannya linear.', 'duration_seconds' => 9, 'timestamp_seconds' => 9])->assertOk();
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/exam/respond') && str_contains($request['messages'][0]['content'], 'Peserta sedang melatih menjawab dengan poin jelas'));
+    }
+
     public function test_other_visitors_cannot_answer_someone_elses_session(): void
     {
         $this->offline();
