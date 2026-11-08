@@ -51,9 +51,6 @@ Route::prefix('booth')->name('booth.')->controller(BoothController::class)->grou
 // Guest / Demo Mode for Innofest Exhibition Booth (No Registration Required)
 Route::prefix('demo')->name('demo.')->group(function () {
     Route::get('/', [DemoSessionController::class, 'create'])->name('create');
-    Route::post('/start', [DemoSessionController::class, 'start'])->name('start');
-    Route::post('/{practiceSession}/message', [DemoSessionController::class, 'message'])->name('message');
-    Route::post('/{practiceSession}/finish', [DemoSessionController::class, 'finish'])->name('finish');
     Route::get('/{practiceSession}', [DemoSessionController::class, 'show'])->name('show');
     Route::post('/reset', [DemoSessionController::class, 'reset'])->name('reset');
 });
@@ -61,10 +58,6 @@ Route::prefix('demo')->name('demo.')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/practice', [PracticeSessionController::class, 'create'])->name('practice.create');
     Route::get('/practice/history', [PracticeSessionController::class, 'index'])->name('practice.history');
-    Route::post('/practice', [PracticeSessionController::class, 'store'])->name('practice.store');
-    Route::post('/practice/start', [PracticeSessionController::class, 'start'])->name('practice.start');
-    Route::post('/practice/{practiceSession}/message', [PracticeSessionController::class, 'message'])->name('practice.message');
-    Route::post('/practice/{practiceSession}/finish', [PracticeSessionController::class, 'finish'])->name('practice.finish');
     Route::get('/practice/{practiceSession}', [PracticeSessionController::class, 'show'])->name('practice.show');
     Route::delete('/practice/{practiceSession}', [PracticeSessionController::class, 'destroy'])->name('practice.destroy');
     Route::get('/practice-export-csv', [PracticeSessionController::class, 'exportCsv'])->name('practice.export');

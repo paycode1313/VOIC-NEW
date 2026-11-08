@@ -37,57 +37,6 @@ class PracticeSessionFeatureTest extends TestCase
     }
 
     /**
-     * Test that authenticated users can submit practice session data and receive JSON redirect.
-     */
-    public function test_authenticated_users_can_submit_practice_session(): void
-    {
-        $user = User::factory()->create();
-
-        $payload = [
-            'scenario_type' => 'Sidang Skripsi',
-            'duration_seconds' => 180,
-            'overall_score' => 88.50,
-            'feedback_notes' => [
-                'summary' => 'Presentasi sangat baik dan percaya diri.',
-                'eye_contact_score' => 85,
-                'smile_rate' => 78,
-                'pace_wpm' => 135,
-                'clarity_score' => 90,
-                'strengths' => ['Kontak mata fokus'],
-                'improvements' => ['Tingkatkan dinamika intonasi'],
-            ],
-        ];
-
-        $response = $this->actingAs($user)
-            ->postJson('/practice', $payload);
-
-        $response->assertCreated();
-        $response->assertJson([
-            'success' => true,
-        ]);
-
-        $this->assertDatabaseHas('practice_sessions', [
-            'user_id' => $user->id,
-            'scenario_type' => 'Sidang Skripsi',
-            'duration_seconds' => 180,
-        ]);
-    }
-
-    /**
-     * Test that validation fails if required fields are missing.
-     */
-    public function test_submission_fails_with_invalid_data(): void
-    {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)
-            ->postJson('/practice', []);
-
-        $response->assertUnprocessable();
-        $response->assertJsonValidationErrors(['scenario_type', 'duration_seconds', 'overall_score']);
-    }
-
-    /**
      * Test that a user can view their practice report.
      */
     public function test_user_can_view_their_own_practice_report(): void

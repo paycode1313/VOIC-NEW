@@ -4,7 +4,6 @@ namespace App\Services\Exam;
 
 use App\Models\PracticeSession;
 use App\Models\SessionMessage;
-use App\Services\AiRoleplayService;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +23,6 @@ class ExamReportService
     public function __construct(
         protected ExamBlueprint $blueprint,
         protected SpeakingAnalyzer $analyzer,
-        protected AiRoleplayService $roleplay,
     ) {}
 
     /**
@@ -102,9 +100,37 @@ class ExamReportService
             'feedback_notes' => $notes,
         ]);
 
-        $this->roleplay->syncUserLearningProfile($session, (float) $session->overall_score, $notes);
+        $this->updateLearningProfile($session, $report);
 
         return $report;
+    }
+
+    /**
+     * Keep a small per-user memory (weak spots, practised modes) on the user profile.
+     *
+     * @param  array<string, mixed>  $report
+     */
+    protected function updateLearningProfile(PracticeSession $session, array $report): void
+    {
+        $user = $session->user;
+        if ($user === null) {
+            return;
+        }
+
+        $profile = $user->getAiLearningProfile();
+        $weaknesses = array_values(array_unique([...array_column($report['focus'], 'title'), ...($profile['identified_weaknesses'] ?? [])]));
+        $mastered = $profile['mastered_topics'] ?? [];
+        if ($report['overall_band'] >= 6.5 && ! in_array($session->scenario_type, $mastered, true)) {
+            $mastered[] = $session->scenario_type;
+        }
+
+        $user->update(['ai_learning_profile' => array_merge($profile, [
+            'total_turns_learned' => (int) ($profile['total_turns_learned'] ?? 0) + (int) $report['stats']['answers'],
+            'identified_weaknesses' => array_slice($weaknesses, 0, 5),
+            'mastered_topics' => array_slice($mastered, -6),
+            'preferred_pace_wpm' => $report['stats']['average_wpm'] ?? ($profile['preferred_pace_wpm'] ?? 120),
+            'last_trained_at' => now()->toIso8601String(),
+        ])]);
     }
 
     /**

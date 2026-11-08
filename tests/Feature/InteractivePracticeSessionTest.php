@@ -31,159 +31,6 @@ class InteractivePracticeSessionTest extends TestCase
     }
 
     /**
-     * Test starting an interactive AI session creates a session and initial AI message.
-     */
-    public function test_user_can_start_interactive_ai_session(): void
-    {
-        $this->seed(AiRoleSeeder::class);
-        $user = User::factory()->create();
-        $role = AiRole::where('role_type', 'dosen_penguji')->firstOrFail();
-
-        $response = $this->actingAs($user)->postJson(route('practice.start'), [
-            'ai_role_id' => $role->id,
-            'scenario_type' => 'Sidang Skripsi',
-        ]);
-
-        $response->assertCreated();
-        $response->assertJson([
-            'success' => true,
-        ]);
-
-        $sessionId = $response->json('session_id');
-
-        $this->assertDatabaseHas('practice_sessions', [
-            'id' => $sessionId,
-            'user_id' => $user->id,
-            'ai_role_id' => $role->id,
-        ]);
-
-        $this->assertDatabaseHas('session_messages', [
-            'practice_session_id' => $sessionId,
-            'sender' => 'ai',
-        ]);
-    }
-
-    /**
-     * Test starting an interactive AI session with a custom topic generates a tailored opening greeting.
-     */
-    public function test_user_can_start_session_with_custom_topic_and_contextual_greeting(): void
-    {
-        $this->seed(AiRoleSeeder::class);
-        $user = User::factory()->create();
-        $role = AiRole::where('role_type', 'hrd')->firstOrFail();
-
-        $response = $this->actingAs($user)->postJson(route('practice.start'), [
-            'ai_role_id' => $role->id,
-            'scenario_type' => 'Software Engineer / Fullstack',
-        ]);
-
-        $response->assertCreated();
-        $sessionId = $response->json('session_id');
-
-        $this->assertDatabaseHas('practice_sessions', [
-            'id' => $sessionId,
-            'scenario_type' => 'Software Engineer / Fullstack',
-        ]);
-
-        $this->assertDatabaseHas('session_messages', [
-            'practice_session_id' => $sessionId,
-            'sender' => 'ai',
-        ]);
-
-        $initialMessage = $response->json('initial_message.message');
-        $this->assertStringContainsString('Software Engineer / Fullstack', $initialMessage);
-    }
-
-    /**
-     * Test sending a turn-by-turn conversational message with facial telemetry.
-     */
-    public function test_user_can_send_turn_with_facial_telemetry(): void
-    {
-        $this->seed(AiRoleSeeder::class);
-        $user = User::factory()->create();
-        $role = AiRole::where('role_type', 'hrd')->firstOrFail();
-
-        $session = PracticeSession::factory()->create([
-            'user_id' => $user->id,
-            'ai_role_id' => $role->id,
-            'scenario_type' => 'Wawancara Kerja',
-        ]);
-
-        $response = $this->actingAs($user)->postJson(route('practice.message', $session), [
-            'message' => 'Saya pernah memimpin proyek pengembangan aplikasi dan berhasil meningkatkan performa tim sebesar 30%.',
-            'facial_status' => [
-                'status' => 'tegang',
-                'eye_contact_score' => 65,
-                'is_smiling' => false,
-            ],
-            'timestamp_seconds' => 14,
-        ]);
-
-        $response->assertOk();
-        $response->assertJson([
-            'success' => true,
-        ]);
-
-        // User message stored
-        $this->assertDatabaseHas('session_messages', [
-            'practice_session_id' => $session->id,
-            'sender' => 'user',
-            'message' => 'Saya pernah memimpin proyek pengembangan aplikasi dan berhasil meningkatkan performa tim sebesar 30%.',
-            'timestamp_seconds' => 14,
-        ]);
-
-        // AI message response stored
-        $this->assertDatabaseHas('session_messages', [
-            'practice_session_id' => $session->id,
-            'sender' => 'ai',
-        ]);
-    }
-
-    /**
-     * Test finishing an interactive session updates scores and generates AI conclusion.
-     */
-    public function test_user_can_finish_interactive_session(): void
-    {
-        $this->seed(AiRoleSeeder::class);
-        $user = User::factory()->create();
-        $role = AiRole::where('role_type', 'dosen_penguji')->firstOrFail();
-
-        $session = PracticeSession::factory()->create([
-            'user_id' => $user->id,
-            'ai_role_id' => $role->id,
-            'scenario_type' => 'Sidang Skripsi',
-        ]);
-
-        $response = $this->actingAs($user)->postJson(route('practice.finish', $session), [
-            'duration_seconds' => 125,
-            'face_score' => 86.5,
-            'voice_score' => 88.0,
-            'overall_score' => 87.25,
-            'feedback_notes' => [
-                'summary' => 'Sesi sidang skripsi diselesaikan dengan baik.',
-                'eye_contact_score' => 88,
-                'smile_rate' => 74,
-                'pace_wpm' => 134,
-                'clarity_score' => 90,
-            ],
-        ]);
-
-        $response->assertOk();
-        $response->assertJson([
-            'success' => true,
-            'redirect_url' => route('practice.show', $session),
-        ]);
-
-        $session->refresh();
-        $this->assertEquals(125, $session->duration_seconds);
-        $this->assertEquals(86.5, $session->face_score);
-        $this->assertEquals(88.0, $session->voice_score);
-        $this->assertEquals(87.25, $session->overall_score);
-        $this->assertNotNull($session->ai_conclusion);
-        $this->assertStringContainsString('Hasil Evaluasi', $session->ai_conclusion);
-    }
-
-    /**
      * Test viewing report displays AI role verdict, scores, and conversation messages.
      */
     public function test_practice_report_displays_ai_verdict_and_chat_history(): void
@@ -226,7 +73,7 @@ class InteractivePracticeSessionTest extends TestCase
     }
 
     /**
-     * Test that unauthorized users cannot send messages to someone else's session.
+     * Test that other users cannot view or delete someone else's session.
      */
     public function test_other_user_cannot_access_or_modify_session(): void
     {
@@ -237,12 +84,9 @@ class InteractivePracticeSessionTest extends TestCase
             'user_id' => $owner->id,
         ]);
 
-        $response = $this->actingAs($intruder)->postJson(route('practice.message', $session), [
-            'message' => 'Tes injeksi pesan',
-            'timestamp_seconds' => 5,
-        ]);
-
-        $response->assertForbidden();
+        $this->actingAs($intruder)->get(route('practice.show', $session))->assertForbidden();
+        $this->actingAs($intruder)->deleteJson(route('practice.destroy', $session))->assertForbidden();
+        $this->assertModelExists($session);
     }
 
     /**

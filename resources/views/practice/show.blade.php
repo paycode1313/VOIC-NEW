@@ -211,13 +211,7 @@
                 $detectedUptalking = $feedback['detected_uptalking'] ?? 0;
                 $awkwardPauses = $feedback['awkward_pauses'] ?? 0;
                 $currentStage = $feedback['current_stage'] ?? 'core';
-                $goprepDiagnostic = $feedback['goprep_diagnostic'] ?? app(\App\Services\AiRoleplayService::class)->buildGoprepDiagnostic(
-                    $session,
-                    (float) ($session->face_score ?? 80),
-                    (float) ($session->voice_score ?? 80),
-                    (float) ($session->overall_score ?? 80),
-                    $simLanguage
-                );
+                $goprepDiagnostic = $feedback['goprep_diagnostic'] ?? null;
             @endphp
 
             <!-- Print-Only Official Report Header -->

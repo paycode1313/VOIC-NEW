@@ -45,8 +45,9 @@ Tes percakapan singkat di terminal untuk memastikan model sudah terpasang.
 
 - `GET /`: Health check status layanan.
 - `GET /health/ollama`: Memeriksa apakah aplikasi Ollama sudah aktif dan mendeteksi daftar model yang terpasang di laptop.
-- `POST /chat`: Menerima pesan ucapan pengguna beserta data ekspresi wajah kamera (`emotion`, `eye_contact_ratio`, `smile_detected`), memproses ke Ollama dengan persona karakter, dan menghasilkan suara balasan otomatis (TTS).
-- `GET /audio/{filename}`: Mengunduh file audio balasan AI dalam format MP3.
+- `POST /tts`: Sintesis suara (Piper lokal, cadangan edge-tts).
+- `GET /audio/{filename}`: Mengunduh file audio balasan AI (WAV/MP3).
+- Endpoint ujian dan suara lokal dijelaskan di bagian 4 dan 5.
 
 ---
 
@@ -136,4 +137,4 @@ python eval_dialogue.py --models voic-coach qwen2.5:3b
 ```
 Pakai model hasil fine-tune hanya jika *pass rate*-nya lebih tinggi dari baseline.
 
-> Catatan: `datasets/voic_train_dialogue.jsonl` (dataset lama dari endpoint `/chat`) berisi balasan template berulang seperti *"Mengenai pembahasan '...' yang Saudara sampaikan"*. Jangan dipakai untuk training; quality gate baru menolak pola tersebut.
+> Catatan: dataset lama dari endpoint `/chat` (balasan template seperti *"Mengenai pembahasan '...' yang Saudara sampaikan"*) sudah dihapus bersama endpoint-nya; quality gate menolak pola tersebut.
