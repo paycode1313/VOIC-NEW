@@ -4,6 +4,7 @@ namespace App\Services\Exam;
 
 use App\Models\PracticeSession;
 use App\Models\SessionMessage;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Drives a three-part mock exam turn by turn.
@@ -43,7 +44,7 @@ class ExamFlowService
             'language' => $language,
             'topic' => $topic,
             'parts' => $parts,
-            'plan' => $this->blueprint->buildPlan($mode, $parts, $seed),
+            'plan' => $plan = $this->blueprint->buildPlan($mode, $parts, $seed, Cache::get("voic.exam.recent.{$mode}", [])),
             'part' => $parts[0],
             'question_index' => 0,
             'followups_used' => 0,
@@ -70,6 +71,25 @@ class ExamFlowService
         $message = $this->recordExaminerMessage($session, $opening, $audioUrl, $state, 'opening');
 
         return $this->payload($session->refresh(), $message);
+    }
+
+    /**
+     * Remember which questions the last visitors got (about two sessions' worth per part).
+     *
+     * @param  array<int, list<int>|int>  $plan
+     */
+    protected function rememberRecent(string $mode, array $plan): void
+    {
+        $key = "voic.exam.recent.{$mode}";
+        $recent = Cache::get($key, []);
+
+        foreach ($plan as $part => $items) {
+            $items = array_values(array_filter((array) $items, fn ($index) => $part === 2 || $index !== 0));
+            $keep = $part === 2 ? 2 : 6;
+            $recent[$part] = array_slice(array_values(array_unique([...$items, ...($recent[$part] ?? [])])), 0, $keep);
+        }
+
+        Cache::put($key, $recent, now()->addHours(12));
     }
 
     /**

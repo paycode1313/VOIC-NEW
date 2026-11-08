@@ -392,5 +392,64 @@
         "reply": "Lima belas ribu transaksi dari semua fakultas cukup kuat, dan Anda jujur soal data dosen yang hanya tiga persen. Justru itu menarik, kalau begitu menurut Anda apa keterbatasan terbesar penelitian ini, dan bagaimana pengaruhnya terhadap rekomendasi untuk dosen?"
       }
     ]
+  },
+  {
+    "mode": "pitching",
+    "language": "id",
+    "topic": "SampahKu, aplikasi jemput sampah daur ulang",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Bagaimana Anda pertama kali menemukan masalah ini?",
+        "answer": "Waktu KKN di desa, saya lihat warga bakar plastik tiap sore karena truk sampah cuma datang seminggu sekali.",
+        "directive": "next",
+        "planned_question": "Siapa yang paling sering mengeluhkan masalah ini?",
+        "reply": "Bakar plastik tiap sore karena truk cuma seminggu sekali, itu gambaran masalah yang sangat nyata. Dari warga desa itu, siapa sebenarnya yang paling dirugikan dan paling sering mengeluh, ibu rumah tangga, pengepul, atau pemerintah desa?"
+      },
+      {
+        "part": 1,
+        "question": "Bakar plastik tiap sore karena truk cuma seminggu sekali, itu gambaran masalah yang sangat nyata. Dari warga desa itu, siapa sebenarnya yang paling dirugikan dan paling sering mengeluh, ibu rumah tangga, pengepul, atau pemerintah desa?",
+        "answer": "Pengepul sih pak, mereka kekurangan pasokan plastik bersih.",
+        "directive": "follow_up",
+        "reply": "Menarik, jadi pelanggan Anda justru pengepul, bukan warga. Berapa banyak plastik bersih yang mereka butuhkan per minggu dan berapa yang sekarang bisa mereka dapat?"
+      },
+      {
+        "part": 3,
+        "question": "Bagaimana Anda menentukan harga produk, dan apakah pelanggan sudah mau membayar?",
+        "answer": "Kami ambil komisi lima ratus rupiah per kilo dari pengepul. Sudah ada tiga pengepul yang bayar rutin selama dua bulan.",
+        "directive": "next",
+        "planned_question": "Berapa runway yang Anda miliki sekarang?",
+        "reply": "Tiga pengepul yang bayar rutin dua bulan itu sinyal awal yang bagus, walau lima ratus rupiah per kilo masih tipis. Dengan margin setipis itu, berapa lama uang yang Anda punya sekarang bisa menghidupi tim?"
+      },
+      {
+        "part": 3,
+        "question": "Dengan margin setipis itu, berapa lama uang yang Anda punya sekarang bisa menghidupi tim?",
+        "answer": "Hehe jujur kami belum hitung, pak.",
+        "directive": "follow_up",
+        "reply": "Tidak apa-apa, banyak founder awal juga begitu. Coba kita hitung kasar sekarang, berapa pengeluaran tim per bulan dan berapa saldo yang ada di rekening?"
+      }
+    ]
+  },
+  {
+    "mode": "sidang",
+    "language": "id",
+    "topic": "Chatbot layanan akademik berbasis RAG",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Bagaimana Anda menemukan celah penelitian ini?",
+        "answer": "Saya lihat admin prodi kewalahan menjawab pertanyaan yang sama berulang, misalnya jadwal KRS dan syarat sidang, dan penelitian chatbot kampus sebelumnya masih pakai aturan if-else.",
+        "directive": "next",
+        "planned_question": "Apa batasan ruang lingkup yang Anda tetapkan?",
+        "reply": "Pengamatan dari admin prodi yang kewalahan dan perbandingan dengan chatbot berbasis aturan itu menjadi dasar yang jelas. Karena pertanyaan mahasiswa bisa sangat luas, apa batasan ruang lingkup yang Anda tetapkan untuk chatbot ini?"
+      },
+      {
+        "part": 3,
+        "question": "Bagaimana Anda memastikan tidak terjadi bias dalam pengambilan data?",
+        "answer": "Bias seperti apa maksudnya, Bu?",
+        "directive": "clarify",
+        "reply": "Maksud saya, apakah pertanyaan uji yang Anda pakai hanya berasal dari satu angkatan atau satu jenis pertanyaan saja. Bagaimana Anda memastikan pertanyaan uji itu mewakili kebutuhan mahasiswa secara umum?"
+      }
+    ]
   }
 ]

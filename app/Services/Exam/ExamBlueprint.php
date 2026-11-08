@@ -98,20 +98,27 @@ class ExamBlueprint
     /**
      * Pick which questions and cue card a new session will use.
      *
+     * Items listed in $recent (used by the previous visitors) are only reused when
+     * the bank runs out, so consecutive people at the booth hear different questions.
+     *
      * @param  list<int>  $parts
+     * @param  array<int, list<int>>  $recent
      * @return array{1?: list<int>, 2?: int, 3?: list<int>}
      */
-    public function buildPlan(string $mode, array $parts, ?int $seed = null): array
+    public function buildPlan(string $mode, array $parts, ?int $seed = null, array $recent = []): array
     {
         $plan = [];
         $random = $seed !== null ? new Randomizer(new Mt19937($seed)) : new Randomizer;
 
         foreach ($parts as $part) {
             $definition = $this->part($mode, $part);
+            $avoid = array_map('intval', $recent[$part] ?? []);
 
             if ($part === 2) {
-                $cardCount = count($definition['cue_cards'] ?? []);
-                $plan[2] = $cardCount > 0 ? $random->getInt(0, $cardCount - 1) : 0;
+                $cards = array_keys($definition['cue_cards'] ?? []);
+                $fresh = array_values(array_diff($cards, $avoid));
+                $pool = $fresh !== [] ? $fresh : $cards;
+                $plan[2] = $pool !== [] ? $pool[$random->getInt(0, count($pool) - 1)] : 0;
 
                 continue;
             }
@@ -120,9 +127,10 @@ class ExamBlueprint
             $take = min((int) ($definition['question_count'] ?? 3), $questionCount);
 
             // The first question of each part is the natural opener, keep it first.
-            $rest = range(1, max(1, $questionCount - 1));
-            $rest = $questionCount > 1 ? $random->shuffleArray($rest) : [];
-            $picked = array_merge([0], array_slice($rest, 0, $take - 1));
+            $rest = $questionCount > 1 ? range(1, $questionCount - 1) : [];
+            $fresh = $random->shuffleArray(array_values(array_diff($rest, $avoid)));
+            $used = $random->shuffleArray(array_values(array_intersect($rest, $avoid)));
+            $picked = array_merge([0], array_slice([...$fresh, ...$used], 0, $take - 1));
 
             $plan[$part] = array_values($picked);
         }
