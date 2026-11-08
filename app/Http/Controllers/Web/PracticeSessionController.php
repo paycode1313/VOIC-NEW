@@ -245,8 +245,13 @@ class PracticeSessionController extends Controller
 
         // Filter by AI role type
         if ($request->filled('role')) {
-            $query->whereHas('aiRole', function ($q) use ($request) {
-                $q->where('role_type', $request->input('role'));
+            $role = (string) $request->input('role');
+            $mode = app(ExamBlueprint::class)->modeForRoleType($role);
+            $query->where(function ($q) use ($role, $mode) {
+                $q->whereHas('aiRole', fn ($roleQuery) => $roleQuery->where('role_type', $role));
+                if ($mode !== null) {
+                    $q->orWhere('exam_mode', $mode);
+                }
             });
         }
 

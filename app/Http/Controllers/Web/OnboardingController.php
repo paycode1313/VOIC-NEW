@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Exam\ExamBlueprint;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -43,7 +44,7 @@ class OnboardingController extends Controller
         return response()->json([
             'success' => true,
             'recommended_role' => $recommendedRole,
-            'redirect_url' => route('practice.create', ['role' => $recommendedRole]),
+            'redirect_url' => route('exam.setup', app(ExamBlueprint::class)->modeForRoleType($recommendedRole) ?? 'sidang'),
         ]);
     }
 

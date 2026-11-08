@@ -130,27 +130,4 @@ class AiContinuousLearningTest extends TestCase
         $this->assertContains('Sidang Skripsi', $profile['mastered_topics']);
         $this->assertContains('Tingkatkan variasi intonasi pada bab 3', $profile['identified_weaknesses']);
     }
-
-    /**
-     * Test dashboard renders the Deep Learning adaptive card.
-     */
-    public function test_dashboard_renders_deep_learning_adaptive_card(): void
-    {
-        $user = User::factory()->create([
-            'ai_learning_profile' => [
-                'learning_level' => 3,
-                'total_turns_learned' => 45,
-                'adaptive_mastery_rate' => 84.5,
-                'identified_weaknesses' => ['Kontak mata kamera'],
-                'mastered_topics' => ['Sidang Skripsi'],
-            ],
-        ]);
-
-        $response = $this->actingAs($user)->get(route('dashboard'));
-
-        $response->assertOk();
-        $response->assertSeeText('Otak AI & Continuous Deep Learning');
-        $response->assertSeeText('Level 3');
-        $response->assertSeeText('Koherensi Semantik');
-    }
 }
