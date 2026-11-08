@@ -178,6 +178,7 @@ class ExamController extends Controller
             'ai_conclusion' => $session->ai_conclusion,
             'report' => $session->feedback_notes['exam_report'] ?? null,
             'report_url' => route('exam.result', $session),
+            'share_url' => $session->shareUrl(),
         ];
     }
 

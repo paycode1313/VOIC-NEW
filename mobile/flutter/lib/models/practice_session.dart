@@ -62,6 +62,9 @@ class SessionEvaluationReport {
   final String? verificationUrl;
   final String? certificateQrData;
 
+  /// Full band-score report (criteria, answers, focus) from the exam engine.
+  final Map<String, dynamic>? report;
+
   SessionEvaluationReport({
     required this.sessionId,
     required this.scenarioType,
@@ -73,6 +76,7 @@ class SessionEvaluationReport {
     required this.feedbackNotes,
     this.verificationUrl,
     this.certificateQrData,
+    this.report,
   });
 
   factory SessionEvaluationReport.fromJson(Map<String, dynamic> json) {
@@ -84,9 +88,22 @@ class SessionEvaluationReport {
       voiceScore: (json['voice_score'] as num?)?.toDouble() ?? 0.0,
       overallScore: (json['overall_score'] as num?)?.toDouble() ?? 0.0,
       aiConclusion: json['ai_conclusion'] as String? ?? '',
-      feedbackNotes: json['feedback_notes'] as Map<String, dynamic>? ?? {},
-      verificationUrl: json['verification_url'] as String?,
+      feedbackNotes: json['feedback_notes'] as Map<String, dynamic>? ?? _notesFromReport(json['report'] as Map<String, dynamic>?),
+      verificationUrl: (json['share_url'] ?? json['verification_url']) as String?,
       certificateQrData: json['certificate_qr_data'] as String?,
+      report: json['report'] as Map<String, dynamic>?,
     );
+  }
+
+  /// Strengths and focus areas from the exam report, in the shape the report screen expects.
+  static Map<String, dynamic> _notesFromReport(Map<String, dynamic>? report) {
+    if (report == null) return {};
+    final focus = (report['focus'] as List<dynamic>? ?? [])
+        .map((item) => '${item['title']}: ${item['drill']}')
+        .toList();
+    return {
+      'strengths': report['strengths'] ?? [],
+      'improvements': focus,
+    };
   }
 }

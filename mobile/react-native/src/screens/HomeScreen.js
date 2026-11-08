@@ -48,20 +48,20 @@ export default function HomeScreen({ user, onStartPractice, onLogout }) {
     if (!selectedRole) return;
     setIsStarting(true);
     try {
-      const res = await apiService.startPractice(
-        selectedRole.id,
-        selectedScenario ? selectedScenario.name : selectedRole.name,
+      const res = await apiService.startExam(apiService.modeForRole(selectedRole.role_type), {
+        topic: selectedScenario ? selectedScenario.name : null,
         language,
-        contextMaterial.trim() || null
-      );
+        contextMaterial: contextMaterial.trim() || null,
+      });
       if (res.success) {
         onStartPractice({
           sessionId: res.session_id,
           role: selectedRole,
           scenario: selectedScenario,
           language: language,
-          initialGreeting: res.initial_message?.message || 'Halo! Silakan mulai perkenalkan diri Anda.',
-          initialAudioUrl: res.initial_message?.audio_url,
+          initialGreeting: res.examiner_message?.text || '',
+          initialAudioUrl: res.examiner_message?.audio_url,
+          partTitle: res.part_title,
         });
       }
     } catch (err) {
@@ -244,6 +244,9 @@ export default function HomeScreen({ user, onStartPractice, onLogout }) {
 
       {/* Fixed Bottom CTA Bar */}
       <View style={styles.bottomBar}>
+        <Text style={styles.consentText}>
+          Dengan memulai, kamu setuju jawabanmu diproses oleh AI di laptop penyelenggara untuk membuat rapor.
+        </Text>
         <TouchableOpacity
           style={styles.startButton}
           onPress={handleStart}
@@ -635,5 +638,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: 'bold',
     letterSpacing: 0.5,
+  },
+  consentText: {
+    color: colors.textSecondary || '#64748B',
+    fontSize: 11,
+    textAlign: 'center',
+    marginBottom: 8,
   },
 });

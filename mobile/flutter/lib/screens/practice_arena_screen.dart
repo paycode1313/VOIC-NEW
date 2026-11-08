@@ -38,6 +38,7 @@ class _PracticeArenaScreenState extends State<PracticeArenaScreen> {
 
   // Dialogue & Critique
   String _currentAiDialogue = '';
+  DateTime _answerStartedAt = DateTime.now();
   String? _lastFacialCritique;
 
   // Live Facial Telemetry
@@ -92,17 +93,10 @@ class _PracticeArenaScreenState extends State<PracticeArenaScreen> {
     });
 
     try {
-      final telemetry = FacialTelemetry(
-        eyeContactScore: _eyeContactRatio * 100,
-        isSmiling: _isSmiling,
-        faceDetected: _faceDetected,
-        status: _isSmiling ? 'rileks' : 'serius',
-      );
-
-      final res = await ApiService.sendMessageTurn(
+      final res = await ApiService.answerExam(
         sessionId: widget.sessionId,
-        message: text,
-        telemetry: telemetry,
+        answer: text,
+        durationSeconds: DateTime.now().difference(_answerStartedAt).inSeconds,
         timestampSeconds: _secondsElapsed,
       );
 
@@ -111,14 +105,22 @@ class _PracticeArenaScreenState extends State<PracticeArenaScreen> {
       setState(() {
         _isProcessingTurn = false;
         _isAiSpeaking = true;
-        _currentAiDialogue = res['response_text'] ?? '';
-        _lastFacialCritique = res['facial_critique'];
+        _currentAiDialogue = (res['examiner_message']?['text'] as String?) ?? '';
+        _lastFacialCritique = null;
       });
 
-      // Reset AI speaking indicator after short duration
+      // Reset AI speaking indicator after short duration, then the next answer starts.
       Future.delayed(const Duration(seconds: 4), () {
-        if (mounted) setState(() => _isAiSpeaking = false);
+        if (mounted) {
+          setState(() => _isAiSpeaking = false);
+          _answerStartedAt = DateTime.now();
+        }
       });
+
+      if (res['completed'] == true) {
+        // The examiner just said the closing line: build the report.
+        await _finishAndShowReport();
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessingTurn = false);
@@ -137,7 +139,7 @@ class _PracticeArenaScreenState extends State<PracticeArenaScreen> {
         backgroundColor: VoicColors.surface,
         title: const Text('Selesaikan Latihan?', style: TextStyle(color: Colors.white)),
         content: const Text(
-          'AI akan menganalisis rekaman suara, konsistensi kontak mata, dan menyusun rapor evaluasi Anda.',
+          'Rapor dibuat dari jawaban yang sudah kamu berikan sejauh ini.',
           style: TextStyle(color: VoicColors.textSecondary),
         ),
         actions: [
@@ -155,7 +157,11 @@ class _PracticeArenaScreenState extends State<PracticeArenaScreen> {
     );
 
     if (confirmed != true) return;
+    await _finishAndShowReport();
+  }
 
+  /// Ask the server to build the band-score report from the real answers, then show it.
+  Future<void> _finishAndShowReport() async {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -165,26 +171,9 @@ class _PracticeArenaScreenState extends State<PracticeArenaScreen> {
     );
 
     try {
-      // Send Final Scores to Laravel Backend
-      final report = await ApiService.finishPractice(
+      final report = await ApiService.finishExam(
         sessionId: widget.sessionId,
-        durationSeconds: _secondsElapsed > 0 ? _secondsElapsed : 60,
-        faceScore: 88.5,
-        voiceScore: 85.0,
-        overallScore: 86.8,
-        feedbackNotes: {
-          'eye_contact_score': (_eyeContactRatio * 100),
-          'smile_rate': 78.0,
-          'pace_wpm': 124,
-          'strengths': [
-            'Artikulasi kalimat sangat jelas dan terstruktur dengan metode STAR.',
-            'Kontak mata konsisten menatap kamera depan saat menyampaikan argumen penting.',
-          ],
-          'improvements': [
-            'Kurangi jeda hening saat beralih antar poin penjelasan.',
-            'Tingkatkan variasi dinamika intonasi pada bagian kesimpulan.',
-          ],
-        },
+        durationSeconds: _secondsElapsed,
       );
 
       if (!mounted) return;

@@ -12,8 +12,10 @@ export const endpoints = {
   register: `${API_BASE_URL}/auth/register`,
   user: `${API_BASE_URL}/auth/user`,
   roles: `${API_BASE_URL}/roles`,
-  practiceStart: `${API_BASE_URL}/practice/start`,
-  practiceMessage: (sessionId) => `${API_BASE_URL}/practice/${sessionId}/message`,
-  practiceFinish: (sessionId) => `${API_BASE_URL}/practice/${sessionId}/finish`,
+  // Three-part mock exam (same engine as the web app)
+  examModes: `${API_BASE_URL}/exam/modes`,
+  examStart: (mode) => `${API_BASE_URL}/exam/${mode}/start`,
+  examAnswer: (sessionId) => `${API_BASE_URL}/exam/${sessionId}/answer`,
+  examFinish: (sessionId) => `${API_BASE_URL}/exam/${sessionId}/finish`,
   practiceHistory: `${API_BASE_URL}/practice`,
 };

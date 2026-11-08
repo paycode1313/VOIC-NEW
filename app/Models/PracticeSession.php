@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 #[Fillable([
     'user_id',
@@ -96,6 +97,17 @@ class PracticeSession extends Model
         }
 
         return $this->isGuest() ? route('demo.show', $this) : route('practice.show', $this);
+    }
+
+    /**
+     * Signed, read-only link to the report that a phone can open without logging in,
+     * using the booth's public address (VOIC_PUBLIC_URL) when set.
+     */
+    public function shareUrl(int $days = 7): string
+    {
+        $signed = URL::temporarySignedRoute('exam.shared', now()->addDays($days), ['practiceSession' => $this], absolute: false);
+
+        return rtrim((string) (config('exam.public_url') ?: url('/')), '/').$signed;
     }
 
     /**

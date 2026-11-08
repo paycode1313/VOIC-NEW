@@ -22,7 +22,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -377,20 +376,9 @@ class ExamController extends Controller
             'canRate' => $canManage,
             'canManage' => $canManage,
             'shared' => $shared,
-            'shareUrl' => $this->shareUrl($practiceSession),
+            'shareUrl' => $practiceSession->shareUrl(),
             'drill' => fn (string $criterion) => app(ExamProgressService::class)->drillUrl($practiceSession->exam_mode, $criterion),
         ]);
-    }
-
-    /**
-     * Signed link to the report that a phone can open, using the booth's public address.
-     */
-    protected function shareUrl(PracticeSession $practiceSession): string
-    {
-        $signed = URL::temporarySignedRoute('exam.shared', now()->addDays(7), ['practiceSession' => $practiceSession], absolute: false);
-        $base = rtrim((string) (config('exam.public_url') ?: url('/')), '/');
-
-        return $base.$signed;
     }
 
     /**

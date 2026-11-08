@@ -75,21 +75,35 @@ class ApiService {
     throw Exception('Gagal memuat peran AI');
   }
 
-  // Practice: Start Session
-  static Future<Map<String, dynamic>> startPractice({
-    required int aiRoleId,
-    String? scenarioType,
+  /// Map a legacy role type to an exam mode slug.
+  static String modeForRole(String roleType) {
+    switch (roleType) {
+      case 'hrd':
+        return 'wawancara';
+      case 'investor':
+        return 'pitching';
+      default:
+        return 'sidang';
+    }
+  }
+
+  /// Start a three-part mock exam. Returns the examiner's opening line and exam state.
+  static Future<Map<String, dynamic>> startExam({
+    required String mode,
+    String? topic,
     String language = 'id',
     String? contextMaterial,
+    List<int> parts = const [1, 2, 3],
   }) async {
     final response = await http.post(
-      Uri.parse(ApiConfig.practiceStart),
+      Uri.parse(ApiConfig.examStart(mode)),
       headers: await _getHeaders(),
       body: jsonEncode({
-        'ai_role_id': aiRoleId,
-        'scenario_type': scenarioType,
+        'topic': topic,
         'language': language,
         'context_material': contextMaterial,
+        'parts': parts,
+        'consent': true, // shown to the user on the start screen
       }),
     );
 
@@ -99,55 +113,43 @@ class ApiService {
     throw Exception('Gagal memulai sesi latihan');
   }
 
-  // Practice: Send conversational turn (speech text + face telemetry)
-  static Future<Map<String, dynamic>> sendMessageTurn({
+  /// Send one answer (text recognised on the device). Returns the examiner's next turn.
+  static Future<Map<String, dynamic>> answerExam({
     required int sessionId,
-    required String message,
-    required FacialTelemetry telemetry,
+    required String answer,
+    required int durationSeconds,
     required int timestampSeconds,
-    String language = 'id',
   }) async {
     final response = await http.post(
-      Uri.parse(ApiConfig.practiceMessage(sessionId)),
+      Uri.parse(ApiConfig.examAnswer(sessionId)),
       headers: await _getHeaders(),
       body: jsonEncode({
-        'message': message,
-        'facial_status': telemetry.toJson(),
+        'answer': answer,
+        'duration_seconds': durationSeconds,
         'timestamp_seconds': timestampSeconds,
-        'language': language,
       }),
     );
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     }
-    throw Exception('Gagal memproses giliran bicara');
+    throw Exception('Gagal memproses jawaban');
   }
 
-  // Practice: Finalize and calculate score
-  static Future<SessionEvaluationReport> finishPractice({
+  /// Finish the exam. The band-score report is computed on the server from the real answers.
+  static Future<SessionEvaluationReport> finishExam({
     required int sessionId,
     required int durationSeconds,
-    required double faceScore,
-    required double voiceScore,
-    required double overallScore,
-    Map<String, dynamic>? feedbackNotes,
   }) async {
     final response = await http.post(
-      Uri.parse(ApiConfig.practiceFinish(sessionId)),
+      Uri.parse(ApiConfig.examFinish(sessionId)),
       headers: await _getHeaders(),
-      body: jsonEncode({
-        'duration_seconds': durationSeconds,
-        'face_score': faceScore,
-        'voice_score': voiceScore,
-        'overall_score': overallScore,
-        'feedback_notes': feedbackNotes ?? {},
-      }),
+      body: jsonEncode({'duration_seconds': durationSeconds}),
     );
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      return SessionEvaluationReport.fromJson(json['session']);
+      return SessionEvaluationReport.fromJson(json['evaluation']);
     }
     throw Exception('Gagal menyelesaikan evaluasi sesi');
   }

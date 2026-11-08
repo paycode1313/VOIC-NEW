@@ -61,75 +61,45 @@ export const apiService = {
     return await res.json();
   },
 
-  // Start Practice Session (Generates opening greeting from AI Role)
-  startPractice: async (aiRoleId, scenarioType, language = 'id', contextMaterial = null) => {
-    const res = await fetch(endpoints.practiceStart, {
+  // Map a legacy role type to an exam mode slug.
+  modeForRole: (roleType) => ({ hrd: 'wawancara', investor: 'pitching' }[roleType] || 'sidang'),
+
+  // Start a three-part mock exam. Returns the examiner's opening line and exam state.
+  startExam: async (mode, { topic = null, language = 'id', contextMaterial = null, parts = [1, 2, 3] } = {}) => {
+    const res = await fetch(endpoints.examStart(mode), {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        ai_role_id: aiRoleId,
-        scenario_type: scenarioType,
-        language: language || 'id',
-        context_material: contextMaterial || null,
+        topic,
+        language,
+        context_material: contextMaterial,
+        parts,
+        consent: true, // shown to the user on the start screen
       }),
     });
     return await res.json();
   },
 
-  // Send Conversational Turn to AI (speech transcript + facial telemetry)
-  sendMessage: async (sessionId, message, eyeContactRatio = 0.9, isSmiling = true, faceDetected = true, timestampSeconds = 1) => {
-    const telemetry = {
-      status: isSmiling ? 'smile' : 'neutral',
-      eye_contact_score: Math.round(eyeContactRatio * 100),
-      is_smiling: Boolean(isSmiling),
-      face_detected: Boolean(faceDetected),
-    };
-
-    const res = await fetch(endpoints.practiceMessage(sessionId), {
+  // Send one answer (text recognised on the device). Returns the examiner's next turn.
+  answerExam: async (sessionId, answer, durationSeconds, timestampSeconds = 0) => {
+    const res = await fetch(endpoints.examAnswer(sessionId), {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({
-        message,
-        facial_status: telemetry,
-        timestamp_seconds: timestampSeconds || 1,
-        language: 'id',
+        answer,
+        duration_seconds: Math.max(0, Math.round(durationSeconds || 0)),
+        timestamp_seconds: Math.max(0, Math.round(timestampSeconds || 0)),
       }),
     });
     return await res.json();
   },
 
-  // Alias for backward compatibility
-  sendMessageTurn: async (sessionId, message, telemetry, timestampSeconds = 1) => {
-    const res = await fetch(endpoints.practiceMessage(sessionId), {
+  // Finish the exam. Returns { evaluation } with the real band-score report computed by the server.
+  finishExam: async (sessionId, durationSeconds = 0) => {
+    const res = await fetch(endpoints.examFinish(sessionId), {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({
-        message,
-        facial_status: telemetry,
-        timestamp_seconds: timestampSeconds || 1,
-        language: 'id',
-      }),
-    });
-    return await res.json();
-  },
-
-  // Finalize Practice Session and Trigger AI Evaluation Report
-  finishPractice: async (sessionId, durationSeconds = 60, faceScore = 88.0, voiceScore = 85.0, overallScore = 86.5, feedbackNotes = {}) => {
-    const safeDuration = Math.max(parseInt(durationSeconds, 10) || 60, 1);
-    const safeFace = parseFloat(faceScore) || 88.0;
-    const safeVoice = parseFloat(voiceScore) || 85.0;
-    const safeOverall = parseFloat(overallScore) || Math.round((safeFace * 0.4 + safeVoice * 0.6) * 10) / 10;
-
-    const res = await fetch(endpoints.practiceFinish(sessionId), {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify({
-        duration_seconds: safeDuration,
-        face_score: safeFace,
-        voice_score: safeVoice,
-        overall_score: safeOverall,
-        feedback_notes: feedbackNotes || {},
-      }),
+      body: JSON.stringify({ duration_seconds: Math.max(0, Math.round(durationSeconds || 0)) }),
     });
     return await res.json();
   },
