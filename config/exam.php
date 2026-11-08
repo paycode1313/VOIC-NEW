@@ -30,6 +30,11 @@ return [
     */
     'retention_days' => (int) env('VOIC_RETENTION_DAYS', 7),
 
+    /*
+    | PIN for the booth operator page (/booth). Leave empty to disable it.
+    */
+    'booth_pin' => env('VOIC_BOOTH_PIN'),
+
     'long_turn_seconds' => 120,
 
     'modes' => [

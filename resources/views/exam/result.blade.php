@@ -139,6 +139,12 @@
                 </div>
                 <div class="mt-6 flex flex-wrap gap-2">
                     <a href="{{ route('exam.setup', ['mode' => $modeKey] + ($isEn ? ['lang' => 'en'] : [])) }}" class="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-slate-900 hover:bg-slate-100 dark:bg-slate-900 dark:text-white">{{ $isEn ? 'Practise again' : 'Latihan lagi' }}</a>
+                    @if (! $shared && \App\Http\Controllers\Web\BoothController::isUnlocked(request()))
+                        <form method="POST" action="{{ route('booth.next') }}">
+                            @csrf
+                            <button type="submit" class="rounded-full bg-emerald-400 px-5 py-2.5 text-sm font-bold text-slate-900 hover:bg-emerald-300">{{ $isEn ? 'Next visitor' : 'Pengunjung berikutnya' }}</button>
+                        </form>
+                    @endif
                     <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="rounded-full border border-white/20 px-5 py-2.5 text-sm font-bold hover:bg-white/10 dark:border-black/15 dark:hover:bg-black/5">{{ $isEn ? 'Other modes' : 'Mode lain' }}</a>
                 </div>
             </div>

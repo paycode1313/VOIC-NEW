@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\BoothController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\DemoSessionController;
 use App\Http\Controllers\Web\ExamController;
@@ -36,6 +37,15 @@ Route::prefix('latihan')->name('exam.')->controller(ExamController::class)->grou
     Route::post('/sesi/{practiceSession}/pesan/{message}/nilai', 'rate')->scopeBindings()->middleware('throttle:60,1')->name('rate');
     Route::get('/{mode}', 'setup')->whereIn('mode', array_keys(config('exam.modes')))->name('setup');
     Route::post('/{mode}/mulai', 'start')->whereIn('mode', array_keys(config('exam.modes')))->middleware('throttle:10,1')->name('start');
+});
+
+// Booth operator (PIN from VOIC_BOOTH_PIN)
+Route::prefix('booth')->name('booth.')->controller(BoothController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/masuk', 'unlock')->middleware('throttle:10,1')->name('unlock');
+    Route::get('/papan', 'board')->name('board');
+    Route::post('/berikutnya', 'nextVisitor')->name('next');
+    Route::post('/kunci', 'lock')->name('lock');
 });
 
 // Guest / Demo Mode for Innofest Exhibition Booth (No Registration Required)
