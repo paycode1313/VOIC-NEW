@@ -206,9 +206,14 @@ class DemoSessionController extends Controller
     /**
      * Display demo scorecard for guest.
      */
-    public function show(PracticeSession $practiceSession, CredentialVerificationService $verificationService): View
+    public function show(PracticeSession $practiceSession, CredentialVerificationService $verificationService): View|RedirectResponse
     {
         Gate::authorize('view', $practiceSession);
+
+        // Exam sessions have their own band-score report.
+        if ($practiceSession->isExam()) {
+            return redirect()->to($practiceSession->reportUrl());
+        }
 
         $practiceSession->load(['aiRole', 'messages']);
         $benchmarkData = $verificationService->getBenchmarkData($practiceSession);

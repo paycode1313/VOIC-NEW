@@ -83,6 +83,21 @@ class PracticeSession extends Model
     }
 
     /**
+     * URL of the report for this session: the band-score report for exams
+     * (or the room if the exam is not finished yet), the legacy report otherwise.
+     */
+    public function reportUrl(): string
+    {
+        if ($this->isExam()) {
+            return isset($this->feedback_notes['exam_report'])
+                ? route('exam.result', $this)
+                : route('exam.room', $this);
+        }
+
+        return $this->isGuest() ? route('demo.show', $this) : route('practice.show', $this);
+    }
+
+    /**
      * Determine if this session is a guest/demo session without an authenticated user.
      */
     public function isGuest(): bool

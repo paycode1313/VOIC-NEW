@@ -515,7 +515,7 @@
                                             </span>
                                         </td>
                                         <td class="py-3.5 px-5 text-right whitespace-nowrap">
-                                            <a href="{{ route('practice.show', $session) }}"
+                                            <a href="{{ $session->reportUrl() }}"
                                                class="inline-flex items-center px-3 py-1 rounded-lg font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-white hover:bg-blue-50 dark:hover:bg-white/5 transition">
                                                 <span>Lihat Rapor</span>
                                                 <svg class="w-3.5 h-3.5 ms-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

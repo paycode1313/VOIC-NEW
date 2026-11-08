@@ -297,9 +297,14 @@ class PracticeSessionController extends Controller
     /**
      * Display detailed post-practice feedback and performance metrics.
      */
-    public function show(PracticeSession $practiceSession, CredentialVerificationService $verificationService): View
+    public function show(PracticeSession $practiceSession, CredentialVerificationService $verificationService): View|RedirectResponse
     {
         Gate::authorize('view', $practiceSession);
+
+        // Exam sessions have their own band-score report.
+        if ($practiceSession->isExam()) {
+            return redirect()->to($practiceSession->reportUrl());
+        }
 
         $practiceSession->load(['aiRole', 'messages', 'user']);
         $benchmarkData = $verificationService->getBenchmarkData($practiceSession);
