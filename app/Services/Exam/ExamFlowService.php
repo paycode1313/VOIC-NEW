@@ -21,6 +21,14 @@ class ExamFlowService
 
     public const PHASE_COMPLETED = 'completed';
 
+    public const TYPE_EXAM = 'exam';
+
+    /** Free, time-boxed coaching conversation (no parts, no scripted questions). */
+    public const TYPE_COACH = 'coach';
+
+    /** Seconds before the end when the coach starts wrapping up. */
+    public const COACH_WRAP_UP_SECONDS = 90;
+
     public function __construct(
         protected ExamBlueprint $blueprint,
         protected ExaminerService $examiner,
@@ -75,6 +83,129 @@ class ExamFlowService
     }
 
     /**
+     * Start a coaching conversation: the coach greets and asks what to work on.
+     *
+     * @return array<string, mixed>
+     */
+    public function startCoach(PracticeSession $session, string $mode, string $language, ?string $topic): array
+    {
+        $state = [
+            'session_type' => self::TYPE_COACH,
+            'mode' => $mode,
+            'language' => $language,
+            'topic' => $topic,
+            'parts' => [],
+            'plan' => [],
+            'part' => 1,
+            'question_index' => 0,
+            'followups_used' => 0,
+            'phase' => self::PHASE_ANSWERING,
+            'turn' => 0,
+            'focus' => null,
+            'started_at' => now()->timestamp,
+            'limit_seconds' => max(60, (int) config('exam.coach_minutes', 10) * 60),
+        ];
+
+        $definition = $this->blueprint->mode($mode);
+        $opening = $this->blueprint->text($definition['coach']['opening'] ?? '', $language);
+
+        $session->forceFill(['exam_state' => $state])->save();
+
+        $audioUrl = $this->examiner->speak($opening, $definition['role_type'], $language);
+        $message = $this->recordExaminerMessage($session, $opening, $audioUrl, $state, 'opening');
+
+        return $this->payload($session->refresh(), $message);
+    }
+
+    /**
+     * Whether a session is a coaching conversation.
+     *
+     * @param  array<string, mixed>  $state
+     */
+    public static function isCoach(array $state): bool
+    {
+        return ($state['session_type'] ?? self::TYPE_EXAM) === self::TYPE_COACH;
+    }
+
+    /**
+     * Seconds left in a coaching conversation (never negative).
+     *
+     * @param  array<string, mixed>  $state
+     */
+    public static function remainingSeconds(array $state): int
+    {
+        $elapsed = now()->timestamp - (int) ($state['started_at'] ?? now()->timestamp);
+
+        return max(0, (int) ($state['limit_seconds'] ?? 600) - $elapsed);
+    }
+
+    /**
+     * One coaching turn: react, teach one concrete thing, keep the conversation going.
+     * An empty answer with $timeUp closes the session without recording a user turn.
+     *
+     * @param  array<string, mixed>|null  $facial
+     * @return array<string, mixed>
+     */
+    protected function answerCoach(PracticeSession $session, string $answer, int $durationSeconds, ?array $facial, int $timestampSeconds, ?callable $onSentence, bool $timeUp): array
+    {
+        $state = $session->exam_state;
+        $mode = $state['mode'];
+        $question = $this->lastExaminerQuestion($session);
+
+        if (trim($answer) !== '') {
+            $session->messages()->create([
+                'sender' => 'user',
+                'message' => $answer,
+                'facial_status' => $facial,
+                'timestamp_seconds' => $timestampSeconds,
+                'exam_part' => 1,
+                'meta' => ['question' => $question, 'duration_seconds' => $durationSeconds, 'kind' => 'answer'],
+            ]);
+        }
+
+        $remaining = self::remainingSeconds($state);
+        $closing = $timeUp || $remaining <= 0;
+        $state['turn'] = (int) $state['turn'] + 1;
+        if ($closing) {
+            $state['phase'] = self::PHASE_COMPLETED;
+        }
+        $directive = $closing ? ExaminerService::DIRECTIVE_COACH_CLOSE : ExaminerService::DIRECTIVE_COACH;
+
+        $definition = $this->blueprint->mode($mode);
+        $reply = $this->examiner->respond([
+            'session_type' => self::TYPE_COACH,
+            'mode' => $mode,
+            'role_type' => $definition['role_type'],
+            'examiner_name' => $definition['examiner']['name'],
+            'coach_title' => $this->blueprint->text($definition['coach']['title'] ?? '', $state['language']),
+            'coach_skills' => $this->blueprint->text($definition['coach']['skills'] ?? '', $state['language']),
+            'language' => $state['language'],
+            'topic' => $state['topic'],
+            'context_material' => $session->feedback_notes['context_material'] ?? null,
+            'part' => 1,
+            'part_title' => $this->blueprint->text($definition['coach']['title'] ?? '', $state['language']),
+            'directive' => $directive,
+            'question' => $question,
+            'answer' => $answer,
+            'history' => $this->history($session, includeLast: trim($answer) === ''),
+            'scripted' => '',
+            'planned_question' => null,
+            'transition' => null,
+            'remaining_seconds' => $remaining,
+            'wrap_up' => ! $closing && $remaining <= self::COACH_WRAP_UP_SECONDS,
+            'turn' => (int) $state['turn'],
+            'session_id' => $session->id,
+            'focus' => null,
+        ], $onSentence);
+
+        $session->forceFill(['exam_state' => $state])->save();
+
+        $message = $this->recordExaminerMessage($session, $reply['text'], $reply['audio_url'], $state, $directive, $timestampSeconds + 1, $reply['engine'], $reply['reply'], 1);
+
+        return $this->payload($session->refresh(), $message);
+    }
+
+    /**
      * Remember which questions the last visitors got (about two sessions' worth per part).
      *
      * @param  array<int, list<int>|int>  $plan
@@ -100,9 +231,13 @@ class ExamFlowService
      * @param  (callable(string, ?string): void)|null  $onSentence  Called with each examiner sentence as soon as it is ready.
      * @return array<string, mixed>
      */
-    public function answer(PracticeSession $session, string $answer, int $durationSeconds, ?array $facial, int $timestampSeconds, ?callable $onSentence = null): array
+    public function answer(PracticeSession $session, string $answer, int $durationSeconds, ?array $facial, int $timestampSeconds, ?callable $onSentence = null, bool $timeUp = false): array
     {
         $state = $session->exam_state;
+        if (self::isCoach($state)) {
+            return $this->answerCoach($session, $answer, $durationSeconds, $facial, $timestampSeconds, $onSentence, $timeUp);
+        }
+
         $mode = $state['mode'];
         $part = (int) $state['part'];
         $question = $this->lastExaminerQuestion($session);
@@ -188,6 +323,33 @@ class ExamFlowService
         $mode = $state['mode'];
         $part = (int) $state['part'];
         $language = $state['language'];
+
+        if (self::isCoach($state)) {
+            $limit = (int) ($state['limit_seconds'] ?? 600);
+            $remaining = self::remainingSeconds($state);
+
+            return [
+                'session_id' => $session->id,
+                'session_type' => self::TYPE_COACH,
+                'phase' => $state['phase'],
+                'completed' => $state['phase'] === self::PHASE_COMPLETED,
+                'part' => 1,
+                'part_title' => $this->blueprint->text($this->blueprint->mode($mode)['coach']['title'] ?? '', $language),
+                'part_subtitle' => '',
+                'parts' => [],
+                'cue_card' => null,
+                'limit_seconds' => $limit,
+                'remaining_seconds' => $remaining,
+                'progress' => ['answered' => (int) $state['turn'], 'total' => 0, 'percent' => (int) round(($limit - $remaining) / max(1, $limit) * 100)],
+                'examiner_message' => $message ? [
+                    'id' => $message->id,
+                    'text' => $message->message,
+                    'audio_url' => $message->audio_url,
+                    'engine' => $message->meta['engine'] ?? null,
+                ] : null,
+            ];
+        }
+
         $partDefinition = $this->blueprint->part($mode, $part);
 
         $cueCard = null;
@@ -206,6 +368,7 @@ class ExamFlowService
 
         return [
             'session_id' => $session->id,
+            'session_type' => self::TYPE_EXAM,
             'phase' => $state['phase'],
             'completed' => $state['phase'] === self::PHASE_COMPLETED,
             'part' => $part,
@@ -403,18 +566,18 @@ class ExamFlowService
      *
      * @return list<array{role: string, content: string}>
      */
-    protected function history(PracticeSession $session): array
+    protected function history(PracticeSession $session, bool $includeLast = false): array
     {
-        return $session->messages()
+        $history = $session->messages()
             ->orderBy('id')
             ->get(['sender', 'message'])
             ->map(fn (SessionMessage $message) => [
                 'role' => $message->sender === 'user' ? 'user' : 'assistant',
                 'content' => $message->message,
-            ])
-            ->slice(0, -1) // the answer just recorded is sent separately
-            ->values()
-            ->all();
+            ]);
+
+        // The answer just recorded is sent separately, unless no answer was recorded (time up).
+        return ($includeLast ? $history : $history->slice(0, -1))->values()->all();
     }
 
     /**

@@ -25,6 +25,7 @@ class ExamAnswerRequest extends FormRequest
     {
         return [
             'answer' => ['present', 'nullable', 'string', 'max:5000'],
+            'time_up' => ['nullable', 'boolean'],
             'duration_seconds' => ['required', 'integer', 'min:0', 'max:900'],
             'timestamp_seconds' => ['required', 'integer', 'min:0'],
             'facial' => ['nullable', 'array'],

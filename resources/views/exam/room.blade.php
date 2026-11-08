@@ -15,9 +15,16 @@
 <x-exam-layout :title="$blueprint->text($mode['title'], $language)" :full-height="true">
     <div x-data="examRoom(@js($roomConfig))" class="mx-auto flex h-full max-w-6xl flex-col px-4 pb-4 sm:px-6">
 
-        {{-- Part stepper --}}
+        {{-- Part stepper (exam) or coaching timer (coach) --}}
         <div class="flex shrink-0 items-center justify-between gap-3 py-3">
-            <ol class="flex min-w-0 items-center gap-1.5 overflow-x-auto text-xs font-semibold sm:text-sm">
+            <div x-show="isCoach" x-cloak class="flex min-w-0 items-center gap-2 text-xs font-semibold sm:text-sm">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-2.5 py-1 text-white dark:bg-white dark:text-slate-900" x-text="state.part_title"></span>
+                <span class="text-slate-500">{{ $isEn ? 'Relaxed chat, no score' : 'Ngobrol santai, tanpa nilai' }}</span>
+                <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-mono font-bold"
+                      :class="coachRemaining <= 60 ? 'bg-amber-100 text-amber-800 dark:bg-amber-400/15 dark:text-amber-300' : 'bg-black/5 dark:bg-white/10'"
+                      :aria-label="t('Sisa waktu', 'Time left')" x-text="coachClock"></span>
+            </div>
+            <ol x-show="!isCoach" class="flex min-w-0 items-center gap-1.5 overflow-x-auto text-xs font-semibold sm:text-sm">
                 <template x-for="(p, i) in state.parts" :key="p.number">
                     <li class="flex shrink-0 items-center gap-1.5">
                         <span x-show="i > 0" class="h-px w-4 bg-black/15 dark:bg-white/15 sm:w-8"></span>
@@ -30,7 +37,7 @@
                     </li>
                 </template>
             </ol>
-            <button type="button" @click="if (confirm(t('Akhiri sesi dan lihat laporan dari jawaban sejauh ini?', 'End the session and see the report for answers so far?'))) finish()"
+            <button type="button" @click="if (confirm(isCoach ? t('Akhiri obrolan dan lihat catatan coaching?', 'End the chat and see your coaching notes?') : t('Akhiri sesi dan lihat laporan dari jawaban sejauh ini?', 'End the session and see the report for answers so far?'))) finish()"
                     x-show="started" x-cloak
                     class="shrink-0 rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-black/5 dark:border-white/15 dark:text-slate-300 dark:hover:bg-white/10">
                 {{ $isEn ? 'End session' : 'Akhiri sesi' }}
@@ -48,8 +55,9 @@
                 {{-- Pre-start: mic check --}}
                 <div x-show="!started" class="flex flex-1 flex-col items-center justify-center overflow-y-auto p-6 text-center">
                     <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-24 w-24 rounded-full object-cover">
-                    <h1 class="mt-4 text-2xl font-extrabold tracking-tight">{{ $isEn ? 'Ready when you are' : 'Siap kalau kamu siap' }}</h1>
-                    <p class="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
+                    <h1 class="mt-4 text-2xl font-extrabold tracking-tight" x-text="isCoach ? t('Yuk ngobrol {{ config('exam.coach_minutes') }} menit', 'Let\'s chat for {{ config('exam.coach_minutes') }} minutes') : t('Siap kalau kamu siap', 'Ready when you are')"></h1>
+                    <p x-show="isCoach" x-cloak class="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">{{ $isEn ? 'This is not a test. Talk naturally, ask anything, and your coach will show you how to say it better.' : 'Ini bukan tes. Bicara saja senatural mungkin, boleh bertanya apa pun, dan coach akan menunjukkan cara mengatakannya dengan lebih baik.' }}</p>
+                    <p x-show="!isCoach" class="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
                         {{ $isEn
                             ? "{$mode['examiner']['name']} will speak first. Answer out loud; when you stop talking for a moment your answer is sent automatically."
                             : "{$mode['examiner']['name']} akan bicara duluan. Jawab dengan suara; saat kamu berhenti bicara sejenak, jawaban terkirim otomatis." }}
@@ -69,7 +77,7 @@
                         <p x-show="!speechSupported" x-cloak class="mt-3 text-xs text-amber-600">{{ $isEn ? 'This browser has no speech recognition. You will type your answers.' : 'Browser ini tidak mendukung pengenalan suara. Kamu akan menjawab dengan mengetik.' }}</p>
                         <button type="button" @click="begin()"
                                 class="mt-4 w-full rounded-full bg-slate-900 px-6 py-3.5 text-base font-bold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
-                            {{ $isEn ? 'Start the exam' : 'Mulai ujian' }}
+                            <span x-text="isCoach ? t('Mulai ngobrol', 'Start chatting') : t('Mulai ujian', 'Start the exam')"></span>
                         </button>
                     </div>
                 </div>

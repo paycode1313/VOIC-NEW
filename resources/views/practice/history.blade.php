@@ -43,8 +43,8 @@
                 @endphp
                 <div id="session-{{ $session->id }}" class="flex items-center gap-4 rounded-3xl border border-black/5 bg-white p-4 dark:border-white/10 dark:bg-white/[0.03]">
                     <span class="inline-flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl bg-[#f6f6f3] dark:bg-white/5">
-                        <span class="text-sm font-extrabold">{{ $band !== null ? number_format($band, 1) : ($session->isExam() ? '…' : number_format($session->overall_score, 0)) }}</span>
-                        <span class="text-[9px] font-semibold uppercase text-slate-400">{{ $band !== null ? 'band' : ($session->isExam() ? 'proses' : 'skor') }}</span>
+                        <span class="text-sm font-extrabold">{{ $band !== null ? number_format($band, 1) : ($session->isCoaching() ? '💬' : ($session->isExam() ? '…' : number_format($session->overall_score, 0))) }}</span>
+                        <span class="text-[9px] font-semibold uppercase text-slate-400">{{ $band !== null ? 'band' : ($session->isCoaching() ? 'coach' : ($session->isExam() ? 'proses' : 'skor')) }}</span>
                     </span>
                     <div class="min-w-0 flex-1">
                         <p class="truncate font-semibold">{{ $session->scenario_type }}</p>

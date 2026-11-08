@@ -57,6 +57,14 @@ class QualityGateTest(unittest.TestCase):
     def test_react_must_not_ask(self):
         self.assertIn("react_with_question", exam_engine.quality_issues("Kecepatan YOLOv8 di pabrik tekstil masuk akal ya?", ANSWER, "react", "id"))
 
+    def test_clean_reply_keeps_quoted_example_sentences(self):
+        text = 'Bagus. Coba bilang: "Saya terbiasa menjelaskan data." Sekarang ulangi.'
+        self.assertEqual(exam_engine.clean_reply(text, max_sentences=4), text)
+
+    def test_clean_reply_keeps_a_closing_quote_at_the_end(self):
+        text = 'Coba bilang: "Saya membantu tim menaikkan konversi lima belas persen."'
+        self.assertEqual(exam_engine.clean_reply(text), text)
+
     def test_clean_reply_strips_markdown_and_labels(self):
         self.assertEqual(exam_engine.clean_reply("Prof. Hendra: **Baik**, saya paham. [catatan]"), "Baik, saya paham.")
 

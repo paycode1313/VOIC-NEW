@@ -64,11 +64,11 @@
                 @forelse ($recentSessions as $session)
                     @php
                         $band = $session->feedback_notes['exam_report']['overall_band'] ?? null;
-                        $finished = ! $session->isExam() || $band !== null;
+                        $finished = ! $session->isExam() || $session->hasReport();
                     @endphp
                     <a href="{{ $session->reportUrl() }}" class="mt-3 flex items-center gap-4 rounded-2xl px-2 py-2 hover:bg-black/[0.03] dark:hover:bg-white/5">
                         <span class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#f6f6f3] text-sm font-extrabold dark:bg-white/5">
-                            {{ $band !== null ? number_format($band, 1) : ($session->isExam() ? '…' : number_format($session->overall_score, 0)) }}
+                            {{ $band !== null ? number_format($band, 1) : ($session->isCoaching() ? '💬' : ($session->isExam() ? '…' : number_format($session->overall_score, 0))) }}
                         </span>
                         <span class="min-w-0 flex-1">
                             <span class="block truncate font-semibold">{{ $session->scenario_type }}</span>

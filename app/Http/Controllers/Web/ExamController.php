@@ -70,6 +70,8 @@ class ExamController extends Controller
             'language' => $this->language($request),
             'selectedParts' => $parts === [] ? [1, 2, 3] : $parts,
             'focus' => $focus,
+            // Coaching is the default; drills and explicit ?type=exam open the scored mock exam.
+            'sessionType' => $focus !== null || $request->query('type') === 'exam' ? ExamFlowService::TYPE_EXAM : ExamFlowService::TYPE_COACH,
         ]);
     }
 
@@ -104,7 +106,9 @@ class ExamController extends Controller
         $session = PracticeSession::create([
             'user_id' => $user?->id,
             'ai_role_id' => AiRole::where('role_type', $definition['role_type'])->value('id'),
-            'scenario_type' => $this->blueprint->text($definition['title'], $language).($topic ? ' · '.Str::limit($topic, 60) : ''),
+            'scenario_type' => ($request->validated('session_type') === ExamFlowService::TYPE_COACH
+                ? $this->blueprint->text($definition['coach']['title'], $language)
+                : $this->blueprint->text($definition['title'], $language)).($topic ? ' · '.Str::limit($topic, 60) : ''),
             'exam_mode' => $mode,
             'duration_seconds' => 0,
             'feedback_notes' => $notes,
@@ -116,7 +120,11 @@ class ExamController extends Controller
             $request->session()->put('pending_claim_session_id', $session->id);
         }
 
-        $flow->start($session, $mode, $request->parts(), $language, $topic, focus: $request->validated('focus'));
+        if ($request->validated('session_type') === ExamFlowService::TYPE_COACH) {
+            $flow->startCoach($session, $mode, $language, $topic);
+        } else {
+            $flow->start($session, $mode, $request->parts(), $language, $topic, focus: $request->validated('focus'));
+        }
 
         return redirect()->route('exam.room', $session);
     }
@@ -129,7 +137,7 @@ class ExamController extends Controller
         abort_unless($practiceSession->isExam(), 404);
         Gate::authorize('update', $practiceSession);
 
-        if (isset($practiceSession->feedback_notes['exam_report'])) {
+        if ($practiceSession->hasReport()) {
             return redirect()->route('exam.result', $practiceSession);
         }
 
@@ -165,6 +173,7 @@ class ExamController extends Controller
             (int) $request->validated('duration_seconds'),
             $request->validated('facial'),
             (int) $request->validated('timestamp_seconds'),
+            timeUp: (bool) $request->validated('time_up', false),
         );
 
         return response()->json($payload);
@@ -231,6 +240,7 @@ class ExamController extends Controller
                 $request->validated('facial'),
                 (int) $request->validated('timestamp_seconds'),
                 fn (string $text, ?string $audioUrl) => $send(['type' => 'sentence', 'text' => $text, 'audio_url' => $audioUrl]),
+                (bool) $request->validated('time_up', false),
             );
 
             if ($pending !== null) {
@@ -314,7 +324,7 @@ class ExamController extends Controller
             'duration_seconds' => ['nullable', 'integer', 'min:0', 'max:7200'],
         ]);
 
-        if (! isset($practiceSession->feedback_notes['exam_report'])) {
+        if (! $practiceSession->hasReport()) {
             $reports->finalize($practiceSession, (int) ($validated['duration_seconds'] ?? 0));
         }
 
@@ -331,7 +341,7 @@ class ExamController extends Controller
         abort_unless($practiceSession->isExam(), 404);
         Gate::authorize('view', $practiceSession);
 
-        if (! isset($practiceSession->feedback_notes['exam_report'])) {
+        if (! $practiceSession->hasReport()) {
             return redirect()->route('exam.room', $practiceSession);
         }
 
@@ -343,7 +353,7 @@ class ExamController extends Controller
      */
     public function shared(PracticeSession $practiceSession): View
     {
-        abort_unless($practiceSession->isExam() && isset($practiceSession->feedback_notes['exam_report']), 404);
+        abort_unless($practiceSession->isExam() && $practiceSession->hasReport(), 404);
 
         return $this->resultView($practiceSession, false, shared: true);
     }
@@ -363,6 +373,24 @@ class ExamController extends Controller
 
     protected function resultView(PracticeSession $practiceSession, bool $canManage, bool $shared = false): View
     {
+        if (isset($practiceSession->feedback_notes['coach_report'])) {
+            $coach = $practiceSession->feedback_notes['coach_report'];
+
+            return view('exam.coach-result', [
+                'session' => $practiceSession,
+                'modeKey' => $practiceSession->exam_mode,
+                'mode' => $this->blueprint->mode($practiceSession->exam_mode),
+                'blueprint' => $this->blueprint,
+                'language' => $coach['language'] ?? 'id',
+                'report' => $coach,
+                'transcript' => $practiceSession->messages()->orderBy('id')->get(['id', 'sender', 'message', 'exam_part', 'meta']),
+                'canRate' => $canManage,
+                'canManage' => $canManage,
+                'shared' => $shared,
+                'shareUrl' => $practiceSession->shareUrl(),
+            ]);
+        }
+
         $report = $practiceSession->feedback_notes['exam_report'];
 
         return view('exam.result', [

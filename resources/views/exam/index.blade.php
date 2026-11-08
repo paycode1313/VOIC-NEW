@@ -84,11 +84,13 @@
                 <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     @foreach ($recentSessions as $recent)
                         @php $recentReport = $recent->feedback_notes['exam_report'] ?? null; @endphp
-                        <a href="{{ $recentReport ? route('exam.result', $recent) : route('exam.room', $recent) }}" class="rounded-2xl border border-black/5 bg-white p-4 text-sm hover:shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                        <a href="{{ $recent->reportUrl() }}" class="rounded-2xl border border-black/5 bg-white p-4 text-sm hover:shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
                             <div class="flex items-center justify-between">
                                 <span class="font-semibold">{{ \Illuminate\Support\Str::limit($recent->scenario_type, 28) }}</span>
                                 @if ($recentReport)
                                     <span class="rounded-full bg-slate-900 px-2 py-0.5 text-xs font-bold text-white dark:bg-white dark:text-slate-900">{{ number_format($recentReport['overall_band'], 1) }}</span>
+                                @elseif ($recent->hasReport())
+                                    <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-300">{{ $isEn ? 'Coach' : 'Coaching' }}</span>
                                 @else
                                     <span class="text-xs text-amber-600">{{ $isEn ? 'In progress' : 'Belum selesai' }}</span>
                                 @endif

@@ -155,8 +155,15 @@ class ExportExamTrainingData extends Command
                             ->values()
                             ->all();
 
+                        $coach = ($state['session_type'] ?? null) === 'coach';
+                        $definition = $blueprint->mode($session->exam_mode);
                         $turns[] = [
-                            $this->turn(
+                            ($coach ? [
+                                'session_type' => 'coach',
+                                'coach_title' => $blueprint->text($definition['coach']['title'] ?? '', $state['language'] ?? 'id'),
+                                'coach_skills' => $blueprint->text($definition['coach']['skills'] ?? '', $state['language'] ?? 'id'),
+                                'wrap_up' => false,
+                            ] : []) + $this->turn(
                                 $blueprint,
                                 $session->exam_mode,
                                 $state['language'] ?? 'id',
@@ -189,7 +196,7 @@ class ExportExamTrainingData extends Command
     {
         $meta = $message->meta ?? [];
 
-        if ($message->sender !== 'ai' || ! in_array($meta['kind'] ?? null, [ExaminerService::DIRECTIVE_REACT, ExaminerService::DIRECTIVE_FOLLOW_UP, ExaminerService::DIRECTIVE_NEXT, ExaminerService::DIRECTIVE_CLARIFY], true) || empty($meta['reply'])) {
+        if ($message->sender !== 'ai' || ! in_array($meta['kind'] ?? null, [ExaminerService::DIRECTIVE_REACT, ExaminerService::DIRECTIVE_FOLLOW_UP, ExaminerService::DIRECTIVE_NEXT, ExaminerService::DIRECTIVE_CLARIFY, ExaminerService::DIRECTIVE_COACH, ExaminerService::DIRECTIVE_COACH_CLOSE], true) || empty($meta['reply'])) {
             return null;
         }
 

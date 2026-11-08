@@ -91,7 +91,7 @@ class PracticeSession extends Model
     public function reportUrl(): string
     {
         if ($this->isExam()) {
-            return isset($this->feedback_notes['exam_report'])
+            return $this->hasReport()
                 ? route('exam.result', $this)
                 : route('exam.room', $this);
         }
@@ -108,6 +108,22 @@ class PracticeSession extends Model
         $signed = URL::temporarySignedRoute('exam.shared', now()->addDays($days), ['practiceSession' => $this], absolute: false);
 
         return rtrim((string) (config('exam.public_url') ?: url('/')), '/').$signed;
+    }
+
+    /**
+     * Whether a finished report exists (band-score exam or coaching notes).
+     */
+    public function hasReport(): bool
+    {
+        return isset($this->feedback_notes['exam_report']) || isset($this->feedback_notes['coach_report']);
+    }
+
+    /**
+     * Whether this is a free coaching conversation rather than a scored exam.
+     */
+    public function isCoaching(): bool
+    {
+        return ($this->exam_state['session_type'] ?? null) === 'coach';
     }
 
     /**

@@ -33,7 +33,13 @@ class ExaminerService
     /** The candidate asked what the question means: explain and ask again. */
     public const DIRECTIVE_CLARIFY = 'clarify';
 
-    public function __construct(protected SpeakingAnalyzer $analyzer) {}
+    /** Coaching conversation: react, teach one concrete thing, keep talking. */
+    public const DIRECTIVE_COACH = 'coach';
+
+    /** Coaching time is up: warm wrap-up, no question. */
+    public const DIRECTIVE_COACH_CLOSE = 'coach_close';
+
+    public function __construct(protected SpeakingAnalyzer $analyzer, protected ExamBlueprint $blueprint) {}
 
     /**
      * Generate the examiner's turn.
@@ -142,7 +148,7 @@ class ExaminerService
                     $buffer = substr($buffer, $newline + 1);
 
                     if (($event['type'] ?? null) === 'sentence' && trim((string) $event['text']) !== '') {
-                        $text = $this->clean((string) $event['text']);
+                        $text = $this->clean((string) $event['text'], 5);
                         $audioUrl = $this->audioSource($event['audio_data'] ?? null, $event['audio_file'] ?? null);
                         if ($audioUrl !== null && ! str_starts_with($audioUrl, 'data:')) {
                             $firstAudio ??= $audioUrl;
@@ -163,7 +169,8 @@ class ExaminerService
         $reply = trim(implode(' ', $spoken));
 
         // The model must end an asking turn with a question; if it did not, finish it for it.
-        if (! str_contains($reply, '?')) {
+        // Coaching turns may end on a tip or an invitation to try again, so they are left as they are.
+        if (! str_contains($reply, '?') && ! self::isCoachDirective($turn['directive'])) {
             $tail = match ($turn['directive']) {
                 self::DIRECTIVE_NEXT => trim((string) ($turn['planned_question'] ?? '')) ?: trim((string) $turn['scripted']),
                 self::DIRECTIVE_CLARIFY => $this->offlineClarify($turn),
@@ -340,6 +347,10 @@ class ExaminerService
      */
     public function systemPrompt(array $turn): string
     {
+        if (($turn['session_type'] ?? null) === 'coach') {
+            return $this->coachSystemPrompt($turn);
+        }
+
         $isEn = $turn['language'] === 'en';
         $name = $turn['examiner_name'];
         $topic = $turn['topic'] ? Str::limit((string) $turn['topic'], 120) : null;
@@ -399,12 +410,112 @@ class ExaminerService
     }
 
     /**
+     * Whether a directive belongs to a coaching conversation.
+     */
+    public static function isCoachDirective(string $directive): bool
+    {
+        return in_array($directive, [self::DIRECTIVE_COACH, self::DIRECTIVE_COACH_CLOSE], true);
+    }
+
+    /**
+     * Persona and rules for the friendly coach (teaching, not testing).
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function coachSystemPrompt(array $turn): string
+    {
+        $isEn = $turn['language'] === 'en';
+        $name = $turn['examiner_name'];
+        $title = (string) ($turn['coach_title'] ?? '');
+        $skills = (string) ($turn['coach_skills'] ?? '');
+        $topic = $turn['topic'] ? Str::limit((string) $turn['topic'], 120) : null;
+        $context = $turn['context_material'] ? Str::limit((string) $turn['context_material'], 500) : null;
+
+        $persona = match ($turn['role_type']) {
+            'hrd' => $isEn
+                ? "You are {$name}, a friendly {$title} and senior recruiter. You talk like a supportive older sibling: relaxed, warm, a bit playful, never judging."
+                : "Kamu adalah {$name}, {$title} sekaligus HR recruiter senior. Gaya bicaramu seperti kakak yang suportif: santai, hangat, sedikit jenaka, tidak pernah menghakimi. Pakai 'aku' dan 'kamu'.",
+            'investor' => $isEn
+                ? "You are {$name}, a {$title} who has heard thousands of pitches. Friendly, direct, practical, you love concrete examples."
+                : "Kamu adalah {$name}, {$title} yang sudah mendengar ribuan pitch. Ramah, lugas, praktis, dan suka contoh konkret. Panggil lawan bicara dengan 'Anda'.",
+            default => $isEn
+                ? "You are {$name}, a patient {$title}. Calm, encouraging, precise with academic language."
+                : "Kamu adalah {$name}, {$title} yang sabar. Tenang, menyemangati, dan teliti soal bahasa ilmiah. Panggil mahasiswa dengan 'Anda'.",
+        };
+
+        $rules = $isEn
+            ? [
+                'This is a relaxed coaching chat, NOT a test. Never give scores. The goal is that the person learns how to answer better.',
+                'Talk like a real person in a voice call: short spoken sentences, no lists, no markdown, no emoji, no speaker labels.',
+                'Every turn: react to what they actually said, then teach ONE concrete thing (wording, structure, tone, or a filler habit). When useful, give a better example sentence in quotes that they can copy.',
+                'Then keep the conversation going: ask them to try saying it again in the better way, or give a new realistic practice question, or ask what they want to work on next.',
+                'Follow their lead. If they ask a question, answer it simply and practically first.',
+                'If they are nervous or unsure, encourage them in one short sentence before teaching.',
+                'Skills you can coach: '.$skills.'.',
+            ]
+            : [
+                'Ini sesi ngobrol coaching yang santai, BUKAN tes. Jangan pernah memberi nilai. Tujuannya peserta belajar cara menjawab yang lebih baik.',
+                'Bicaralah seperti orang sungguhan di panggilan suara: kalimat lisan yang pendek, tanpa daftar, tanpa markdown, tanpa emoji, tanpa label nama.',
+                'Setiap giliran: tanggapi isi yang benar-benar dia katakan, lalu ajarkan SATU hal konkret (pilihan kata, struktur jawaban, nada bicara, atau kebiasaan kata pengisi). Jika berguna, beri contoh kalimat yang lebih baik di dalam tanda kutip yang bisa langsung dia tiru.',
+                'Lalu jaga obrolan tetap jalan: minta dia mencoba mengucapkan ulang dengan cara yang lebih baik, atau beri satu pertanyaan latihan yang realistis, atau tanyakan apa yang ingin dia latih berikutnya.',
+                'Ikuti arah obrolannya. Kalau dia bertanya, jawab dulu dengan sederhana dan praktis.',
+                'Kalau dia gugup atau ragu, semangati dalam satu kalimat pendek sebelum mengajari.',
+                'Keterampilan yang bisa kamu latih: '.$skills.'.',
+            ];
+
+        $lines = [$persona];
+        if ($topic) {
+            $lines[] = ($isEn ? 'They are preparing for: ' : 'Peserta sedang bersiap untuk: ').$topic;
+        }
+        if ($context) {
+            $lines[] = ($isEn ? 'Background from the person: ' : 'Latar dari peserta: ').$context;
+        }
+        $lines[] = implode("\n", array_map(fn ($rule, $i) => ($i + 1).'. '.$rule, $rules, array_keys($rules)));
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * Instruction for one coaching turn.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    protected function coachInstruction(array $turn): string
+    {
+        $isEn = $turn['language'] === 'en';
+        $answer = trim((string) $turn['answer']);
+
+        if ($turn['directive'] === self::DIRECTIVE_COACH_CLOSE) {
+            $task = $isEn
+                ? 'Time is up. Close the session warmly in at most 3 sentences: one thing they already do well, the one habit to keep practising, and an encouraging goodbye. Do not ask a question.'
+                : 'Waktu habis. Tutup sesi dengan hangat maksimal 3 kalimat: satu hal yang sudah bagus, satu kebiasaan yang perlu terus dilatih, lalu salam penyemangat. Jangan bertanya.';
+
+            return ($answer !== '' ? ($isEn ? 'They said: ' : 'Peserta berkata: ').$answer."\n" : '').'['.$task.']';
+        }
+
+        $task = $isEn
+            ? 'Reply in at most 4 spoken sentences: react to what they said, teach one concrete improvement (with a better example sentence in quotes if useful), then keep the conversation going.'
+            : 'Balas maksimal 4 kalimat lisan: tanggapi yang dia katakan, ajarkan satu perbaikan konkret (dengan contoh kalimat yang lebih baik dalam tanda kutip jika berguna), lalu jaga obrolan tetap berlanjut.';
+        if (! empty($turn['wrap_up'])) {
+            $task .= $isEn
+                ? ' About one minute is left: start summarising the most important tip and ask for one last short try.'
+                : ' Waktu tinggal sekitar satu menit: mulai rangkum tips paling penting dan minta satu percobaan singkat terakhir.';
+        }
+
+        return ($isEn ? 'They said: ' : 'Peserta berkata: ').($answer !== '' ? $answer : ($isEn ? '(silence)' : '(diam)'))."\n".'['.$task.']';
+    }
+
+    /**
      * The final user message: the candidate answer plus what to produce.
      *
      * @param  array<string, mixed>  $turn
      */
     public function turnInstruction(array $turn): string
     {
+        if (self::isCoachDirective($turn['directive'])) {
+            return $this->coachInstruction($turn);
+        }
+
         $isEn = $turn['language'] === 'en';
         $answer = trim((string) $turn['answer']) !== '' ? trim((string) $turn['answer']) : ($isEn ? '(no answer)' : '(tidak menjawab)');
         $planned = trim((string) ($turn['planned_question'] ?? ''));
@@ -440,6 +551,15 @@ class ExaminerService
      */
     public function resolveModelReply(string $raw, array $turn): ?array
     {
+        if (self::isCoachDirective($turn['directive'])) {
+            $reply = $this->clean($raw, $turn['directive'] === self::DIRECTIVE_COACH ? 5 : 3);
+            if ($turn['directive'] === self::DIRECTIVE_COACH_CLOSE) {
+                $reply = $this->stripQuestions($reply, 3);
+            }
+
+            return mb_strlen($reply) < 8 ? null : ['text' => $reply, 'reply' => $reply];
+        }
+
         $reply = $this->clean($raw);
         if ($reply === '' || mb_strlen($reply) < 8) {
             return null;
@@ -484,6 +604,12 @@ class ExaminerService
      */
     public function offlineTurn(array $turn): array
     {
+        if (self::isCoachDirective($turn['directive'])) {
+            $reply = $this->offlineCoach($turn);
+
+            return ['text' => $reply, 'reply' => $reply];
+        }
+
         $scripted = trim((string) ($turn['scripted'] ?? ''));
 
         return match ($turn['directive']) {
@@ -533,6 +659,102 @@ class ExaminerService
     }
 
     /**
+     * Rule-based coaching turn: one tip that fits the answer, then keep going.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function offlineCoach(array $turn): string
+    {
+        $isEn = $turn['language'] === 'en';
+        $isHr = $turn['role_type'] === 'hrd';
+        $you = $isEn ? 'you' : ($isHr ? 'kamu' : 'Anda');
+        $answer = (string) $turn['answer'];
+        $userText = implode(' ', array_map(fn ($item) => $item['content'], array_filter($turn['history'] ?? [], fn ($item) => $item['role'] === 'user'))).' '.$answer;
+        $all = $this->analyzer->analyzeAnswer($userText, 0, '', $turn['mode']);
+        $now = $this->analyzer->analyzeAnswer($answer, 0, (string) $turn['question'], $turn['mode']);
+
+        if ($turn['directive'] === self::DIRECTIVE_COACH_CLOSE) {
+            $good = match (true) {
+                $all['has_example'] => $isEn ? 'You already back your points with real examples.' : ucfirst($you).' sudah bagus memberi contoh nyata.',
+                count($all['connectors']) >= 2 => $isEn ? 'Your answers already flow in a clear order.' : 'Alur jawaban '.$you.' sudah runtut.',
+                default => $isEn ? 'You kept talking and tried every time, that is the most important start.' : ucfirst($you).' berani mencoba dan terus bicara, itu modal paling penting.',
+            };
+            $practice = match (true) {
+                $all['filler_rate'] >= 3 => $isEn ? 'Keep practising replacing fillers with a short silent pause.' : 'Terus latih mengganti kata pengisi dengan jeda diam sebentar.',
+                ! $all['has_numbers'] => $isEn ? 'Keep practising stating results with a number.' : 'Terus latih menyebut hasil dengan angka.',
+                default => $isEn ? 'Keep practising the pattern: point, reason, example.' : 'Terus latih pola: poin, alasan, contoh.',
+            };
+
+            return $isEn
+                ? "Our time is up. {$good} {$practice} Good luck, you are going to do great!"
+                : "Waktu kita sudah habis. {$good} {$practice} Semangat, ".($isHr ? 'aku yakin kamu bisa' : 'saya yakin Anda bisa').'!';
+        }
+
+        if ($this->analyzer->soundsUnsure($answer)) {
+            $tip = $isEn
+                ? 'That is totally fine, when you are unsure just say: "Let me think for a second", then give your best answer.'
+                : 'Nggak apa-apa kok. Kalau ragu, bilang saja: "Boleh saya pikirkan sebentar?", lalu jawab semampunya, itu terdengar jauh lebih tenang.';
+        } elseif (str_ends_with(trim($answer), '?')) {
+            $tip = $isEn
+                ? 'Good question. The trick is simple: give the main point first in one sentence, then one real example.'
+                : 'Pertanyaan bagus. Triknya sederhana: sampaikan poin utama dulu dalam satu kalimat, lalu satu contoh nyata.';
+        } elseif ($now['filler_count'] >= 2) {
+            $tip = $isEn
+                ? 'I heard a few "um"s. Try a short silent pause instead, it sounds much more confident.'
+                : 'Tadi ada beberapa "eh". Coba ganti dengan jeda diam sebentar, kedengarannya jauh lebih percaya diri.';
+        } elseif ($now['word_count'] < 12) {
+            $tip = $isEn
+                ? 'That was quite short. Add one real example, like: "For example, when I..., I..., and the result was..."'
+                : 'Jawabannya masih singkat. Tambahkan satu contoh nyata, misalnya: "Contohnya, waktu saya ..., saya ..., dan hasilnya ..."';
+        } elseif (! $now['has_numbers'] && $turn['role_type'] !== 'hrd') {
+            $tip = $isEn
+                ? 'Nice. It becomes stronger with a number, for example: "...which improved accuracy to 87 percent."'
+                : 'Bagus. Akan lebih kuat kalau ada angka, misalnya: "... sehingga akurasinya naik menjadi 87 persen."';
+        } elseif (! $now['has_numbers']) {
+            $tip = $isEn
+                ? 'Nice story. End it with the result, ideally a number: "As a result, we finished two days early."'
+                : 'Ceritanya sudah bagus. Tutup dengan hasilnya, kalau bisa pakai angka: "Hasilnya, kami selesai dua hari lebih cepat."';
+        } else {
+            $tip = $isEn
+                ? 'That was clear and concrete. One more polish: open with your main point in the first sentence.'
+                : 'Itu sudah jelas dan konkret. Satu poles lagi: sebutkan poin utamamu di kalimat pertama.';
+        }
+
+        $wrap = ! empty($turn['wrap_up']);
+        $tryAgain = (int) $turn['turn'] % 2 === 1 && ! $wrap;
+        if ($tryAgain) {
+            $next = $isEn ? 'Try saying your answer again that way, I am listening.' : 'Coba ucapkan ulang jawaban '.$you.' dengan cara itu, '.($isHr ? 'aku dengarkan' : 'saya dengarkan').'.';
+        } else {
+            $next = ($wrap ? ($isEn ? 'We only have a moment left, one last short try: ' : 'Waktu kita tinggal sebentar, satu latihan singkat terakhir: ') : ($isEn ? 'Now try this one: ' : 'Sekarang coba jawab ini ya: '))
+                .$this->coachPracticeQuestion($turn);
+        }
+
+        return trim($tip.' '.$next);
+    }
+
+    /**
+     * A realistic practice question from the mode's bank that was not asked yet in this chat.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    protected function coachPracticeQuestion(array $turn): string
+    {
+        $asked = implode(' ', array_map(fn ($item) => $item['content'], array_filter($turn['history'] ?? [], fn ($item) => $item['role'] !== 'user')));
+        $mode = $this->blueprint->mode($turn['mode']);
+        $candidates = [];
+        foreach ([1, 3] as $part) {
+            foreach (array_keys($mode['parts'][$part]['questions'] ?? []) as $index) {
+                $candidates[] = $this->blueprint->question($turn['mode'], $part, $index, $turn['language'], $turn['topic'] ?? null);
+            }
+        }
+
+        $fresh = array_values(array_filter($candidates, fn ($question) => ! str_contains($asked, $question)));
+        $pool = $fresh !== [] ? $fresh : $candidates;
+
+        return $pool[((int) $turn['turn'] * 7) % max(1, count($pool))] ?? '';
+    }
+
+    /**
      * Re-explain the current question without a model.
      *
      * @param  array<string, mixed>  $turn
@@ -552,28 +774,33 @@ class ExaminerService
     /**
      * Remove markdown, labels and stray whitespace from model output.
      */
-    public function clean(string $text): string
+    public function clean(string $text, int $maxSentences = 3): string
     {
         $text = preg_replace('/[\*#_`~]+/u', '', $text) ?? $text;
         $text = preg_replace('/^\s*[\-•\d]+[\.\)]\s*/mu', '', $text) ?? $text;
-        $text = preg_replace('/^\s*[\p{L}\.\s]{2,30}:\s+/u', '', trim($text)) ?? $text;
+        // A speaker label is a short run of capitalised words ("Prof. Hendra:", "Kak Nadia:"), never a sentence like "Bagus. Coba bilang:".
+        $text = preg_replace('/^\s*(?:[\p{Lu}][\p{L}\.]*)(?:\s[\p{Lu}][\p{L}\.]*){0,3}:\s+/u', '', trim($text)) ?? $text;
         $text = preg_replace('/\[[^\]]*\]/u', '', $text) ?? $text;
-        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text, " \"'");
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+        // Only unwrap quotes around the whole reply; quoted example sentences inside must stay intact.
+        if (preg_match('/^["“](.*)["”]$/us', $text, $wrapped) && ! preg_match('/["“”]/u', $wrapped[1])) {
+            $text = trim($wrapped[1]);
+        }
 
         $sentences = preg_split('/(?<=[.!?])\s+/u', $text) ?: [];
 
-        return trim(implode(' ', array_slice($sentences, 0, 3)));
+        return trim(implode(' ', array_slice($sentences, 0, $maxSentences)));
     }
 
     /**
      * Drop sentences ending with a question mark.
      */
-    protected function stripQuestions(string $text): string
+    protected function stripQuestions(string $text, int $limit = 2): string
     {
         $sentences = preg_split('/(?<=[.!?])\s+/u', $text) ?: [];
         $kept = array_filter($sentences, fn ($sentence) => ! str_ends_with(trim($sentence), '?'));
 
-        return trim(implode(' ', array_slice(array_values($kept), 0, 2)));
+        return trim(implode(' ', array_slice(array_values($kept), 0, $limit)));
     }
 
     /**

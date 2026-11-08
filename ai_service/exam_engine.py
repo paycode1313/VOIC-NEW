@@ -100,7 +100,7 @@ class RespondRequest(BaseModel):
     mode: str
     role_type: str
     language: str = "id"
-    directive: str = "react"  # react | follow_up | next | clarify
+    directive: str = "react"  # react | follow_up | next | clarify | coach | coach_close
     part: int = 1
     question: str = ""
     answer: str = ""
@@ -142,10 +142,16 @@ def clean_reply(text: str, max_sentences: int = 3) -> str:
     text = re.sub(r"\[[^\]]*\]", "", text)
     text = re.sub(r"[\*\#\_\`\~]+", "", text)
     text = re.sub(r"^\s*[\-•\d]+[\.\)]\s*", "", text, flags=re.MULTILINE)
-    text = re.sub(r"^\s*[A-Za-z\.\s]{2,30}:\s+", "", text.strip())
-    text = re.sub(r"\s+", " ", text).strip().strip('"').strip("'")
+    # Label pembicara = beberapa kata berhuruf kapital ("Prof. Hendra:"), bukan kalimat seperti "Bagus. Coba bilang:".
+    text = re.sub(r"^\s*[A-Z][A-Za-z\.]*(?:\s[A-Z][A-Za-z\.]*){0,3}:\s+", "", text.strip())
+    text = re.sub(r"\s+", " ", text).strip()
+    # Hanya buang tanda kutip yang membungkus seluruh balasan; contoh kalimat di dalamnya harus utuh.
+    wrapped = re.match(r'^["\u201c](.*)["\u201d]$', text, flags=re.S)
+    if wrapped and not re.search(r'["\u201c\u201d]', wrapped.group(1)):
+        text = wrapped.group(1).strip()
 
-    if text and not text.endswith((".", "?", "!")):
+    # A sentence may end with a closing quote after its punctuation ('... persen."'); keep it.
+    if text and not re.search(r'[.?!]["\u201d\')\]]?$', text):
         cut = max(text.rfind("."), text.rfind("?"), text.rfind("!"))
         if cut > 15:
             text = text[: cut + 1]
@@ -169,7 +175,7 @@ def quality_issues(reply: str, answer: str, directive: str, language: str) -> Li
         return ["empty"]
     if len(words) < 3:
         issues.append("too_short")
-    if len(words) > 55:
+    if len(words) > (85 if directive == "coach" else 55):
         issues.append("too_long")
     if any(re.search(p, lowered) for p in BANNED_PATTERNS):
         issues.append("banned_template")
@@ -180,7 +186,9 @@ def quality_issues(reply: str, answer: str, directive: str, language: str) -> Li
         issues.append("follow_up_without_question")
     if asks and question_count > (2 if directive == "next" else 1):
         issues.append("multiple_questions")
-    if directive == "react" and question_count > 0:
+    if directive == "coach" and question_count > 2:
+        issues.append("multiple_questions")
+    if directive in ("react", "coach_close") and question_count > 0:
         issues.append("react_with_question")
 
     # Active listening: tanggapan harus menyentuh isi jawaban, kecuali jawabannya sangat pendek
@@ -271,8 +279,8 @@ async def respond(req: RespondRequest):
     """Jalankan model untuk satu giliran penguji. Retry sekali jika gagal quality gate."""
     started = time.time()
     messages = [m.model_dump() for m in req.messages]
-    max_sentences = {"next": 3, "follow_up": 2, "clarify": 2}.get(req.directive, 1)
-    num_predict = {"next": 120, "follow_up": 90, "clarify": 100}.get(req.directive, 55)
+    max_sentences = {"next": 3, "follow_up": 2, "clarify": 2, "coach": 4, "coach_close": 3}.get(req.directive, 1)
+    num_predict = {"next": 120, "follow_up": 90, "clarify": 100, "coach": 170, "coach_close": 110}.get(req.directive, 55)
 
     best_reply, best_issues = "", ["empty"]
     error: Optional[str] = None
@@ -342,6 +350,51 @@ async def warmup():
         return {"ok": True, "model": await resolve_model(), "seconds": round(time.time() - started, 1), "stats": stats}
     except Exception as exc:
         return {"ok": False, "model": await resolve_model(), "seconds": round(time.time() - started, 1), "error": describe_error(exc)}
+
+
+class CoachSummaryRequest(BaseModel):
+    mode: str
+    role_type: str
+    language: str = "id"
+    transcript: List[ChatTurn]
+
+
+def _bullet_lines(text: str, header: str) -> List[str]:
+    """Ambil baris berawalan '-' di bawah judul tertentu (format yang mudah ditulis model kecil)."""
+    block = re.search(rf"{header}\s*:?\s*\n(.*?)(?:\n\s*\n|\n[A-Z][A-Z ]+:|$)", text, flags=re.S | re.I)
+    if not block:
+        return []
+    items = [re.sub(r"^[\s\-\*\u2022\d\.\)]+", "", line).strip().strip('"') for line in block.group(1).splitlines()]
+    return [item for item in items if 6 <= len(item) <= 220][:3]
+
+
+@router.post("/coach-summary")
+async def coach_summary(req: CoachSummaryRequest):
+    """Ringkas sesi coaching: apa yang sudah bagus, apa yang perlu dilatih, kalimat yang bisa dipakai."""
+    is_en = req.language == "en"
+    convo = "\n".join(f"{'PESERTA' if t.role == 'user' else 'COACH'}: {t.content}" for t in req.transcript[-30:])
+    instruction = (
+        "Summarise this coaching chat for the participant. Use exactly this format, max 3 lines each, short and specific to what they said:\n"
+        "BAGUS:\n- ...\nLATIH:\n- ...\nKALIMAT:\n- (a better sentence they can reuse)\nWrite in English."
+        if is_en else
+        "Ringkas sesi coaching ini untuk peserta. Pakai format persis ini, maksimal 3 baris per bagian, singkat dan spesifik pada yang dia katakan:\n"
+        "BAGUS:\n- ...\nLATIH:\n- ...\nKALIMAT:\n- (contoh kalimat lebih baik yang bisa dia pakai)\nTulis dalam Bahasa Indonesia, sapa peserta dengan 'kamu'."
+    )
+    try:
+        raw = await ollama_chat(
+            [{"role": "system", "content": "Kamu pelatih komunikasi yang ringkas dan jujur."}, {"role": "user", "content": convo + "\n\n" + instruction}],
+            num_predict=260,
+            temperature=0.4,
+        )
+    except Exception as exc:
+        return {"strengths": [], "practice": [], "phrases": [], "error": describe_error(exc)}
+
+    return {
+        "strengths": _bullet_lines(raw, "BAGUS"),
+        "practice": _bullet_lines(raw, "LATIH"),
+        "phrases": _bullet_lines(raw, "KALIMAT"),
+        "model": await resolve_model(),
+    }
 
 
 IMPROVE_GUIDE = {
@@ -498,8 +551,8 @@ async def respond_stream(req: RespondStreamRequest):
 
     messages = [m.model_dump() for m in req.messages]
     asks = req.directive in ("follow_up", "next", "clarify")
-    max_sentences = {"next": 3, "follow_up": 2, "clarify": 2}.get(req.directive, 1)
-    num_predict = {"next": 120, "follow_up": 90, "clarify": 100}.get(req.directive, 55)
+    max_sentences = {"next": 3, "follow_up": 2, "clarify": 2, "coach": 4, "coach_close": 3}.get(req.directive, 1)
+    num_predict = {"next": 120, "follow_up": 90, "clarify": 100, "coach": 170, "coach_close": 110}.get(req.directive, 55)
     temperature = 0.8 if req.role_type in ("hrd", "investor") else 0.7
 
     async def generate():
@@ -513,7 +566,7 @@ async def respond_stream(req: RespondStreamRequest):
             nonlocal first_ms
             # A chunk can hold a short fragment glued to the next sentence ("Oke. Lalu ...?"); keep all of it.
             text = clean_reply(sentence, max_sentences=3)
-            if not text or (req.directive == "react" and text.endswith("?")):
+            if not text or (req.directive in ("react", "coach_close") and text.endswith("?")):
                 return None
             spoken.append(text)
             audio = await voice_engine.synthesize(text, req.role_type, req.language) if req.generate_voice else None

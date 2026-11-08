@@ -62,6 +62,7 @@ class ExamController extends Controller
             'parts' => ['nullable', 'array', 'min:1'],
             'parts.*' => ['integer', 'in:1,2,3'],
             'consent' => ['accepted'],
+            'session_type' => ['nullable', 'string', 'in:exam,coach'],
         ]);
 
         $definition = $this->blueprint->mode($mode);
@@ -77,7 +78,9 @@ class ExamController extends Controller
             'feedback_notes' => ['language' => $language, 'context_material' => $validated['context_material'] ?? null, 'topic' => $topic, 'client' => 'mobile'],
         ]);
 
-        $payload = $flow->start($session, $mode, array_map('intval', $validated['parts'] ?? [1, 2, 3]), $language, $topic);
+        $payload = ($validated['session_type'] ?? 'exam') === ExamFlowService::TYPE_COACH
+            ? $flow->startCoach($session, $mode, $language, $topic)
+            : $flow->start($session, $mode, array_map('intval', $validated['parts'] ?? [1, 2, 3]), $language, $topic);
 
         return response()->json(['success' => true] + $payload, 201);
     }
@@ -90,7 +93,8 @@ class ExamController extends Controller
         $this->authorizeOwner($request, $practiceSession);
 
         $validated = $request->validate([
-            'answer' => ['nullable', 'string', 'max:5000', 'required_without:audio'],
+            'answer' => ['nullable', 'string', 'max:5000', 'required_without_all:audio,time_up'],
+            'time_up' => ['nullable', 'boolean'],
             'audio' => ['nullable', 'file', 'max:20480'],
             'duration_seconds' => ['required', 'integer', 'min:0', 'max:900'],
             'timestamp_seconds' => ['nullable', 'integer', 'min:0'],
@@ -120,6 +124,7 @@ class ExamController extends Controller
             (int) $validated['duration_seconds'],
             null,
             (int) ($validated['timestamp_seconds'] ?? 0),
+            timeUp: (bool) ($validated['time_up'] ?? false),
         );
 
         if ($transcript !== null && $request->hasFile('audio')) {
@@ -140,7 +145,7 @@ class ExamController extends Controller
 
         $validated = $request->validate(['duration_seconds' => ['nullable', 'integer', 'min:0', 'max:7200']]);
 
-        if (! isset($practiceSession->feedback_notes['exam_report'])) {
+        if (! $practiceSession->hasReport()) {
             $reports->finalize($practiceSession, (int) ($validated['duration_seconds'] ?? 0));
         }
 
@@ -154,7 +159,7 @@ class ExamController extends Controller
     {
         $this->authorizeOwner($request, $practiceSession);
 
-        if (isset($practiceSession->feedback_notes['exam_report'])) {
+        if ($practiceSession->hasReport()) {
             return response()->json(['success' => true, 'evaluation' => $this->evaluation($practiceSession)]);
         }
 
@@ -176,7 +181,9 @@ class ExamController extends Controller
             'voice_score' => $session->voice_score,
             'duration_seconds' => $session->duration_seconds,
             'ai_conclusion' => $session->ai_conclusion,
+            'session_type' => $session->isCoaching() ? 'coach' : 'exam',
             'report' => $session->feedback_notes['exam_report'] ?? null,
+            'coach_report' => $session->feedback_notes['coach_report'] ?? null,
             'report_url' => route('exam.result', $session),
             'share_url' => $session->shareUrl(),
         ];

@@ -32,6 +32,10 @@ class ExamReportService
      */
     public function finalize(PracticeSession $session, int $durationSeconds): array
     {
+        if (ExamFlowService::isCoach($session->exam_state ?? [])) {
+            return $this->finalizeCoach($session, $durationSeconds);
+        }
+
         $state = $session->exam_state;
         $mode = $state['mode'];
         $language = $state['language'];
@@ -103,6 +107,146 @@ class ExamReportService
         $this->updateLearningProfile($session, $report);
 
         return $report;
+    }
+
+    /**
+     * Coaching notes: what went well, what to practise, phrases the coach taught, real speaking stats.
+     *
+     * @return array<string, mixed>
+     */
+    public function finalizeCoach(PracticeSession $session, int $durationSeconds): array
+    {
+        $state = $session->exam_state;
+        $mode = $state['mode'];
+        $language = $state['language'];
+        $isEn = $language === 'en';
+        $messages = $session->messages()->orderBy('id')->get();
+        $userMessages = $messages->where('sender', 'user')->values();
+        $coachMessages = $messages->where('sender', 'ai')->values();
+
+        $userText = $userMessages->pluck('message')->implode(' ');
+        $metrics = $this->analyzer->analyzeAnswer($userText, 0, '', $mode);
+        $speakingSeconds = (int) $userMessages->sum(fn (SessionMessage $message) => (int) ($message->meta['duration_seconds'] ?? 0));
+        $fillers = $metrics['fillers'];
+        arsort($fillers);
+
+        $phrases = $this->taughtPhrases($coachMessages->pluck('message')->all());
+        $summary = $this->coachSummaryFromModel($session, $messages->all(), $language);
+
+        $strengths = $summary['strengths'] ?? [];
+        if ($strengths === []) {
+            if ($metrics['has_example']) {
+                $strengths[] = $isEn ? 'You back your points with real examples.' : 'Kamu sudah memberi contoh nyata untuk mendukung jawaban.';
+            }
+            if (count($metrics['connectors']) >= 2) {
+                $strengths[] = $isEn ? 'Your answers flow in a clear order.' : 'Alur jawabanmu runtut dan mudah diikuti.';
+            }
+            if (count($metrics['domain_terms']) >= 2) {
+                $strengths[] = ($isEn ? 'You use fitting terms: ' : 'Kamu memakai istilah yang pas: ').implode(', ', array_slice($metrics['domain_terms'], 0, 3)).'.';
+            }
+            $strengths[] = $isEn ? 'You kept the conversation going and tried again after each tip.' : 'Kamu terus mencoba dan tidak berhenti bicara setelah diberi masukan.';
+        }
+
+        $practice = $summary['practice'] ?? [];
+        if ($practice === []) {
+            if ($metrics['filler_rate'] >= 3) {
+                $practice[] = $isEn ? 'Replace fillers ("um", "uh") with a short silent pause.' : 'Ganti kata pengisi ("eh", "ehm") dengan jeda diam sebentar.';
+            }
+            if (! $metrics['has_numbers']) {
+                $practice[] = $isEn ? 'End stories with a measurable result.' : 'Tutup cerita dengan hasil yang terukur, kalau bisa dengan angka.';
+            }
+            if (! $metrics['has_example']) {
+                $practice[] = $isEn ? 'Add one concrete example to every answer.' : 'Tambahkan satu contoh konkret di setiap jawaban.';
+            }
+            $practice[] = $isEn ? 'Open with your main point in the first sentence.' : 'Sebutkan poin utama di kalimat pertama.';
+        }
+
+        $report = [
+            'version' => 1,
+            'type' => 'coach',
+            'mode' => $mode,
+            'language' => $language,
+            'coach_title' => $this->blueprint->text($this->blueprint->mode($mode)['coach']['title'] ?? '', $language),
+            'strengths' => array_slice(array_values(array_unique($strengths)), 0, 3),
+            'practice' => array_slice(array_values(array_unique($practice)), 0, 3),
+            'phrases' => array_slice(array_values(array_unique([...($summary['phrases'] ?? []), ...$phrases])), 0, 5),
+            'stats' => [
+                'turns' => $userMessages->count(),
+                'total_words' => $metrics['word_count'],
+                'speaking_seconds' => $speakingSeconds,
+                'average_wpm' => $speakingSeconds >= 10 ? (int) round($metrics['word_count'] / ($speakingSeconds / 60)) : null,
+                'fillers' => $fillers,
+                'filler_count' => $metrics['filler_count'],
+            ],
+            'summary_source' => $summary === [] ? 'rules' : 'ai',
+        ];
+
+        $notes = is_array($session->feedback_notes) ? $session->feedback_notes : [];
+        $notes['coach_report'] = $report;
+        $notes['pace_wpm'] = $report['stats']['average_wpm'];
+        $notes['improvements'] = $report['practice'];
+        $notes['strengths'] = $report['strengths'];
+
+        $session->update([
+            'duration_seconds' => max($durationSeconds, $speakingSeconds),
+            'ai_conclusion' => ($isEn ? 'Coaching session' : 'Sesi coaching').' · '.$report['stats']['turns'].($isEn ? ' turns. Next focus: ' : ' giliran. Fokus berikutnya: ').($report['practice'][0] ?? '-'),
+            'feedback_notes' => $notes,
+        ]);
+
+        return $report;
+    }
+
+    /**
+     * Example sentences the coach put in quotes, so the candidate can reuse them.
+     *
+     * @param  list<string>  $coachLines
+     * @return list<string>
+     */
+    protected function taughtPhrases(array $coachLines): array
+    {
+        $phrases = [];
+        foreach ($coachLines as $line) {
+            preg_match_all('/["“”]([^"“”]{15,220})["“”]/u', (string) $line, $matches);
+            foreach ($matches[1] as $phrase) {
+                $phrases[] = trim($phrase);
+            }
+        }
+
+        return array_values(array_unique($phrases));
+    }
+
+    /**
+     * Ask the local model for a short coaching summary; empty array when unavailable.
+     *
+     * @param  list<SessionMessage>  $messages
+     * @return array{strengths?: list<string>, practice?: list<string>, phrases?: list<string>}
+     */
+    protected function coachSummaryFromModel(PracticeSession $session, array $messages, string $language): array
+    {
+        try {
+            $response = Http::connectTimeout(1.5)->timeout(45)->post(rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/').'/exam/coach-summary', [
+                'mode' => $session->exam_mode,
+                'role_type' => $this->blueprint->mode($session->exam_mode)['role_type'],
+                'language' => $language,
+                'transcript' => array_map(fn (SessionMessage $message) => ['role' => $message->sender === 'user' ? 'user' : 'coach', 'content' => $message->message], $messages),
+            ]);
+
+            if (! $response->successful()) {
+                return [];
+            }
+
+            $clean = fn ($items) => array_values(array_filter(array_map(fn ($item) => trim((string) $item), (array) $items), fn ($item) => $item !== '' && mb_strlen($item) <= 240));
+
+            return array_filter([
+                'strengths' => $clean($response->json('strengths', [])),
+                'practice' => $clean($response->json('practice', [])),
+                'phrases' => $clean($response->json('phrases', [])),
+            ]);
+        } catch (\Throwable $exception) {
+            Log::info('Coach summary unavailable: '.$exception->getMessage());
+
+            return [];
+        }
     }
 
     /**

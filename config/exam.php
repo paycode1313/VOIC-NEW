@@ -20,6 +20,12 @@ return [
     'prep_seconds' => 60,
 
     /*
+    | Coaching sessions: a free, friendly 10-minute conversation where the coach
+    | teaches how to answer (wording, structure, delivery) instead of testing.
+    */
+    'coach_minutes' => (int) env('VOIC_COACH_MINUTES', 10),
+
+    /*
     | Public base URL for QR codes (LAN IP or tunnel), because "localhost" cannot be
     | opened from a visitor's phone. Example: http://192.168.1.50:8000
     */
@@ -52,6 +58,17 @@ return [
             'topic_label' => ['id' => 'Posisi yang dilamar', 'en' => 'Position you are applying for'],
             'topic_placeholder' => ['id' => 'Contoh: Frontend Developer di startup fintech', 'en' => 'e.g. Frontend Developer at a fintech startup'],
             'context_label' => ['id' => 'Ringkasan CV / pengalaman (opsional)', 'en' => 'CV summary / experience (optional)'],
+            'coach' => [
+                'title' => ['id' => 'Coach Wawancara', 'en' => 'Interview Coach'],
+                'opening' => [
+                    'id' => 'Halo, aku Kak Nadia! Sepuluh menit ke depan kita ngobrol santai ya, ini bukan tes kok. Aku bantu kamu latihan cara ngomong dan milih kata yang pas waktu wawancara. Cerita dulu dong, kamu lagi siap-siap wawancara buat posisi apa, dan bagian mana yang paling bikin deg-degan?',
+                    'en' => "Hi, I'm Nadia! For the next ten minutes we'll just chat, this isn't a test. I'll help you practise how to speak and which words to use in interviews. Tell me first, what role are you preparing for, and which part makes you most nervous?",
+                ],
+                'skills' => [
+                    'id' => 'memperkenalkan diri dengan menarik, menjawab dengan pola STAR (situasi, tugas, aksi, hasil), memilih kata yang profesional tapi tetap natural, mengurangi kata pengisi seperti eh dan ehm, serta menjawab pertanyaan sulit seperti kelemahan, alasan resign, dan gaji',
+                    'en' => 'introducing yourself well, answering with STAR (situation, task, action, result), choosing professional but natural wording, cutting fillers, and handling hard questions such as weaknesses, leaving a job, and salary',
+                ],
+            ],
             'parts' => [
                 1 => [
                     'title' => ['id' => 'Perkenalan', 'en' => 'Introduction'],
@@ -162,6 +179,17 @@ return [
             'topic_label' => ['id' => 'Judul skripsi', 'en' => 'Thesis title'],
             'topic_placeholder' => ['id' => 'Contoh: Deteksi cacat kain menggunakan YOLOv8', 'en' => 'e.g. Fabric defect detection using YOLOv8'],
             'context_label' => ['id' => 'Abstrak (opsional, membuat pertanyaan lebih spesifik)', 'en' => 'Abstract (optional, makes questions more specific)'],
+            'coach' => [
+                'title' => ['id' => 'Dosen Pembimbing', 'en' => 'Thesis Mentor'],
+                'opening' => [
+                    'id' => 'Halo, saya Prof. Hendra. Sepuluh menit ini anggap saja sesi bimbingan sebelum sidang, bukan ujian. Kita latih cara Anda menjelaskan penelitian dengan runtut dan meyakinkan. Coba ceritakan dulu, penelitian Anda tentang apa, dan pertanyaan penguji seperti apa yang paling Anda khawatirkan?',
+                    'en' => 'Hello, I am Professor Hendra. Think of these ten minutes as a supervision session before your defense, not an exam. We will practise explaining your research clearly and convincingly. First, what is your research about, and which examiner questions worry you most?',
+                ],
+                'skills' => [
+                    'id' => 'menjelaskan latar belakang, rumusan masalah, dan metode secara runtut, memakai istilah ilmiah yang tepat tanpa bertele-tele, menjawab kritik penguji dengan tenang, serta mengakui keterbatasan penelitian dengan elegan',
+                    'en' => 'explaining background, problem and method in order, using precise academic terms without rambling, answering criticism calmly, and acknowledging limitations gracefully',
+                ],
+            ],
             'parts' => [
                 1 => [
                     'title' => ['id' => 'Pembukaan', 'en' => 'Opening'],
@@ -257,6 +285,17 @@ return [
             'topic_label' => ['id' => 'Nama dan bidang startup', 'en' => 'Startup name and sector'],
             'topic_placeholder' => ['id' => 'Contoh: KasirKu, aplikasi kasir untuk UMKM', 'en' => 'e.g. KasirKu, a POS app for small shops'],
             'context_label' => ['id' => 'Ringkasan pitch deck (opsional)', 'en' => 'Pitch deck summary (optional)'],
+            'coach' => [
+                'title' => ['id' => 'Mentor Startup', 'en' => 'Startup Mentor'],
+                'opening' => [
+                    'id' => 'Halo, saya William. Sepuluh menit ini kita ngobrol santai seperti sesi mentoring sebelum demo day, bukan penilaian. Saya bantu Anda bercerita tentang startup dengan cara yang bikin investor tertarik. Ceritakan dulu startup Anda dalam satu atau dua kalimat, dan bagian mana dari pitch yang paling sulit buat Anda?',
+                    'en' => 'Hi, I am William. These ten minutes are a relaxed mentoring chat before demo day, not an evaluation. I will help you tell your startup story in a way investors care about. Describe your startup in one or two sentences, and tell me which part of the pitch is hardest for you.',
+                ],
+                'skills' => [
+                    'id' => 'membuka pitch dengan masalah yang kuat, menjelaskan solusi dengan bahasa sederhana, menyebut angka traksi dan unit economics, menjawab pertanyaan investor dengan lugas, serta menutup dengan permintaan pendanaan yang jelas',
+                    'en' => 'opening with a strong problem, explaining the solution simply, quoting traction and unit economics, answering investor questions directly, and closing with a clear ask',
+                ],
+            ],
             'parts' => [
                 1 => [
                     'title' => ['id' => 'Founder & Masalah', 'en' => 'Founder & Problem'],

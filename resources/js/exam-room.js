@@ -69,6 +69,9 @@ export default function examRoom(config) {
         engine: null,
         aiStatus: null,
         firstSentenceMs: null,
+        coachRemaining: config.initialState?.remaining_seconds ?? null,
+        coachTimer: null,
+        timeUpPending: false,
 
         get isEn() {
             return this.config.language === 'en';
@@ -80,6 +83,17 @@ export default function examRoom(config) {
 
         get cueCard() {
             return this.state.cue_card;
+        },
+
+        get isCoach() {
+            return this.state.session_type === 'coach';
+        },
+
+        get coachClock() {
+            const left = Math.max(0, this.coachRemaining ?? 0);
+            const m = Math.floor(left / 60);
+            const s = left % 60;
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
         },
 
         get isListening() {
@@ -225,6 +239,7 @@ export default function examRoom(config) {
             // Unlock audio + speech synthesis on the user gesture (required by Safari/Chrome).
             if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
             if (this.voiceMode !== 'typing') await this.ensureMic();
+            if (this.isCoach) this.startCoachTimer();
             const opening = this.state.examiner_message;
             await this.playSentences([{ text: opening?.text || '', audio_url: opening?.audio_url || null }]);
             this.afterExaminerTurn();
@@ -303,8 +318,42 @@ export default function examRoom(config) {
             this.afterExaminerTurn();
         },
 
+        // ----- Coaching timer -----------------------------------------------
+
+        startCoachTimer() {
+            clearInterval(this.coachTimer);
+            this.coachTimer = setInterval(() => {
+                if (this.coachRemaining === null) return;
+                this.coachRemaining = Math.max(0, this.coachRemaining - 1);
+                if (this.coachRemaining === 0) {
+                    clearInterval(this.coachTimer);
+                    this.onCoachTimeUp();
+                }
+            }, 1000);
+        },
+
+        onCoachTimeUp() {
+            if (this.state.completed) return;
+            const silent = this.status === 'listening' && !this.liveAnswer.trim() && !this.typed.trim() && !(this.voiceMode === 'local' && this.vad.speaking);
+            // Mid-answer: let them finish; the server closes on that turn. Otherwise close now.
+            if (silent) return this.sendTimeUp();
+            this.timeUpPending = true;
+        },
+
+        async sendTimeUp() {
+            this.timeUpPending = false;
+            this.stopListening(true);
+            this.status = 'thinking';
+            const form = new FormData();
+            form.append('time_up', '1');
+            form.append('duration_seconds', '0');
+            form.append('timestamp_seconds', Math.round((Date.now() - this.sessionStartedAt) / 1000));
+            await this.streamTurn(form, '');
+        },
+
         afterExaminerTurn() {
             if (this.state.completed) return this.finish();
+            if (this.isCoach && (this.timeUpPending || this.coachRemaining === 0)) return this.sendTimeUp();
             if (this.state.phase === 'cue_card') return this.startPrep();
             this.startListening();
         },
@@ -563,6 +612,7 @@ export default function examRoom(config) {
             }
 
             this.state = done;
+            if (typeof done.remaining_seconds === 'number') this.coachRemaining = done.remaining_seconds;
             if (done.examiner_message?.engine) this.engine = done.examiner_message.engine;
             const completedNaturally = await player;
             if (completedNaturally) this.afterExaminerTurn();
@@ -691,6 +741,7 @@ export default function examRoom(config) {
         },
 
         teardown() {
+            clearInterval(this.coachTimer);
             this.stopListening(true);
             this.clearCountdown();
             this.stopVoice();

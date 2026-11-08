@@ -148,3 +148,44 @@ class VoiceEngineTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CoachTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.patches = [
+            mock.patch.object(exam_engine, "HARVEST_FILE", os.path.join(self.tmp.name, "h.jsonl")),
+            mock.patch.object(voice_engine, "synthesize", mock.AsyncMock(return_value=None)),
+        ]
+        for p in self.patches:
+            p.start()
+
+    def tearDown(self):
+        for p in self.patches:
+            p.stop()
+        self.tmp.cleanup()
+
+    def test_coach_turn_streams_several_sentences_and_does_not_stop_at_first_question(self):
+        text = ("Pakai YOLOv8 untuk pabrik tekstil itu menarik banget. "
+                "Tapi coba buka jawabanmu dengan masalahnya dulu, ya? "
+                "Misalnya: \"Di pabrik kami, dua belas persen cacat kecil lolos ke pengemasan.\" "
+                "Sekarang coba ucapkan ulang dengan pembuka itu.")
+        body = dict(BODY, directive="coach")
+        with mock.patch.object(exam_engine, "ollama_stream", fake_stream(text)):
+            response = client.post("/exam/respond/stream", json=body)
+        sentences = [json.loads(l) for l in response.text.splitlines() if '"sentence"' in l]
+        self.assertEqual(len(sentences), 4)
+
+    def test_coach_summary_parses_sections(self):
+        raw = ("BAGUS:\n- Kamu sudah memberi contoh nyata dari pabrik.\n- Tempo bicaramu tenang.\n\n"
+               "LATIH:\n- Sebutkan angka hasil penelitian.\n\n"
+               "KALIMAT:\n- \"Penelitian ini menurunkan cacat yang lolos dari 12 menjadi 3 persen.\"\n")
+        with mock.patch.object(exam_engine, "ollama_chat", mock.AsyncMock(return_value=raw)), \
+                mock.patch.object(exam_engine, "resolve_model", mock.AsyncMock(return_value="voic-coach")):
+            data = client.post("/exam/coach-summary", json={
+                "mode": "sidang", "role_type": "dosen_penguji", "language": "id",
+                "transcript": [{"role": "user", "content": "Saya pakai YOLOv8."}, {"role": "coach", "content": "Bagus."}],
+            }).json()
+        self.assertEqual(data["strengths"], ["Kamu sudah memberi contoh nyata dari pabrik.", "Tempo bicaramu tenang."])
+        self.assertEqual(data["practice"], ["Sebutkan angka hasil penelitian."])
+        self.assertEqual(data["phrases"], ["Penelitian ini menurunkan cacat yang lolos dari 12 menjadi 3 persen."])

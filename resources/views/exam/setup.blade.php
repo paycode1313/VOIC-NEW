@@ -8,7 +8,7 @@
 <x-exam-layout :title="$blueprint->text($mode['title'], $language)" :back="route('exam.index', $isEn ? ['lang' => 'en'] : [])">
     <div class="mx-auto grid max-w-5xl gap-8 px-4 pb-20 pt-8 sm:px-6 lg:grid-cols-[1fr_340px] lg:pt-12">
         <form method="POST" action="{{ route('exam.start', $modeKey) }}" class="space-y-6"
-              x-data="{ parts: @js($selectedParts), submitting: false, toggle(n) { this.parts.includes(n) ? (this.parts.length > 1 && (this.parts = this.parts.filter(p => p !== n))) : this.parts.push(n) } }"
+              x-data="{ type: @js($sessionType), parts: @js($selectedParts), submitting: false, toggle(n) { this.parts.includes(n) ? (this.parts.length > 1 && (this.parts = this.parts.filter(p => p !== n))) : this.parts.push(n) } }"
               @submit="submitting = true">
             @csrf
             <input type="hidden" name="language" value="{{ $language }}">
@@ -20,6 +20,30 @@
                 </span>
                 <h1 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $isEn ? 'Set up your session' : 'Siapkan sesi latihanmu' }}</h1>
                 <p class="mt-2 text-slate-600 dark:text-slate-400">{{ $blueprint->text($mode['tagline'], $language) }}</p>
+            </div>
+
+            <input type="hidden" name="session_type" :value="type">
+            <div class="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="{{ $isEn ? 'Session type' : 'Jenis sesi' }}">
+                @foreach ([
+                    'coach' => [
+                        $isEn ? 'Chat with a coach' : 'Ngobrol dengan coach',
+                        ($isEn ? config('exam.coach_minutes').' min · relaxed, no score' : config('exam.coach_minutes').' menit · santai, tanpa nilai'),
+                        $isEn ? $blueprint->text($mode['coach']['title'], 'en').' teaches you how to answer and which words to use.' : $blueprint->text($mode['coach']['title'], 'id').' mengajarimu cara menjawab dan memilih kata, sambil ngobrol.',
+                    ],
+                    'exam' => [
+                        $isEn ? 'Mock exam' : 'Simulasi ujian',
+                        $isEn ? '3 parts · band score' : '3 bagian · band score',
+                        $isEn ? 'Feels like the real thing, then a report with scores per criterion.' : 'Seperti ujian sungguhan, lalu rapor nilai per kriteria.',
+                    ],
+                ] as $value => [$label, $meta, $body])
+                    <button type="button" role="radio" :aria-checked="type === '{{ $value }}'" @click="type = '{{ $value }}'"
+                            :class="type === '{{ $value }}' ? 'border-slate-900 bg-slate-900 text-white dark:border-white dark:bg-white dark:text-slate-900' : 'border-black/10 bg-white hover:border-black/30 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/30'"
+                            class="rounded-3xl border p-5 text-left transition">
+                        <span class="block text-base font-bold">{{ $label }}</span>
+                        <span class="mt-0.5 block text-xs font-semibold opacity-70">{{ $meta }}</span>
+                        <span class="mt-2 block text-sm opacity-80">{{ $body }}</span>
+                    </button>
+                @endforeach
             </div>
 
             @if ($focus)
@@ -55,7 +79,7 @@
                 @endguest
             </div>
 
-            <fieldset class="rounded-3xl border border-black/5 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
+            <fieldset x-show="type === 'exam'" class="rounded-3xl border border-black/5 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
                 <legend class="sr-only">{{ $isEn ? 'Parts' : 'Bagian' }}</legend>
                 <div class="flex items-center justify-between">
                     <p class="text-sm font-semibold">{{ $isEn ? 'Which parts do you want?' : 'Bagian yang ingin dilatih' }}</p>
@@ -93,7 +117,7 @@
 
             <button type="submit" :disabled="submitting"
                     class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-slate-900 px-6 py-4 text-base font-bold text-white transition hover:bg-slate-800 disabled:opacity-60 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
-                <span x-show="!submitting">{{ $isEn ? 'Enter the exam room' : 'Masuk ruang ujian' }}</span>
+                <span x-show="!submitting" x-text="type === 'coach' ? @js($isEn ? 'Start chatting' : 'Mulai ngobrol') : @js($isEn ? 'Enter the exam room' : 'Masuk ruang ujian')"></span>
                 <span x-show="submitting" x-cloak>{{ $isEn ? 'Preparing…' : 'Menyiapkan…' }}</span>
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5M6 12h12"/></svg>
             </button>
