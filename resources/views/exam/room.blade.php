@@ -1,6 +1,8 @@
 @php
     $isEn = $language === 'en';
     $accent = config('exam.accents')[$mode['accent']] ?? config('exam.accents.indigo');
+    // RGB triplet for the glow behind the examiner (matches the mode accent).
+    $glow = ['amber' => '245 158 11', 'indigo' => '99 102 241', 'violet' => '139 92 246'][$mode['accent']] ?? '99 102 241';
     $roomConfig = [
         'language' => $language,
         'initialState' => $initialState,
@@ -58,8 +60,13 @@
 
                 {{-- Pre-start: mic check --}}
                 <div x-show="!started" class="flex flex-1 flex-col items-center justify-center overflow-y-auto p-6 text-center">
-                    <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-24 w-24 rounded-full object-cover">
-                    <h1 class="mt-4 text-2xl font-extrabold tracking-tight" x-text="isCoach ? t('Yuk ngobrol {{ config('exam.coach_minutes') }} menit', 'Let\'s chat for {{ config('exam.coach_minutes') }} minutes') : t('Siap kalau kamu siap', 'Ready when you are')"></h1>
+                    <div class="relative" style="--glow: {{ $glow }}">
+                        <div class="absolute -inset-6 rounded-full blur-2xl [background:radial-gradient(circle,rgb(var(--glow)/0.45),transparent_70%)]"></div>
+                        <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="relative h-28 w-28 rounded-full bg-slate-900 object-cover shadow-xl ring-4 ring-white dark:ring-white/10 sm:h-32 sm:w-32">
+                    </div>
+                    <p class="mt-3 text-sm font-bold">{{ $mode['examiner']['name'] }}</p>
+                    <p class="text-xs text-slate-500">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
+                    <h1 class="mt-5 text-2xl font-extrabold tracking-tight" x-text="isCoach ? t('Yuk ngobrol {{ config('exam.coach_minutes') }} menit', 'Let\'s chat for {{ config('exam.coach_minutes') }} minutes') : t('Siap kalau kamu siap', 'Ready when you are')"></h1>
                     <p x-show="isCoach" x-cloak class="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">{{ $isEn ? 'This is not a test. Talk naturally, ask anything, and your coach will show you how to say it better.' : 'Ini bukan tes. Bicara saja senatural mungkin, boleh bertanya apa pun, dan coach akan menunjukkan cara mengatakannya dengan lebih baik.' }}</p>
                     <p x-show="!isCoach" class="mt-2 max-w-md text-sm text-slate-600 dark:text-slate-400">
                         {{ $isEn
@@ -88,46 +95,95 @@
 
                 {{-- Live stage --}}
                 <div x-show="started" x-cloak class="flex min-h-0 flex-1 flex-col">
-                    <div class="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-6 text-center sm:px-10">
-                        {{-- Live avatar: the canvas animates the portrait (resources/js/avatar.js); the photo is the fallback. --}}
-                        <div class="relative h-36 w-36 sm:h-48 sm:w-48">
-                            <span class="absolute -inset-1 rounded-full {{ $accent['solid'] }} opacity-25 transition-opacity" :class="status === 'speaking' ? 'opacity-40' : 'opacity-0'"></span>
-                            <div class="relative h-full w-full overflow-hidden rounded-full bg-slate-900 ring-4 transition"
-                                 :class="status === 'speaking' ? 'ring-emerald-400' : (isListening ? 'ring-sky-400/70' : 'ring-transparent')">
-                                <img x-show="!avatarReady" src="{{ asset($mode['examiner']['avatar']) }}" alt="{{ $mode['examiner']['name'] }}" class="h-full w-full object-cover">
-                                <canvas x-ref="avatarCanvas" x-show="avatarReady" x-cloak class="h-full w-full" role="img" aria-label="{{ $mode['examiner']['name'] }}"></canvas>
+
+                    {{-- Call tile: the examiner, like a video call --}}
+                    <div class="shrink-0 p-3 pb-0 sm:p-4 sm:pb-0">
+                        <div class="voic-tile relative isolate overflow-hidden rounded-2xl bg-[#0b0f1a] text-white" style="--glow: {{ $glow }}">
+                            <div class="pointer-events-none absolute inset-0 -z-10 transition-opacity duration-700 [background:radial-gradient(55%_75%_at_50%_42%,rgb(var(--glow)/0.55),transparent_72%)]"
+                                 :class="status === 'speaking' ? 'opacity-100' : 'opacity-50'"></div>
+                            <div class="pointer-events-none absolute inset-0 -z-10 [background:linear-gradient(180deg,transparent_55%,rgba(0,0,0,0.55))]"></div>
+
+                            <div class="flex items-center justify-center pb-12 pt-9 sm:py-7">
+                                {{-- Live avatar: the canvas animates the portrait (resources/js/avatar.js); the photo is the fallback. --}}
+                                <div class="relative h-28 w-28 sm:h-40 sm:w-40 lg:h-48 lg:w-48">
+                                    <span x-show="status === 'speaking'" x-cloak class="voic-ring absolute inset-0 rounded-full border-2" style="border-color: rgb(var(--glow) / 0.6)"></span>
+                                    <span x-show="status === 'speaking'" x-cloak class="voic-ring absolute inset-0 rounded-full border-2 [animation-delay:900ms]" style="border-color: rgb(var(--glow) / 0.6)"></span>
+                                    <div class="relative h-full w-full overflow-hidden rounded-full bg-slate-900 shadow-2xl shadow-black/60 ring-[3px] transition duration-300"
+                                         :class="status === 'speaking' ? 'ring-white/90' : (isListening ? 'ring-sky-400/80' : 'ring-white/15')">
+                                        <img x-show="!avatarReady" src="{{ asset($mode['examiner']['avatar']) }}" alt="{{ $mode['examiner']['name'] }}" class="h-full w-full object-cover">
+                                        <canvas x-ref="avatarCanvas" x-show="avatarReady" x-cloak class="h-full w-full" role="img" aria-label="{{ $mode['examiner']['name'] }}"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Name plate and live status, bottom left --}}
+                            <div class="absolute bottom-2.5 left-3 right-3 flex items-end justify-between gap-2 sm:bottom-3 sm:left-4 sm:right-4">
+                                <div class="min-w-0 text-left">
+                                    <p class="truncate text-sm font-bold leading-tight sm:text-base">{{ $mode['examiner']['name'] }}</p>
+                                    <p class="truncate text-[11px] text-white/60 sm:text-xs">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
+                                </div>
+                                <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold backdrop-blur sm:text-xs" aria-live="polite">
+                                    <span x-show="status === 'speaking'" class="flex h-3 items-end gap-[2px]" aria-hidden="true">
+                                        <span class="voic-eq w-[3px] rounded-full bg-white"></span>
+                                        <span class="voic-eq w-[3px] rounded-full bg-white [animation-delay:150ms]"></span>
+                                        <span class="voic-eq w-[3px] rounded-full bg-white [animation-delay:300ms]"></span>
+                                        <span class="voic-eq w-[3px] rounded-full bg-white [animation-delay:450ms]"></span>
+                                    </span>
+                                    <span x-show="isListening" x-cloak class="relative flex h-2 w-2" aria-hidden="true">
+                                        <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-75"></span>
+                                        <span class="relative inline-flex h-2 w-2 rounded-full bg-sky-400"></span>
+                                    </span>
+                                    <span x-show="status === 'thinking' || status === 'finishing'" x-cloak class="flex gap-0.5" aria-hidden="true">
+                                        <span class="h-1 w-1 animate-bounce rounded-full bg-white"></span>
+                                        <span class="h-1 w-1 animate-bounce rounded-full bg-white [animation-delay:120ms]"></span>
+                                        <span class="h-1 w-1 animate-bounce rounded-full bg-white [animation-delay:240ms]"></span>
+                                    </span>
+                                    <span x-text="{
+                                        speaking: t('Berbicara', 'Speaking'),
+                                        listening: vad.speaking ? t('Mendengarkan…', 'Listening…') : t('Giliranmu', 'Your turn'),
+                                        long_turn: t('Mendengarkan, tidak menyela', 'Listening, no interruptions'),
+                                        thinking: t('Berpikir', 'Thinking'),
+                                        prep: t('Waktu persiapan', 'Preparation'),
+                                        finishing: t('Menyusun laporan', 'Building report'),
+                                        error: t('Ada kendala', 'Something went wrong'),
+                                        ready: t('Siap', 'Ready')
+                                    }[status]"></span>
+                                </span>
+                            </div>
+
+                            {{-- AI engine chip, top right: details on demand instead of a big warning box --}}
+                            <div x-data="{ open: false }" x-show="engine" x-cloak class="absolute right-3 top-3 text-left sm:right-4 sm:top-4">
+                                <button type="button" @click="open = !open" :aria-expanded="open"
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold backdrop-blur hover:bg-black/60">
+                                    <span class="h-1.5 w-1.5 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-400' : 'bg-emerald-400'"></span>
+                                    <span x-text="{ local_llm: t('AI lokal', 'Local AI'), cloud_llm: t('AI cloud', 'Cloud AI'), offline_composer: t('Mode cadangan', 'Fallback mode') }[engine]"></span>
+                                    <svg class="h-3 w-3 opacity-70 transition" :class="open && 'rotate-180'" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                                </button>
+                                <div x-show="open" x-transition.opacity @click.outside="open = false"
+                                     class="absolute right-0 z-10 mt-2 w-72 max-w-[80vw] rounded-2xl border border-white/10 bg-[#141826]/95 p-3 text-xs text-white/80 shadow-xl backdrop-blur">
+                                    <p class="font-semibold text-white" x-text="engine === 'offline_composer'
+                                        ? t('AI belum aktif: penguji memakai jawaban cadangan.', 'AI is off: the examiner uses fallback replies.')
+                                        : t('AI berjalan normal.', 'AI is running normally.')"></p>
+                                    <template x-if="aiStatus?.reason">
+                                        <div class="mt-2 rounded-xl bg-amber-400/10 p-2 text-amber-200">
+                                            <p x-text="aiStatus.reason"></p>
+                                            <p x-show="aiStatus.fix" class="mt-1 break-words font-mono text-[10px]" x-text="aiStatus.fix"></p>
+                                        </div>
+                                    </template>
+                                    <p class="mt-2 text-white/60" x-text="t('Telinga: ', 'Ears: ') + (voiceMode === 'local' ? t('Whisper lokal', 'local Whisper') : voiceMode === 'browser' ? t('browser (online)', 'browser (online)') : t('ketik', 'typing'))
+                                        + ' · ' + t('Suara: ', 'Voice: ') + (aiStatus?.tts_local ? t('Piper lokal', 'local Piper') : t('cadangan', 'fallback'))
+                                        + (firstSentenceMs ? ' · ' + t('respon ', 'reply ') + (firstSentenceMs / 1000).toFixed(1) + t(' dtk', 's') : '')"></p>
+                                    <button type="button" class="mt-2 font-semibold text-white underline" @click="checkEngine()">{{ $isEn ? 'Check again' : 'Cek ulang' }}</button>
+                                </div>
                             </div>
                         </div>
-                        <p class="mt-3 text-sm font-semibold">{{ $mode['examiner']['name'] }}</p>
-                        <span x-show="engine" x-cloak class="mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                              :class="engine === 'offline_composer' ? 'bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300'"
-                              :title="engine === 'offline_composer' ? t('Ollama / ai_service.py belum aktif dan tidak ada API key cloud. Penguji memakai jawaban cadangan berbasis aturan.', 'Ollama / ai_service.py is not running and no cloud key is set. The examiner uses rule-based fallback replies.') : ''">
-                            <span class="h-1.5 w-1.5 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-500' : 'bg-emerald-500'"></span>
-                            <span x-text="{ local_llm: t('AI lokal aktif', 'Local AI on'), cloud_llm: t('AI cloud aktif', 'Cloud AI on'), offline_composer: t('AI offline · mode cadangan', 'AI offline · fallback mode') }[engine]"></span>
-                        </span>
-                        <div x-show="aiStatus?.reason" x-cloak class="mt-2 max-w-md rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2 text-left text-xs text-amber-900 dark:border-amber-400/30 dark:bg-amber-400/10 dark:text-amber-200">
-                            <p class="font-semibold" x-text="aiStatus?.reason"></p>
-                            <p class="mt-0.5 font-mono text-[11px]" x-show="aiStatus?.fix" x-text="aiStatus?.fix"></p>
-                            <button type="button" class="mt-1 font-semibold underline" @click="checkEngine()">{{ $isEn ? 'Check again' : 'Cek ulang' }}</button>
-                        </div>
-                        <span x-show="aiStatus" x-cloak class="mt-1 text-[11px] text-slate-500"
-                              x-text="t('Telinga: ', 'Ears: ') + (voiceMode === 'local' ? t('Whisper lokal', 'local Whisper') : voiceMode === 'browser' ? t('browser (online)', 'browser (online)') : t('ketik', 'typing'))
-                                + ' · ' + t('Suara: ', 'Voice: ') + (aiStatus?.tts_local ? t('Piper lokal', 'local Piper') : t('cadangan', 'fallback'))
-                                + (firstSentenceMs ? ' · ' + t('respon ', 'reply ') + (firstSentenceMs / 1000).toFixed(1) + t(' dtk', 's') : '')"></span>
-                        <p class="text-xs text-slate-500" x-text="{
-                            speaking: t('Sedang berbicara…', 'Speaking…'),
-                            listening: t('Mendengarkan kamu', 'Listening to you'),
-                            long_turn: t('Mendengarkan, tidak akan menyela', 'Listening, will not interrupt'),
-                            thinking: t('Sedang berpikir…', 'Thinking…'),
-                            prep: t('Waktu persiapan', 'Preparation time'),
-                            finishing: t('Menyusun laporan…', 'Building your report…'),
-                            error: t('Ada kendala', 'Something went wrong'),
-                            ready: ''
-                        }[status]"></p>
+                    </div>
 
+                    {{-- What the examiner says (or the cue card) --}}
+                    <div class="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-5 py-4 text-center sm:px-10 sm:py-6">
                         {{-- Cue card --}}
                         <template x-if="cueCard && (status === 'prep' || status === 'long_turn')">
-                            <div class="mt-6 w-full max-w-xl rounded-2xl border-2 border-dashed border-black/15 bg-[#fbfbf9] p-5 text-left dark:border-white/15 dark:bg-white/[0.02]">
+                            <div class="my-auto w-full max-w-xl rounded-2xl border-2 border-dashed border-black/15 bg-[#fbfbf9] p-5 text-left dark:border-white/15 dark:bg-white/[0.02]">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ $isEn ? 'Topic card' : 'Kartu topik' }}</span>
                                     <span class="rounded-full px-3 py-1 font-mono text-sm font-bold"
@@ -153,13 +209,9 @@
                         </template>
 
                         {{-- Examiner subtitle --}}
-                        <p x-show="!(cueCard && (status === 'prep' || status === 'long_turn'))"
-                           class="mt-6 max-w-2xl text-lg font-semibold leading-relaxed tracking-tight sm:text-2xl" x-text="subtitle"></p>
-
-                        <div x-show="status === 'thinking' || status === 'finishing'" class="mt-5 flex gap-1.5" aria-hidden="true">
-                            <span class="h-2 w-2 animate-bounce rounded-full bg-slate-400"></span>
-                            <span class="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:120ms]"></span>
-                            <span class="h-2 w-2 animate-bounce rounded-full bg-slate-400 [animation-delay:240ms]"></span>
+                        <div x-show="!(cueCard && (status === 'prep' || status === 'long_turn'))" class="my-auto w-full max-w-2xl">
+                            <p class="text-lg font-semibold leading-relaxed tracking-tight text-slate-900 transition-opacity dark:text-white sm:text-xl lg:text-[22px]"
+                               :class="status === 'speaking' ? 'opacity-100' : 'opacity-70'" x-text="subtitle"></p>
                         </div>
                     </div>
 
@@ -238,6 +290,7 @@
                               :class="expression === 'tense' || expression === 'away' ? 'bg-amber-500/90' : 'bg-emerald-600/90'"
                               class="absolute bottom-2 left-2 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white"></span>
                         <div x-show="!cameraOn" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center text-xs text-slate-500">
+                            <svg class="mb-2 h-7 w-7 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
                             <p>{{ $isEn ? 'Camera off. Turn it on to measure eye contact and expression.' : 'Kamera mati. Nyalakan untuk mengukur kontak mata dan ekspresi.' }}</p>
                         </div>
                     </div>
