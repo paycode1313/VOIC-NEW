@@ -40,6 +40,50 @@ NUM_CTX = int(os.getenv("VOIC_NUM_CTX", "4096"))
 # Qwen3 punya mode "berpikir" yang menulis penalaran panjang dulu. Untuk percakapan suara itu terlalu
 # lambat, jadi dimatikan. Model lain mengabaikan opsi ini.
 THINK = os.getenv("VOIC_THINK", "0") == "1"
+# Model cloud lewat Ollama (mis. kimi-k3:cloud) berjalan di server Ollama, bukan di laptop.
+# Kalau gagal (internet mati, belum `ollama signin`, kuota habis), giliran itu otomatis
+# dijawab model lokal. Batas waktu dibuat lebih pendek agar peserta tidak menunggu lama.
+CLOUD_TIMEOUT = float(os.getenv("VOIC_CLOUD_TIMEOUT", "45"))
+
+
+def is_cloud_model(name: Optional[str]) -> bool:
+    """Model ber-tag :cloud / -cloud di Ollama dijalankan di server Ollama, bukan lokal."""
+    lowered = (name or "").lower()
+    return lowered.endswith(":cloud") or lowered.endswith("-cloud")
+
+
+def chat_payload(model: str, messages: List[Dict[str, str]], stream: bool, num_predict: int, temperature: float) -> Dict:
+    """Isi request /api/chat. Model cloud tidak memakai opsi memori lokal (num_ctx, keep_alive), dan
+    model penalar seperti Kimi K3 memakai token untuk berpikir dulu, jadi panjangnya tidak dibatasi di sini
+    (balasan tetap dipotong ke kalimat utuh oleh clean_reply)."""
+    if is_cloud_model(model):
+        return {"model": model, "messages": messages, "stream": stream, "options": {"temperature": temperature}}
+    return {
+        "model": model,
+        "messages": messages,
+        "stream": stream,
+        "think": THINK,
+        "keep_alive": KEEP_ALIVE,
+        "options": {
+            "temperature": temperature,
+            "top_p": 0.9,
+            "repeat_penalty": 1.12,
+            "num_predict": num_predict,
+            "num_ctx": NUM_CTX,
+        },
+    }
+
+
+async def candidate_models(requested: Optional[str]) -> List[str]:
+    """Model yang dicoba berurutan: yang diminta Laravel (VOIC_AI_MODEL), lalu model lokal sebagai cadangan."""
+    local = await resolve_model()
+    if requested and requested != local:
+        return [requested, local]
+    return [local]
+
+
+def model_timeout(model: str) -> httpx.Timeout:
+    return httpx.Timeout(CLOUD_TIMEOUT if is_cloud_model(model) else LLM_TIMEOUT, connect=3.0)
 KEEP_ALIVE = os.getenv("VOIC_KEEP_ALIVE", "2h")
 
 router = APIRouter(prefix="/exam", tags=["exam"])
@@ -112,6 +156,8 @@ class RespondRequest(BaseModel):
     question: str = ""
     answer: str = ""
     messages: List[ChatTurn]
+    # Model Ollama untuk giliran ini (dari VOIC_AI_MODEL di .env Laravel), mis. "kimi-k3:cloud".
+    model: Optional[str] = None
 
 
 class RespondResponse(BaseModel):
@@ -136,6 +182,7 @@ class ImproveRequest(BaseModel):
     language: str = "id"
     topic: Optional[str] = None
     items: List[ImproveItem]
+    model: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -282,30 +329,24 @@ def ollama_stats(data: Dict) -> Dict:
     }
 
 
-async def ollama_chat(messages: List[Dict[str, str]], num_predict: int, temperature: float, stats: Optional[Dict] = None) -> str:
-    async with httpx.AsyncClient(timeout=httpx.Timeout(LLM_TIMEOUT, connect=3.0)) as client:
-        response = await client.post(
-            f"{OLLAMA_BASE_URL}/api/chat",
-            json={
-                "model": await resolve_model(),
-                "messages": messages,
-                "stream": False,
-                "think": THINK,
-                "keep_alive": KEEP_ALIVE,
-                "options": {
-                    "temperature": temperature,
-                    "top_p": 0.9,
-                    "repeat_penalty": 1.12,
-                    "num_predict": num_predict,
-                    "num_ctx": NUM_CTX,
-                },
-            },
-        )
-        response.raise_for_status()
-        data = response.json()
-        if stats is not None:
-            stats.update(ollama_stats(data))
-        return data.get("message", {}).get("content", "")
+async def ollama_chat(messages: List[Dict[str, str]], num_predict: int, temperature: float, stats: Optional[Dict] = None, model: Optional[str] = None) -> str:
+    """Satu balasan utuh. Jika model yang diminta gagal, model lokal dicoba. stats["model"] = model yang menjawab."""
+    models = await candidate_models(model)
+    for index, name in enumerate(models):
+        try:
+            async with httpx.AsyncClient(timeout=model_timeout(name)) as client:
+                response = await client.post(f"{OLLAMA_BASE_URL}/api/chat", json=chat_payload(name, messages, False, num_predict, temperature))
+                response.raise_for_status()
+                data = response.json()
+            if stats is not None:
+                stats.update(ollama_stats(data))
+                stats["model"] = name
+            return data.get("message", {}).get("content", "")
+        except Exception as exc:
+            if index == len(models) - 1:
+                raise
+            print(f"[VOIC] Model {name} gagal ({describe_error(exc)}), memakai model lokal {models[index + 1]}.")
+    return ""
 
 
 def describe_error(exc: Exception) -> str:
@@ -343,6 +384,7 @@ async def respond(req: RespondRequest):
                 num_predict=num_predict,
                 temperature=0.7 if attempt == 0 else 0.55,
                 stats=stats,
+                model=req.model,
             )
         except Exception as exc:  # Ollama mati / model belum di-pull / terlalu lambat
             error = describe_error(exc)
@@ -375,7 +417,7 @@ async def respond(req: RespondRequest):
             "part": req.part,
             "messages": messages,
             "reply": best_reply,
-            "model": EXAM_MODEL,
+            "model": stats.get("model", EXAM_MODEL),
             "reviewed": False,
         })
 
@@ -383,7 +425,7 @@ async def respond(req: RespondRequest):
         reply=best_reply,
         passed_quality=bool(best_reply) and not best_issues,
         issues=best_issues,
-        model=await resolve_model(),
+        model=stats.get("model") or await resolve_model(),
         latency_ms=int((time.time() - started) * 1000),
         error=error,
         stats=stats,
@@ -407,6 +449,7 @@ class CoachSummaryRequest(BaseModel):
     role_type: str
     language: str = "id"
     transcript: List[ChatTurn]
+    model: Optional[str] = None
 
 
 def _bullet_lines(text: str, header: str) -> List[str]:
@@ -435,6 +478,7 @@ async def coach_summary(req: CoachSummaryRequest):
             [{"role": "system", "content": "Kamu pelatih komunikasi yang ringkas dan jujur."}, {"role": "user", "content": convo + "\n\n" + instruction}],
             num_predict=260,
             temperature=0.4,
+            model=req.model,
         )
     except Exception as exc:
         return {"strengths": [], "practice": [], "phrases": [], "error": describe_error(exc)}
@@ -491,6 +535,7 @@ async def improve(req: ImproveRequest):
                 ],
                 num_predict=200,
                 temperature=0.5,
+                model=req.model,
             )
         except Exception as exc:
             print(f"Improve error: {exc}")
@@ -502,7 +547,7 @@ async def improve(req: ImproveRequest):
         if 12 <= len(text.split()) <= 120:
             results.append({"key": item.key, "improved": text})
 
-    return {"items": results, "model": EXAM_MODEL}
+    return {"items": results, "model": req.model or EXAM_MODEL}
 
 
 # ---------------------------------------------------------------------------
@@ -556,37 +601,41 @@ def split_sentences(buffer: str, final: bool = False):
     return sentences, rest
 
 
-async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temperature: float):
-    """Token-by-token dari Ollama (NDJSON)."""
-    timeout = httpx.Timeout(LLM_TIMEOUT, connect=3.0)
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        async with client.stream(
-            "POST",
-            f"{OLLAMA_BASE_URL}/api/chat",
-            json={
-                "model": await resolve_model(),
-                "messages": messages,
-                "stream": True,
-                "think": THINK,
-                "keep_alive": KEEP_ALIVE,
-                "options": {"temperature": temperature, "top_p": 0.9, "repeat_penalty": 1.12, "num_predict": num_predict, "num_ctx": NUM_CTX},
-            },
-        ) as response:
-            response.raise_for_status()
-            # Penalaran di field "thinking" diabaikan; <think> di dalam content disaring.
-            thinking = ThinkFilter()
-            async for line in response.aiter_lines():
-                if not line.strip():
-                    continue
-                data = json.loads(line)
-                chunk = thinking.feed(data.get("message", {}).get("content", ""))
-                if chunk:
-                    yield chunk
-                if data.get("done"):
-                    break
-            rest = thinking.flush()
-            if rest:
-                yield rest
+async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temperature: float, model: Optional[str] = None, used: Optional[Dict] = None):
+    """Token-by-token dari Ollama (NDJSON). Jika model yang diminta gagal sebelum mengirim teks apa pun,
+    model lokal dipakai. used["model"] = model yang benar-benar menjawab."""
+    models = await candidate_models(model)
+    for index, name in enumerate(models):
+        sent = False
+        try:
+            async with httpx.AsyncClient(timeout=model_timeout(name)) as client:
+                async with client.stream("POST", f"{OLLAMA_BASE_URL}/api/chat", json=chat_payload(name, messages, True, num_predict, temperature)) as response:
+                    response.raise_for_status()
+                    if used is not None:
+                        used["model"] = name
+                    # Penalaran di field "thinking" diabaikan; <think> di dalam content disaring.
+                    thinking = ThinkFilter()
+                    async for line in response.aiter_lines():
+                        if not line.strip():
+                            continue
+                        data = json.loads(line)
+                        if data.get("error"):
+                            raise RuntimeError(str(data["error"]))
+                        chunk = thinking.feed(data.get("message", {}).get("content", ""))
+                        if chunk:
+                            sent = True
+                            yield chunk
+                        if data.get("done"):
+                            break
+                    rest = thinking.flush()
+                    if rest:
+                        yield rest
+            return
+        except Exception as exc:
+            # Setelah ada kalimat yang diucapkan, jangan mengulang dengan model lain.
+            if sent or index == len(models) - 1:
+                raise
+            print(f"[VOIC] Model {name} gagal ({describe_error(exc)}), memakai model lokal {models[index + 1]}.")
 
 
 def _line(payload: Dict) -> str:
@@ -615,6 +664,7 @@ async def respond_stream(req: RespondStreamRequest):
         started = time.time()
         first_ms = None
         spoken: List[str] = []
+        used: Dict = {}
         buffer = ""
         finished = False
 
@@ -631,7 +681,7 @@ async def respond_stream(req: RespondStreamRequest):
             return _line({"type": "sentence", "text": text, **audio_payload(audio, req.inline_audio)})
 
         try:
-            async for chunk in ollama_stream(messages, num_predict, temperature):
+            async for chunk in ollama_stream(messages, num_predict, temperature, model=req.model, used=used):
                 buffer += chunk
                 sentences, buffer = split_sentences(buffer)
                 for sentence in sentences:
@@ -659,13 +709,13 @@ async def respond_stream(req: RespondStreamRequest):
             harvest({
                 "ts": int(time.time()), "session_id": req.session_id, "mode": req.mode, "role_type": req.role_type,
                 "language": req.language, "directive": req.directive, "part": req.part, "messages": messages,
-                "reply": reply, "model": EXAM_MODEL, "reviewed": False,
+                "reply": reply, "model": used.get("model", EXAM_MODEL), "reviewed": False,
             })
         yield _line({
             "type": "done",
             "reply": reply,
             "issues": issues,
-            "model": EXAM_MODEL,
+            "model": used.get("model", EXAM_MODEL),
             "first_sentence_ms": first_ms,
             "latency_ms": int((time.time() - started) * 1000),
         })

@@ -224,3 +224,143 @@ class ThinkingModelTest(unittest.TestCase):
 
         self.assertIs(sent["think"], False)
         self.assertGreaterEqual(sent["options"]["num_ctx"], 4096)
+
+
+class CloudModelTest(unittest.TestCase):
+    """kimi-k3:cloud runs on Ollama's servers; when it fails, the local model answers instead."""
+
+    def fake_client(self, calls, fail_models=()):
+        class FakeResponse:
+            def __init__(self, model):
+                self.model = model
+
+            def raise_for_status(self):
+                if self.model in fail_models:
+                    raise RuntimeError(f"{self.model} unauthorized")
+
+            def json(self):
+                return {"message": {"content": f"Jawaban dari {self.model}."}}
+
+        class FakeClient:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            async def post(self, url, json):
+                calls.append(json)
+                return FakeResponse(json["model"])
+
+        return FakeClient
+
+    def run_chat(self, calls, fail_models=(), model="kimi-k3:cloud"):
+        import asyncio
+
+        stats = {}
+        with mock.patch.object(exam_engine.httpx, "AsyncClient", self.fake_client(calls, fail_models)), \
+                mock.patch.object(exam_engine, "resolve_model", mock.AsyncMock(return_value="voic-coach")):
+            text = asyncio.run(exam_engine.ollama_chat(MESSAGES, num_predict=90, temperature=0.7, stats=stats, model=model))
+        return text, stats
+
+    def test_cloud_model_is_detected(self):
+        self.assertTrue(exam_engine.is_cloud_model("kimi-k3:cloud"))
+        self.assertTrue(exam_engine.is_cloud_model("gpt-oss:120b-cloud"))
+        self.assertFalse(exam_engine.is_cloud_model("qwen3:4b"))
+        self.assertFalse(exam_engine.is_cloud_model(None))
+
+    def test_cloud_request_skips_local_only_options(self):
+        calls = []
+        text, stats = self.run_chat(calls)
+        self.assertEqual(text, "Jawaban dari kimi-k3:cloud.")
+        self.assertEqual(stats["model"], "kimi-k3:cloud")
+        self.assertEqual(calls[0]["model"], "kimi-k3:cloud")
+        for key in ("think", "keep_alive"):
+            self.assertNotIn(key, calls[0])
+        self.assertNotIn("num_ctx", calls[0]["options"])
+        self.assertNotIn("num_predict", calls[0]["options"])
+
+    def test_falls_back_to_local_model_when_cloud_fails(self):
+        calls = []
+        text, stats = self.run_chat(calls, fail_models=("kimi-k3:cloud",))
+        self.assertEqual([c["model"] for c in calls], ["kimi-k3:cloud", "voic-coach"])
+        self.assertEqual(text, "Jawaban dari voic-coach.")
+        self.assertEqual(stats["model"], "voic-coach")
+        self.assertIs(calls[1]["think"], False)
+
+    def test_without_requested_model_only_local_is_used(self):
+        calls = []
+        self.run_chat(calls, model=None)
+        self.assertEqual([c["model"] for c in calls], ["voic-coach"])
+
+    def test_respond_endpoint_forwards_the_model_and_reports_who_answered(self):
+        reply = "Kecepatan real-time memang krusial di pabrik tekstil. Bagaimana Anda mengukur akurasi YOLOv8?"
+
+        async def fake_chat(messages, num_predict, temperature, stats=None, model=None):
+            stats["model"] = model
+            return reply
+
+        with mock.patch.object(exam_engine, "ollama_chat", fake_chat), \
+                mock.patch.object(exam_engine, "harvest"), \
+                mock.patch.object(exam_engine, "resolve_model", mock.AsyncMock(return_value="voic-coach")):
+            data = client.post("/exam/respond", json={
+                "mode": "sidang", "role_type": "dosen_penguji", "directive": "follow_up",
+                "answer": ANSWER, "messages": MESSAGES, "model": "kimi-k3:cloud",
+            }).json()
+        self.assertEqual(data["model"], "kimi-k3:cloud")
+        self.assertEqual(data["reply"], reply)
+
+    def test_stream_falls_back_before_any_text_is_spoken(self):
+        import asyncio
+        import json as jsonlib
+
+        tried = []
+
+        class FakeStream:
+            def __init__(self, model):
+                self.model = model
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            def raise_for_status(self):
+                return None
+
+            async def aiter_lines(self):
+                if self.model == "kimi-k3:cloud":
+                    yield jsonlib.dumps({"error": "this model requires a subscription"})
+                    return
+                yield jsonlib.dumps({"message": {"content": "Baik, lanjut."}, "done": True})
+
+        class FakeClient:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            def stream(self, method, url, json):
+                tried.append(json["model"])
+                return FakeStream(json["model"])
+
+        async def collect():
+            used = {}
+            chunks = [c async for c in exam_engine.ollama_stream(MESSAGES, 90, 0.7, model="kimi-k3:cloud", used=used)]
+            return chunks, used
+
+        with mock.patch.object(exam_engine.httpx, "AsyncClient", FakeClient), \
+                mock.patch.object(exam_engine, "resolve_model", mock.AsyncMock(return_value="voic-coach")):
+            chunks, used = asyncio.run(collect())
+
+        self.assertEqual(tried, ["kimi-k3:cloud", "voic-coach"])
+        self.assertEqual("".join(chunks), "Baik, lanjut.")
+        self.assertEqual(used["model"], "voic-coach")
