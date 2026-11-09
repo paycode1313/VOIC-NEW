@@ -54,7 +54,9 @@ return [
                 'id' => 'Latihan interview dengan HR recruiter: dari perkenalan sampai pertanyaan situasional.',
                 'en' => 'Practise with an HR recruiter, from introductions to situational questions.',
             ],
-            'examiner' => ['name' => 'Kak Nadia', 'title' => ['id' => 'Senior HR Recruiter', 'en' => 'Senior HR Recruiter'], 'avatar' => 'images/avatars/hrd.webp'],
+            'examiner' => ['name' => 'Kak Nadia', 'title' => ['id' => 'Senior HR Recruiter', 'en' => 'Senior HR Recruiter'], 'avatar' => 'images/avatars/hrd-portrait.webp',
+                // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
+                'rig' => ['eyes' => [[0.4395, 0.3164], [0.5586, 0.3164]], 'eyeW' => 0.0508, 'eyeH' => 0.0254, 'mouth' => [0.5, 0.4229], 'mouthW' => 0.1133, 'chin' => 0.5078]],
             'topic_label' => ['id' => 'Posisi yang dilamar', 'en' => 'Position you are applying for'],
             'topic_placeholder' => ['id' => 'Contoh: Frontend Developer di startup fintech', 'en' => 'e.g. Frontend Developer at a fintech startup'],
             'context_label' => ['id' => 'Ringkasan CV / pengalaman (opsional)', 'en' => 'CV summary / experience (optional)'],
@@ -175,7 +177,9 @@ return [
                 'id' => 'Simulasi sidang dengan dosen penguji: presentasi inti lalu tanya jawab metodologi.',
                 'en' => 'Defend your thesis: core presentation, then methodology Q&A.',
             ],
-            'examiner' => ['name' => 'Prof. Hendra', 'title' => ['id' => 'Dosen Penguji Utama', 'en' => 'Lead Examiner'], 'avatar' => 'images/avatars/dosen.webp'],
+            'examiner' => ['name' => 'Prof. Hendra', 'title' => ['id' => 'Dosen Penguji Utama', 'en' => 'Lead Examiner'], 'avatar' => 'images/avatars/dosen-portrait.webp',
+                // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
+                'rig' => ['eyes' => [[0.4268, 0.3457], [0.5713, 0.3457]], 'eyeW' => 0.0449, 'eyeH' => 0.0215, 'mouth' => [0.501, 0.5068], 'mouthW' => 0.1367, 'chin' => 0.6104]],
             'topic_label' => ['id' => 'Judul skripsi', 'en' => 'Thesis title'],
             'topic_placeholder' => ['id' => 'Contoh: Deteksi cacat kain menggunakan YOLOv8', 'en' => 'e.g. Fabric defect detection using YOLOv8'],
             'context_label' => ['id' => 'Abstrak (opsional, membuat pertanyaan lebih spesifik)', 'en' => 'Abstract (optional, makes questions more specific)'],
@@ -281,7 +285,9 @@ return [
                 'id' => 'Pitch di depan investor: problem, solusi, lalu dibedah habis di sesi due diligence.',
                 'en' => 'Pitch to an investor: problem, solution, then a due-diligence grilling.',
             ],
-            'examiner' => ['name' => 'Pak William', 'title' => ['id' => 'Partner Venture Capital', 'en' => 'Venture Capital Partner'], 'avatar' => 'images/avatars/investor.webp'],
+            'examiner' => ['name' => 'Pak William', 'title' => ['id' => 'Partner Venture Capital', 'en' => 'Venture Capital Partner'], 'avatar' => 'images/avatars/investor-portrait.webp',
+                // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
+                'rig' => ['eyes' => [[0.4463, 0.2979], [0.5537, 0.2979]], 'eyeW' => 0.0449, 'eyeH' => 0.0195, 'mouth' => [0.5, 0.4111], 'mouthW' => 0.1035, 'chin' => 0.4951]],
             'topic_label' => ['id' => 'Nama dan bidang startup', 'en' => 'Startup name and sector'],
             'topic_placeholder' => ['id' => 'Contoh: KasirKu, aplikasi kasir untuk UMKM', 'en' => 'e.g. KasirKu, a POS app for small shops'],
             'context_label' => ['id' => 'Ringkasan pitch deck (opsional)', 'en' => 'Pitch deck summary (optional)'],

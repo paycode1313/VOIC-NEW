@@ -17,6 +17,8 @@
  * stops the examiner and starts listening, like a real conversation.
  */
 
+import TalkingAvatar from './avatar';
+
 const MEDIAPIPE_VERSION = '0.10.14';
 const LOCAL_MEDIAPIPE = '/vendor/mediapipe';
 const END_SILENCE_MS = 1100; // pause that ends a normal answer
@@ -26,8 +28,22 @@ const BARGE_IN_MS = 350;
 const MAX_ANSWER_MS = 90000;
 
 export default function examRoom(config) {
+    // Kept outside Alpine's reactive state: canvas and Web Audio objects must not be proxied.
+    let avatar = null;
+    let playbackContext = null;
+    let voiceAnalyser = null;
+
+    const moodFor = (status) => ({
+        speaking: 'speaking',
+        listening: 'listening',
+        long_turn: 'listening',
+        thinking: 'thinking',
+        finishing: 'thinking',
+    }[status] ?? 'idle');
+
     return {
         config,
+        avatarReady: false,
         state: config.initialState,
         transcript: config.transcript || [],
         status: 'ready', // ready | speaking | listening | thinking | prep | long_turn | finishing | error
@@ -118,7 +134,65 @@ export default function examRoom(config) {
             try { this.bargeIn = localStorage.getItem('voic_barge_in') === '1'; } catch (e) { /* ignore */ }
             this.$watch('bargeIn', (value) => { try { localStorage.setItem('voic_barge_in', value ? '1' : '0'); } catch (e) { /* ignore */ } });
             this.$watch('transcript', () => this.$nextTick(() => this.scrollTranscript()));
+            this.$watch('status', (status) => avatar?.setMood(moodFor(status)));
+            this.$watch('vad.speaking', (speaking) => avatar?.setUserTalking(Boolean(speaking)));
+            this.$nextTick(() => this.startAvatar());
             window.addEventListener('beforeunload', () => this.teardown());
+        },
+
+        // ----- Live avatar ---------------------------------------------------
+
+        startAvatar() {
+            const rig = this.config.avatar?.rig;
+            const canvas = this.$refs.avatarCanvas;
+            if (!rig || !canvas || !canvas.getContext) return;
+            try {
+                avatar = new TalkingAvatar(canvas, this.config.avatar.image, rig);
+                avatar.image.addEventListener('load', () => { this.avatarReady = true; }, { once: true });
+            } catch (e) {
+                avatar = null;
+            }
+        },
+
+        /**
+         * Route the examiner's voice through an analyser so the avatar's mouth follows it.
+         * Must be created on a user gesture (the start button).
+         */
+        startVoiceAnalyser() {
+            if (playbackContext || !avatar) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                playbackContext = new AudioCtx();
+                voiceAnalyser = playbackContext.createAnalyser();
+                voiceAnalyser.fftSize = 1024;
+                voiceAnalyser.smoothingTimeConstant = 0.5;
+                voiceAnalyser.connect(playbackContext.destination);
+                playbackContext.resume?.();
+                avatar.useAnalyser(voiceAnalyser);
+            } catch (e) {
+                playbackContext = null;
+                voiceAnalyser = null;
+            }
+        },
+
+        /**
+         * Connect one audio element to the analyser. Only same-origin or data: audio: a
+         * cross-origin source would be silenced by the browser once routed through Web Audio.
+         */
+        connectVoice(audio, url) {
+            let routable = false;
+            try {
+                routable = url.startsWith('data:') || new URL(url, window.location.href).origin === window.location.origin;
+            } catch (e) { /* not routable */ }
+
+            if (routable && playbackContext?.state === 'running' && voiceAnalyser) {
+                try {
+                    playbackContext.createMediaElementSource(audio).connect(voiceAnalyser);
+                    avatar?.simulate(false);
+                    return;
+                } catch (e) { /* fall through to simulated lips */ }
+            }
+            avatar?.simulate(true);
         },
 
         t(id, en) {
@@ -240,6 +314,7 @@ export default function examRoom(config) {
             this.sessionStartedAt = Date.now();
             // Unlock audio + speech synthesis on the user gesture (required by Safari/Chrome).
             if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
+            this.startVoiceAnalyser();
             if (this.voiceMode !== 'typing') await this.ensureMic();
             if (this.isCoach) this.startCoachTimer();
             const opening = this.state.examiner_message;
@@ -276,6 +351,7 @@ export default function examRoom(config) {
             return new Promise((resolve, reject) => {
                 const audio = new Audio(url);
                 this.currentAudio = audio;
+                this.connectVoice(audio, url);
                 audio.onended = () => resolve();
                 audio.onpause = () => resolve();
                 audio.onerror = () => reject(new Error('audio failed'));
@@ -294,9 +370,12 @@ export default function examRoom(config) {
                 const voice = voices.find((v) => v.lang === lang && /natural|google|online/i.test(v.name)) || voices.find((v) => v.lang.startsWith(lang.slice(0, 2)));
                 if (voice) utterance.voice = voice;
                 // Chrome sometimes never fires onend; guard with a length-based timeout.
-                const guard = setTimeout(resolve, Math.max(3000, text.length * 85));
-                utterance.onend = () => { clearTimeout(guard); resolve(); };
-                utterance.onerror = () => { clearTimeout(guard); resolve(); };
+                // The browser voice exposes no audio signal: move the lips on a speech-like rhythm.
+                avatar?.simulate(true);
+                const done = () => { clearTimeout(guard); avatar?.simulate(false); resolve(); };
+                const guard = setTimeout(done, Math.max(3000, text.length * 85));
+                utterance.onend = done;
+                utterance.onerror = done;
                 window.speechSynthesis.speak(utterance);
             });
         },
@@ -789,6 +868,10 @@ export default function examRoom(config) {
             this.micStream?.getTracks().forEach((track) => track.stop());
             this.micStream = null;
             this.audioContext?.close().catch(() => {});
+            avatar?.destroy();
+            avatar = null;
+            playbackContext?.close().catch(() => {});
+            playbackContext = null;
         },
     };
 }

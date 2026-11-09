@@ -9,6 +9,10 @@
         'finishUrl' => route('exam.finish', $session),
         'statusUrl' => route('exam.status'),
         'streamUrl' => route('exam.answer.stream', $session),
+        'avatar' => [
+            'image' => asset($mode['examiner']['avatar']),
+            'rig' => $mode['examiner']['rig'] ?? null,
+        ],
     ];
 @endphp
 
@@ -85,11 +89,14 @@
                 {{-- Live stage --}}
                 <div x-show="started" x-cloak class="flex min-h-0 flex-1 flex-col">
                     <div class="flex flex-1 flex-col items-center justify-center overflow-y-auto px-5 py-6 text-center sm:px-10">
-                        <div class="relative">
-                            <span class="absolute inset-0 rounded-full {{ $accent['solid'] }} opacity-30" :class="status === 'speaking' && 'animate-ping'"></span>
-                            <img src="{{ asset($mode['examiner']['avatar']) }}" alt="{{ $mode['examiner']['name'] }}"
-                                 class="relative h-20 w-20 rounded-full object-cover ring-4 transition sm:h-24 sm:w-24"
-                                 :class="status === 'speaking' ? 'ring-emerald-400' : 'ring-transparent'">
+                        {{-- Live avatar: the canvas animates the portrait (resources/js/avatar.js); the photo is the fallback. --}}
+                        <div class="relative h-36 w-36 sm:h-48 sm:w-48">
+                            <span class="absolute -inset-1 rounded-full {{ $accent['solid'] }} opacity-25 transition-opacity" :class="status === 'speaking' ? 'opacity-40' : 'opacity-0'"></span>
+                            <div class="relative h-full w-full overflow-hidden rounded-full bg-slate-900 ring-4 transition"
+                                 :class="status === 'speaking' ? 'ring-emerald-400' : (isListening ? 'ring-sky-400/70' : 'ring-transparent')">
+                                <img x-show="!avatarReady" src="{{ asset($mode['examiner']['avatar']) }}" alt="{{ $mode['examiner']['name'] }}" class="h-full w-full object-cover">
+                                <canvas x-ref="avatarCanvas" x-show="avatarReady" x-cloak class="h-full w-full" role="img" aria-label="{{ $mode['examiner']['name'] }}"></canvas>
+                            </div>
                         </div>
                         <p class="mt-3 text-sm font-semibold">{{ $mode['examiner']['name'] }}</p>
                         <span x-show="engine" x-cloak class="mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold"

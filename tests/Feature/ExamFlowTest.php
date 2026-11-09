@@ -72,6 +72,27 @@ class ExamFlowTest extends TestCase
         $this->get(route('exam.room', $session))->assertOk()->assertSee('Mulai ujian');
     }
 
+    public function test_room_ships_the_live_avatar_with_its_face_rig(): void
+    {
+        $this->offline();
+
+        $session = $this->startExam('sidang', [1]);
+
+        $this->get(route('exam.room', $session))
+            ->assertOk()
+            ->assertSee('x-ref="avatarCanvas"', false)
+            ->assertSee('dosen-portrait.webp', false)
+            ->assertSee('mouthW', false);
+
+        foreach (config('exam.modes') as $key => $mode) {
+            $rig = $mode['examiner']['rig'];
+            $this->assertFileExists(public_path($mode['examiner']['avatar']), $key);
+            $this->assertCount(2, $rig['eyes'], $key);
+            $this->assertGreaterThan($rig['mouth'][1], $rig['chin'], "{$key}: chin must be below the mouth");
+            $this->assertGreaterThan($rig['eyes'][0][1], $rig['mouth'][1], "{$key}: mouth must be below the eyes");
+        }
+    }
+
     public function test_short_answer_gets_a_follow_up_that_reuses_the_candidate_words(): void
     {
         $this->offline();

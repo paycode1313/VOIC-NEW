@@ -13,6 +13,7 @@ Laravel untuk web, layanan Python (`ai_service/`) untuk telinga (Whisper), suara
 
 - **Ujian 3 bagian** dan **mode coaching 10 menit**, dengan penguji AI yang bertanya lanjutan berdasarkan jawaban.
 - **Suara dua arah**: jawab dengan mikrofon, AI menjawab dengan suara.
+- **Avatar hidup**: foto penguji bergerak di browser (tanpa model tambahan): mulut mengikuti suara AI, berkedip, mengangguk saat peserta bicara, dan memiringkan kepala saat berpikir. Posisi mata/mulut tiap penguji ada di `config/exam.php` (`rig`).
 - **Kamera opsional** (diproses di perangkat peserta): kontak mata dan ekspresi wajah.
   Jika peserta terlihat tegang atau tidak menatap kamera, penguji akan menegur dengan ramah.
 - **Rapor & sertifikat**: QR untuk membawa pulang rapor, link sertifikat bertanda tangan (tidak bisa ditebak).
