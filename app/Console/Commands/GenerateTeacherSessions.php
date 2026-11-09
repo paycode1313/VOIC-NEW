@@ -113,6 +113,11 @@ class GenerateTeacherSessions extends Command
             return self::FAILURE;
         }
 
+        // 3. One real call before hours of work: the teacher must answer, directly and through the AI service.
+        if (! $this->teacherAnswers($teacher) || ! $this->aiServiceUsesTeacher($aiService, $teacher)) {
+            return self::FAILURE;
+        }
+
         /** @var ExaminerService $examiner */
         $examiner = app(ExaminerService::class);
         $examiner->useModel($teacher);
@@ -171,6 +176,79 @@ class GenerateTeacherSessions extends Command
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Ask the teacher one short question straight through Ollama and show why it fails, if it does.
+     */
+    protected function teacherAnswers(string $teacher): bool
+    {
+        $this->line("  <fg=gray>Mengecek {$teacher} langsung di Ollama…</>");
+
+        try {
+            $response = Http::connectTimeout(3)->timeout(180)->post($this->ollamaUrl().'/api/chat', [
+                'model' => $teacher,
+                'messages' => [['role' => 'user', 'content' => 'Jawab dengan satu kata: halo']],
+                'stream' => false,
+            ]);
+        } catch (\Throwable $exception) {
+            $this->components->error("{$teacher} tidak menjawab: ".$exception->getMessage());
+
+            return false;
+        }
+
+        if ($response->successful() && trim((string) $response->json('message.content', '')) !== '') {
+            return true;
+        }
+
+        $reason = (string) ($response->json('error') ?? $response->body());
+        $this->components->error("{$teacher} menolak permintaan (HTTP {$response->status()}): ".Str::limit($reason, 300));
+        $this->line(match (true) {
+            in_array($response->status(), [401, 403], true) => '  Jalankan <fg=yellow>ollama signin</> lalu coba lagi.',
+            $response->status() === 402 || str_contains(strtolower($reason), 'subscription') => '  Akun Ollama ini belum punya langganan yang mendukung model ini (lihat ollama.com/pricing), atau kuotanya habis.',
+            $response->status() === 429 => '  Kuota/batas pemakaian Ollama tercapai. Tunggu sebentar lalu coba lagi.',
+            default => '  Coba di terminal: <fg=yellow>ollama run '.$teacher.'</> untuk melihat pesan aslinya.',
+        });
+
+        return false;
+    }
+
+    /**
+     * The AI service must forward the model name; an instance started before the update ignores it.
+     */
+    protected function aiServiceUsesTeacher(string $aiService, string $teacher): bool
+    {
+        $this->line('  <fg=gray>Mengecek AI service memakai model guru…</>');
+
+        try {
+            $response = Http::connectTimeout(3)->timeout(180)->post($aiService.'/exam/respond', [
+                'mode' => 'wawancara',
+                'role_type' => 'hrd',
+                'directive' => ExaminerService::DIRECTIVE_REACT,
+                'question' => 'Boleh perkenalkan diri?',
+                'answer' => 'Saya Rina, lulusan akuntansi.',
+                'messages' => [['role' => 'user', 'content' => 'Jawaban peserta: Saya Rina, lulusan akuntansi. [Balas satu kalimat pendek.]']],
+                'model' => $teacher,
+            ]);
+        } catch (\Throwable $exception) {
+            $this->components->error('AI service gagal: '.$exception->getMessage());
+
+            return false;
+        }
+
+        $used = (string) $response->json('model', '');
+        if ($used === $teacher) {
+            $this->line('  <fg=green>✓</> Model guru siap.');
+
+            return true;
+        }
+
+        $this->components->error("AI service menjawab dengan {$used}, bukan {$teacher}.");
+        $this->line('  Jendela VOIC_AI_SERVICE kemungkinan masih menjalankan kode lama (sebelum git pull).');
+        $this->line('  Tutup jendela itu, lalu jalankan ulang <fg=yellow>jalankan_voic.bat</> atau <fg=yellow>python ai_service/ai_service.py</>.');
+        $this->line('  Jika sudah dijalankan ulang dan tetap begini, lihat pesan "[VOIC] Model ... gagal" di jendela AI service.');
+
+        return false;
     }
 
     protected function ollamaUrl(): string

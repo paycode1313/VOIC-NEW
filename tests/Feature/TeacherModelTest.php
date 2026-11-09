@@ -141,6 +141,36 @@ class TeacherModelTest extends TestCase
         File::delete([base_path($output), base_path('storage/framework/testing/teacher_eval.jsonl')]);
     }
 
+    public function test_teacher_command_stops_when_the_ai_service_ignores_the_teacher(): void
+    {
+        Http::fake([
+            '*/api/tags' => Http::response(['models' => [['name' => 'kimi-k3:cloud'], ['name' => 'qwen3:4b']]]),
+            '*/api/chat' => Http::response(['message' => ['content' => 'Halo.']]),
+            '*/voice/status' => Http::response(['llm' => ['available' => true]]),
+            // An AI service started before the update answers with its local model.
+            '*/exam/respond' => Http::response(['reply' => 'Oke.', 'model' => 'voic-coach']),
+        ]);
+
+        $this->artisan('voic:teacher-generate', ['--sessions' => 1])
+            ->expectsOutputToContain('kode lama')
+            ->assertFailed();
+
+        $this->assertSame(0, PracticeSession::count());
+    }
+
+    public function test_teacher_command_explains_a_missing_subscription(): void
+    {
+        Http::fake([
+            '*/api/tags' => Http::response(['models' => [['name' => 'kimi-k3:cloud'], ['name' => 'qwen3:4b']]]),
+            '*/api/chat' => Http::response(['error' => 'this model requires a subscription'], 402),
+            '*/voice/status' => Http::response(['llm' => ['available' => true]]),
+        ]);
+
+        $this->artisan('voic:teacher-generate', ['--sessions' => 1])
+            ->expectsOutputToContain('langganan')
+            ->assertFailed();
+    }
+
     public function test_teacher_command_explains_how_to_get_the_teacher_model(): void
     {
         Http::fake(['*/api/tags' => Http::response(['models' => [['name' => 'qwen3:4b']]])]);
