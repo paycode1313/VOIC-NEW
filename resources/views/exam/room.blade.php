@@ -156,7 +156,7 @@
                                 <button type="button" @click="open = !open" :aria-expanded="open"
                                         class="inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold backdrop-blur hover:bg-black/60">
                                     <span class="h-1.5 w-1.5 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-400' : 'bg-emerald-400'"></span>
-                                    <span x-text="{ local_llm: t('AI lokal', 'Local AI'), cloud_llm: t('AI cloud', 'Cloud AI'), offline_composer: t('Mode cadangan', 'Fallback mode') }[engine]"></span>
+                                    <span x-text="{ local_llm: t('AI lokal', 'Local AI'), ollama_cloud: (aiStatus?.model || 'AI') + ' · cloud', cloud_llm: t('AI cloud', 'Cloud AI'), offline_composer: t('Mode cadangan', 'Fallback mode') }[engine]"></span>
                                     <svg class="h-3 w-3 opacity-70 transition" :class="open && 'rotate-180'" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                                 </button>
                                 <div x-show="open" x-transition.opacity @click.outside="open = false"

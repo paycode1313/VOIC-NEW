@@ -136,7 +136,7 @@ Skrip ini menilai setiap balasan dengan quality gate yang sama dengan produksi: 
 pip install -r requirements-train.txt
 python finetune_lora.py --train datasets/sft/voic_exam_sft.jsonl --eval datasets/sft/voic_exam_eval.jsonl
 ```
-Catatan: skrip fine-tune masih memakai keluarga **Qwen2.5-3B**. Model hasil fine-tune itu harus dipasang dengan Modelfile dari `outputs/`, bukan dengan `setup_models.py` (yang memakai Qwen3).
+Skrip fine-tune memakai **Qwen3-4B-Instruct** (muat di Colab T4 gratis). Notebook siap pakai: `colab/latih_voic_coach.ipynb`. Data guru (Kimi K3) dibuat dengan `php artisan voic:teacher-generate`. Model hasil fine-tune dipasang dengan Modelfile dari `outputs/`, bukan dengan `setup_models.py`.
 Loss hanya dihitung pada balasan penguji. Targetkan minimal 200-300 contoh. Dengan data seed saja (~40), gunakan `--epochs 2` agar tidak overfit.
 
 ### e. Pasang & bandingkan

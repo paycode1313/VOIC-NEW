@@ -44,7 +44,53 @@ class ExaminerService
      */
     public const RECENT_MESSAGES = 12;
 
+    /**
+     * Model chosen for this process instead of config('exam.ai_model') (used by the teacher command).
+     */
+    protected ?string $modelOverride = null;
+
+    /**
+     * Ollama model that produced the last reply from the AI service.
+     */
+    protected ?string $lastModel = null;
+
     public function __construct(protected SpeakingAnalyzer $analyzer, protected ExamBlueprint $blueprint) {}
+
+    /**
+     * Use a specific Ollama model for the examiner from now on (null = back to the configured one).
+     */
+    public function useModel(?string $model): void
+    {
+        $this->modelOverride = $model;
+    }
+
+    /**
+     * Ollama model the examiner should use; null lets the AI service pick its local model.
+     */
+    public function examinerModel(): ?string
+    {
+        $model = $this->modelOverride ?? Config::get('exam.ai_model');
+
+        return is_string($model) && trim($model) !== '' ? trim($model) : null;
+    }
+
+    /**
+     * Ollama ":cloud" models run on Ollama's servers, not on this laptop.
+     */
+    public static function isCloudModel(?string $model): bool
+    {
+        $model = strtolower((string) $model);
+
+        return str_ends_with($model, ':cloud') || str_ends_with($model, '-cloud');
+    }
+
+    /**
+     * Engine label for a reply that came through the AI service.
+     */
+    protected function engineFor(?string $model): string
+    {
+        return self::isCloudModel($model) ? 'ollama_cloud' : 'local_llm';
+    }
 
     /**
      * Condensed notes on the part of the conversation that no longer fits word for word,
@@ -128,7 +174,7 @@ class ExaminerService
         $result = null;
         $local = $this->callLocalModel($turn, $messages);
         if ($local !== null && ($resolved = $this->resolveModelReply($local, $turn)) !== null) {
-            $result = $resolved + ['audio_url' => $this->synthesize($baseUrl, $resolved['text'], $turn), 'engine' => 'local_llm'];
+            $result = $resolved + ['audio_url' => $this->synthesize($baseUrl, $resolved['text'], $turn), 'engine' => $this->engineFor($this->lastModel)];
         }
 
         if ($result === null) {
@@ -160,6 +206,7 @@ class ExaminerService
     {
         $spoken = [];
         $firstAudio = null;
+        $model = null;
 
         try {
             $response = Http::connectTimeout(1.5)
@@ -175,6 +222,7 @@ class ExaminerService
                     'question' => $turn['question'],
                     'answer' => $turn['answer'],
                     'messages' => $messages,
+                    'model' => $this->examinerModel(),
                     'generate_voice' => true,
                     // Audio travels inside the stream: no extra request while the stream is open.
                     'inline_audio' => true,
@@ -191,6 +239,10 @@ class ExaminerService
                 while (($newline = strpos($buffer, "\n")) !== false) {
                     $event = json_decode(substr($buffer, 0, $newline), true);
                     $buffer = substr($buffer, $newline + 1);
+
+                    if (($event['type'] ?? null) === 'done') {
+                        $model = $event['model'] ?? null;
+                    }
 
                     if (($event['type'] ?? null) === 'sentence' && trim((string) $event['text']) !== '') {
                         $text = $this->clean((string) $event['text'], 5);
@@ -227,7 +279,7 @@ class ExaminerService
             }
         }
 
-        return ['text' => $reply, 'reply' => $reply, 'audio_url' => $firstAudio, 'engine' => 'local_llm'];
+        return ['text' => $reply, 'reply' => $reply, 'audio_url' => $firstAudio, 'engine' => $this->engineFor($model)];
     }
 
     /**
@@ -354,6 +406,19 @@ class ExaminerService
         } catch (\Throwable) {
             $status['reason'] = "AI service (ai_service.py) tidak bisa dihubungi di {$url}.";
             $status['fix'] = 'Jalankan: pip install -r ai_service\\requirements.txt lalu python ai_service\\ai_service.py (lihat error di jendelanya).';
+        }
+
+        // A cloud model through Ollama (e.g. kimi-k3:cloud) answers first; the local model is the fallback.
+        $chosen = $this->examinerModel();
+        if (self::isCloudModel($chosen) && isset($models) && $status['engine'] === 'local_llm') {
+            $ready = collect($models)->contains(fn ($name) => $name === $chosen);
+            if ($ready) {
+                $status['engine'] = 'ollama_cloud';
+                $status['model'] = $chosen;
+            } else {
+                $status['reason'] = "Model {$chosen} belum siap di Ollama, sementara memakai AI lokal.";
+                $status['fix'] = "Jalankan: ollama signin lalu ollama pull {$chosen}";
+            }
         }
 
         if ($status['engine'] !== 'local_llm' && ((string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '')) {
@@ -970,9 +1035,11 @@ class ExaminerService
                     'question' => $turn['question'],
                     'answer' => $turn['answer'],
                     'messages' => $messages,
+                    'model' => $this->examinerModel(),
                 ]);
 
             $reply = trim((string) $response->json('reply', ''));
+            $this->lastModel = $response->json('model');
 
             return $response->successful() && $reply !== '' ? $reply : null;
         } catch (\Throwable $exception) {

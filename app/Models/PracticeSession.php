@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\PracticeSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,6 +45,23 @@ class PracticeSession extends Model
             'exam_state' => 'array',
             'feedback_notes' => 'array',
         ];
+    }
+
+    /**
+     * Owner of the simulated sessions made by `voic:teacher-generate` (training data, not real people).
+     */
+    public const TEACHER_EMAIL = 'teacher@voic.local';
+
+    /**
+     * Only sessions taken by real people: leaves out simulated teacher sessions.
+     *
+     * @param  Builder<PracticeSession>  $query
+     */
+    public function scopeTakenByPeople(Builder $query): void
+    {
+        $query->where(fn (Builder $inner) => $inner
+            ->whereNull('user_id')
+            ->orWhereHas('user', fn (Builder $user) => $user->where('email', '!=', self::TEACHER_EMAIL)));
     }
 
     /**

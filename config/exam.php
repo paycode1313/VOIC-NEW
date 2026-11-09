@@ -41,6 +41,20 @@ return [
     */
     'booth_pin' => env('VOIC_BOOTH_PIN'),
 
+    /*
+    | Ollama model for the examiner. Empty = the local "voic-coach" model (fully offline).
+    | A cloud model such as "kimi-k3:cloud" runs on Ollama's servers (internet, `ollama signin`);
+    | when it fails, the local model answers instead.
+    */
+    'ai_model' => env('VOIC_AI_MODEL'),
+
+    /*
+    | Teacher model for `php artisan voic:teacher-generate` (distillation data), and the
+    | local model that plays the candidate in those simulated sessions.
+    */
+    'teacher_model' => env('VOIC_TEACHER_MODEL', 'kimi-k3:cloud'),
+    'teacher_candidate_model' => env('VOIC_TEACHER_CANDIDATE_MODEL', 'qwen3:4b'),
+
     'long_turn_seconds' => 120,
 
     'modes' => [

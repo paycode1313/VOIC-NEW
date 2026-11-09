@@ -34,9 +34,9 @@ class VoicDoctor extends Command
         // 2. AI service, Ollama, voice.
         Cache::forget('voic.examiner.availability');
         $status = $examiner->diagnose();
-        $local = $status['engine'] === 'local_llm';
+        $local = in_array($status['engine'], ['local_llm', 'ollama_cloud'], true);
         $ok = $this->report(
-            'Otak AI lokal (Ollama)'.($status['model'] ? " · {$status['model']}" : ''),
+            ($status['engine'] === 'ollama_cloud' ? 'Otak AI cloud lewat Ollama' : 'Otak AI lokal (Ollama)').($status['model'] ? " · {$status['model']}" : ''),
             $local,
             $status['fix'] ?? 'Jalankan Ollama dan python ai_service\\ai_service.py'
         ) && $ok;

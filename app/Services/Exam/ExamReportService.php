@@ -23,7 +23,16 @@ class ExamReportService
     public function __construct(
         protected ExamBlueprint $blueprint,
         protected SpeakingAnalyzer $analyzer,
+        protected ExaminerService $examiner,
     ) {}
+
+    /**
+     * Seconds to wait for the AI service: a cloud reasoning model (Kimi K3) thinks before it answers.
+     */
+    protected function aiTimeout(int $local): int
+    {
+        return ExaminerService::isCloudModel($this->examiner->examinerModel()) ? 90 : $local;
+    }
 
     /**
      * Build the report, persist scores on the session and return the report.
@@ -227,7 +236,8 @@ class ExamReportService
     protected function coachSummaryFromModel(PracticeSession $session, array $messages, string $language): array
     {
         try {
-            $response = Http::connectTimeout(1.5)->timeout(45)->post(rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/').'/exam/coach-summary', [
+            $response = Http::connectTimeout(1.5)->timeout($this->aiTimeout(45))->post(rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/').'/exam/coach-summary', [
+                'model' => $this->examiner->examinerModel(),
                 'mode' => $session->exam_mode,
                 'role_type' => $this->blueprint->mode($session->exam_mode)['role_type'],
                 'language' => $language,
@@ -436,7 +446,8 @@ class ExamReportService
         $baseUrl = (string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001');
 
         try {
-            $response = Http::connectTimeout(1.5)->timeout(30)->post("{$baseUrl}/exam/improve", [
+            $response = Http::connectTimeout(1.5)->timeout($this->aiTimeout(30))->post("{$baseUrl}/exam/improve", [
+                'model' => $this->examiner->examinerModel(),
                 'mode' => $mode,
                 'role_type' => $this->blueprint->mode($mode)['role_type'],
                 'language' => $language,

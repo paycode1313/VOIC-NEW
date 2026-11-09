@@ -29,7 +29,7 @@ class BoothController extends Controller
             return view('booth.unlock', ['enabled' => $this->pin() !== null]);
         }
 
-        $today = PracticeSession::query()->whereNotNull('exam_mode')->whereDate('created_at', today())->get();
+        $today = PracticeSession::query()->takenByPeople()->whereNotNull('exam_mode')->whereDate('created_at', today())->get();
         $finished = $today->filter(fn (PracticeSession $session) => isset($session->feedback_notes['exam_report']));
 
         return view('booth.index', [
@@ -53,7 +53,7 @@ class BoothController extends Controller
             return redirect()->route('booth.index');
         }
 
-        $finished = PracticeSession::query()->whereNotNull('exam_mode')->whereDate('created_at', today())->get()
+        $finished = PracticeSession::query()->takenByPeople()->whereNotNull('exam_mode')->whereDate('created_at', today())->get()
             ->filter(fn (PracticeSession $session) => isset($session->feedback_notes['exam_report']));
 
         return view('booth.board', [

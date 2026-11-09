@@ -128,6 +128,38 @@ Akun baru wajib memverifikasi email sebelum membuka dashboard dan riwayat latiha
 
 ---
 
+## Melatih AI dengan Kimi K3 sebagai guru (Google Colab gratis)
+
+Kimi K3 terlalu besar (±1,5 TB) untuk dilatih di Colab atau dijalankan di laptop, jadi dipakai sebagai **guru**:
+Kimi K3 (`kimi-k3:cloud` lewat Ollama) menjadi penguji dalam sesi simulasi, lalu **Qwen3-4B (murid)** dilatih meniru
+balasannya di Google Colab dan hasilnya dijalankan **100% lokal di laptop, CPU only**.
+
+1. **Laptop, sekali saja:** login Ollama dan ambil modelnya (butuh akun Ollama yang mendukung Kimi K3):
+   ```bash
+   ollama signin
+   ollama pull kimi-k3:cloud
+   ollama pull qwen3:4b
+   ```
+2. **Laptop:** nyalakan layanan AI (`python ai_service/ai_service.py`), lalu buat sesi simulasi dan ekspor datanya:
+   ```bash
+   php artisan voic:teacher-generate --sessions=30
+   php artisan voic:export-training-data
+   ```
+   Kimi K3 berpikir dulu sebelum menjawab, jadi satu sesi bisa beberapa menit. Sesi simulasi dimiliki akun
+   `teacher@voic.local` dan tidak dihitung sebagai pengunjung booth.
+3. **Google Colab (T4 gratis):** buka `ai_service/colab/latih_voic_coach.ipynb`, unggah
+   `ai_service/datasets/sft/voic_exam_sft.jsonl`, `voic_exam_eval.jsonl`, dan `ai_service/finetune_lora.py`,
+   lalu jalankan semua sel. Hasilnya (file `.gguf` + `Modelfile`) tersimpan di Google Drive.
+4. **Laptop:** di folder hasil unduhan, pasang modelnya dan ukur hasilnya:
+   ```bash
+   ollama create voic-coach -f Modelfile
+   python ai_service/eval_dialogue.py --models voic-coach qwen3:4b
+   ```
+   Biarkan `VOIC_AI_MODEL=` kosong di `.env` agar ujian memakai `voic-coach` lokal.
+
+> Kimi K3 juga bisa langsung jadi penguji saat ujian dengan `VOIC_AI_MODEL=kimi-k3:cloud`, tetapi itu **bukan AI lokal**
+> (butuh internet, jawaban peserta dikirim ke server Ollama; teks persetujuan otomatis menyesuaikan).
+
 ## Pengembangan
 
 ```bash

@@ -122,7 +122,8 @@ class ExportExamTrainingData extends Command
 
     /**
      * Collect examiner turns from real sessions that are good enough to learn from:
-     * replies rated "good" by the candidate, and cloud-model replies (distillation) not rated "bad".
+     * replies rated "good" by the candidate, and cloud-model replies (distillation, e.g. Kimi K3
+     * as teacher) not rated "bad".
      *
      * @return list<array{0: array<string, mixed>, 1: string}>
      */
@@ -206,6 +207,7 @@ class ExportExamTrainingData extends Command
             $rating === 'bad' => null,
             $rating === 'good' => 'rated_good',
             ($meta['engine'] ?? null) === 'cloud_llm' => 'cloud_distill',
+            ($meta['engine'] ?? null) === 'ollama_cloud' => 'teacher_distill',
             default => null,
         };
     }

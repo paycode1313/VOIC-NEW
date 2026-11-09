@@ -103,9 +103,16 @@
                 <input type="checkbox" name="consent" value="1" required @checked(old('consent'))
                        class="mt-0.5 h-4 w-4 rounded border-black/20 text-slate-900 focus:ring-slate-900">
                 <span class="text-slate-600 dark:text-slate-400">
-                    {{ $isEn
-                        ? 'I agree that my voice is processed by the AI on this laptop (not sent to the internet), and that my answers are stored to build the report.'
-                        : 'Saya setuju suara saya diproses oleh AI di laptop ini (tidak dikirim ke internet) dan jawaban saya disimpan untuk membuat rapor.' }}
+                    @if (\App\Services\Exam\ExaminerService::isCloudModel(config('exam.ai_model')))
+                        {{-- A cloud examiner (e.g. kimi-k3:cloud) receives the text of the answers: say so. --}}
+                        {{ $isEn
+                            ? 'I agree that my voice is turned into text on this laptop, that the text of my answers is sent to an online AI ('.config('exam.ai_model').' via Ollama) to reply, and that my answers are stored to build the report.'
+                            : 'Saya setuju suara saya diubah menjadi teks di laptop ini, teks jawaban saya dikirim ke AI online ('.config('exam.ai_model').' lewat Ollama) untuk dibalas, dan jawaban saya disimpan untuk membuat rapor.' }}
+                    @else
+                        {{ $isEn
+                            ? 'I agree that my voice is processed by the AI on this laptop (not sent to the internet), and that my answers are stored to build the report.'
+                            : 'Saya setuju suara saya diproses oleh AI di laptop ini (tidak dikirim ke internet) dan jawaban saya disimpan untuk membuat rapor.' }}
+                    @endif
                     @guest
                         {{ $isEn
                             ? 'Guest data is deleted automatically after '.config('exam.retention_days').' days.'

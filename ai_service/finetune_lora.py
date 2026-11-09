@@ -1,7 +1,8 @@
 """
 Fine-tune model penguji VOIC (LoRA) lalu ekspor ke GGUF untuk Ollama.
 
-Butuh GPU NVIDIA (>= 8 GB VRAM). Paling mudah dijalankan di Google Colab (T4 gratis):
+Butuh GPU NVIDIA (>= 8 GB VRAM). Paling mudah: notebook colab/latih_voic_coach.ipynb di Google Colab (T4 gratis).
+Manual:
 
     pip install -r requirements-train.txt
     python finetune_lora.py \
@@ -13,7 +14,8 @@ Hasil: outputs/voic-coach/ berisi file *.gguf dan Modelfile. Salin ke laptop, la
 
     ollama create voic-coach -f outputs/voic-coach/Modelfile
 
-Dataset dibuat oleh `php artisan voic:export-training-data`, sehingga format prompt
+Data guru-murid: `php artisan voic:teacher-generate` (Kimi K3 sebagai penguji/guru), lalu
+`php artisan voic:export-training-data`, sehingga format prompt
 (system + riwayat + instruksi giliran) persis sama dengan yang dipakai saat ujian berjalan.
 Model hanya dilatih pada token balasan penguji (assistant), bukan pada prompt.
 """
@@ -21,6 +23,7 @@ Model hanya dilatih pada token balasan penguji (assistant), bukan pada prompt.
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
 import random
@@ -54,7 +57,10 @@ def main() -> None:
     parser.add_argument("--train", default="datasets/sft/voic_exam_sft.jsonl")
     parser.add_argument("--eval", default="datasets/sft/voic_exam_eval.jsonl")
     parser.add_argument("--extra", action="append", default=[], help="JSONL tambahan (boleh berulang)")
-    parser.add_argument("--base", default="unsloth/Qwen2.5-3B-Instruct", help="Harus sama keluarga dengan model Ollama (qwen2.5:3b)")
+    parser.add_argument("--base", default="unsloth/Qwen3-4B-Instruct-2507",
+                        help="Model murid. Qwen3-4B-Instruct-2507 muat di T4 gratis dan tidak punya mode berpikir.")
+    parser.add_argument("--chat-template", default="auto",
+                        help="auto = pakai template bawaan tokenizer (Qwen3), atau nama template Unsloth mis. qwen-2.5")
     parser.add_argument("--output", default="outputs/voic-coach")
     parser.add_argument("--epochs", type=float, default=3)
     parser.add_argument("--lr", type=float, default=2e-4)
@@ -96,7 +102,12 @@ def main() -> None:
         use_gradient_checkpointing="unsloth",
         random_state=args.seed,
     )
-    tokenizer = get_chat_template(tokenizer, chat_template="qwen-2.5")
+    template = args.chat_template
+    if template == "auto":
+        # Qwen2.5 lama butuh template Unsloth; Qwen3-Instruct sudah membawa template ChatML sendiri.
+        template = "qwen-2.5" if "qwen2.5" in args.base.lower() else None
+    if template:
+        tokenizer = get_chat_template(tokenizer, chat_template=template)
 
     def render(batch):
         return {"text": [tokenizer.apply_chat_template(m, tokenize=False, add_generation_prompt=False) for m in batch["messages"]]}
@@ -141,14 +152,21 @@ def main() -> None:
     tokenizer.save_pretrained(os.path.join(args.output, "lora"))
     model.save_pretrained_gguf(args.output, tokenizer, quantization_method=args.quant)
 
-    gguf = next((f for f in sorted(os.listdir(args.output)) if f.endswith(".gguf")), None)
-    if gguf is None:
+    # Versi Unsloth berbeda menaruh file GGUF di folder output atau di "<output>_gguf".
+    found = sorted(glob.glob(os.path.join(args.output, "**", "*.gguf"), recursive=True) + glob.glob(args.output + "_gguf/*.gguf"))
+    found = [f for f in found if "mmproj" not in os.path.basename(f).lower()]
+    if not found:
         raise SystemExit("Ekspor GGUF gagal, periksa log di atas.")
+    # Taruh GGUF di sebelah Modelfile agar cukup menyalin satu folder ke laptop.
+    target = os.path.join(args.output, os.path.basename(found[-1]))
+    if os.path.abspath(found[-1]) != os.path.abspath(target):
+        os.replace(found[-1], target)
+    gguf = os.path.basename(target)
 
     with open(os.path.join(args.output, "Modelfile"), "w", encoding="utf-8") as handle:
         handle.write(
             f"FROM ./{gguf}\n\n"
-            "# Template chat Qwen2.5 (ChatML), sama dengan saat training.\n"
+            "# Template chat ChatML (Qwen), sama dengan saat training.\n"
             'TEMPLATE """{{- if .System }}<|im_start|>system\n{{ .System }}<|im_end|>\n{{ end }}'
             "{{- range .Messages }}<|im_start|>{{ .Role }}\n{{ .Content }}<|im_end|>\n{{ end }}"
             '<|im_start|>assistant\n"""\n\n'
@@ -161,7 +179,7 @@ def main() -> None:
         )
 
     print(f"\nSelesai. Jalankan di laptop:\n  ollama create voic-coach -f {os.path.join(args.output, 'Modelfile')}\n"
-          "Lalu ukur hasilnya:\n  python eval_dialogue.py --models voic-coach qwen2.5:3b")
+          "Lalu ukur hasilnya:\n  python eval_dialogue.py --models voic-coach qwen3:4b")
 
 
 if __name__ == "__main__":
