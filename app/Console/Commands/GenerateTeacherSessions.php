@@ -234,14 +234,27 @@ class GenerateTeacherSessions extends Command
             }
 
             $longTurn = ($state['phase'] ?? null) === ExamFlowService::PHASE_CUE_CARD;
+            $started = microtime(true);
             $answer = $this->candidateAnswer($session, $candidate, $person, $language, $longTurn);
             if ($answer === '') {
                 break;
             }
+            $candidateSeconds = microtime(true) - $started;
 
             $seconds = max(3, (int) round(str_word_count($answer) / 2.2));
             $clock += $seconds + 4;
+            $started = microtime(true);
             $flow->answer($session, $answer, $seconds, null, $clock);
+
+            // Progress per turn, so a slow model never looks like a frozen command.
+            $engine = $session->messages()->where('sender', 'ai')->latest('id')->value('meta')['engine'] ?? '?';
+            $this->line(sprintf(
+                '        <fg=gray>giliran %d · peserta %ds · penguji %ds (%s)</>',
+                $turn + 1,
+                (int) round($candidateSeconds),
+                (int) round(microtime(true) - $started),
+                $engine === 'ollama_cloud' ? 'guru' : 'cadangan: '.$engine,
+            ));
         }
 
         // A coaching chat ends on time in real life; close it so the goodbye turn is learned too.
