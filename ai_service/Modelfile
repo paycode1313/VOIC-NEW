@@ -4,7 +4,8 @@
 # Persona, aturan bicara, dan instruksi tiap giliran dikirim oleh Laravel
 # (App\Services\Exam\ExaminerService) di setiap request, jadi SYSTEM di sini
 # hanya cadangan untuk endpoint lama (/chat) dan uji manual di terminal.
-FROM qwen2.5:3b
+# setup_models.py mengganti baris FROM sesuai laptop (qwen3:4b CPU, qwen3:8b GPU).
+FROM qwen3:4b
 
 PARAMETER temperature 0.70
 PARAMETER top_p 0.90

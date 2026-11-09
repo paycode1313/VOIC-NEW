@@ -10,16 +10,18 @@ Folder ini berisi layanan mikro Python (`ai_service.py`) yang menghubungkan apli
 1. Unduh Ollama dari situs resmi: **[https://ollama.com/download](https://ollama.com/download)**
 2. Install di laptop (Windows / macOS / Linux).
 
-### B. Unduh Model Bahasa (LLM Ringan)
-Buka Command Prompt / PowerShell, ketik:
+### B. Unduh Model Bahasa
+Cara termudah: jalankan `python setup_models.py` (lihat bagian 4). Skrip itu mengunduh model yang
+cocok dengan laptop dan membuat model `voic-coach`. Manual:
 ```bash
-# Model percakapan cepat bahasa Indonesia (sangat direkomendasikan untuk laptop standar):
-ollama run llama3.2
+# Laptop biasa (CPU, RAM 8 GB+): paling nyambung untuk ukurannya
+ollama pull qwen3:4b
 
-# Atau alternatif yang sangat fasih bahasa Indonesia:
-ollama run qwen2.5:3b
+# Laptop dengan GPU NVIDIA (VRAM 6 GB+): jauh lebih pintar
+ollama pull qwen3:8b
 ```
-Tes percakapan singkat di terminal untuk memastikan model sudah terpasang.
+Qwen3 butuh **Ollama 0.9 atau lebih baru** (agar mode "berpikir"-nya bisa dimatikan; kalau tidak,
+balasan jadi sangat lambat). Cek dengan `ollama --version`. Ollama lama: pakai `qwen2.5:3b`.
 
 ---
 
@@ -64,7 +66,7 @@ Skrip ini mengunduh semua yang dibutuhkan agar booth bisa jalan tanpa internet:
 
 | Bagian | Model | Catatan |
 |---|---|---|
-| Otak | Ollama `qwen2.5:3b` (CPU) / `qwen2.5:7b` (GPU) → `voic-coach` | 7B jauh lebih nyambung, butuh GPU ±6 GB VRAM |
+| Otak | Ollama `qwen3:4b` (CPU) / `qwen3:8b` (GPU) → `voic-coach` | 8B jauh lebih nyambung, butuh GPU ±6 GB VRAM. Cadangan otomatis: `qwen2.5:3b` / `qwen2.5:7b` |
 | Telinga (STT) | faster-whisper `small` (CPU) / `large-v3-turbo` (GPU) | menggantikan pengenal suara Chrome/Edge yang sebenarnya online |
 | Suara (TTS) | Piper `id_ID-news_tts-medium` | ±0,2 detik per kalimat; edge-tts (online) hanya cadangan |
 | Mata | MediaPipe Face Landmarker → `public/vendor/mediapipe` | kontak mata di browser tanpa CDN |
@@ -97,7 +99,13 @@ Model menyusun seluruh giliran penguji dengan kata-katanya sendiri. Laravel hany
 
 Naskah pertanyaan hanya dipakai bila model tidak tersedia atau balasannya gagal validasi. Ruang ujian menampilkan badge **AI lokal aktif / AI cloud aktif / AI offline · mode cadangan** (`GET /latihan/status-ai`). Kalau badge kuning, percakapan masih memakai jawaban cadangan berbasis aturan: jalankan Ollama dan `python ai_service.py`, atau isi `GROQ_API_KEY` di `.env`.
 
-Kalau ingin memakai model selain `voic-coach`, set `VOIC_EXAM_MODEL=qwen2.5:7b` sebelum menjalankan service.
+Kalau ingin memakai model selain `voic-coach`, set `VOIC_EXAM_MODEL=qwen3:8b` sebelum menjalankan service.
+
+### Supaya obrolan nyambung
+- **Ingatan sesi**: 12 pesan terakhir dikirim utuh; jawaban dan pertanyaan yang lebih lama diringkas ke prompt sistem, jadi penguji tetap ingat nama, proyek, dan angka yang disebut peserta di awal.
+- **Konteks 4096 token** (`VOIC_NUM_CTX`): persona tidak pernah terpotong walau sesi panjang.
+- **Mode berpikir dimatikan** (`VOIC_THINK=0`): penalaran `<think>` Qwen3 tidak pernah diucapkan. Set `VOIC_THINK=1` hanya untuk eksperimen (jauh lebih lambat).
+- Bandingkan model di laptopmu sendiri: `python eval_dialogue.py --models voic-coach qwen3:4b qwen2.5:3b`.
 
 ## 6. Melatih AI Lokal agar Lebih Nyambung
 
@@ -119,7 +127,7 @@ Hasilnya `datasets/sft/voic_exam_sft.jsonl` (train) dan `voic_exam_eval.jsonl` (
 
 ### c. Ukur model sekarang (baseline)
 ```bash
-python eval_dialogue.py --models voic-coach qwen2.5:3b
+python eval_dialogue.py --models voic-coach qwen3:4b qwen2.5:3b
 ```
 Skrip ini menilai setiap balasan dengan quality gate yang sama dengan produksi: menyinggung isi jawaban, jumlah pertanyaan sesuai instruksi, dan panjang yang wajar.
 
@@ -128,12 +136,13 @@ Skrip ini menilai setiap balasan dengan quality gate yang sama dengan produksi: 
 pip install -r requirements-train.txt
 python finetune_lora.py --train datasets/sft/voic_exam_sft.jsonl --eval datasets/sft/voic_exam_eval.jsonl
 ```
+Catatan: skrip fine-tune masih memakai keluarga **Qwen2.5-3B**. Model hasil fine-tune itu harus dipasang dengan Modelfile dari `outputs/`, bukan dengan `setup_models.py` (yang memakai Qwen3).
 Loss hanya dihitung pada balasan penguji. Targetkan minimal 200-300 contoh. Dengan data seed saja (~40), gunakan `--epochs 2` agar tidak overfit.
 
 ### e. Pasang & bandingkan
 ```bash
 ollama create voic-coach -f outputs/voic-coach/Modelfile
-python eval_dialogue.py --models voic-coach qwen2.5:3b
+python eval_dialogue.py --models voic-coach qwen3:4b qwen2.5:3b
 ```
 Pakai model hasil fine-tune hanya jika *pass rate*-nya lebih tinggi dari baseline.
 

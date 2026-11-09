@@ -1,7 +1,7 @@
 """
 Ukur seberapa "nyambung" model penguji, dan bandingkan beberapa model sekaligus.
 
-    python eval_dialogue.py --models voic-coach qwen2.5:3b
+    python eval_dialogue.py --models voic-coach qwen3:4b qwen2.5:3b
     python eval_dialogue.py --models voic-coach --show 5
 
 Setiap contoh di set evaluasi (hasil `php artisan voic:export-training-data`) dikirim ke
@@ -42,6 +42,7 @@ async def generate(client: httpx.AsyncClient, model: str, messages: List[Dict]) 
             "model": model,
             "messages": messages,
             "stream": False,
+            "think": False,
             "options": {"temperature": 0.7, "top_p": 0.9, "repeat_penalty": 1.12, "num_predict": 90, "num_ctx": 4096},
         },
         timeout=60.0,

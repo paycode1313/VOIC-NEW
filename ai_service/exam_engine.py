@@ -33,8 +33,13 @@ HARVEST_FILE = os.path.join(os.path.dirname(__file__), "datasets", "harvest", "e
 
 # Laptop CPU bisa butuh 10-30 detik hanya untuk MEMUAT model pertama kali; jangan menyerah terlalu cepat.
 LLM_TIMEOUT = float(os.getenv("VOIC_LLM_TIMEOUT", "90"))
-# Konteks lebih kecil = prompt diproses lebih cepat di CPU. 2048 cukup untuk ±10 giliran terakhir.
-NUM_CTX = int(os.getenv("VOIC_NUM_CTX", "2048"))
+# 4096 token: cukup untuk persona, ringkasan seluruh sesi, dan ±12 giliran terakhir tanpa memotong
+# instruksi sistem (jika konteks penuh, Ollama membuang bagian AWAL prompt = persona hilang).
+# Ollama menyimpan cache awalan prompt antargiliran, jadi di CPU yang dihitung ulang hanya bagian baru.
+NUM_CTX = int(os.getenv("VOIC_NUM_CTX", "4096"))
+# Qwen3 punya mode "berpikir" yang menulis penalaran panjang dulu. Untuk percakapan suara itu terlalu
+# lambat, jadi dimatikan. Model lain mengabaikan opsi ini.
+THINK = os.getenv("VOIC_THINK", "0") == "1"
 KEEP_ALIVE = os.getenv("VOIC_KEEP_ALIVE", "2h")
 
 router = APIRouter(prefix="/exam", tags=["exam"])
@@ -56,7 +61,9 @@ async def resolve_model() -> str:
             res = await client.get(f"{OLLAMA_BASE_URL}/api/tags")
             names = [m["name"] for m in res.json().get("models", [])] if res.status_code == 200 else []
         if names and not any(n == EXAM_MODEL or n.startswith(EXAM_MODEL + ":") for n in names):
-            preferred = [n for n in names if n.startswith(("qwen2.5:7b", "qwen2.5:3b", "qwen", "llama3", "gemma"))]
+            # Urutan = prioritas: model yang paling nyambung dalam bahasa Indonesia lebih dulu.
+            priority = ("qwen3:8b", "qwen3:4b", "qwen3", "qwen2.5:7b", "qwen2.5:3b", "qwen", "gemma", "llama3")
+            preferred = [n for prefix in priority for n in names if n.startswith(prefix)]
             chosen = (preferred or names)[0]
             print(f"[VOIC] Model '{EXAM_MODEL}' belum ada di Ollama, memakai '{chosen}'. "
                   "Buat dengan: ollama create voic-coach -f Modelfile")
@@ -135,8 +142,50 @@ class ImproveRequest(BaseModel):
 # Output cleaning & quality gate
 # ---------------------------------------------------------------------------
 
+_THINK_BLOCK = re.compile(r"<think>.*?(</think>|$)", flags=re.S | re.IGNORECASE)
+
+
+def strip_think(text: str) -> str:
+    """Buang penalaran <think>...</think> (Qwen3/DeepSeek) agar tidak ikut diucapkan."""
+    return _THINK_BLOCK.sub("", text or "").replace("</think>", "").strip()
+
+
+class ThinkFilter:
+    """Versi streaming dari strip_think: menahan teks di dalam <think>...</think>."""
+
+    def __init__(self) -> None:
+        self.pending = ""
+        self.inside = False
+
+    def feed(self, chunk: str) -> str:
+        self.pending += chunk
+        out = ""
+        while self.pending:
+            tag = "</think>" if self.inside else "<think>"
+            index = self.pending.find(tag)
+            if index >= 0:
+                if not self.inside:
+                    out += self.pending[:index]
+                self.pending = self.pending[index + len(tag):]
+                self.inside = not self.inside
+                continue
+            # Sisakan potongan yang mungkin awal sebuah tag ("<thi") untuk chunk berikutnya.
+            keep = next((n for n in range(len(tag) - 1, 0, -1) if self.pending.endswith(tag[:n])), 0)
+            if not self.inside:
+                out += self.pending[: len(self.pending) - keep]
+            self.pending = self.pending[len(self.pending) - keep:] if keep else ""
+            break
+        return out
+
+    def flush(self) -> str:
+        rest = "" if self.inside else self.pending
+        self.pending = ""
+        return rest
+
+
 def clean_reply(text: str, max_sentences: int = 3) -> str:
     """Bersihkan markdown, label pembicara, dan potong ke kalimat utuh."""
+    text = strip_think(text)
     if not text:
         return ""
     text = re.sub(r"\[[^\]]*\]", "", text)
@@ -241,6 +290,7 @@ async def ollama_chat(messages: List[Dict[str, str]], num_predict: int, temperat
                 "model": await resolve_model(),
                 "messages": messages,
                 "stream": False,
+                "think": THINK,
                 "keep_alive": KEEP_ALIVE,
                 "options": {
                     "temperature": temperature,
@@ -517,20 +567,26 @@ async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temper
                 "model": await resolve_model(),
                 "messages": messages,
                 "stream": True,
+                "think": THINK,
                 "keep_alive": KEEP_ALIVE,
                 "options": {"temperature": temperature, "top_p": 0.9, "repeat_penalty": 1.12, "num_predict": num_predict, "num_ctx": NUM_CTX},
             },
         ) as response:
             response.raise_for_status()
+            # Penalaran di field "thinking" diabaikan; <think> di dalam content disaring.
+            thinking = ThinkFilter()
             async for line in response.aiter_lines():
                 if not line.strip():
                     continue
                 data = json.loads(line)
-                chunk = data.get("message", {}).get("content", "")
+                chunk = thinking.feed(data.get("message", {}).get("content", ""))
                 if chunk:
                     yield chunk
                 if data.get("done"):
                     break
+            rest = thinking.flush()
+            if rest:
+                yield rest
 
 
 def _line(payload: Dict) -> str:

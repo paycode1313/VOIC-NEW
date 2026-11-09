@@ -39,7 +39,51 @@ class ExaminerService
     /** Coaching time is up: warm wrap-up, no question. */
     public const DIRECTIVE_COACH_CLOSE = 'coach_close';
 
+    /**
+     * Messages sent word for word; anything older is condensed by sessionMemory().
+     */
+    public const RECENT_MESSAGES = 12;
+
     public function __construct(protected SpeakingAnalyzer $analyzer, protected ExamBlueprint $blueprint) {}
+
+    /**
+     * Condensed notes on the part of the conversation that no longer fits word for word,
+     * so a small local model still remembers what the candidate said and what was asked.
+     *
+     * @param  list<array{role: string, content: string}>  $older
+     */
+    public function sessionMemory(array $older, bool $isEn): string
+    {
+        $said = [];
+        $asked = [];
+        foreach ($older as $item) {
+            $content = trim(preg_replace('/\s+/', ' ', (string) $item['content']) ?? '');
+            if ($content === '') {
+                continue;
+            }
+            if ($item['role'] === 'user') {
+                $said[] = Str::limit($content, 160);
+            } elseif (preg_match_all('/[^.?!]*\?/u', $content, $questions) && $questions[0] !== []) {
+                $asked[] = Str::limit(trim((string) end($questions[0])), 120);
+            }
+        }
+
+        $said = array_slice($said, -8);
+        $asked = array_slice($asked, -8);
+        if ($said === [] && $asked === []) {
+            return '';
+        }
+
+        $lines = ["\n".($isEn ? 'Earlier in this session (remember it and refer back when it fits):' : 'Sebelumnya di sesi ini (ingat dan rujuk kembali bila cocok):')];
+        foreach ($said as $line) {
+            $lines[] = ($isEn ? '- Candidate said: ' : '- Peserta berkata: ').$line;
+        }
+        foreach ($asked as $line) {
+            $lines[] = ($isEn ? '- You already asked: ' : '- Kamu sudah bertanya: ').$line;
+        }
+
+        return implode("\n", $lines);
+    }
 
     /**
      * Generate the examiner's turn.
@@ -327,9 +371,13 @@ class ExaminerService
      */
     public function buildMessages(array $turn): array
     {
-        $messages = [['role' => 'system', 'content' => $this->systemPrompt($turn)]];
+        $history = $turn['history'];
+        $older = array_slice($history, 0, max(0, count($history) - self::RECENT_MESSAGES));
+        $system = $this->systemPrompt($turn).$this->sessionMemory($older, $turn['language'] === 'en');
 
-        foreach (array_slice($turn['history'], -12) as $item) {
+        $messages = [['role' => 'system', 'content' => $system]];
+
+        foreach (array_slice($history, -self::RECENT_MESSAGES) as $item) {
             $messages[] = [
                 'role' => $item['role'] === 'user' ? 'user' : 'assistant',
                 'content' => Str::limit($item['content'], 700),
@@ -374,6 +422,7 @@ class ExaminerService
                 'You are talking out loud in a live mock exam. Plain spoken sentences only: no lists, no markdown, no emoji, no speaker labels.',
                 'This is a real conversation, not a script. Always react to something specific the candidate just said, in your own words, and connect your next question to it when you can.',
                 'Ask at most one question per turn and never repeat a question already asked.',
+                'Remember everything the candidate has told you in this session (names, projects, numbers, claims). Refer back to it, and gently point out when a new answer contradicts an earlier one.',
                 'If the answer is vague or very short, gently ask for a concrete example, a number, or the reason behind it.',
                 'If the candidate is nervous, jokes, or says they do not know, respond like a kind human in one short sentence, then keep going.',
                 'Never give the full model answer and never score the candidate during the exam.',
@@ -382,6 +431,7 @@ class ExaminerService
                 'Kamu sedang ngobrol langsung dalam simulasi ujian lisan. Gunakan kalimat lisan biasa: tanpa daftar, tanpa markdown, tanpa emoji, tanpa label nama.',
                 'Ini percakapan sungguhan, bukan naskah. Selalu tanggapi hal spesifik yang baru saja dikatakan peserta dengan kata-katamu sendiri, dan kaitkan pertanyaan berikutnya dengan jawaban itu bila memungkinkan.',
                 'Ajukan paling banyak satu pertanyaan per giliran dan jangan mengulang pertanyaan yang sudah ditanyakan.',
+                'Ingat semua yang sudah diceritakan peserta di sesi ini (nama, proyek, angka, klaim). Rujuk kembali hal itu, dan tanyakan dengan sopan jika jawaban baru bertentangan dengan jawaban sebelumnya.',
                 'Kalau jawabannya kabur atau sangat singkat, minta contoh konkret, angka, atau alasannya dengan sopan.',
                 'Kalau peserta gugup, bercanda, atau bilang tidak tahu, tanggapi seperti manusia yang ramah dalam satu kalimat pendek, lalu lanjutkan.',
                 'Jangan memberikan contoh jawaban lengkap dan jangan memberi nilai selama ujian berlangsung.',
@@ -451,6 +501,7 @@ class ExaminerService
                 'Every turn: react to what they actually said, then teach ONE concrete thing (wording, structure, tone, or a filler habit). When useful, give a better example sentence in quotes that they can copy.',
                 'Then keep the conversation going: ask them to try saying it again in the better way, or give a new realistic practice question, or ask what they want to work on next.',
                 'Follow their lead. If they ask a question, answer it simply and practically first.',
+                'Remember what they told you earlier in this chat and build on it instead of starting over.',
                 'If they are nervous or unsure, encourage them in one short sentence before teaching.',
                 'Skills you can coach: '.$skills.'.',
             ]
@@ -460,6 +511,7 @@ class ExaminerService
                 'Setiap giliran: tanggapi isi yang benar-benar dia katakan, lalu ajarkan SATU hal konkret (pilihan kata, struktur jawaban, nada bicara, atau kebiasaan kata pengisi). Jika berguna, beri contoh kalimat yang lebih baik di dalam tanda kutip yang bisa langsung dia tiru.',
                 'Lalu jaga obrolan tetap jalan: minta dia mencoba mengucapkan ulang dengan cara yang lebih baik, atau beri satu pertanyaan latihan yang realistis, atau tanyakan apa yang ingin dia latih berikutnya.',
                 'Ikuti arah obrolannya. Kalau dia bertanya, jawab dulu dengan sederhana dan praktis.',
+                'Ingat apa yang dia ceritakan sebelumnya di obrolan ini dan lanjutkan dari situ, jangan mulai dari nol.',
                 'Kalau dia gugup atau ragu, semangati dalam satu kalimat pendek sebelum mengajari.',
                 'Keterampilan yang bisa kamu latih: '.$skills.'.',
             ];

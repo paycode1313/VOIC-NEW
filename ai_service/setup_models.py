@@ -4,9 +4,11 @@ Unduh semua model AI lokal VOIC sekali (butuh internet), setelah itu pameran bis
     python setup_models.py                  # laptop CPU biasa
     python setup_models.py --gpu            # laptop dengan GPU NVIDIA (model lebih besar & akurat)
     python setup_models.py --check          # hanya cek apa yang sudah siap
+    python setup_models.py --model qwen3:8b # pilih sendiri model dasar Ollama
 
 Yang diunduh:
-  1. Otak AI (Ollama)  : qwen2.5:3b (CPU) atau qwen2.5:7b (GPU), lalu dibuat model "voic-coach"
+  1. Otak AI (Ollama)  : qwen3:4b (CPU) atau qwen3:8b (GPU), lalu dibuat model "voic-coach"
+                         (jika gagal diunduh, otomatis memakai qwen2.5:3b / qwen2.5:7b)
   2. Telinga (STT)     : faster-whisper "small" (CPU) atau "large-v3-turbo" (GPU)
   3. Suara (TTS)       : Piper id_ID-news_tts-medium (+ en_US-lessac-medium untuk mode Inggris)
   4. Mata (kamera)     : MediaPipe Face Landmarker, disalin ke public/vendor/mediapipe
@@ -15,6 +17,7 @@ Yang diunduh:
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import subprocess
 import sys
@@ -39,23 +42,48 @@ def step(title: str) -> None:
     print(f"\n=== {title} ===")
 
 
-def setup_ollama(gpu: bool, check: bool) -> bool:
+def ollama_version() -> tuple:
+    """Versi Ollama sebagai tuple angka, mis. (0, 12, 3). (0,) jika tidak terbaca."""
+    output = subprocess.run(["ollama", "--version"], capture_output=True, text=True).stdout
+    found = re.search(r"(\d+)\.(\d+)\.(\d+)", output)
+    return tuple(int(part) for part in found.groups()) if found else (0,)
+
+
+def setup_ollama(gpu: bool, check: bool, model: str | None = None) -> bool:
     step("Otak AI (Ollama)")
     if shutil.which("ollama") is None:
         print("✗ Ollama belum terpasang. Unduh dari https://ollama.com/download lalu jalankan ulang skrip ini.")
         return False
-    base = "qwen2.5:7b" if gpu else "qwen2.5:3b"
     listed = subprocess.run(["ollama", "list"], capture_output=True, text=True).stdout
     if check:
         ok = "voic-coach" in listed
         print(("✓" if ok else "✗") + " model voic-coach " + ("siap" if ok else "belum dibuat"))
         return ok
-    if base not in listed:
-        print(f"Mengunduh {base} (beberapa GB, sekali saja)…")
-        subprocess.run(["ollama", "pull", base], check=True)
+
+    # Qwen3 jauh lebih nyambung dalam bahasa Indonesia daripada Qwen2.5, tapi butuh Ollama 0.9+
+    # agar mode "berpikir"-nya bisa dimatikan (kalau tidak, balasan jadi sangat lambat).
+    candidates = [model] if model else (["qwen3:8b", "qwen2.5:7b"] if gpu else ["qwen3:4b", "qwen2.5:3b"])
+    if not model and ollama_version() < (0, 9, 0):
+        print("! Ollama versi lama: Qwen3 dilewati. Perbarui dari https://ollama.com/download agar AI lebih pintar.")
+        candidates = candidates[1:]
+
+    base = None
+    for candidate in candidates:
+        if candidate in listed:
+            base = candidate
+            break
+        print(f"Mengunduh {candidate} (beberapa GB, sekali saja)…")
+        if subprocess.run(["ollama", "pull", candidate]).returncode == 0:
+            base = candidate
+            break
+        print(f"✗ Gagal mengunduh {candidate}, mencoba model berikutnya…")
+    if base is None:
+        print("✗ Tidak ada model yang berhasil diunduh. Cek koneksi internet lalu jalankan ulang.")
+        return False
+
     modelfile = (BASE / "Modelfile").read_text(encoding="utf-8")
     tuned = BASE / "Modelfile.local"
-    tuned.write_text(modelfile.replace("FROM qwen2.5:3b", f"FROM {base}"), encoding="utf-8")
+    tuned.write_text(re.sub(r"^FROM .*$", f"FROM {base}", modelfile, count=1, flags=re.M), encoding="utf-8")
     subprocess.run(["ollama", "create", "voic-coach", "-f", str(tuned)], check=True)
     print(f"✓ voic-coach dibuat dari {base}")
     return True
@@ -138,10 +166,11 @@ def main() -> None:
     parser.add_argument("--gpu", action="store_true", help="Pakai model lebih besar untuk laptop dengan GPU NVIDIA")
     parser.add_argument("--check", action="store_true", help="Hanya cek kesiapan, tanpa mengunduh")
     parser.add_argument("--skip-ollama", action="store_true")
+    parser.add_argument("--model", help="Model dasar Ollama, mis. qwen3:8b atau qwen2.5:3b")
     args = parser.parse_args()
 
     results = {
-        "Otak AI": True if args.skip_ollama else setup_ollama(args.gpu, args.check),
+        "Otak AI": True if args.skip_ollama else setup_ollama(args.gpu, args.check, args.model),
         "Telinga (STT)": setup_whisper(args.gpu, args.check),
         "Suara (TTS)": setup_piper(args.check),
         "Mata (kamera)": setup_mediapipe(args.check),

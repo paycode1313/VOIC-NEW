@@ -30,7 +30,7 @@ Laravel untuk web, layanan Python (`ai_service/`) untuk telinga (Whisper), suara
 | Composer | 2.x | Paket PHP |
 | Node.js | 22 LTS (minimal 20.19) | Build tampilan (Vite 8) |
 | Python | 3.10+ | Layanan AI (`ai_service/`) |
-| Ollama | terbaru | Otak AI lokal ([ollama.com/download](https://ollama.com/download)) |
+| Ollama | 0.9+ (terbaru) | Otak AI lokal: Qwen3 ([ollama.com/download](https://ollama.com/download)) |
 
 Di Windows, cara termudah adalah memakai [Laragon](https://laragon.org) (sudah berisi PHP, Composer, dan Node.js).
 
@@ -99,6 +99,7 @@ php artisan migrate
 
 Lalu bandingkan `.env.example` dengan `.env` milikmu dan tambahkan setting baru yang belum ada.
 Jika ada perubahan di `ai_service/requirements.txt`, jalankan lagi `pip install -r ai_service/requirements.txt`.
+Jika model AI diperbarui (mis. pindah ke Qwen3), jalankan lagi `python ai_service/setup_models.py` lalu nyalakan ulang layanan AI.
 
 ---
 

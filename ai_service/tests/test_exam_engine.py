@@ -138,6 +138,9 @@ class ResolveModelTest(unittest.TestCase):
     def test_falls_back_to_available_qwen_when_voic_coach_missing(self):
         self.assertEqual(self.resolve_with(["nomic-embed-text", "qwen2.5:3b"]), "qwen2.5:3b")
 
+    def test_prefers_the_newer_qwen3_over_qwen2_5(self):
+        self.assertEqual(self.resolve_with(["qwen2.5:3b", "qwen3:4b"]), "qwen3:4b")
+
 
 class SlowModelTest(unittest.TestCase):
     def test_timeout_is_reported_with_a_clear_reason(self):
@@ -167,3 +170,57 @@ class SlowModelTest(unittest.TestCase):
         self.assertEqual(stats["load_ms"], 2000)
         self.assertEqual(stats["tokens_per_second"], 10.0)
         self.assertEqual(stats["prompt_ms"], 3000)
+
+
+class ThinkingModelTest(unittest.TestCase):
+    """Qwen3 can write <think>...</think> reasoning first; it must never be spoken."""
+
+    def test_strip_think_removes_reasoning_blocks(self):
+        raw = "<think>Peserta menyebut YOLOv8, saya tanya akurasi.</think>\nAlasan yang kuat. Bagaimana Anda mengukur akurasinya?"
+        self.assertEqual(exam_engine.strip_think(raw), "Alasan yang kuat. Bagaimana Anda mengukur akurasinya?")
+        self.assertEqual(exam_engine.strip_think("<think>belum selesai berpikir"), "")
+        self.assertEqual(exam_engine.clean_reply("<think>\n\n</think>\n\nBaik. Lanjut?"), "Baik. Lanjut?")
+
+    def test_think_filter_handles_tags_split_across_chunks(self):
+        text = "<think>rencana jawaban</think>Kecepatan memang penting. Bagaimana akurasinya?"
+        thinking = exam_engine.ThinkFilter()
+        out = "".join(thinking.feed(text[i:i + 3]) for i in range(0, len(text), 3)) + thinking.flush()
+        self.assertEqual(out, "Kecepatan memang penting. Bagaimana akurasinya?")
+
+    def test_think_filter_passes_plain_text_through(self):
+        thinking = exam_engine.ThinkFilter()
+        out = thinking.feed("Harga 5 < 10 itu wajar. ") + thinking.feed("Kenapa?") + thinking.flush()
+        self.assertEqual(out, "Harga 5 < 10 itu wajar. Kenapa?")
+
+    def test_requests_ask_ollama_not_to_think_and_use_a_larger_context(self):
+        sent = {}
+
+        class FakeResponse:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"message": {"content": "<think>x</think>Oke."}}
+
+        class FakeClient:
+            def __init__(self, *args, **kwargs):
+                pass
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, *exc):
+                return False
+
+            async def post(self, url, json):
+                sent.update(json)
+                return FakeResponse()
+
+        import asyncio
+
+        with mock.patch.object(exam_engine.httpx, "AsyncClient", FakeClient), \
+                mock.patch.object(exam_engine, "resolve_model", mock.AsyncMock(return_value="voic-coach")):
+            asyncio.run(exam_engine.ollama_chat(MESSAGES, num_predict=50, temperature=0.7))
+
+        self.assertIs(sent["think"], False)
+        self.assertGreaterEqual(sent["options"]["num_ctx"], 4096)
