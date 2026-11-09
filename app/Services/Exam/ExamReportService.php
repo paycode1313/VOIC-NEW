@@ -31,7 +31,7 @@ class ExamReportService
      */
     protected function aiTimeout(int $local): int
     {
-        return ExaminerService::isCloudModel($this->examiner->examinerModel()) ? 90 : $local;
+        return ExaminerService::isCloudModel($this->examiner->ollamaModel()) ? 90 : $local;
     }
 
     /**
@@ -237,7 +237,7 @@ class ExamReportService
     {
         try {
             $response = Http::connectTimeout(1.5)->timeout($this->aiTimeout(45))->post(rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/').'/exam/coach-summary', [
-                'model' => $this->examiner->examinerModel(),
+                'model' => $this->examiner->ollamaModel(),
                 'mode' => $session->exam_mode,
                 'role_type' => $this->blueprint->mode($session->exam_mode)['role_type'],
                 'language' => $language,
@@ -447,7 +447,7 @@ class ExamReportService
 
         try {
             $response = Http::connectTimeout(1.5)->timeout($this->aiTimeout(30))->post("{$baseUrl}/exam/improve", [
-                'model' => $this->examiner->examinerModel(),
+                'model' => $this->examiner->ollamaModel(),
                 'mode' => $mode,
                 'role_type' => $this->blueprint->mode($mode)['role_type'],
                 'language' => $language,

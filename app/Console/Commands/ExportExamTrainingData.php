@@ -207,7 +207,7 @@ class ExportExamTrainingData extends Command
             $rating === 'bad' => null,
             $rating === 'good' => 'rated_good',
             ($meta['engine'] ?? null) === 'cloud_llm' => 'cloud_distill',
-            ($meta['engine'] ?? null) === 'ollama_cloud' => 'teacher_distill',
+            in_array($meta['engine'] ?? null, ['ollama_cloud', 'openrouter'], true) => 'teacher_distill',
             default => null,
         };
     }

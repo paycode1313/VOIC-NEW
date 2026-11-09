@@ -54,7 +54,25 @@ class ExaminerService
      */
     protected ?string $lastModel = null;
 
-    public function __construct(protected SpeakingAnalyzer $analyzer, protected ExamBlueprint $blueprint) {}
+    public function __construct(protected SpeakingAnalyzer $analyzer, protected ExamBlueprint $blueprint, protected OpenRouterClient $openRouter) {}
+
+    /**
+     * Model name for the AI service (Ollama). OpenRouter models are called from here instead.
+     */
+    public function ollamaModel(): ?string
+    {
+        $model = $this->examinerModel();
+
+        return OpenRouterClient::handles($model) ? null : $model;
+    }
+
+    /**
+     * The OpenRouter client, so the teacher command can read why a call failed.
+     */
+    public function openRouter(): OpenRouterClient
+    {
+        return $this->openRouter;
+    }
 
     /**
      * Use a specific Ollama model for the examiner from now on (null = back to the configured one).
@@ -75,13 +93,13 @@ class ExaminerService
     }
 
     /**
-     * Ollama ":cloud" models run on Ollama's servers, not on this laptop.
+     * Models that run on someone else's servers: Ollama ":cloud" models and OpenRouter models.
      */
     public static function isCloudModel(?string $model): bool
     {
         $model = strtolower((string) $model);
 
-        return str_ends_with($model, ':cloud') || str_ends_with($model, '-cloud');
+        return str_ends_with($model, ':cloud') || str_ends_with($model, '-cloud') || OpenRouterClient::handles($model);
     }
 
     /**
@@ -162,6 +180,20 @@ class ExaminerService
         $messages = $this->buildMessages($turn);
         $baseUrl = $this->baseUrl();
 
+        // An OpenRouter model (e.g. the free Kimi K2.6) answers first; on failure the local chain takes over.
+        $chosen = $this->examinerModel();
+        if (OpenRouterClient::handles($chosen)) {
+            $remote = $this->openRouter->chat($messages, (string) $chosen);
+            if ($remote !== null && ($resolved = $this->resolveModelReply($remote, $turn)) !== null) {
+                $result = $resolved + ['audio_url' => null, 'engine' => 'openrouter'];
+                if ($onSentence !== null) {
+                    $onSentence($result['text'], $this->synthesize($baseUrl, $result['text'], $turn, inline: true));
+                }
+
+                return $result;
+            }
+        }
+
         // Streaming: sentences are spoken while the model is still writing. A pure reaction
         // is followed by a fixed announcement, so it is not worth streaming.
         if ($onSentence !== null && $turn['directive'] !== self::DIRECTIVE_REACT) {
@@ -222,7 +254,7 @@ class ExaminerService
                     'question' => $turn['question'],
                     'answer' => $turn['answer'],
                     'messages' => $messages,
-                    'model' => $this->examinerModel(),
+                    'model' => $this->ollamaModel(),
                     'generate_voice' => true,
                     // Audio travels inside the stream: no extra request while the stream is open.
                     'inline_audio' => true,
@@ -410,7 +442,15 @@ class ExaminerService
 
         // A cloud model through Ollama (e.g. kimi-k3:cloud) answers first; the local model is the fallback.
         $chosen = $this->examinerModel();
-        if (self::isCloudModel($chosen) && isset($models) && $status['engine'] === 'local_llm') {
+        if (OpenRouterClient::handles($chosen)) {
+            if ($this->openRouter->configured()) {
+                $status['engine'] = 'openrouter';
+                $status['model'] = Str::after((string) $chosen, OpenRouterClient::PREFIX);
+            } else {
+                $status['reason'] = 'OPENROUTER_API_KEY belum diisi, sementara memakai AI lokal.';
+                $status['fix'] = 'Buat API key di openrouter.ai/keys lalu isi OPENROUTER_API_KEY di .env, lalu php artisan config:clear';
+            }
+        } elseif (self::isCloudModel($chosen) && isset($models) && $status['engine'] === 'local_llm') {
             $ready = collect($models)->contains(fn ($name) => $name === $chosen);
             if ($ready) {
                 $status['engine'] = 'ollama_cloud';
@@ -1035,7 +1075,7 @@ class ExaminerService
                     'question' => $turn['question'],
                     'answer' => $turn['answer'],
                     'messages' => $messages,
-                    'model' => $this->examinerModel(),
+                    'model' => $this->ollamaModel(),
                 ]);
 
             $reply = trim((string) $response->json('reply', ''));

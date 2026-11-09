@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExamFlowService;
 use App\Services\Exam\ExaminerService;
+use App\Services\Exam\OpenRouterClient;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -66,6 +67,8 @@ class GenerateTeacherSessions extends Command
         ['profile' => 'sangat singkat, sering hanya menjawab satu kalimat', 'length' => '1 kalimat'],
     ];
 
+    protected OpenRouterClient $openRouter;
+
     /**
      * Execute the console command.
      */
@@ -82,44 +85,55 @@ class GenerateTeacherSessions extends Command
             mt_srand((int) $this->option('seed'));
         }
 
-        // 1. Ollama must have the teacher (signed in) and, ideally, a local model for the candidate.
-        $available = $this->ollamaModels();
-        if ($available === null) {
-            $this->components->error('Ollama tidak berjalan di '.$this->ollamaUrl().'. Buka aplikasi Ollama dulu.');
+        $viaOpenRouter = OpenRouterClient::handles($teacher);
+        /** @var ExaminerService $examiner */
+        $examiner = app(ExaminerService::class);
+        // Same client as the examiner, so a quota hit during a session is visible here.
+        $this->openRouter = $examiner->openRouter();
 
-            return self::FAILURE;
-        }
-        if (! in_array($teacher, $available, true)) {
-            $this->components->error("Model guru {$teacher} belum ada di Ollama.");
-            $this->line('  Jalankan: <fg=yellow>ollama signin</> lalu <fg=yellow>ollama pull '.$teacher.'</>');
-            if (ExaminerService::isCloudModel($teacher)) {
-                $this->line('  Catatan: model cloud seperti Kimi K3 membutuhkan akun Ollama dengan langganan yang mendukungnya.');
+        // 1. Ollama: needed for an Ollama teacher, and for a local candidate model.
+        $available = ($viaOpenRouter && OpenRouterClient::handles($candidate)) ? [] : $this->ollamaModels();
+        if (! $viaOpenRouter) {
+            if ($available === null) {
+                $this->components->error('Ollama tidak berjalan di '.$this->ollamaUrl().'. Buka aplikasi Ollama dulu.');
+
+                return self::FAILURE;
             }
+            if (! in_array($teacher, $available, true)) {
+                $this->components->error("Model guru {$teacher} belum ada di Ollama.");
+                $this->line('  Jalankan: <fg=yellow>ollama signin</> lalu <fg=yellow>ollama pull '.$teacher.'</>');
+                if (ExaminerService::isCloudModel($teacher)) {
+                    $this->line('  Catatan: model cloud seperti Kimi K3 membutuhkan akun Ollama dengan langganan yang mendukungnya.');
+                }
 
-            return self::FAILURE;
+                return self::FAILURE;
+            }
         }
-        if (! in_array($candidate, $available, true)) {
-            $this->components->warn("Model peserta {$candidate} tidak ada, peserta juga diperankan oleh {$teacher} (memakai kuota guru).");
+        if (! OpenRouterClient::handles($candidate) && ! in_array($candidate, $available ?? [], true)) {
+            $this->components->warn("Model peserta {$candidate} tidak ada di Ollama, peserta juga diperankan oleh {$teacher} (memakai kuota guru).");
             $candidate = $teacher;
         }
 
-        // 2. The examiner turns go through the AI service, exactly like a live session.
-        $aiService = rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/');
-        try {
-            Http::connectTimeout(2)->timeout(5)->get($aiService.'/voice/status')->throw();
-        } catch (\Throwable) {
-            $this->components->error("AI service tidak bisa dihubungi di {$aiService}. Jalankan: python ai_service/ai_service.py");
+        // 2. One real call before hours of work: the teacher must answer (and, for Ollama, through the AI service).
+        if ($viaOpenRouter) {
+            if (! $this->openRouterAnswers($teacher)) {
+                return self::FAILURE;
+            }
+        } else {
+            $aiService = rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/');
+            try {
+                Http::connectTimeout(2)->timeout(5)->get($aiService.'/voice/status')->throw();
+            } catch (\Throwable) {
+                $this->components->error("AI service tidak bisa dihubungi di {$aiService}. Jalankan: python ai_service/ai_service.py");
 
-            return self::FAILURE;
+                return self::FAILURE;
+            }
+            if (! $this->teacherAnswers($teacher) || ! $this->aiServiceUsesTeacher($aiService, $teacher)) {
+                return self::FAILURE;
+            }
         }
+        $teacherEngine = $viaOpenRouter ? 'openrouter' : 'ollama_cloud';
 
-        // 3. One real call before hours of work: the teacher must answer, directly and through the AI service.
-        if (! $this->teacherAnswers($teacher) || ! $this->aiServiceUsesTeacher($aiService, $teacher)) {
-            return self::FAILURE;
-        }
-
-        /** @var ExaminerService $examiner */
-        $examiner = app(ExaminerService::class);
         $examiner->useModel($teacher);
         app()->instance(ExaminerService::class, $examiner);
         /** @var ExamFlowService $flow */
@@ -127,7 +141,7 @@ class GenerateTeacherSessions extends Command
 
         $owner = $this->teacherUser();
         $this->components->info("Guru: {$teacher} · Peserta: {$candidate} · {$sessions} sesi");
-        $this->line('  <fg=gray>Model guru yang berpikir dulu (Kimi K3) bisa butuh 10-40 detik per giliran.</>');
+        $this->line('  <fg=gray>Model guru yang berpikir dulu (Kimi) bisa butuh 10-40 detik per giliran. Ctrl+C aman: data yang sudah jadi tetap tersimpan.</>');
 
         $teacherTurns = 0;
         $fallbackTurns = 0;
@@ -140,16 +154,25 @@ class GenerateTeacherSessions extends Command
             $session = $this->startSession($flow, $blueprint, $owner, $mode, $language, $topic, $person, $coach);
             $this->line(sprintf('  [%d/%d] %s · %s · %s', $i + 1, $sessions, $coach ? 'coaching' : 'ujian', $mode, $topic));
 
-            [$byTeacher, $byFallback] = $this->runSession($flow, $session, $candidate, $person, $language, $maxTurns);
+            [$byTeacher, $byFallback] = $this->runSession($flow, $session, $candidate, $person, $language, $maxTurns, $teacherEngine);
             $teacherTurns += $byTeacher;
             $fallbackTurns += $byFallback;
             $this->line("        <fg=gray>{$byTeacher} giliran dari guru".($byFallback ? ", {$byFallback} dari cadangan (tidak dipakai untuk training)" : '').'</>');
+
+            if ($this->openRouter->quotaExhausted()) {
+                $this->newLine();
+                $this->components->warn('Kuota gratis OpenRouter habis untuk sementara: '.$this->openRouter->lastError());
+                $this->line('  Data yang sudah jadi tetap tersimpan. Jalankan perintah yang sama lagi nanti (biasanya besok) untuk menambah data.');
+                break;
+            }
         }
 
         $this->newLine();
         $this->components->info("Selesai: {$teacherTurns} balasan penguji dari {$teacher}.");
         if ($teacherTurns === 0) {
-            $this->components->warn('Tidak ada balasan dari model guru. Cek `ollama signin`, kuota Ollama, dan jendela ai_service.');
+            $this->components->warn($viaOpenRouter
+                ? 'Tidak ada balasan dari model guru. '.($this->openRouter->lastError() ?? 'Cek OPENROUTER_API_KEY dan koneksi internet.')
+                : 'Tidak ada balasan dari model guru. Cek `ollama signin`, kuota Ollama, dan jendela ai_service.');
 
             return self::FAILURE;
         }
@@ -209,6 +232,34 @@ class GenerateTeacherSessions extends Command
             $response->status() === 429 => '  Kuota/batas pemakaian Ollama tercapai. Tunggu sebentar lalu coba lagi.',
             default => '  Coba di terminal: <fg=yellow>ollama run '.$teacher.'</> untuk melihat pesan aslinya.',
         });
+
+        return false;
+    }
+
+    /**
+     * Ask an OpenRouter teacher one short question and explain a missing key, credit or limit.
+     */
+    protected function openRouterAnswers(string $teacher): bool
+    {
+        $this->line("  <fg=gray>Mengecek {$teacher}…</>");
+
+        if (! $this->openRouter->configured()) {
+            $this->components->error('OPENROUTER_API_KEY belum diisi di .env.');
+            $this->line('  Buat API key di <fg=yellow>https://openrouter.ai/keys</>, isi OPENROUTER_API_KEY=... di .env, lalu <fg=yellow>php artisan config:clear</>.');
+
+            return false;
+        }
+
+        if ($this->openRouter->chat([['role' => 'user', 'content' => 'Jawab dengan satu kata: halo']], $teacher) !== null) {
+            $this->line('  <fg=green>✓</> Model guru siap.');
+
+            return true;
+        }
+
+        $this->components->error((string) $this->openRouter->lastError());
+        $this->line($this->openRouter->quotaExhausted()
+            ? '  Kuota gratis sedang habis. Coba lagi nanti, atau pakai model gratis lain dengan --teacher=openrouter/<nama-model>:free.'
+            : '  Cek API key dan nama model di https://openrouter.ai/models (model gratis berakhiran :free).');
 
         return false;
     }
@@ -302,7 +353,7 @@ class GenerateTeacherSessions extends Command
      * @param  array{profile: string, length: string}  $person
      * @return array{0: int, 1: int} Examiner turns written by the teacher, and by a fallback engine.
      */
-    protected function runSession(ExamFlowService $flow, PracticeSession $session, string $candidate, array $person, string $language, int $maxTurns): array
+    protected function runSession(ExamFlowService $flow, PracticeSession $session, string $candidate, array $person, string $language, int $maxTurns, string $teacherEngine = 'ollama_cloud'): array
     {
         $clock = 5;
         for ($turn = 0; $turn < $maxTurns; $turn++) {
@@ -331,19 +382,23 @@ class GenerateTeacherSessions extends Command
                 $turn + 1,
                 (int) round($candidateSeconds),
                 (int) round(microtime(true) - $started),
-                $engine === 'ollama_cloud' ? 'guru' : 'cadangan: '.$engine,
+                $engine === $teacherEngine ? 'guru' : 'cadangan: '.$engine,
             ));
+
+            if ($this->openRouter->quotaExhausted()) {
+                break;
+            }
         }
 
         // A coaching chat ends on time in real life; close it so the goodbye turn is learned too.
         $state = $session->refresh()->exam_state;
-        if (ExamFlowService::isCoach($state) && ($state['phase'] ?? null) !== ExamFlowService::PHASE_COMPLETED) {
+        if (ExamFlowService::isCoach($state) && ($state['phase'] ?? null) !== ExamFlowService::PHASE_COMPLETED && ! $this->openRouter->quotaExhausted()) {
             $flow->answer($session, '', 0, null, $clock + 1, timeUp: true);
         }
 
         $engines = $session->messages()->where('sender', 'ai')->get()->map(fn ($message) => $message->meta['engine'] ?? null);
 
-        return [$engines->filter(fn ($engine) => $engine === 'ollama_cloud')->count(), $engines->filter(fn ($engine) => in_array($engine, ['local_llm', 'cloud_llm', 'offline_composer'], true))->count()];
+        return [$engines->filter(fn ($engine) => $engine === $teacherEngine)->count(), $engines->filter(fn ($engine) => $engine !== $teacherEngine && $engine !== null)->count()];
     }
 
     /**
@@ -367,6 +422,12 @@ class GenerateTeacherSessions extends Command
             $messages[] = ['role' => $message->sender === 'ai' ? 'user' : 'assistant', 'content' => $message->message];
         }
 
+        if (OpenRouterClient::handles($model)) {
+            $text = (string) $this->openRouter->chat($messages, $model, 0.9);
+
+            return $this->cleanAnswer($text);
+        }
+
         $payload = ['model' => $model, 'messages' => $messages, 'stream' => false, 'options' => ['temperature' => 0.9]];
         if (! ExaminerService::isCloudModel($model)) {
             $payload['think'] = false;
@@ -381,6 +442,14 @@ class GenerateTeacherSessions extends Command
             return '';
         }
 
+        return $this->cleanAnswer($text);
+    }
+
+    /**
+     * Spoken answer only: no reasoning block, speaker label or markdown.
+     */
+    protected function cleanAnswer(string $text): string
+    {
         $text = preg_replace('/<think>.*?(<\/think>|$)/s', '', $text) ?? '';
         $text = preg_replace('/^\s*(peserta|kandidat|candidate|saya)\s*:\s*/i', '', trim($text)) ?? '';
 

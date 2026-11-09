@@ -105,9 +105,14 @@
                 <span class="text-slate-600 dark:text-slate-400">
                     @if (\App\Services\Exam\ExaminerService::isCloudModel(config('exam.ai_model')))
                         {{-- A cloud examiner (e.g. kimi-k3:cloud) receives the text of the answers: say so. --}}
+                        @php
+                            $onlineAi = \App\Services\Exam\OpenRouterClient::handles(config('exam.ai_model'))
+                                ? \Illuminate\Support\Str::after(config('exam.ai_model'), 'openrouter/').($isEn ? ' via OpenRouter' : ' lewat OpenRouter')
+                                : config('exam.ai_model').($isEn ? ' via Ollama' : ' lewat Ollama');
+                        @endphp
                         {{ $isEn
-                            ? 'I agree that my voice is turned into text on this laptop, that the text of my answers is sent to an online AI ('.config('exam.ai_model').' via Ollama) to reply, and that my answers are stored to build the report.'
-                            : 'Saya setuju suara saya diubah menjadi teks di laptop ini, teks jawaban saya dikirim ke AI online ('.config('exam.ai_model').' lewat Ollama) untuk dibalas, dan jawaban saya disimpan untuk membuat rapor.' }}
+                            ? 'I agree that my voice is turned into text on this laptop, that the text of my answers is sent to an online AI ('.$onlineAi.') to reply, and that my answers are stored to build the report.'
+                            : 'Saya setuju suara saya diubah menjadi teks di laptop ini, teks jawaban saya dikirim ke AI online ('.$onlineAi.') untuk dibalas, dan jawaban saya disimpan untuk membuat rapor.' }}
                     @else
                         {{ $isEn
                             ? 'I agree that my voice is processed by the AI on this laptop (not sent to the internet), and that my answers are stored to build the report.'

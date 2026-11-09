@@ -1,6 +1,6 @@
 @php
-    $engineLabel = ['local_llm' => 'AI lokal aktif', 'ollama_cloud' => ($status['model'] ?? 'Model').' (cloud) aktif', 'cloud_llm' => 'AI cloud aktif', 'offline_composer' => 'AI offline · mode cadangan'][$status['engine']] ?? $status['engine'];
-    $healthy = in_array($status['engine'], ['local_llm', 'ollama_cloud'], true);
+    $engineLabel = ['local_llm' => 'AI lokal aktif', 'ollama_cloud' => ($status['model'] ?? 'Model').' (cloud) aktif', 'openrouter' => ($status['model'] ?? 'Model').' (OpenRouter) aktif', 'cloud_llm' => 'AI cloud aktif', 'offline_composer' => 'AI offline · mode cadangan'][$status['engine']] ?? $status['engine'];
+    $healthy = in_array($status['engine'], ['local_llm', 'ollama_cloud', 'openrouter'], true);
 @endphp
 
 <x-exam-layout title="Operator Booth">
