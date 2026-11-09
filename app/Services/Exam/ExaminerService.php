@@ -61,7 +61,8 @@ class ExaminerService
      *     planned_question?: ?string,
      *     transition?: ?string,
      *     turn: int,
-     *     session_id: int
+     *     session_id: int,
+     *     visual?: ?array{eye_contact?: float|int, face_visible?: float|int, smile?: float|int, tension?: float|int, samples?: int}
      * }  $turn
      * @param  (callable(string, ?string): void)|null  $onSentence  Receives each sentence (text, audio URL) as soon as it can be spoken.
      * @return array{text: string, reply: string, audio_url: ?string, engine: string}
@@ -513,7 +514,7 @@ class ExaminerService
     public function turnInstruction(array $turn): string
     {
         if (self::isCoachDirective($turn['directive'])) {
-            return $this->coachInstruction($turn);
+            return $this->coachInstruction($turn).$this->visualInstruction($turn);
         }
 
         $isEn = $turn['language'] === 'en';
@@ -539,7 +540,83 @@ class ExaminerService
 
         return ($isEn ? 'Question: ' : 'Pertanyaan: ').$turn['question']."\n"
             .($isEn ? 'Candidate answer: ' : 'Jawaban peserta: ').$answer."\n"
-            .'['.$task.']';
+            .'['.$task.']'
+            .$this->visualInstruction($turn);
+    }
+
+    /**
+     * What the camera noticed while the candidate answered: 'tense', 'away' (not facing
+     * the camera) or null. Needs enough samples so one blink or glance does not count.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function visualCue(array $turn): ?string
+    {
+        $visual = $turn['visual'] ?? null;
+        if (! is_array($visual) || (int) ($visual['samples'] ?? 0) < 5) {
+            return null;
+        }
+
+        if (isset($visual['tension']) && (float) $visual['tension'] >= 40) {
+            return 'tense';
+        }
+
+        $faceVisible = isset($visual['face_visible']) ? (float) $visual['face_visible'] : 100.0;
+        if ($faceVisible < 50 || (isset($visual['eye_contact']) && (float) $visual['eye_contact'] < 45)) {
+            return 'away';
+        }
+
+        return null;
+    }
+
+    /**
+     * Extra line for the model so it can respond to the candidate's face, as a real examiner would.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    protected function visualInstruction(array $turn): string
+    {
+        $cue = $this->visualCue($turn);
+        if ($cue === null || $turn['directive'] === self::DIRECTIVE_COACH_CLOSE) {
+            return '';
+        }
+
+        $isEn = $turn['language'] === 'en';
+        $note = match ($cue) {
+            'tense' => $isEn
+                ? 'Camera observation: the candidate looked tense while answering. Start with one short, kind sentence that helps them relax (for example, suggest a breath), then continue as instructed.'
+                : 'Pengamatan kamera: peserta terlihat tegang saat menjawab. Awali dengan satu kalimat singkat yang ramah untuk menenangkannya (misalnya mengajak tarik napas), lalu lanjutkan sesuai instruksi.',
+            default => $isEn
+                ? 'Camera observation: the candidate often looked away from the camera. Briefly and kindly remind them to keep eye contact, then continue as instructed.'
+                : 'Pengamatan kamera: peserta sering tidak menatap kamera. Ingatkan singkat dan sopan agar tetap menjaga kontak mata, lalu lanjutkan sesuai instruksi.',
+        };
+
+        return "\n[".$note.']';
+    }
+
+    /**
+     * Spoken remark used by the offline composer for the same camera cue.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function visualRemark(array $turn): ?string
+    {
+        $cue = $this->visualCue($turn);
+        if ($cue === null || $turn['directive'] === self::DIRECTIVE_COACH_CLOSE || $this->analyzer->soundsUnsure((string) $turn['answer'])) {
+            return null;
+        }
+
+        $isEn = $turn['language'] === 'en';
+        $casual = $turn['role_type'] === 'hrd';
+
+        return match ($cue) {
+            'tense' => $isEn
+                ? 'You look a little tense, take a breath, you are doing fine.'
+                : ($casual ? 'Santai aja, kelihatannya kamu agak tegang, tarik napas dulu ya.' : 'Saya lihat Anda sedikit tegang, coba tarik napas sebentar.'),
+            default => $isEn
+                ? 'Try to keep looking at the camera while you answer, it makes you sound more confident.'
+                : ($casual ? 'Coba sesekali lihat ke kamera ya, biar kelihatan lebih yakin.' : 'Usahakan tetap menatap kamera saat menjawab, agar terlihat lebih yakin.'),
+        };
     }
 
     /**
@@ -603,6 +680,21 @@ class ExaminerService
      * @return array{text: string, reply: string}
      */
     public function offlineTurn(array $turn): array
+    {
+        $result = $this->offlineTurnWithoutVisual($turn);
+        $remark = $this->visualRemark($turn);
+
+        return $remark === null ? $result : [
+            'text' => $remark.' '.$result['text'],
+            'reply' => $remark.' '.$result['reply'],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $turn
+     * @return array{text: string, reply: string}
+     */
+    protected function offlineTurnWithoutVisual(array $turn): array
     {
         if (self::isCoachDirective($turn['directive'])) {
             $reply = $this->offlineCoach($turn);

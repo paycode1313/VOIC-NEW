@@ -196,6 +196,7 @@ class ExamFlowService
             'turn' => (int) $state['turn'],
             'session_id' => $session->id,
             'focus' => null,
+            'visual' => $facial,
         ], $onSentence);
 
         $session->forceFill(['exam_state' => $state])->save();
@@ -300,6 +301,7 @@ class ExamFlowService
             'turn' => (int) $state['turn'],
             'session_id' => $session->id,
             'focus' => $state['focus'] ?? null,
+            'visual' => $facial,
         ], $onSentence);
 
         $session->forceFill(['exam_state' => $state])->save();

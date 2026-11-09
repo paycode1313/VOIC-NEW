@@ -1723,7 +1723,7 @@
                             </div>
 
                             <div class="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-2.5 print:hidden" x-data="{ copied: false }">
-                                <a href="{{ route('practice.verify', $session) }}"
+                                <a href="{{ $session->verifyUrl() }}"
                                    target="_blank"
                                    class="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-md shadow-blue-600/30">
                                     <svg class="w-3.5 h-3.5 me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1734,7 +1734,7 @@
 
                                 <!-- Copy Link Button -->
                                 <button type="button"
-                                        data-verify-url="{{ route('practice.verify', $session) }}"
+                                        data-verify-url="{{ $session->verifyUrl() }}"
                                         @click="navigator.clipboard.writeText($el.dataset.verifyUrl); copied = true; setTimeout(() => copied = false, 2500)"
                                         class="inline-flex items-center px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-200 bg-navy-800 hover:bg-navy-750 border border-navy-700 transition cursor-pointer">
                                     <svg class="w-3.5 h-3.5 me-1.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1744,7 +1744,7 @@
                                 </button>
 
                                 <!-- WhatsApp Share -->
-                                <a href="https://api.whatsapp.com/send?text={{ urlencode('Saya baru saja menyelesaikan simulasi interview dengan VOIC AI dengan predikat ' . ($session->overall_score >= 85 ? 'Sangat Baik' : 'Baik') . ' (Skor ' . number_format($session->overall_score, 1) . '/100)! Cek sertifikat terverifikasi saya di: ' . route('practice.verify', $session)) }}"
+                                <a href="https://api.whatsapp.com/send?text={{ urlencode('Saya baru saja menyelesaikan simulasi interview dengan VOIC AI dengan predikat ' . ($session->overall_score >= 85 ? 'Sangat Baik' : 'Baik') . ' (Skor ' . number_format($session->overall_score, 1) . '/100)! Cek sertifikat terverifikasi saya di: ' . $session->verifyUrl()) }}"
                                    target="_blank"
                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-700/60 transition">
                                     <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
@@ -1752,7 +1752,7 @@
                                 </a>
 
                                 <!-- LinkedIn Share -->
-                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('practice.verify', $session)) }}"
+                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode($session->verifyUrl()) }}"
                                    target="_blank"
                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-sky-300 bg-navy-900/80 hover:bg-navy-800 border border-sky-700/60 transition">
                                     <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
@@ -1772,7 +1772,7 @@
 
                         <!-- QR Code Container -->
                         <div class="flex flex-col items-center bg-white p-4 rounded-2xl shadow-2xl text-slate-900 shrink-0 border-4 border-blue-500/40">
-                            <div id="qrcodeSvgContainer" data-url="{{ route('practice.verify', $session) }}" class="w-36 h-36 flex items-center justify-center">
+                            <div id="qrcodeSvgContainer" data-url="{{ $session->verifyUrl() }}" class="w-36 h-36 flex items-center justify-center">
                                 <!-- Rendered dynamically via QR SVG Generator -->
                             </div>
                             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-2">
@@ -2251,21 +2251,21 @@
                         <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block">Pilih Platform Bagikan:</span>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                             <!-- WhatsApp -->
-                            <a href="https://api.whatsapp.com/send?text={{ urlencode('Saya baru saja menyelesaikan simulasi interview dengan VOIC AI dengan predikat ' . ($session->overall_score >= 85 ? 'Sangat Baik' : 'Baik') . ' (Skor ' . number_format($session->overall_score, 1) . '/100)! Cek sertifikat terverifikasi saya di: ' . route('practice.verify', $session)) }}"
+                            <a href="https://api.whatsapp.com/send?text={{ urlencode('Saya baru saja menyelesaikan simulasi interview dengan VOIC AI dengan predikat ' . ($session->overall_score >= 85 ? 'Sangat Baik' : 'Baik') . ' (Skor ' . number_format($session->overall_score, 1) . '/100)! Cek sertifikat terverifikasi saya di: ' . $session->verifyUrl()) }}"
                                target="_blank"
                                class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition shadow-xs">
                                 <span>WhatsApp</span>
                             </a>
 
                             <!-- LinkedIn -->
-                            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode(route('practice.verify', $session)) }}"
+                            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ urlencode($session->verifyUrl()) }}"
                                target="_blank"
                                class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 transition shadow-xs">
                                 <span>LinkedIn</span>
                             </a>
 
                             <!-- Twitter / X -->
-                            <a href="https://twitter.com/intent/tweet?text={{ urlencode('Saya baru saja menyelesaikan simulasi public speaking dengan skor ' . number_format($session->overall_score, 1) . '/100 di VOIC AI! 🚀') }}&url={{ urlencode(route('practice.verify', $session)) }}"
+                            <a href="https://twitter.com/intent/tweet?text={{ urlencode('Saya baru saja menyelesaikan simulasi public speaking dengan skor ' . number_format($session->overall_score, 1) . '/100 di VOIC AI! 🚀') }}&url={{ urlencode($session->verifyUrl()) }}"
                                target="_blank"
                                class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 transition shadow-xs">
                                 <span>X / Twitter</span>
@@ -2276,10 +2276,10 @@
                         <div class="flex items-center gap-2 pt-2">
                             <input type="text"
                                    readonly
-                                   value="{{ route('practice.verify', $session) }}"
+                                   value="{{ $session->verifyUrl() }}"
                                    class="flex-1 text-xs px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-mono select-all focus:outline-none">
                             <button type="button"
-                                    data-verify-url="{{ route('practice.verify', $session) }}"
+                                    data-verify-url="{{ $session->verifyUrl() }}"
                                     @click="navigator.clipboard.writeText($el.dataset.verifyUrl); copiedShare = true; setTimeout(() => copiedShare = false, 2500)"
                                     class="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition shadow-sm cursor-pointer whitespace-nowrap">
                                 <span x-text="copiedShare ? '✓ Disalin!' : 'Salin Tautan'"></span>

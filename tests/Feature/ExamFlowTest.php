@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\PracticeSession;
 use App\Models\User;
 use App\Services\Exam\ExamFlowService;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
@@ -91,6 +92,63 @@ class ExamFlowTest extends TestCase
         $this->assertSame(0, $session->exam_state['question_index']);
     }
 
+    public function test_examiner_responds_when_the_camera_sees_a_tense_face(): void
+    {
+        $this->offline();
+
+        $session = $this->startExam('wawancara', [1]);
+
+        $response = $this->postJson(route('exam.answer', $session), [
+            'answer' => 'Saya lulusan informatika.',
+            'duration_seconds' => 4,
+            'timestamp_seconds' => 10,
+            'facial' => ['eye_contact' => 90, 'face_visible' => 100, 'smile' => 0, 'tension' => 70, 'samples' => 20],
+        ]);
+
+        $response->assertOk();
+        $this->assertStringContainsString('tarik napas', $response->json('examiner_message.text'));
+        $this->assertSame(70, $session->messages()->where('sender', 'user')->first()->facial_status['tension']);
+    }
+
+    public function test_examiner_reminds_about_eye_contact_and_ignores_a_relaxed_face(): void
+    {
+        $this->offline();
+
+        $session = $this->startExam('sidang', [1]);
+
+        $away = $this->postJson(route('exam.answer', $session), [
+            'answer' => 'Penelitian saya tentang sistem rekomendasi.',
+            'duration_seconds' => 5,
+            'timestamp_seconds' => 10,
+            'facial' => ['eye_contact' => 20, 'face_visible' => 100, 'tension' => 5, 'samples' => 20],
+        ]);
+        $this->assertStringContainsString('menatap kamera', $away->json('examiner_message.text'));
+
+        $relaxed = $this->postJson(route('exam.answer', $session), [
+            'answer' => 'Metodenya kuantitatif dengan 120 responden.',
+            'duration_seconds' => 5,
+            'timestamp_seconds' => 20,
+            'facial' => ['eye_contact' => 95, 'face_visible' => 100, 'smile' => 60, 'tension' => 0, 'samples' => 20],
+        ]);
+        $text = $relaxed->json('examiner_message.text');
+        $this->assertStringNotContainsString('tegang', $text);
+        $this->assertStringNotContainsString('menatap kamera', $text);
+    }
+
+    public function test_out_of_range_expression_values_are_rejected(): void
+    {
+        $this->offline();
+
+        $session = $this->startExam('wawancara', [1]);
+
+        $this->postJson(route('exam.answer', $session), [
+            'answer' => 'Halo.',
+            'duration_seconds' => 2,
+            'timestamp_seconds' => 1,
+            'facial' => ['tension' => 150],
+        ])->assertJsonValidationErrors('facial.tension');
+    }
+
     public function test_full_three_part_exam_produces_a_report(): void
     {
         $this->offline();
@@ -116,7 +174,7 @@ class ExamFlowTest extends TestCase
                 'answer' => $answer,
                 'duration_seconds' => $state['phase'] === ExamFlowService::PHASE_CUE_CARD ? 90 : 25,
                 'timestamp_seconds' => $i * 30,
-                'facial' => ['eye_contact' => 82, 'face_visible' => 100, 'samples' => 40],
+                'facial' => ['eye_contact' => 82, 'face_visible' => 100, 'tension' => 10, 'samples' => 40],
             ])->assertOk();
         }
 
@@ -137,6 +195,7 @@ class ExamFlowTest extends TestCase
         $this->assertLessThanOrEqual(9, $report['overall_band']);
         $this->assertCount(4, $report['criteria']);
         $this->assertSame(82, $report['stats']['eye_contact']);
+        $this->assertSame(90, $report['stats']['composure']);
         $this->assertNotEmpty(array_filter($report['answers'], fn ($item) => $item['kind'] === 'long_turn'));
         $this->assertNotEmpty(array_filter($report['answers'], fn ($item) => $item['improved'] !== null));
         $this->assertGreaterThan(0, $session->overall_score);
@@ -458,6 +517,18 @@ class ExamFlowTest extends TestCase
         $this->assertModelExists($oldUser);
         Storage::disk('local')->assertMissing($oldUser->recordingsDirectory().'/1.webm');
         Storage::disk('local')->assertExists($fresh->recordingsDirectory().'/1.webm');
+    }
+
+    /**
+     * Pruning runs every hour so it still happens on a booth laptop that is off at night.
+     */
+    public function test_prune_is_scheduled_every_hour(): void
+    {
+        $event = collect(app(Schedule::class)->events())
+            ->first(fn ($event) => str_contains((string) $event->command, 'voic:prune'));
+
+        $this->assertNotNull($event);
+        $this->assertSame('0 * * * *', $event->expression);
     }
 
     /**

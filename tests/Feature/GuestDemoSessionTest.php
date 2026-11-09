@@ -104,7 +104,7 @@ class GuestDemoSessionTest extends TestCase
             ],
         ]);
 
-        $response = $this->get(route('practice.verify', $session));
+        $response = $this->get($session->verifyUrl());
 
         $response->assertOk();
         $response->assertSee('Profesor Haryanto');

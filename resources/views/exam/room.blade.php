@@ -227,8 +227,11 @@
                 <div class="overflow-hidden rounded-3xl border border-black/5 bg-white dark:border-white/10 dark:bg-white/[0.03]">
                     <div class="relative aspect-video bg-slate-100 dark:bg-black/40">
                         <video x-ref="video" x-show="cameraOn" muted playsinline class="h-full w-full -scale-x-100 object-cover"></video>
+                        <span x-show="cameraOn && expression" x-cloak x-text="expressionLabel()"
+                              :class="expression === 'tense' || expression === 'away' ? 'bg-amber-500/90' : 'bg-emerald-600/90'"
+                              class="absolute bottom-2 left-2 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white"></span>
                         <div x-show="!cameraOn" class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center text-xs text-slate-500">
-                            <p>{{ $isEn ? 'Camera off. Turn it on to measure eye contact.' : 'Kamera mati. Nyalakan untuk mengukur kontak mata.' }}</p>
+                            <p>{{ $isEn ? 'Camera off. Turn it on to measure eye contact and expression.' : 'Kamera mati. Nyalakan untuk mengukur kontak mata dan ekspresi.' }}</p>
                         </div>
                     </div>
                     <div class="flex items-center justify-between p-3 text-xs">

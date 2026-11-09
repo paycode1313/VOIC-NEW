@@ -111,6 +111,15 @@ class PracticeSession extends Model
     }
 
     /**
+     * Permanent, signed link to the public certificate page (QR code, WhatsApp, LinkedIn).
+     * The signature stops anyone from opening other people's certificates by guessing IDs.
+     */
+    public function verifyUrl(): string
+    {
+        return URL::signedRoute('practice.verify', ['practiceSession' => $this]);
+    }
+
+    /**
      * Whether a finished report exists (band-score exam or coaching notes).
      */
     public function hasReport(): bool

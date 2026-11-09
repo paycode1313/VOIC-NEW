@@ -200,7 +200,9 @@ timeout /t 1 /nobreak >nul
 goto WAIT_WEB
 :WEB_DONE
 
-rem Penjadwal: hapus otomatis data tamu dan rekaman lama (voic:prune)
+rem Hapus data tamu dan rekaman yang sudah lewat masa simpan (laptop sering mati di malam hari)
+php artisan voic:prune
+rem Penjadwal: hapus otomatis data tamu dan rekaman lama setiap jam (voic:prune)
 start "VOIC_SCHEDULER" /min cmd /c "php artisan schedule:work"
 echo   [OK] Penjadwal hapus-data otomatis berjalan
 

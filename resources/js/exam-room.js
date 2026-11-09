@@ -62,8 +62,10 @@ export default function examRoom(config) {
         cameraOn: false,
         cameraStream: null,
         faceLandmarker: null,
-        faceSamples: { total: 0, visible: 0, looking: 0 },
+        faceSamples: { total: 0, visible: 0, looking: 0, smiling: 0, tense: 0 },
         faceLoop: null,
+        // Live label under the camera: 'relaxed' | 'smiling' | 'tense' | 'away' | null
+        expression: null,
         currentAudio: null,
         playToken: 0,
         engine: null,
@@ -366,7 +368,7 @@ export default function examRoom(config) {
             this.typed = '';
             this.recordSeconds = 0;
             this.answerStartedAt = Date.now();
-            this.faceSamples = { total: 0, visible: 0, looking: 0 };
+            this.faceSamples = { total: 0, visible: 0, looking: 0, smiling: 0, tense: 0 };
             this.vad = { speaking: false, speechMs: 0, silenceMs: 0, aboveMs: 0, lastTick: 0 };
             this.status = longTurn ? 'long_turn' : 'listening';
 
@@ -673,6 +675,7 @@ export default function examRoom(config) {
             this.cameraStream?.getTracks().forEach((track) => track.stop());
             this.cameraStream = null;
             this.cameraOn = false;
+            this.expression = null;
         },
 
         async mediapipeBase() {
@@ -698,6 +701,7 @@ export default function examRoom(config) {
                     runningMode: 'VIDEO',
                     numFaces: 1,
                     outputFacialTransformationMatrixes: true,
+                    outputFaceBlendshapes: true,
                 });
                 this.startFaceLoop();
             } catch (e) {
@@ -714,21 +718,57 @@ export default function examRoom(config) {
                 const result = this.faceLandmarker.detectForVideo(video, performance.now());
                 this.faceSamples.total += 1;
                 const matrix = result.facialTransformationMatrixes?.[0]?.data;
-                if (!matrix) return;
+                if (!matrix) {
+                    this.expression = 'away';
+                    return;
+                }
                 this.faceSamples.visible += 1;
                 // Column-major 4x4: derive yaw and pitch of the head in degrees.
                 const yaw = Math.atan2(-matrix[2], Math.hypot(matrix[0], matrix[1])) * (180 / Math.PI);
                 const pitch = Math.atan2(matrix[6], matrix[10]) * (180 / Math.PI);
-                if (Math.abs(yaw) < 16 && Math.abs(pitch) < 16) this.faceSamples.looking += 1;
+                const looking = Math.abs(yaw) < 16 && Math.abs(pitch) < 16;
+                if (looking) this.faceSamples.looking += 1;
+
+                const mood = this.readExpression(result.faceBlendshapes?.[0]?.categories);
+                if (mood === 'smiling') this.faceSamples.smiling += 1;
+                if (mood === 'tense') this.faceSamples.tense += 1;
+                this.expression = looking ? mood : 'away';
             }, 350);
         },
 
+        /**
+         * Rough expression from MediaPipe blendshapes (0..1 each): a smile, or tension from
+         * lowered brows, pressed lips and a worried inner brow. A heuristic, not an emotion test.
+         */
+        readExpression(categories) {
+            if (!categories?.length) return 'relaxed';
+            const score = Object.fromEntries(categories.map((item) => [item.categoryName, item.score]));
+            const pair = (name) => ((score[`${name}Left`] ?? 0) + (score[`${name}Right`] ?? 0)) / 2;
+            const smile = pair('mouthSmile');
+            const tension = 0.45 * pair('browDown') + 0.35 * pair('mouthPress') + 0.2 * (score.browInnerUp ?? 0);
+            if (smile > 0.4) return 'smiling';
+            if (tension > 0.3) return 'tense';
+            return 'relaxed';
+        },
+
+        expressionLabel() {
+            return {
+                relaxed: this.t('Tenang', 'Relaxed'),
+                smiling: this.t('Tersenyum', 'Smiling'),
+                tense: this.t('Terlihat tegang', 'Looks tense'),
+                away: this.t('Tidak menatap kamera', 'Not facing the camera'),
+            }[this.expression] ?? '';
+        },
+
         facialSummary() {
-            const { total, visible, looking } = this.faceSamples;
+            const { total, visible, looking, smiling, tense } = this.faceSamples;
             if (!this.cameraOn || total < 3) return null;
+            const share = (count) => (visible > 0 ? Math.round((count / visible) * 100) : 0);
             return {
                 eye_contact: Math.round((looking / total) * 100),
                 face_visible: Math.round((visible / total) * 100),
+                smile: share(smiling),
+                tension: share(tense),
                 samples: total,
             };
         },

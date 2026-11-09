@@ -112,7 +112,7 @@
                     [$isEn ? 'Average pace' : 'Rata-rata tempo', $stats['average_wpm'] ? $stats['average_wpm'].' '.($isEn ? 'wpm' : 'kata/mnt') : '–', $isEn ? 'Ideal 105–165' : 'Ideal 105–165'],
                     [$isEn ? 'Filler words' : 'Kata pengisi', (string) $stats['filler_count'], collect($stats['fillers'])->take(3)->map(fn ($c, $w) => "{$w} ×{$c}")->implode(', ') ?: ($isEn ? 'Clean!' : 'Bersih!')],
                     [$isEn ? 'Words spoken' : 'Kata diucapkan', (string) $stats['total_words'], ''],
-                    [$isEn ? 'Eye contact' : 'Kontak mata', $stats['eye_contact'] !== null ? $stats['eye_contact'].'%' : '–', $stats['eye_contact'] === null ? ($isEn ? 'Camera was off' : 'Kamera tidak aktif') : ''],
+                    [$isEn ? 'Eye contact' : 'Kontak mata', $stats['eye_contact'] !== null ? $stats['eye_contact'].'%' : '–', $stats['eye_contact'] === null ? ($isEn ? 'Camera was off' : 'Kamera tidak aktif') : (isset($stats['composure']) ? ($isEn ? 'Relaxed face ' : 'Wajah tenang ').$stats['composure'].'%' : '')],
                 ] as [$label, $value, $hint])
                     <div class="rounded-3xl border border-black/5 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03]">
                         <p class="text-xs font-semibold text-slate-500">{{ $label }}</p>

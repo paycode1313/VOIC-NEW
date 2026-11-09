@@ -144,7 +144,7 @@ class InteractivePracticeSessionTest extends TestCase
             'ai_conclusion' => 'Argumen ilmiah sangat kokoh dan lugas.',
         ]);
 
-        $response = $this->get(route('practice.verify', $session));
+        $response = $this->get($session->verifyUrl());
 
         $response->assertOk();
         $response->assertViewIs('practice.verify');
@@ -153,6 +153,21 @@ class InteractivePracticeSessionTest extends TestCase
         $response->assertSee('Peserta Unggulan');
         $response->assertSee('VOIC-Dosen Penguji');
         $response->assertSee('VOIC-CERT-');
+    }
+
+    /**
+     * Certificates cannot be opened by guessing a session ID: the link must carry a valid signature.
+     */
+    public function test_verification_page_rejects_unsigned_or_tampered_links(): void
+    {
+        $user = User::factory()->create(['name' => 'Peserta Rahasia']);
+        $session = PracticeSession::factory()->create(['user_id' => $user->id]);
+        $other = PracticeSession::factory()->create(['user_id' => $user->id]);
+
+        $this->get('/verify/'.$session->id)->assertForbidden();
+
+        $tampered = str_replace('/verify/'.$session->id, '/verify/'.$other->id, $session->verifyUrl());
+        $this->get($tampered)->assertForbidden();
     }
 
     /**

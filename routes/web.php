@@ -18,7 +18,9 @@ Route::get('/dashboard', DashboardController::class)
     ->name('dashboard');
 
 // Public Digital Certificate Verification (Accessible via QR Code scan)
+// Signed so certificates cannot be found by guessing sequential session IDs.
 Route::get('/verify/{practiceSession}', [PracticeSessionController::class, 'verify'])
+    ->middleware(['signed', 'throttle:60,1'])
     ->name('practice.verify');
 
 // Three-part mock exam (interview, thesis defense, startup pitch). Open to guests for the booth.
@@ -55,12 +57,15 @@ Route::prefix('demo')->name('demo.')->group(function () {
     Route::post('/reset', [DemoSessionController::class, 'reset'])->name('reset');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/practice', [PracticeSessionController::class, 'create'])->name('practice.create');
     Route::get('/practice/history', [PracticeSessionController::class, 'index'])->name('practice.history');
     Route::get('/practice/{practiceSession}', [PracticeSessionController::class, 'show'])->name('practice.show');
     Route::delete('/practice/{practiceSession}', [PracticeSessionController::class, 'destroy'])->name('practice.destroy');
     Route::get('/practice-export-csv', [PracticeSessionController::class, 'exportCsv'])->name('practice.export');
+});
+
+Route::middleware('auth')->group(function () {
 
     Route::post('/onboarding/complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
     Route::post('/onboarding/reset', [OnboardingController::class, 'reset'])->name('onboarding.reset');

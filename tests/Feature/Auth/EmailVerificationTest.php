@@ -4,8 +4,10 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
@@ -54,5 +56,56 @@ class EmailVerificationTest extends TestCase
         $this->actingAs($user)->get($verificationUrl);
 
         $this->assertFalse($user->fresh()->hasVerifiedEmail());
+    }
+
+    public function test_new_web_registration_sends_verification_email(): void
+    {
+        Notification::fake();
+
+        $this->post('/register', [
+            'name' => 'Pengguna Baru',
+            'email' => 'baru@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        Notification::assertSentTo(User::where('email', 'baru@example.com')->firstOrFail(), VerifyEmail::class);
+    }
+
+    public function test_new_mobile_registration_sends_verification_email(): void
+    {
+        Notification::fake();
+
+        $this->postJson(route('api.v1.auth.register'), [
+            'name' => 'Pengguna Mobile',
+            'email' => 'mobile@example.com',
+            'password' => 'password',
+        ])->assertSuccessful();
+
+        Notification::assertSentTo(User::where('email', 'mobile@example.com')->firstOrFail(), VerifyEmail::class);
+    }
+
+    public function test_unverified_user_is_sent_to_verification_notice(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $this->actingAs($user)->get(route('dashboard'))->assertRedirect(route('verification.notice'));
+        $this->actingAs($user)->get(route('practice.history'))->assertRedirect(route('verification.notice'));
+    }
+
+    public function test_verification_email_is_written_in_indonesian(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $mail = (new VerifyEmail)->toMail($user);
+
+        $this->assertSame('Verifikasi alamat email Anda', $mail->subject);
+        $this->assertSame('Verifikasi Alamat Email', $mail->actionText);
+    }
+
+    public function test_validation_messages_are_in_indonesian(): void
+    {
+        $this->post('/login', ['email' => '', 'password' => ''])
+            ->assertSessionHasErrors(['email' => 'Email wajib diisi.']);
     }
 }

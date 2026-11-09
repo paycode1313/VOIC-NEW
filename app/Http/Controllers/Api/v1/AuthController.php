@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -70,6 +71,8 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
             'has_completed_onboarding' => false,
         ]);
+
+        event(new Registered($user));
 
         $deviceName = $validated['device_name'] ?? 'VOIC-Mobile-Client';
         $token = $user->createToken($deviceName)->plainTextToken;

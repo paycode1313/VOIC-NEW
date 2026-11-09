@@ -34,6 +34,8 @@ class ExamStreamAnswerRequest extends FormRequest
             'facial' => ['nullable', 'array'],
             'facial.eye_contact' => ['nullable', 'numeric', 'between:0,100'],
             'facial.face_visible' => ['nullable', 'numeric', 'between:0,100'],
+            'facial.smile' => ['nullable', 'numeric', 'between:0,100'],
+            'facial.tension' => ['nullable', 'numeric', 'between:0,100'],
             'facial.samples' => ['nullable', 'integer', 'min:0'],
         ];
     }

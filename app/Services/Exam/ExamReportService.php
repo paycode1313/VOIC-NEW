@@ -50,7 +50,9 @@ class ExamReportService
 
         $items = $answers->map(fn (SessionMessage $message, int $index) => $this->assessAnswer($message, $mode, $language, $index))->values()->all();
 
-        $eyeContact = $this->averageEyeContact($answers->all());
+        $eyeContact = $this->averageFacial($answers->all(), 'eye_contact');
+        $tension = $this->averageFacial($answers->all(), 'tension');
+        $composure = $tension === null ? null : 100 - $tension;
         $criteria = $this->aggregateCriteria($items, $language, $eyeContact !== null);
         $overallBand = $items === [] ? 0.0 : $this->analyzer->toBand(array_sum(array_column($criteria, 'band')) / count($criteria));
 
@@ -82,6 +84,7 @@ class ExamReportService
                 'fillers' => $fillerTotals,
                 'filler_count' => array_sum($fillerTotals),
                 'eye_contact' => $eyeContact,
+                'composure' => $composure,
             ],
             'strengths' => $this->strengths($criteria, $language, $eyeContact !== null),
             'focus' => $this->focusAreas($criteria, $items, $language),
@@ -541,12 +544,14 @@ class ExamReportService
     }
 
     /**
+     * Average of one camera metric (eye_contact, tension, ...) over the answers that have it.
+     *
      * @param  list<SessionMessage>  $answers
      */
-    protected function averageEyeContact(array $answers): ?int
+    protected function averageFacial(array $answers, string $key): ?int
     {
         $values = array_values(array_filter(array_map(
-            fn (SessionMessage $message) => is_array($message->facial_status) && isset($message->facial_status['eye_contact']) ? (float) $message->facial_status['eye_contact'] : null,
+            fn (SessionMessage $message) => is_array($message->facial_status) && isset($message->facial_status[$key]) ? (float) $message->facial_status[$key] : null,
             $answers
         ), fn ($value) => $value !== null));
 
