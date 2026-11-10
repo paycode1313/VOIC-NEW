@@ -9,3 +9,7 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Windows batch files must keep CRLF, or goto/call labels can break
+*.bat text eol=crlf
+*.cmd text eol=crlf

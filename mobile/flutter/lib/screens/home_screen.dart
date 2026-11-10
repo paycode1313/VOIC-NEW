@@ -52,9 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     try {
-      final res = await ApiService.startPractice(
-        aiRoleId: _selectedRole!.id,
-        scenarioType: _selectedScenario?.name ?? _selectedRole!.name,
+      final res = await ApiService.startExam(
+        mode: ApiService.modeForRole(_selectedRole!.roleType),
+        topic: _selectedScenario?.name,
       );
 
       if (!mounted) return;
@@ -67,8 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
             sessionId: res['session_id'],
             role: _selectedRole!,
             scenario: _selectedScenario,
-            initialGreeting: res['initial_message']['message'],
-            initialAudioUrl: res['initial_message']['audio_url'],
+            initialGreeting: res['examiner_message']['text'] ?? '',
+            initialAudioUrl: res['examiner_message']['audio_url'],
           ),
         ),
       );

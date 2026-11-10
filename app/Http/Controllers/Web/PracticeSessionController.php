@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StorePracticeSessionRequest;
 use App\Models\AiRole;
 use App\Models\PracticeSession;
 use App\Models\User;
-use App\Services\AiRoleplayService;
 use App\Services\CredentialVerificationService;
+use App\Services\Exam\ExamBlueprint;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -18,280 +18,15 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class PracticeSessionController extends Controller
 {
     /**
-     * Show the practice setup, AI role selection, and live AI camera session interface.
+     * The practice room now runs the three-part mock exam flow; keep the old URL working.
      */
-    public function create(Request $request): View
+    public function create(Request $request, ExamBlueprint $blueprint): RedirectResponse
     {
-        $aiRoles = AiRole::where('is_active', true)->orderBy('id')->get();
+        $mode = $blueprint->modeForRoleType($request->query('role'));
 
-        $roleQuery = $request->query('role');
-        $matchedRole = $roleQuery ? $aiRoles->firstWhere('role_type', $roleQuery) : null;
-
-        $defaultRole = $matchedRole ?? $aiRoles->first() ?? [
-            'id' => 1,
-            'name' => 'VOIC - Dosen Penguji',
-            'role_type' => 'dosen_penguji',
-            'difficulty_level' => 'Sulit',
-            'voice_id' => 'id-ID-ArdiNeural',
-            'description' => 'Dosen Penguji Sidang Skripsi senior di bidang informatika.',
-            'personality_traits' => ['kritis & berwibawa', 'fokus metodologi'],
-        ];
-
-        $scenarios = [
-            [
-                'id' => 'sidang-skripsi',
-                'name' => 'Sidang Skripsi',
-                'icon' => '🎓',
-                'badge' => 'Akademik',
-                'badge_color' => 'indigo',
-                'role_type' => 'dosen_penguji',
-                'description' => 'Latihan presentasi tugas akhir/skripsi bersama Dosen Penguji senior. Fokus pada ketenangan, metodologi, dan argumentasi ilmiah.',
-                'prompt_guide' => 'Jelaskan latar belakang, rumusan masalah, serta kebaruan (novelty) dari penelitian Anda dalam waktu 2-3 menit.',
-                'target_duration' => '180 detik',
-            ],
-            [
-                'id' => 'wawancara-kerja',
-                'name' => 'Wawancara Kerja',
-                'icon' => '💼',
-                'badge' => 'Karier',
-                'badge_color' => 'amber',
-                'role_type' => 'hrd',
-                'description' => 'Simulasi menjawab pertanyaan interview bersama HRD Recruiter dengan metode STAR. Fokus pada ekspresi ramah, kontak mata, dan kejelasan jawaban.',
-                'prompt_guide' => 'Ceritakan pengalaman nyata saat menghadapi tantangan besar dalam tim dan bagaimana Anda mengatasinya.',
-                'target_duration' => '120 detik',
-            ],
-            [
-                'id' => 'pitching-startup',
-                'name' => 'Pitching Startup',
-                'icon' => '🚀',
-                'badge' => 'Bisnis',
-                'badge_color' => 'purple',
-                'role_type' => 'investor',
-                'description' => 'Simulasi presentasi elevator pitch di hadapan Venture Capitalist/Angel Investor. Fokus pada problem-solution fit, bisnis model, dan daya tarik pasar.',
-                'prompt_guide' => 'Sampaikan elevator pitch: masalah pasar, keunikan solusi produk Anda, dan model bisnis dalam 1-2 menit.',
-                'target_duration' => '90 detik',
-            ],
-            [
-                'id' => 'presentasi-umum',
-                'name' => 'Presentasi Umum',
-                'icon' => '🎙️',
-                'badge' => 'Public Speaking',
-                'badge_color' => 'emerald',
-                'role_type' => 'dosen_penguji',
-                'description' => 'Latihan berbicara di depan publik/seminar. Fokus pada transisi kalimat yang mengalir, senyum ramah, dan keterikatan audiens.',
-                'prompt_guide' => 'Buka presentasi Anda dengan hook cerita menarik, lalu jelaskan poin inti materi yang ingin Anda sampaikan.',
-                'target_duration' => '120 detik',
-            ],
-        ];
-
-        return view('practice.create', [
-            'aiRoles' => $aiRoles,
-            'defaultRole' => $defaultRole,
-            'scenarios' => $scenarios,
-            'userLearningProfile' => $request->user()?->getAiLearningProfile(),
-        ]);
-    }
-
-    /**
-     * Start a new interactive AI roleplay session.
-     */
-    public function start(Request $request, AiRoleplayService $aiService): JsonResponse
-    {
-        $validated = $request->validate([
-            'ai_role_id' => ['required', 'exists:ai_roles,id'],
-            'scenario_type' => ['nullable', 'string', 'max:100'],
-            'language' => ['nullable', 'string', 'in:id,en'],
-            'context_material' => ['nullable', 'string', 'max:3000'],
-        ]);
-
-        /** @var User $user */
-        $user = $request->user();
-
-        /** @var AiRole $role */
-        $role = AiRole::findOrFail($validated['ai_role_id']);
-
-        $scenarioType = $validated['scenario_type'] ?? $role->name;
-        $language = $validated['language'] ?? 'id';
-        $contextMaterial = $validated['context_material'] ?? null;
-
-        /** @var PracticeSession $session */
-        $session = $user->practiceSessions()->create([
-            'ai_role_id' => $role->id,
-            'scenario_type' => $scenarioType,
-            'duration_seconds' => 0,
-            'overall_score' => 0,
-            'feedback_notes' => [
-                'language' => $language,
-                'context_material' => $contextMaterial,
-            ],
-        ]);
-
-        $greeting = $aiService->getInitialGreeting($role, $scenarioType, $language, $contextMaterial);
-
-        // Store opening turn from the AI character
-        $initialMessage = $session->messages()->create([
-            'sender' => 'ai',
-            'message' => $greeting['message'],
-            'audio_url' => $greeting['audio_url'],
-            'facial_status' => null,
-            'timestamp_seconds' => 0,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'session_id' => $session->id,
-            'language' => $language,
-            'role' => [
-                'id' => $role->id,
-                'name' => $role->name,
-                'role_type' => $role->role_type,
-                'avatar' => $role->avatar,
-                'voice_id' => $role->voice_id,
-            ],
-            'initial_message' => [
-                'id' => $initialMessage->id,
-                'sender' => 'ai',
-                'message' => $greeting['message'],
-                'audio_url' => $greeting['audio_url'],
-                'timestamp_seconds' => 0,
-            ],
-        ], 201);
-    }
-
-    /**
-     * Process an incoming conversational turn (speech text + facial telemetry).
-     */
-    public function message(Request $request, PracticeSession $practiceSession, AiRoleplayService $aiService): JsonResponse
-    {
-        Gate::authorize('update', $practiceSession);
-
-        $validated = $request->validate([
-            'message' => ['required', 'string', 'max:2000'],
-            'facial_status' => ['nullable', 'array'],
-            'facial_status.status' => ['nullable', 'string'],
-            'facial_status.eye_contact_score' => ['nullable', 'numeric'],
-            'facial_status.is_smiling' => ['nullable', 'boolean'],
-            'facial_status.face_detected' => ['nullable', 'boolean'],
-            'timestamp_seconds' => ['required', 'integer', 'min:0'],
-            'language' => ['nullable', 'string', 'in:id,en'],
-        ]);
-
-        $language = $validated['language'] ?? ($practiceSession->feedback_notes['language'] ?? 'id');
-
-        $result = $aiService->processTurn(
-            $practiceSession,
-            $validated['message'],
-            $validated['facial_status'] ?? [],
-            (int) $validated['timestamp_seconds'],
-            $language
-        );
-
-        return response()->json([
-            'success' => true,
-            'user_message' => $result['user_message'],
-            'ai_message' => $result['ai_message'],
-            'response_text' => $result['response_text'],
-            'audio_url' => $result['audio_url'],
-            'facial_critique' => $result['facial_critique'],
-            'coherence_score' => $result['coherence_score'] ?? 86.0,
-            'coherence_category' => $result['coherence_category'] ?? 'Relevan & Nyambung',
-            'salient_entities' => $result['salient_entities'] ?? [],
-            'ai_engine' => $result['ai_engine'] ?? 'persona_fallback',
-            'stage' => $result['stage'] ?? 'core',
-        ]);
-    }
-
-    /**
-     * Finalize an interactive practice session, save evaluation scores and generate AI conclusion.
-     */
-    public function finish(Request $request, PracticeSession $practiceSession, AiRoleplayService $aiService): JsonResponse
-    {
-        Gate::authorize('update', $practiceSession);
-
-        $validated = $request->validate([
-            'duration_seconds' => ['required', 'integer', 'min:1'],
-            'face_score' => ['required', 'numeric', 'between:0,100'],
-            'voice_score' => ['required', 'numeric', 'between:0,100'],
-            'overall_score' => ['required', 'numeric', 'between:0,100'],
-            'feedback_notes' => ['nullable', 'array'],
-            'feedback_notes.language' => ['nullable', 'string', 'in:id,en'],
-            'feedback_notes.context_material' => ['nullable', 'string', 'max:3000'],
-            'feedback_notes.summary' => ['nullable', 'string', 'max:1000'],
-            'feedback_notes.eye_contact_score' => ['nullable', 'numeric', 'between:0,100'],
-            'feedback_notes.smile_rate' => ['nullable', 'numeric', 'between:0,100'],
-            'feedback_notes.pace_wpm' => ['nullable', 'numeric', 'min:0'],
-            'feedback_notes.pitch_dynamics_score' => ['nullable', 'numeric', 'between:0,100'],
-            'feedback_notes.clarity_score' => ['nullable', 'numeric', 'between:0,100'],
-            'feedback_notes.avg_volume' => ['nullable', 'numeric', 'min:0'],
-            'feedback_notes.total_words' => ['nullable', 'integer', 'min:0'],
-            'feedback_notes.filler_words_count' => ['nullable', 'integer', 'min:0'],
-            'feedback_notes.filler_words_list' => ['nullable', 'array'],
-            'feedback_notes.filler_words_list.*' => ['nullable', 'string', 'max:50'],
-            'feedback_notes.timeline_events' => ['nullable', 'array'],
-            'feedback_notes.badges' => ['nullable', 'array'],
-            'feedback_notes.badges.*' => ['nullable', 'string', 'max:100'],
-            'feedback_notes.strengths' => ['nullable', 'array'],
-            'feedback_notes.strengths.*' => ['nullable', 'string', 'max:500'],
-            'feedback_notes.improvements' => ['nullable', 'array'],
-            'feedback_notes.improvements.*' => ['nullable', 'string', 'max:500'],
-            'feedback_notes.detected_uptalking' => ['nullable', 'integer', 'min:0'],
-            'feedback_notes.awkward_pauses' => ['nullable', 'integer', 'min:0'],
-            'feedback_notes.current_stage' => ['nullable', 'string', 'max:50'],
-            'feedback_notes.timeline_bookmarks' => ['nullable', 'array'],
-            'feedback_notes.timeline_bookmarks.*.second' => ['nullable', 'numeric'],
-            'feedback_notes.timeline_bookmarks.*.type' => ['nullable', 'string', 'max:50'],
-            'feedback_notes.timeline_bookmarks.*.label' => ['nullable', 'string', 'max:150'],
-            'feedback_notes.timeline_bookmarks.*.note' => ['nullable', 'string', 'max:300'],
-        ]);
-
-        $faceScore = (float) $validated['face_score'];
-        $voiceScore = (float) $validated['voice_score'];
-        $overallScore = (float) $validated['overall_score'];
-        $existingFeedback = is_array($practiceSession->feedback_notes) ? $practiceSession->feedback_notes : [];
-        $feedbackNotes = array_merge($existingFeedback, $validated['feedback_notes'] ?? []);
-        $language = $feedbackNotes['language'] ?? 'id';
-
-        $aiConclusion = $aiService->generateFinalConclusion(
-            $practiceSession,
-            $faceScore,
-            $voiceScore,
-            $overallScore,
-            $feedbackNotes,
-            $language
-        );
-
-        $practiceSession->update([
-            'duration_seconds' => (int) $validated['duration_seconds'],
-            'face_score' => $faceScore,
-            'voice_score' => $voiceScore,
-            'overall_score' => $overallScore,
-            'ai_conclusion' => $aiConclusion,
-            'feedback_notes' => $feedbackNotes,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Sesi berhasil diselesaikan.',
-            'redirect_url' => route('practice.show', $practiceSession),
-        ]);
-    }
-
-    /**
-     * Store a newly created practice session result in MySQL (legacy/direct submit).
-     */
-    public function store(StorePracticeSessionRequest $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = $request->user();
-
-        $session = $user->practiceSessions()->create($request->validated());
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Sesi latihan berhasil disimpan.',
-            'session_id' => $session->id,
-            'redirect_url' => route('practice.show', $session),
-        ], 201);
+        return $mode
+            ? redirect()->route('exam.setup', $mode)
+            : redirect()->route('exam.index');
     }
 
     /**
@@ -306,8 +41,13 @@ class PracticeSessionController extends Controller
 
         // Filter by AI role type
         if ($request->filled('role')) {
-            $query->whereHas('aiRole', function ($q) use ($request) {
-                $q->where('role_type', $request->input('role'));
+            $role = (string) $request->input('role');
+            $mode = app(ExamBlueprint::class)->modeForRoleType($role);
+            $query->where(function ($q) use ($role, $mode) {
+                $q->whereHas('aiRole', fn ($roleQuery) => $roleQuery->where('role_type', $role));
+                if ($mode !== null) {
+                    $q->orWhere('exam_mode', $mode);
+                }
             });
         }
 
@@ -358,9 +98,14 @@ class PracticeSessionController extends Controller
     /**
      * Display detailed post-practice feedback and performance metrics.
      */
-    public function show(PracticeSession $practiceSession, CredentialVerificationService $verificationService): View
+    public function show(PracticeSession $practiceSession, CredentialVerificationService $verificationService): View|RedirectResponse
     {
         Gate::authorize('view', $practiceSession);
+
+        // Exam sessions have their own band-score report.
+        if ($practiceSession->isExam()) {
+            return redirect()->to($practiceSession->reportUrl());
+        }
 
         $practiceSession->load(['aiRole', 'messages', 'user']);
         $benchmarkData = $verificationService->getBenchmarkData($practiceSession);

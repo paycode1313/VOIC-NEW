@@ -6,6 +6,7 @@ use App\Models\AiRole;
 use App\Models\PracticeSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class GuestDemoSessionTest extends TestCase
@@ -33,120 +34,10 @@ class GuestDemoSessionTest extends TestCase
 
     public function test_guest_can_access_demo_page_without_authentication(): void
     {
-        $response = $this->get(route('demo.create'));
-
-        $response->assertOk();
-        $response->assertSee('Sesi Uji Coba Tamu');
-        $response->assertSee('VOIC-Dosen Penguji');
-    }
-
-    public function test_guest_can_start_demo_session_with_custom_name_and_institution(): void
-    {
-        $response = $this->postJson(route('demo.start'), [
-            'ai_role_id' => $this->role->id,
-            'scenario_type' => 'Sidang Skripsi Kilat',
-            'language' => 'id',
-            'guest_name' => 'Budi Santoso (Dewan Juri)',
-            'guest_institution' => 'Universitas Brawijaya',
-        ]);
-
-        $response->assertCreated();
-        $response->assertJson([
-            'success' => true,
-            'is_demo' => true,
-            'guest_name' => 'Budi Santoso (Dewan Juri)',
-        ]);
-
-        $sessionId = $response->json('session_id');
-        $this->assertNotNull($sessionId);
-
-        $session = PracticeSession::find($sessionId);
-        $this->assertNotNull($session);
-        $this->assertNull($session->user_id);
-        $this->assertTrue($session->isGuest());
-        $this->assertEquals('Budi Santoso (Dewan Juri)', $session->getParticipantName());
-        $this->assertEquals('Universitas Brawijaya', $session->getParticipantInstitution());
-        $this->assertTrue($session->feedback_notes['is_guest']);
-        $this->assertEquals($session->id, session('active_guest_session_id'));
-    }
-
-    public function test_guest_can_send_turn_messages_in_active_demo_session(): void
-    {
-        $startResponse = $this->postJson(route('demo.start'), [
-            'ai_role_id' => $this->role->id,
-            'guest_name' => 'Sarah Pameran',
-        ]);
-
-        $sessionId = $startResponse->json('session_id');
-
-        $messageResponse = $this->postJson(route('demo.message', $sessionId), [
-            'message' => 'Selamat pagi Bapak, saya ingin mempresentasikan penelitian saya.',
-            'facial_status' => [
-                'status' => 'Fokus & Rileks',
-                'eye_contact_score' => 88.5,
-                'is_smiling' => true,
-                'face_detected' => true,
-            ],
-            'timestamp_seconds' => 15,
-            'language' => 'id',
-        ]);
-
-        $messageResponse->assertOk();
-        $messageResponse->assertJsonStructure([
-            'success',
-            'user_message',
-            'ai_message',
-            'response_text',
-            'coherence_score',
-        ]);
-
-        $this->assertDatabaseHas('session_messages', [
-            'practice_session_id' => $sessionId,
-            'sender' => 'user',
-            'message' => 'Selamat pagi Bapak, saya ingin mempresentasikan penelitian saya.',
-        ]);
-    }
-
-    public function test_guest_can_finish_demo_session_and_view_scorecard(): void
-    {
-        $startResponse = $this->postJson(route('demo.start'), [
-            'ai_role_id' => $this->role->id,
-            'guest_name' => 'Dr. Bambang',
-            'guest_institution' => 'Kemenristek',
-        ]);
-
-        $sessionId = $startResponse->json('session_id');
-
-        $finishResponse = $this->postJson(route('demo.finish', $sessionId), [
-            'duration_seconds' => 120,
-            'face_score' => 85.0,
-            'voice_score' => 88.0,
-            'overall_score' => 86.5,
-            'feedback_notes' => [
-                'eye_contact_score' => 86.0,
-                'smile_rate' => 78.0,
-                'pace_wpm' => 135,
-                'pitch_dynamics_score' => 82.0,
-            ],
-        ]);
-
-        $finishResponse->assertOk();
-        $finishResponse->assertJson([
-            'success' => true,
-            'redirect_url' => route('demo.show', $sessionId),
-        ]);
-
-        $session = PracticeSession::find($sessionId);
-        $this->assertEquals(86.5, (float) $session->overall_score);
-        $this->assertNotNull($session->ai_conclusion);
-
-        // View scorecard
-        $viewResponse = $this->get(route('demo.show', $sessionId));
-        $viewResponse->assertOk();
-        $viewResponse->assertSee('Dr. Bambang');
-        $viewResponse->assertSee('Kemenristek');
-        $viewResponse->assertSee('Sesi Uji Coba Tamu');
-        $viewResponse->assertSee('Mulai Sesi Baru');
+        // The booth demo now opens the three-part mock exam, which guests can take without an account.
+        $this->get(route('demo.create'))->assertRedirect(route('exam.index'));
+        $this->get(route('demo.create', ['role' => 'hrd']))->assertRedirect(route('exam.setup', 'wawancara'));
+        $this->get(route('exam.index'))->assertOk()->assertSee('Wawancara Kerja');
     }
 
     public function test_guest_can_reset_demo_session_for_next_visitor(): void
@@ -166,13 +57,14 @@ class GuestDemoSessionTest extends TestCase
 
     public function test_guest_session_is_claimed_when_visitor_registers_new_account(): void
     {
-        $startResponse = $this->postJson(route('demo.start'), [
-            'ai_role_id' => $this->role->id,
+        Http::fake(['*' => Http::response([], 503)]);
+        $this->post(route('exam.start', 'sidang'), [
             'guest_name' => 'Calon User Baru',
-        ]);
+            'parts' => [1],
+            'consent' => '1',
+        ])->assertRedirect();
 
-        $sessionId = $startResponse->json('session_id');
-        $session = PracticeSession::find($sessionId);
+        $session = PracticeSession::latest('id')->firstOrFail();
         $this->assertNull($session->user_id);
 
         // Visitor chooses to register an account
@@ -212,7 +104,7 @@ class GuestDemoSessionTest extends TestCase
             ],
         ]);
 
-        $response = $this->get(route('practice.verify', $session));
+        $response = $this->get($session->verifyUrl());
 
         $response->assertOk();
         $response->assertSee('Profesor Haryanto');

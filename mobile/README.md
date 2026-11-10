@@ -18,8 +18,11 @@ Direktori ini menampung seluruh implementasi aplikasi klien mobile untuk ekosist
 Kedua aplikasi mobile mengonsumsi endpoint Laravel Sanctum yang sama:
 - **Autentikasi & Registrasi**: `POST /api/v1/auth/login`, `POST /api/v1/auth/register`
 - **Daftar Role AI**: `GET /api/v1/roles`
-- **Sesi Simulasi**: `POST /api/v1/practice/start`, `POST /api/v1/practice/{id}/message`, `POST /api/v1/practice/{id}/finish`
-- **Detail & Skor Sesi**: `GET /api/v1/practice/{id}`
+- **Mode ujian**: `GET /api/v1/exam/modes`
+- **Ujian 3 bagian** (mesin yang sama dengan web): `POST /api/v1/exam/{mode}/start` (`consent: true`), `POST /api/v1/exam/{id}/answer` (teks hasil pengenalan suara HP, atau file `audio` untuk Whisper lokal), `POST /api/v1/exam/{id}/finish`, `GET /api/v1/exam/{id}`
+- **Riwayat**: `GET /api/v1/practice`, `GET /api/v1/practice/{id}`
+
+Skor dan rapor dihitung server dari jawaban asli; aplikasi tidak lagi mengirim skor sendiri. Endpoint lama `/practice/start|message|finish` (dialog template) sudah dihapus.
 
 Untuk panduan cara menjalankan masing-masing aplikasi, silakan buka file README di dalam masing-masing subfolder:
 - Panduan Flutter: [`mobile/flutter/README.md`](./flutter/README.md)

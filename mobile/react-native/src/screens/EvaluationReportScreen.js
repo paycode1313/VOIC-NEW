@@ -12,24 +12,19 @@ import QRCode from 'react-native-qrcode-svg';
 import { colors } from '../constants/theme';
 
 export default function EvaluationReportScreen({ report, role, onBackToHome }) {
-  const overallScore = report?.overall_score || 86.8;
-  const faceScore = report?.face_score || 88.5;
-  const voiceScore = report?.voice_score || 85.0;
-  const durationSeconds = report?.duration_seconds || 120;
-  const aiConclusion = report?.ai_conclusion || 'Latihan selesai dengan artikulasi yang sangat baik.';
-  const feedbackNotes = report?.feedback_notes || {};
+  // Everything below comes from the server-side report; nothing is invented on the device.
+  const band = report?.report || null;
+  const overallScore = Number(report?.overall_score || 0);
+  const faceScore = Number(report?.face_score || 0);
+  const voiceScore = Number(report?.voice_score || 0);
+  const durationSeconds = Number(report?.duration_seconds || 0);
+  const aiConclusion = report?.ai_conclusion || 'Belum ada jawaban yang dinilai.';
+  const criteria = band ? Object.values(band.criteria || {}) : [];
 
-  const strengths = feedbackNotes.strengths || [
-    'Artikulasi kalimat sangat jelas dan terstruktur dengan metode STAR.',
-    'Kontak mata konsisten menatap kamera depan saat menjawab pertanyaan kritis.',
-  ];
+  const strengths = band?.strengths || [];
+  const improvements = (band?.focus || []).map((item) => `${item.title}: ${item.drill}`);
 
-  const improvements = feedbackNotes.improvements || [
-    'Kurangi jeda hening saat beralih antar poin penjelasan.',
-    'Tingkatkan variasi dinamika intonasi pada bagian kesimpulan.',
-  ];
-
-  const verificationUrl = report?.verification_url || `http://10.245.84.82/VOIC-NEW/public/verify/${report?.id || 1}`;
+  const verificationUrl = report?.share_url || report?.report_url || '';
 
   const formatDuration = (totalSec) => {
     const m = Math.floor(totalSec / 60);
@@ -71,10 +66,10 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
           </View>
 
           <Text style={[styles.scoreHeroValue, { color: getScoreColor(overallScore) }]}>
-            {overallScore.toFixed(1)}
+            {band ? `Band ${Number(band.overall_band).toFixed(1)}` : overallScore.toFixed(1)}
           </Text>
           <Text style={styles.scoreHeroGrade}>
-            {overallScore >= 80 ? 'Luar Biasa! Kompeten 🏆' : 'Cukup Baik & Berprospek'}
+            {band?.level || (overallScore >= 80 ? 'Sangat Siap' : 'Terus Berlatih')}
           </Text>
 
           {/* Sub-Metric Columns */}
@@ -84,8 +79,8 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
                 <Ionicons name="eye" size={16} color={colors.accentCyan} />
               </View>
               <View style={{ marginLeft: 8 }}>
-                <Text style={styles.miniScoreLabel}>Skor Wajah & Kontak</Text>
-                <Text style={styles.miniScoreValue}>{Math.round(faceScore)}/100</Text>
+                <Text style={styles.miniScoreLabel}>Delivery & Kepercayaan Diri</Text>
+                <Text style={styles.miniScoreValue}>{band ? Number(band.criteria?.delivery?.band || 0).toFixed(1) : Math.round(faceScore)}{band ? ' / 9' : '/100'}</Text>
               </View>
             </View>
 
@@ -96,8 +91,8 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
                 <MaterialCommunityIcons name="waveform" size={16} color={colors.primaryLight} />
               </View>
               <View style={{ marginLeft: 8 }}>
-                <Text style={styles.miniScoreLabel}>Skor Vokal & Artikulasi</Text>
-                <Text style={styles.miniScoreValue}>{Math.round(voiceScore)}/100</Text>
+                <Text style={styles.miniScoreLabel}>Kelancaran & Alur</Text>
+                <Text style={styles.miniScoreValue}>{band ? Number(band.criteria?.fluency?.band || 0).toFixed(1) : Math.round(voiceScore)}{band ? ' / 9' : '/100'}</Text>
               </View>
             </View>
           </View>
@@ -128,7 +123,50 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
             <Text style={styles.sectionTitle}>Kesimpulan AI Coach</Text>
           </View>
           <Text style={styles.conclusionText}>{aiConclusion}</Text>
+          {criteria.map((item) => (
+            <Text key={item.label} style={styles.conclusionText}>
+              {`• ${item.label}: ${Number(item.band).toFixed(1)} / 9`}
+            </Text>
+          ))}
         </View>
+
+        {/* GoPrep 4-Pillar Oral Diagnostic */}
+        {feedbackNotes.goprep_diagnostic?.criteria && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionTitleRow}>
+              <Feather name="award" size={18} color={colors.accentCyan} />
+              <Text style={styles.sectionTitle}>Diagnostik 4 Pilar GoPrep (Band {feedbackNotes.goprep_diagnostic.overall_band}/9.0)</Text>
+            </View>
+            {Object.values(feedbackNotes.goprep_diagnostic.criteria).map((crit, idx) => (
+              <View key={idx} style={{ marginTop: 10 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <Text style={{ color: '#E2E8F0', fontSize: 13, fontWeight: 'bold' }}>{crit.label}</Text>
+                  <Text style={{ color: colors.accentCyan, fontSize: 12, fontWeight: 'bold' }}>Band {crit.band} ({crit.score}%)</Text>
+                </View>
+                <Text style={{ color: '#94A3B8', fontSize: 11, lineHeight: 16 }}>{crit.assessment}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* GoPrep Answer Polishing */}
+        {feedbackNotes.goprep_diagnostic?.answer_polishing && (
+          <View style={[styles.sectionCard, { borderColor: 'rgba(99, 102, 241, 0.4)' }]}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialCommunityIcons name="auto-fix" size={18} color="#818CF8" />
+              <Text style={styles.sectionTitle}>Rekomendasi Jawaban Emas (Answer Polishing)</Text>
+            </View>
+            <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', padding: 10, borderRadius: 8, marginTop: 8 }}>
+              <Text style={{ color: '#94A3B8', fontSize: 10, fontWeight: 'bold' }}>🗣️ UJARAN ASLI ANDA:</Text>
+              <Text style={{ color: '#CBD5E1', fontSize: 12, fontStyle: 'italic', marginTop: 2 }}>"{feedbackNotes.goprep_diagnostic.answer_polishing.original}"</Text>
+            </View>
+            <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: 10, borderRadius: 8, marginTop: 8, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+              <Text style={{ color: '#34D399', fontSize: 10, fontWeight: 'bold' }}>🌟 VERSI REKOMENDASI PENGUJI (SKOR 90+):</Text>
+              <Text style={{ color: '#ECFDF5', fontSize: 12, fontWeight: '500', marginTop: 2 }}>"{feedbackNotes.goprep_diagnostic.answer_polishing.polished}"</Text>
+            </View>
+            <Text style={{ color: '#FDE68A', fontSize: 11, marginTop: 8, lineHeight: 16 }}>💡 {feedbackNotes.goprep_diagnostic.answer_polishing.examiner_tip}</Text>
+          </View>
+        )}
 
         {/* Strengths */}
         {strengths.length > 0 && (
@@ -167,12 +205,12 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
             Pindai QR code ini untuk verifikasi bukti kelayakan & kompetensi digital latihan Anda di web browser.
           </Text>
           <View style={styles.qrContainer}>
-            <QRCode
+            {verificationUrl ? <QRCode
               value={verificationUrl}
               size={130}
               color="#070B14"
               backgroundColor="#FFFFFF"
-            />
+            /> : null}
           </View>
         </View>
 

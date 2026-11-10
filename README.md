@@ -1,58 +1,174 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# VOIC — Voice & Optics Intelligent Coach
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Simulasi ujian lisan dengan AI: **wawancara kerja**, **sidang skripsi**, dan **pitching startup**.
+Peserta menjawab dengan suara, AI penguji menanggapi seperti orang sungguhan, lalu peserta
+mendapat rapor skor (kelancaran, kosakata, struktur, penyampaian, kontak mata, dan ketenangan wajah).
 
-## About Laravel
+Semuanya bisa berjalan **100% lokal tanpa internet** (cocok untuk booth pameran):
+Laravel untuk web, layanan Python (`ai_service/`) untuk telinga (Whisper), suara (Piper), dan otak AI (Ollama).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Fitur utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Ujian 3 bagian** dan **mode coaching 10 menit**, dengan penguji AI yang bertanya lanjutan berdasarkan jawaban.
+- **Suara dua arah**: jawab dengan mikrofon, AI menjawab dengan suara.
+- **Avatar hidup**: foto penguji bergerak di browser (tanpa model tambahan): mulut mengikuti suara AI, berkedip, mengangguk saat peserta bicara, dan memiringkan kepala saat berpikir. Posisi mata/mulut tiap penguji ada di `config/exam.php` (`rig`).
+- **Kamera opsional** (diproses di perangkat peserta): kontak mata dan ekspresi wajah.
+  Jika peserta terlihat tegang atau tidak menatap kamera, penguji akan menegur dengan ramah.
+- **Rapor & sertifikat**: QR untuk membawa pulang rapor, link sertifikat bertanda tangan (tidak bisa ditebak).
+- **Mode booth**: panel operator ber-PIN (`/booth`) dan papan skor (`/booth/papan`).
+- **Privasi**: persetujuan peserta dan penghapusan otomatis data tamu setelah `VOIC_RETENTION_DAYS` hari.
+- **API mobile** (`/api/v1`) untuk aplikasi Flutter / React Native di folder `mobile/`.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Yang perlu dipasang
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+| Program | Versi | Untuk |
+| --- | --- | --- |
+| PHP | 8.3+ | Web Laravel |
+| Composer | 2.x | Paket PHP |
+| Node.js | 22 LTS (minimal 20.19) | Build tampilan (Vite 8) |
+| Python | 3.10+ | Layanan AI (`ai_service/`) |
+| Ollama | 0.9+ (terbaru) | Otak AI lokal: Qwen3 ([ollama.com/download](https://ollama.com/download)) |
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Di Windows, cara termudah adalah memakai [Laragon](https://laragon.org) (sudah berisi PHP, Composer, dan Node.js).
 
-## Agentic Development
+---
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Cara cepat (Windows)
+
+Klik dua kali **`jalankan_voic.bat`** di folder proyek. Launcher ini otomatis:
+
+1. memasang paket PHP dan membangun tampilan,
+2. memasang paket Python untuk AI,
+3. menyalakan Ollama, layanan AI, web Laravel, dan penjadwal hapus-data otomatis,
+4. membuka `http://localhost:8000/latihan` di browser.
+
+Pilih mode **Online** (atau jalankan `jalankan_voic.bat online`) untuk mendapat link publik HTTPS lewat Cloudflare Tunnel.
+
+---
+
+## Cara manual (semua sistem operasi)
+
+### 1. Web Laravel
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+npm install
+npm run build
+cp .env.example .env        # Windows: copy .env.example .env
+php artisan key:generate
+php artisan migrate --seed
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Layanan AI (Python)
 
-## Contributing
+```bash
+cd ai_service
+pip install -r requirements.txt
+python setup_models.py          # unduh model suara & AI (sekali saja, butuh internet)
+python setup_models.py --check  # cek kesiapan
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Laptop dengan GPU NVIDIA: `python setup_models.py --gpu`.
+File `requirements-train.txt` hanya untuk melatih ulang AI (butuh GPU), **tidak perlu** untuk menjalankan aplikasi.
+Penjelasan lengkap ada di [`ai_service/README.md`](ai_service/README.md).
 
-## Code of Conduct
+### 3. Jalankan (3 terminal)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+python ai_service/ai_service.py   # layanan AI di http://127.0.0.1:8001
+php artisan serve                 # web di http://localhost:8000
+php artisan schedule:work         # penjadwal: hapus data tamu lama setiap jam
+```
 
-## Security Vulnerabilities
+Cek status AI kapan saja: `php artisan voic:doctor`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## Setelah `git pull` (untuk anggota tim)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+git pull origin main
+composer install
+npm install
+npm run build
+php artisan migrate
+```
+
+Lalu bandingkan `.env.example` dengan `.env` milikmu dan tambahkan setting baru yang belum ada.
+Jika ada perubahan di `ai_service/requirements.txt`, jalankan lagi `pip install -r ai_service/requirements.txt`.
+Jika model AI diperbarui (mis. pindah ke Qwen3), jalankan lagi `python ai_service/setup_models.py` lalu nyalakan ulang layanan AI.
+
+---
+
+## Pengaturan penting di `.env`
+
+| Nama | Keterangan |
+| --- | --- |
+| `APP_NAME` | Nama aplikasi (default `VOIC`). |
+| `APP_LOCALE` | Bahasa pesan sistem (default `id`). |
+| `AI_SERVICE_URL` | Alamat layanan AI Python (default `http://127.0.0.1:8001`). |
+| `VOIC_PUBLIC_URL` | Alamat yang dibuka HP pengunjung untuk QR rapor, mis. `http://192.168.1.10:8000`. |
+| `VOIC_BOOTH_PIN` | PIN panel operator `/booth`. Kosong = panel nonaktif. |
+| `VOIC_RETENTION_DAYS` | Berapa hari data tamu & rekaman disimpan (default 7). |
+| `MAIL_*` | Pengiriman email verifikasi akun & lupa kata sandi (lihat di bawah). |
+| `GROQ_API_KEY` / `OPENAI_API_KEY` | Opsional: AI cadangan online jika Ollama mati. |
+
+### Email verifikasi & lupa kata sandi
+
+Akun baru wajib memverifikasi email sebelum membuka dashboard dan riwayat latihan
+(mode tamu di `/latihan` tetap bisa dipakai tanpa akun).
+
+- `MAIL_MAILER=log` (default): email **tidak terkirim**. Link verifikasi ditulis ke `storage/logs/laravel.log`, cocok untuk uji lokal.
+- Agar email benar-benar terkirim, isi pengaturan SMTP. Contoh untuk Gmail ada di `.env.example`
+  (gunakan *App Password* Google, bukan kata sandi biasa).
+
+---
+
+## Melatih AI dengan Kimi K3 sebagai guru (Google Colab gratis)
+
+Kimi K3 terlalu besar (±1,5 TB) untuk dilatih di Colab atau dijalankan di laptop, jadi dipakai sebagai **guru**:
+Kimi K3 (`kimi-k3:cloud` lewat Ollama) menjadi penguji dalam sesi simulasi, lalu **Qwen3-4B (murid)** dilatih meniru
+balasannya di Google Colab dan hasilnya dijalankan **100% lokal di laptop, CPU only**.
+
+1. **Laptop, sekali saja:** login Ollama dan ambil modelnya (butuh akun Ollama yang mendukung Kimi K3):
+   ```bash
+   ollama signin
+   ollama pull kimi-k3:cloud
+   ollama pull qwen3:4b
+   ```
+2. **Laptop:** nyalakan layanan AI (`python ai_service/ai_service.py`), lalu buat sesi simulasi dan ekspor datanya:
+   ```bash
+   php artisan voic:teacher-generate --sessions=30
+   php artisan voic:export-training-data
+   ```
+   Kimi K3 berpikir dulu sebelum menjawab, jadi satu sesi bisa beberapa menit. Sesi simulasi dimiliki akun
+   `teacher@voic.local` dan tidak dihitung sebagai pengunjung booth.
+3. **Google Colab (T4 gratis):** buka `ai_service/colab/latih_voic_coach.ipynb`, unggah
+   `ai_service/datasets/sft/voic_exam_sft.jsonl`, `voic_exam_eval.jsonl`, dan `ai_service/finetune_lora.py`,
+   lalu jalankan semua sel. Hasilnya (file `.gguf` + `Modelfile`) tersimpan di Google Drive.
+4. **Laptop:** di folder hasil unduhan, pasang modelnya dan ukur hasilnya:
+   ```bash
+   ollama create voic-coach -f Modelfile
+   python ai_service/eval_dialogue.py --models voic-coach qwen3:4b
+   ```
+   Biarkan `VOIC_AI_MODEL=` kosong di `.env` agar ujian memakai `voic-coach` lokal.
+
+> Kimi K3 juga bisa langsung jadi penguji saat ujian dengan `VOIC_AI_MODEL=kimi-k3:cloud`, tetapi itu **bukan AI lokal**
+> (butuh internet, jawaban peserta dikirim ke server Ollama; teks persetujuan otomatis menyesuaikan).
+
+## Pengembangan
+
+```bash
+php artisan test                               # test Laravel
+vendor/bin/pint                                # rapikan kode PHP
+cd ai_service && python -m unittest discover -s tests   # test layanan AI
+```
+
+Test berjalan otomatis di GitHub Actions setiap ada push ke `main` dan setiap pull request
+(lihat `.github/workflows/tests.yml`).
+
+Dokumen desain ada di folder [`docs/`](docs): PRD, arsitektur, skema database, dan panduan deploy.

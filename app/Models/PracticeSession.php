@@ -4,21 +4,26 @@ namespace App\Models;
 
 use Database\Factories\PracticeSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 #[Fillable([
     'user_id',
     'ai_role_id',
     'scenario_type',
+    'exam_mode',
     'duration_seconds',
     'face_score',
     'voice_score',
     'overall_score',
     'ai_conclusion',
     'feedback_notes',
+    'exam_state',
 ])]
 class PracticeSession extends Model
 {
@@ -37,8 +42,26 @@ class PracticeSession extends Model
             'face_score' => 'float',
             'voice_score' => 'float',
             'overall_score' => 'float',
+            'exam_state' => 'array',
             'feedback_notes' => 'array',
         ];
+    }
+
+    /**
+     * Owner of the simulated sessions made by `voic:teacher-generate` (training data, not real people).
+     */
+    public const TEACHER_EMAIL = 'teacher@voic.local';
+
+    /**
+     * Only sessions taken by real people: leaves out simulated teacher sessions.
+     *
+     * @param  Builder<PracticeSession>  $query
+     */
+    public function scopeTakenByPeople(Builder $query): void
+    {
+        $query->where(fn (Builder $inner) => $inner
+            ->whereNull('user_id')
+            ->orWhereHas('user', fn (Builder $user) => $user->where('email', '!=', self::TEACHER_EMAIL)));
     }
 
     /**
@@ -69,6 +92,82 @@ class PracticeSession extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(SessionMessage::class);
+    }
+
+    /**
+     * Determine if this session uses the three-part mock exam flow.
+     */
+    public function isExam(): bool
+    {
+        return $this->exam_mode !== null;
+    }
+
+    /**
+     * URL of the report for this session: the band-score report for exams
+     * (or the room if the exam is not finished yet), the legacy report otherwise.
+     */
+    public function reportUrl(): string
+    {
+        if ($this->isExam()) {
+            return $this->hasReport()
+                ? route('exam.result', $this)
+                : route('exam.room', $this);
+        }
+
+        return $this->isGuest() ? route('demo.show', $this) : route('practice.show', $this);
+    }
+
+    /**
+     * Signed, read-only link to the report that a phone can open without logging in,
+     * using the booth's public address (VOIC_PUBLIC_URL) when set.
+     */
+    public function shareUrl(int $days = 7): string
+    {
+        $signed = URL::temporarySignedRoute('exam.shared', now()->addDays($days), ['practiceSession' => $this], absolute: false);
+
+        return rtrim((string) (config('exam.public_url') ?: url('/')), '/').$signed;
+    }
+
+    /**
+     * Permanent, signed link to the public certificate page (QR code, WhatsApp, LinkedIn).
+     * The signature stops anyone from opening other people's certificates by guessing IDs.
+     */
+    public function verifyUrl(): string
+    {
+        return URL::signedRoute('practice.verify', ['practiceSession' => $this]);
+    }
+
+    /**
+     * Whether a finished report exists (band-score exam or coaching notes).
+     */
+    public function hasReport(): bool
+    {
+        return isset($this->feedback_notes['exam_report']) || isset($this->feedback_notes['coach_report']);
+    }
+
+    /**
+     * Whether this is a free coaching conversation rather than a scored exam.
+     */
+    public function isCoaching(): bool
+    {
+        return ($this->exam_state['session_type'] ?? null) === 'coach';
+    }
+
+    /**
+     * Delete the session, its messages and any recorded answer audio.
+     */
+    public function deleteWithRecordings(): void
+    {
+        Storage::disk('local')->deleteDirectory($this->recordingsDirectory());
+        $this->delete();
+    }
+
+    /**
+     * Private storage folder holding this session's recorded answers.
+     */
+    public function recordingsDirectory(): string
+    {
+        return 'exam-recordings/'.$this->id;
     }
 
     /**

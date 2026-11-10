@@ -11,9 +11,11 @@ class ApiConfig {
 
   // Roleplay & Practice
   static const String roles = '$baseUrl/roles';
-  static const String practiceStart = '$baseUrl/practice/start';
-  static String practiceMessage(int sessionId) => '$baseUrl/practice/$sessionId/message';
-  static String practiceFinish(int sessionId) => '$baseUrl/practice/$sessionId/finish';
+  // Three-part mock exam (same engine as the web app)
+  static const String examModes = '$baseUrl/exam/modes';
+  static String examStart(String mode) => '$baseUrl/exam/$mode/start';
+  static String examAnswer(int sessionId) => '$baseUrl/exam/$sessionId/answer';
+  static String examFinish(int sessionId) => '$baseUrl/exam/$sessionId/finish';
   static const String practiceHistory = '$baseUrl/practice';
   static String practiceDetail(int sessionId) => '$baseUrl/practice/$sessionId';
 }

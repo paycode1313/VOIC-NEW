@@ -28,6 +28,8 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentAiDialogue, setCurrentAiDialogue] = useState(initialGreeting);
   const [lastFacialCritique, setLastFacialCritique] = useState(null);
+  const [partTitle, setPartTitle] = useState(sessionData.partTitle || '');
+  const answerStartRef = useRef(Date.now());
   const [isMuted, setIsMuted] = useState(false);
 
   // Live Telemetry simulation
@@ -69,7 +71,10 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
       rate: 0.95,
       pitch: 1.0,
       onStart: () => setIsAiSpeaking(true),
-      onDone: () => setIsAiSpeaking(false),
+      onDone: () => {
+        setIsAiSpeaking(false);
+        answerStartRef.current = Date.now();
+      },
       onStopped: () => setIsAiSpeaking(false),
       onError: () => setIsAiSpeaking(false),
     });
@@ -102,95 +107,54 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
 
     Speech.stop();
     setIsModalOpen(false);
-    setIsUserSpeaking(true);
+    setIsProcessing(true);
+    const answerSeconds = (Date.now() - answerStartRef.current) / 1000;
 
-    setTimeout(async () => {
-      setIsUserSpeaking(false);
-      setIsProcessing(true);
+    try {
+      const res = await apiService.answerExam(sessionId, spokenText, answerSeconds, secondsElapsed);
+      setIsProcessing(false);
 
-      try {
-        const res = await apiService.sendMessage(
-          sessionId,
-          spokenText,
-          eyeContactRatio,
-          isSmiling,
-          faceDetected,
-          secondsElapsed
-        );
-
-        if (res.success) {
-          const reply =
-            res.response_text ||
-            res.ai_reply ||
-            res.ai_message?.message ||
-            'Jawaban Anda telah dicatat oleh dewan penguji.';
-
-          setCurrentAiDialogue(reply);
-          setIsProcessing(false);
-
-          if (res.facial_critique) {
-            setLastFacialCritique(res.facial_critique);
-          }
-
-          // Trigger Real AI Voice
-          speakDialogue(reply);
-        } else {
-          setIsProcessing(false);
-          Alert.alert('Respon AI', res.message || 'Tidak ada balasan dari AI.');
-        }
-      } catch (err) {
-        setIsProcessing(false);
-        Alert.alert('Gagal Mengirim Pesan', 'Periksa koneksi jaringan API Laravel Anda.');
+      if (!res.success) {
+        Alert.alert('Respon AI', res.message || 'Tidak ada balasan dari AI.');
+        return;
       }
-    }, 1200);
+
+      const reply = res.examiner_message?.text || '';
+      setCurrentAiDialogue(reply);
+      if (res.part_title) setPartTitle(res.part_title);
+      speakDialogue(reply);
+
+      if (res.completed) {
+        // The examiner just said the closing line: build the report.
+        finishSession();
+      }
+    } catch (err) {
+      setIsProcessing(false);
+      Alert.alert('Gagal Mengirim Jawaban', 'Periksa koneksi ke server Laravel.');
+    }
+  };
+
+  const finishSession = async () => {
+    try {
+      const res = await apiService.finishExam(sessionId, Math.max(secondsElapsed, 1));
+      if (res.success && res.evaluation) {
+        onFinishSession(res.evaluation);
+      } else {
+        Alert.alert('Gagal Membuat Rapor', res.message || 'Coba lagi beberapa saat.');
+      }
+    } catch (err) {
+      Alert.alert('Gagal Membuat Rapor', 'Periksa koneksi ke server Laravel.');
+    }
   };
 
   const handleFinishPrompt = () => {
     Speech.stop();
     Alert.alert(
       'Selesaikan Sesi Latihan?',
-      'AI Coach akan menyusun lembar rapor evaluasi performa vokal dan kontak mata Anda.',
+      'Rapor dibuat dari jawaban yang sudah kamu berikan sejauh ini.',
       [
         { text: 'Lanjut Latihan', style: 'cancel' },
-        {
-          text: 'Selesai & Nilai',
-          style: 'default',
-          onPress: async () => {
-            const calculatedFaceScore = Math.min(100, Math.max(50, Math.round(eyeContactRatio * 100)));
-            const calculatedVoiceScore = 86.0;
-            const calculatedOverall = Math.round((calculatedFaceScore * 0.4 + calculatedVoiceScore * 0.6) * 10) / 10;
-
-            try {
-              const res = await apiService.finishPractice(
-                sessionId,
-                Math.max(secondsElapsed, 10),
-                calculatedFaceScore,
-                calculatedVoiceScore,
-                calculatedOverall
-              );
-              const evalData = res.evaluation || res.session;
-              if (res.success && evalData) {
-                onFinishSession(evalData);
-              } else {
-                onFinishSession({
-                  overall_score: calculatedOverall,
-                  face_score: calculatedFaceScore,
-                  voice_score: calculatedVoiceScore,
-                  duration_seconds: secondsElapsed,
-                  ai_conclusion: 'Sesi latihan berhasil diselesaikan dengan artikulasi yang sangat baik.',
-                });
-              }
-            } catch (err) {
-              onFinishSession({
-                overall_score: calculatedOverall,
-                face_score: calculatedFaceScore,
-                voice_score: calculatedVoiceScore,
-                duration_seconds: secondsElapsed,
-                ai_conclusion: 'Sesi diselesaikan. Performa vokal dan kontak mata Anda sudah tergolong kompeten.',
-              });
-            }
-          },
-        },
+        { text: 'Selesai & Nilai', style: 'default', onPress: finishSession },
       ]
     );
   };
@@ -245,7 +209,7 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerRoleName} numberOfLines={1}>{role?.name || 'VOIC - Penguji'}</Text>
-          <Text style={styles.headerScenario} numberOfLines={1}>{scenario?.name || 'Simulasi Video Call AI'}</Text>
+          <Text style={styles.headerScenario} numberOfLines={1}>{partTitle || scenario?.name || 'Simulasi Ujian'}</Text>
         </View>
 
         {/* Audio Mute/Unmute Toggle Button */}

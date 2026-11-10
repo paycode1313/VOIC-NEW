@@ -182,7 +182,7 @@ class CredentialVerificationService
     public function getVerificationPayload(PracticeSession $session): array
     {
         $serial = $this->generateCertificateSerial($session);
-        $url = route('practice.verify', $session);
+        $url = $session->verifyUrl();
         $benchmark = $this->getBenchmarkData($session);
 
         return [

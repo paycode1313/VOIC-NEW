@@ -34,3 +34,12 @@ mobile/react-native/node_modules/
 mobile/react-native/.expo/
 mobile/flutter/.dart_tool/
 mobile/flutter/build/
+
+# VOIC training data: may contain real user conversations, keep out of git.
+/ai_service/datasets/harvest/
+/ai_service/datasets/sft/
+/ai_service/outputs/
+
+/ai_service/models/
+/ai_service/Modelfile.local
+/public/vendor/mediapipe/

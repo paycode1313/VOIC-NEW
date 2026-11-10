@@ -11,9 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'practice_session_id',
     'sender',
+    'exam_part',
     'message',
     'audio_url',
     'facial_status',
+    'meta',
     'timestamp_seconds',
 ])]
 class SessionMessage extends Model
@@ -30,6 +32,8 @@ class SessionMessage extends Model
     {
         return [
             'facial_status' => 'array',
+            'meta' => 'array',
+            'exam_part' => 'integer',
             'timestamp_seconds' => 'integer',
         ];
     }

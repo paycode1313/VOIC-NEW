@@ -35,14 +35,26 @@ return [
         ],
     ],
 
+    'ollama' => [
+        'url' => env('OLLAMA_URL', 'http://127.0.0.1:11434'),
+    ],
+
     'ai_service' => [
         'url' => env('AI_SERVICE_URL', 'http://127.0.0.1:8001'),
-        'timeout' => (int) env('AI_SERVICE_TIMEOUT', 15),
+        'timeout' => (int) env('AI_SERVICE_TIMEOUT', 90),
     ],
 
     'groq' => [
         'key' => env('GROQ_API_KEY'),
         'model' => env('GROQ_MODEL', 'llama-3.3-70b-versatile'),
+    ],
+
+    'openrouter' => [
+        'key' => env('OPENROUTER_API_KEY'),
+        'url' => env('OPENROUTER_URL', 'https://openrouter.ai/api/v1'),
+        'timeout' => (int) env('OPENROUTER_TIMEOUT', 120),
+        'retries' => 3,
+        'backoff' => 15,
     ],
 
     'openai' => [
