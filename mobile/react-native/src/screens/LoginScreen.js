@@ -11,19 +11,37 @@ import {
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../constants/theme';
 import { apiService } from '../services/apiService';
+import VoicLogo from '../components/VoicLogo';
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('test@example.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
+    if (!email.trim() || !password) {
+      setError('Email dan kata sandi wajib diisi.');
+      return;
+    }
+
+    if (isRegisterMode && password.length < 8) {
+      setError('Kata sandi harus memiliki minimal 8 karakter.');
+      return;
+    }
+
+    if (isRegisterMode && password !== passwordConfirmation) {
+      setError('Konfirmasi kata sandi belum sama.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -37,14 +55,14 @@ export default function LoginScreen({ onLoginSuccess }) {
         if (res.success && res.token) {
           onLoginSuccess(res.user);
         } else {
-          setError(res.message || 'Pendaftaran gagal, periksa kelengkapan form.');
+          setError(Object.values(res.errors || {}).flat()[0] || res.message || 'Pendaftaran gagal. Periksa kembali data Anda.');
         }
       } else {
         const res = await apiService.login(email.trim(), password);
         if (res.success && res.token) {
           onLoginSuccess(res.user);
         } else {
-          setError(res.message || 'Login gagal, periksa email & password.');
+          setError(Object.values(res.errors || {}).flat()[0] || res.message || 'Login gagal. Periksa email dan kata sandi Anda.');
         }
       }
     } catch (err) {
@@ -64,24 +82,9 @@ export default function LoginScreen({ onLoginSuccess }) {
       <View style={styles.ambientAuraBottom} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Logo Orb */}
         <View style={styles.logoContainer}>
-          <LinearGradient
-            colors={colors.orbGradients}
-            style={styles.logoCircle}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <MaterialCommunityIcons name="waveform" size={42} color="#FFFFFF" />
-          </LinearGradient>
-          <Text style={styles.brandTitle}>VOIC</Text>
+          <VoicLogo width={174} height={50} />
           <Text style={styles.brandSubtitle}>Voice & Optics Intelligent Coach</Text>
-          <View style={styles.badgeRow}>
-            <View style={styles.badgePill}>
-              <View style={styles.badgeDot} />
-              <Text style={styles.badgeText}>AI Roleplay & Visual Telemetry</Text>
-            </View>
-          </View>
         </View>
 
         {error && (
@@ -128,9 +131,33 @@ export default function LoginScreen({ onLoginSuccess }) {
               placeholderTextColor={colors.textMuted}
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
             />
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+              onPress={() => setShowPassword((visible) => !visible)}
+              style={styles.passwordToggle}
+            >
+              <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color={colors.textSecondary} />
+            </TouchableOpacity>
           </View>
+
+          {isRegisterMode && (
+            <View style={styles.inputWrapper}>
+              <Feather name="shield" size={18} color={colors.textSecondary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Konfirmasi kata sandi"
+                placeholderTextColor={colors.textMuted}
+                value={passwordConfirmation}
+                onChangeText={setPasswordConfirmation}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+            </View>
+          )}
 
           <TouchableOpacity
             style={styles.loginButton}
@@ -160,6 +187,7 @@ export default function LoginScreen({ onLoginSuccess }) {
             onPress={() => {
               setError(null);
               setIsRegisterMode(!isRegisterMode);
+              setPasswordConfirmation('');
             }}
           >
             <Text style={styles.switchModeText}>
@@ -206,56 +234,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  logoCircle: {
-    width: 82,
-    height: 82,
-    borderRadius: 41,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6,
-    shadowRadius: 24,
-    elevation: 12,
-    borderWidth: 1.5,
-    borderColor: 'rgba(56, 189, 248, 0.4)',
-  },
-  brandTitle: {
-    fontSize: 34,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 2,
-  },
   brandSubtitle: {
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: 4,
-  },
-  badgeRow: {
-    marginTop: 10,
-  },
-  badgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
-  },
-  badgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.accentCyan,
-    marginRight: 6,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.accentCyan,
   },
   errorBox: {
     flexDirection: 'row',
@@ -293,6 +275,10 @@ const styles = StyleSheet.create({
     height: 52,
     color: '#FFFFFF',
     fontSize: 15,
+  },
+  passwordToggle: {
+    padding: 8,
+    marginRight: -8,
   },
   loginButton: {
     marginTop: 6,

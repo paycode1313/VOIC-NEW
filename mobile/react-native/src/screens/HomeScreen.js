@@ -10,11 +10,14 @@ import {
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../constants/theme';
 import { apiService } from '../services/apiService';
+import VoicLogo from '../components/VoicLogo';
 
-export default function HomeScreen({ user, onStartPractice, onLogout }) {
+export default function HomeScreen({ user, onStartPractice }) {
+  const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
   const [roles, setRoles] = useState([]);
   const [scenarios, setScenarios] = useState([]);
@@ -83,20 +86,9 @@ export default function HomeScreen({ user, onStartPractice, onLogout }) {
   return (
     <View style={styles.container}>
       {/* Top Navigation Bar (Identik dengan Web Nav) */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 12) }]}>
         <View style={styles.brandRow}>
-          <LinearGradient
-            colors={colors.orbGradients}
-            style={styles.miniOrb}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <MaterialCommunityIcons name="waveform" size={16} color="#FFFFFF" />
-          </LinearGradient>
-          <Text style={styles.topBrandText}>VOIC</Text>
-          <View style={styles.mobileBadge}>
-            <Text style={styles.mobileBadgeText}>MOBILE</Text>
-          </View>
+          <VoicLogo width={76} height={22} />
         </View>
 
         <View style={styles.rightNavRow}>
@@ -106,11 +98,6 @@ export default function HomeScreen({ user, onStartPractice, onLogout }) {
               {user?.name || 'Praktikan'}
             </Text>
           </View>
-          {onLogout && (
-            <TouchableOpacity onPress={onLogout} style={styles.logoutButton} title="Keluar">
-              <Feather name="log-out" size={15} color={colors.textSecondary} />
-            </TouchableOpacity>
-          )}
         </View>
       </View>
 
@@ -239,11 +226,11 @@ export default function HomeScreen({ user, onStartPractice, onLogout }) {
           );
         })}
 
-        <View style={{ height: 110 }} />
+        <View style={{ height: 190 }} />
       </ScrollView>
 
       {/* Fixed Bottom CTA Bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { bottom: 66 + Math.max(insets.bottom, 8) }]}>
         <TouchableOpacity
           style={styles.startButton}
           onPress={handleStart}
@@ -292,7 +279,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 46,
+    paddingTop: 12,
     paddingBottom: 14,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
@@ -301,37 +288,6 @@ const styles = StyleSheet.create({
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  miniOrb: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.4)',
-  },
-  topBrandText: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 1,
-  },
-  mobileBadge: {
-    marginLeft: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 4,
-    backgroundColor: 'rgba(37, 99, 235, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
-  },
-  mobileBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: colors.accentCyan,
-    letterSpacing: 0.5,
   },
   rightNavRow: {
     flexDirection: 'row',
@@ -602,12 +558,12 @@ const styles = StyleSheet.create({
   },
   bottomBar: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 74,
     left: 0,
     right: 0,
     paddingHorizontal: 20,
     paddingTop: 14,
-    paddingBottom: 22,
+    paddingBottom: 12,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.cardBorderSubtle,

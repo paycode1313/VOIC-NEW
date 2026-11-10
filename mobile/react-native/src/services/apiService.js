@@ -8,6 +8,10 @@ export const setAuthToken = (token) => {
 
 export const getAuthToken = () => authToken;
 
+export const clearAuthToken = () => {
+  authToken = null;
+};
+
 const getHeaders = () => ({
   'Content-Type': 'application/json',
   Accept: 'application/json',
@@ -50,6 +54,30 @@ export const apiService = {
       setAuthToken(data.token);
     }
     return data;
+  },
+
+  getCurrentUser: async () => {
+    const res = await fetch(endpoints.user, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    return await res.json();
+  },
+
+  logout: async () => {
+    const res = await fetch(endpoints.logout, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return await res.json();
+  },
+
+  getPracticeHistory: async () => {
+    const res = await fetch(endpoints.practiceHistory, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+    return await res.json();
   },
 
   // Get AI Roles & Scenarios
