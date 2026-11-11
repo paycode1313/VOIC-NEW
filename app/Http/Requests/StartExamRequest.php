@@ -29,6 +29,7 @@ class StartExamRequest extends FormRequest
             'parts' => ['nullable', 'array', 'min:1'],
             'parts.*' => ['integer', 'in:1,2,3'],
             'guest_name' => ['nullable', 'string', 'max:100'],
+            'study_code' => ['nullable', 'string', 'max:20'],
             'consent' => ['accepted'],
             'session_type' => ['nullable', 'string', 'in:exam,coach'],
             'focus' => ['nullable', 'string', 'in:fluency,vocabulary,structure,delivery'],

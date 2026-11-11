@@ -9,11 +9,13 @@ use App\Http\Requests\StartExamRequest;
 use App\Models\AiRole;
 use App\Models\PracticeSession;
 use App\Models\SessionMessage;
+use App\Models\StudySurvey;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExamFlowService;
 use App\Services\Exam\ExaminerService;
 use App\Services\Exam\ExamProgressService;
 use App\Services\Exam\ExamReportService;
+use App\Services\Study\UserStudy;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -92,6 +94,13 @@ class ExamController extends Controller
             'context_material' => $request->validated('context_material'),
             'topic' => $topic,
         ];
+
+        // User trial: the participant code is remembered for the next practice on this device.
+        $studyCode = UserStudy::normalizeCode($request->validated('study_code'));
+        if ($studyCode !== null) {
+            $notes['study_code'] = $studyCode;
+            $request->session()->put('study_code', $studyCode);
+        }
 
         if (! $user) {
             $guestToken = Str::random(40);
@@ -205,7 +214,18 @@ class ExamController extends Controller
         $audioPath = $pending ? Storage::disk('local')->path($pending) : null;
 
         return response()->stream(function () use ($request, $practiceSession, $flow, $examiner, $audioPath, $pending, $typed, $state) {
-            $send = function (array $event): void {
+            // Latency per turn (ms since the answer arrived), for voic:latency and the pitch deck.
+            $startedAt = hrtime(true);
+            $elapsed = fn (): int => (int) round((hrtime(true) - $startedAt) / 1e6);
+            $latency = ['stt_ms' => null, 'first_sentence_ms' => null, 'first_sound_ms' => null];
+
+            $send = function (array $event) use (&$latency, $elapsed): void {
+                if (($event['type'] ?? null) === 'sentence') {
+                    $latency['first_sentence_ms'] ??= $elapsed();
+                    if (! empty($event['audio_url'])) {
+                        $latency['first_sound_ms'] ??= $elapsed();
+                    }
+                }
                 echo json_encode($event, JSON_UNESCAPED_UNICODE)."\n";
                 if (ob_get_level() > 0) {
                     ob_flush();
@@ -223,6 +243,7 @@ class ExamController extends Controller
                     return;
                 }
                 $answer = $transcript['text'];
+                $latency['stt_ms'] = $elapsed();
                 $send(['type' => 'transcript', 'text' => $answer, 'engine' => $transcript['engine']]);
 
                 if ($answer === '') {
@@ -246,6 +267,8 @@ class ExamController extends Controller
             if ($pending !== null) {
                 $this->attachRecording($practiceSession, $pending);
             }
+
+            $this->recordLatency($practiceSession, $latency + ['total_ms' => $elapsed(), 'voice' => $audioPath !== null]);
 
             $send(['type' => 'done', 'state' => $payload]);
         }, 200, [
@@ -406,7 +429,66 @@ class ExamController extends Controller
             'shared' => $shared,
             'shareUrl' => $practiceSession->shareUrl(),
             'drill' => fn (string $criterion) => app(ExamProgressService::class)->drillUrl($practiceSession->exam_mode, $criterion),
+            'study' => $this->studyState($practiceSession, $canManage && ! $shared),
         ]);
+    }
+
+    /**
+     * Attach the measured latency to the examiner reply this turn produced.
+     *
+     * @param  array<string, int|bool|null>  $latency
+     */
+    protected function recordLatency(PracticeSession $practiceSession, array $latency): void
+    {
+        $reply = $practiceSession->messages()->where('sender', 'ai')->latest('id')->first();
+        if ($reply !== null) {
+            $reply->update(['meta' => array_merge($reply->meta ?? [], ['latency' => $latency])]);
+        }
+    }
+
+    /**
+     * User-trial banner on the report: which practice this was, and the questionnaire after the third.
+     *
+     * @return array{code: string, attempt: ?int, total: int, survey: bool}|null
+     */
+    protected function studyState(PracticeSession $practiceSession, bool $isOwner): ?array
+    {
+        $code = UserStudy::codeOf($practiceSession);
+        if (! $isOwner || $code === null) {
+            return null;
+        }
+        $study = app(UserStudy::class);
+
+        return [
+            'code' => $code,
+            'attempt' => $study->attemptNumber($practiceSession),
+            'total' => UserStudy::ATTEMPTS_FOR_SURVEY,
+            'survey' => $study->needsSurvey($practiceSession),
+        ];
+    }
+
+    /**
+     * Store the user-trial questionnaire (once per participant code).
+     */
+    public function survey(Request $request, PracticeSession $practiceSession): RedirectResponse
+    {
+        Gate::authorize('update', $practiceSession);
+        abort_unless(app(UserStudy::class)->needsSurvey($practiceSession), 404);
+
+        $rules = ['comment' => ['nullable', 'string', 'max:1000']];
+        foreach (array_keys(UserStudy::QUESTIONS) as $key) {
+            $rules["answers.{$key}"] = ['required', 'integer', 'between:1,5'];
+        }
+        $validated = $request->validate($rules, ['answers.*.required' => 'Mohon jawab semua pertanyaan.']);
+
+        StudySurvey::create([
+            'code' => UserStudy::codeOf($practiceSession),
+            'practice_session_id' => $practiceSession->id,
+            'answers' => array_map('intval', $validated['answers']),
+            'comment' => $validated['comment'] ?? null,
+        ]);
+
+        return redirect()->route('exam.result', $practiceSession)->with('status', 'study-survey-saved');
     }
 
     /**

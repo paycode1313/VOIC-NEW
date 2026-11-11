@@ -4,6 +4,7 @@ namespace App\Services\Exam;
 
 use App\Models\PracticeSession;
 use App\Models\SessionMessage;
+use App\Services\Study\UserStudy;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -117,6 +118,7 @@ class ExamReportService
         ]);
 
         $this->updateLearningProfile($session, $report);
+        app(UserStudy::class)->record($session, $report);
 
         return $report;
     }

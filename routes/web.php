@@ -37,6 +37,7 @@ Route::prefix('latihan')->name('exam.')->controller(ExamController::class)->grou
     Route::delete('/sesi/{practiceSession}', 'destroy')->name('destroy');
     Route::get('/sesi/{practiceSession}/rekaman/{message}', 'recording')->scopeBindings()->name('recording');
     Route::post('/sesi/{practiceSession}/pesan/{message}/nilai', 'rate')->scopeBindings()->middleware('throttle:60,1')->name('rate');
+    Route::post('/sesi/{practiceSession}/survei', 'survey')->middleware('throttle:60,1')->name('survey');
     Route::get('/{mode}', 'setup')->whereIn('mode', array_keys(config('exam.modes')))->name('setup');
     Route::post('/{mode}/mulai', 'start')->whereIn('mode', array_keys(config('exam.modes')))->middleware('throttle:10,1')->name('start');
 });

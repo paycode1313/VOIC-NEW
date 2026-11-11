@@ -77,6 +77,18 @@
                            placeholder="{{ $isEn ? 'So the examiner can greet you' : 'Biar penguji bisa menyapamu' }}"
                            class="mt-2 w-full rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] focus:border-slate-900 focus:ring-slate-900 dark:border-white/10 dark:bg-white/5">
                 @endguest
+
+                @php
+                    $studyCode = old('study_code', session('study_code'));
+                @endphp
+                <details class="mt-5 text-sm" @if ($studyCode) open @endif>
+                    <summary class="cursor-pointer font-semibold text-slate-500">{{ $isEn ? 'Taking part in the user trial?' : 'Ikut uji coba VOIC?' }}</summary>
+                    <label for="study_code" class="mt-3 block font-semibold">{{ $isEn ? 'Participant code' : 'Kode peserta' }}</label>
+                    <input id="study_code" name="study_code" type="text" maxlength="20" value="{{ $studyCode }}" autocomplete="off"
+                           placeholder="{{ $isEn ? 'e.g. P01, from the trial team' : 'mis. P01, dari tim uji coba' }}"
+                           class="mt-2 w-full rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] uppercase focus:border-slate-900 focus:ring-slate-900 dark:border-white/10 dark:bg-white/5">
+                    <p class="mt-2 text-xs text-slate-500">{{ $isEn ? 'Only your scores are kept under this code (no name, no recording), to measure progress over 3 practices.' : 'Hanya skor yang disimpan dengan kode ini (tanpa nama, tanpa rekaman), untuk mengukur kemajuan selama 3 kali latihan.' }}</p>
+                </details>
             </div>
 
             <fieldset x-show="type === 'exam'" class="rounded-3xl border border-black/5 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">

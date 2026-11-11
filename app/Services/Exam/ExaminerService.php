@@ -45,6 +45,13 @@ class ExaminerService
     public const RECENT_MESSAGES = 12;
 
     /**
+     * Older messages move into the memory block this many at a time. The system prompt (the start
+     * of the prompt) then stays identical for several turns, so Ollama reuses its cache and only
+     * reads the new answer: on a laptop CPU, re-reading the whole prompt costs 20-35 seconds.
+     */
+    public const MEMORY_STEP = 8;
+
+    /**
      * Model chosen for this process instead of config('exam.ai_model') (used by the teacher command).
      */
     protected ?string $modelOverride = null;
@@ -477,12 +484,14 @@ class ExaminerService
     public function buildMessages(array $turn): array
     {
         $history = $turn['history'];
-        $older = array_slice($history, 0, max(0, count($history) - self::RECENT_MESSAGES));
+        $overflow = max(0, count($history) - self::RECENT_MESSAGES);
+        $condensed = intdiv($overflow + self::MEMORY_STEP - 1, self::MEMORY_STEP) * self::MEMORY_STEP;
+        $older = array_slice($history, 0, $condensed);
         $system = $this->systemPrompt($turn).$this->sessionMemory($older, $turn['language'] === 'en');
 
         $messages = [['role' => 'system', 'content' => $system]];
 
-        foreach (array_slice($history, -self::RECENT_MESSAGES) as $item) {
+        foreach (array_slice($history, $condensed) as $item) {
             $messages[] = [
                 'role' => $item['role'] === 'user' ? 'user' : 'assistant',
                 'content' => Str::limit($item['content'], 700),

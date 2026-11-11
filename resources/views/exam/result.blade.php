@@ -89,6 +89,10 @@
             </script>
         @endunless
 
+        @if ($study)
+            @include('exam.partials.study')
+        @endif
+
         {{-- Criteria --}}
         <section class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($report['criteria'] as $criterion)

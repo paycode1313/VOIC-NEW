@@ -356,6 +356,14 @@ class ExamFlowTest extends TestCase
         $this->assertSame('Dua ribu gambar dari pabrik itu dataset yang lumayan. Ngomong-ngomong, apa yang bikin Anda tertarik ke topik ini?', $ai->message);
         $this->assertSame('local_llm', $ai->meta['engine']);
         $this->assertSame(route('exam.audio', 'tts_1_a.wav'), $ai->audio_url);
+
+        // Waiting time per turn is recorded for voic:latency: speech-to-text, first sound, total.
+        $latency = $ai->meta['latency'];
+        $this->assertTrue($latency['voice']);
+        $this->assertIsInt($latency['stt_ms']);
+        $this->assertGreaterThanOrEqual($latency['stt_ms'], $latency['first_sound_ms']);
+        $this->assertGreaterThanOrEqual($latency['first_sound_ms'], $latency['total_ms']);
+        $this->artisan('voic:latency')->expectsOutputToContain('Sampai suara penguji terdengar')->assertSuccessful();
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/exam/respond/stream') && $request['inline_audio'] === true);
         $this->assertStringContainsString('YOLOv8', $session->messages()->where('sender', 'user')->first()->message);
     }

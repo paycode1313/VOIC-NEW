@@ -78,14 +78,14 @@ Kamera ──► MediaPipe Face Landmarker di browser (kontak mata, ketegangan w
 
 - **Semua berjalan di laptop.** Tidak ada suara atau video yang dikirim ke internet. Analisis kamera bahkan tidak meninggalkan browser.
 - **Metode guru–murid (distilasi):** model besar (Kimi) menulis contoh percakapan ujian yang ideal, lalu model kecil Qwen dilatih meniru di Google Colab dan dipasang ke Ollama sebagai `voic-coach`. Hasilnya penguji yang nyambung, tetapi cukup ringan untuk laptop biasa.
-- **[ISI]** Hasil perbandingan: model sebelum vs sesudah dilatih, dinilai pada set percakapan uji yang sama (misalnya "% balasan yang menanggapi detail jawaban peserta: X% → Y%").
-- **[ISI]** Jeda rata-rata dari peserta selesai bicara sampai penguji mulai menjawab, diukur di laptop demo (target < 3 detik).
+- **[ISI]** Hasil perbandingan dari `php artisan voic:compare-models --score`: model sebelum vs sesudah dilatih, dinilai pada set percakapan uji yang sama (misalnya "% balasan yang menanggapi detail jawaban peserta: X% → Y%").
+- **[ISI]** Dari `php artisan voic:latency`: jeda rata-rata dari peserta selesai bicara sampai penguji mulai menjawab, diukur di laptop demo (target < 3 detik).
 
 ---
 
 ## Slide 7 — Bukti dari pengguna
 
-**[ISI] Wajib ada, ini yang paling dicari juri.** Format yang disarankan:
+**[ISI] Wajib ada, ini yang paling dicari juri.** Cara mengumpulkan datanya: [uji_coba_pengguna.md](uji_coba_pengguna.md). Angka di bawah keluar dari `php artisan voic:study-report`. Format yang disarankan:
 
 | Data | Hasil |
 |---|---|
@@ -111,6 +111,8 @@ Kamera ──► MediaPipe Face Landmarker di browser (kontak mata, ketegangan w
 ---
 
 ## Slide 9 — Model bisnis & keberlanjutan
+
+Versi lengkap (harga, biaya, rencana 12 bulan, risiko): [model_bisnis.md](model_bisnis.md).
 
 **[ISI / sesuaikan dengan rencana tim.]** Usulan awal:
 - **Kampus & career center (B2B):** lisensi per kampus untuk latihan sidang dan persiapan kerja, dipasang di lab atau server kampus (cocok karena bisa offline).

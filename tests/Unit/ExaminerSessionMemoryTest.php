@@ -60,8 +60,24 @@ class ExaminerSessionMemoryTest extends TestCase
         $this->assertStringContainsString('dashboard penjualan React untuk 40 toko retail', $system);
         $this->assertStringContainsString('Kamu sudah bertanya: Boleh perkenalkan diri dulu?', $system);
 
-        // System prompt + 12 recent messages + the current instruction.
-        $this->assertCount(1 + ExaminerService::RECENT_MESSAGES + 1, $messages);
+        // System prompt + at most 12 recent messages (word for word) + the current instruction.
+        $this->assertLessThanOrEqual(1 + ExaminerService::RECENT_MESSAGES + 1, count($messages));
+        $this->assertSame('Jawaban ke-10 tentang pengalaman kerja tim.', $messages[count($messages) - 2]['content']);
+    }
+
+    public function test_system_prompt_stays_identical_for_several_turns_so_the_model_cache_is_reused(): void
+    {
+        $examiner = app(ExaminerService::class);
+        $full = array_merge($this->longHistory(), $this->longHistory());
+        $systemAt = fn (int $length) => $examiner->buildMessages($this->turn(array_slice($full, 0, $length)))[0]['content'];
+
+        // Within one block of MEMORY_STEP messages the start of the prompt does not change...
+        $first = ExaminerService::RECENT_MESSAGES + 1;
+        $block = array_map($systemAt, range($first, $first + ExaminerService::MEMORY_STEP - 1));
+        $this->assertCount(1, array_unique($block));
+
+        // ...and it only moves on at the next block.
+        $this->assertNotSame($block[0], $systemAt($first + ExaminerService::MEMORY_STEP));
     }
 
     public function test_short_conversation_has_no_memory_block(): void
