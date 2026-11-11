@@ -19,6 +19,18 @@ class TeacherModelTest extends TestCase
 
     private const REPLY = 'Dua tahun di e-commerce itu pengalaman yang relevan sekali. Bagian mana dari proyek React itu yang paling menantang buat kamu?';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Independent of the developer's .env (which may point the teacher at OpenRouter).
+        config([
+            'exam.teacher_model' => 'kimi-k3:cloud',
+            'exam.teacher_candidate_model' => 'qwen3:4b',
+            'exam.ai_model' => null,
+        ]);
+    }
+
     private function startExam(string $mode): PracticeSession
     {
         $this->post(route('exam.start', $mode), [
@@ -274,5 +286,40 @@ class TeacherModelTest extends TestCase
 
         // The AI service is never asked to run an OpenRouter model name.
         Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/exam/respond') && ($request['model'] ?? null) === self::OPENROUTER_TEACHER);
+    }
+
+    public function test_dialogues_pasted_from_kimi_chat_are_exported_as_training_data(): void
+    {
+        $dir = 'storage/framework/testing/kimi_'.uniqid();
+        File::ensureDirectoryExists(base_path($dir));
+        $followUp = 'Bagian mana dari proyek React itu yang paling menantang?';
+        $dialogue = [[
+            'mode' => 'wawancara',
+            'topic' => 'Frontend Developer',
+            'turns' => [
+                ['part' => 1, 'question' => 'Boleh perkenalkan diri?', 'answer' => 'Saya Dimas, dua tahun pegang React.', 'directive' => 'follow_up', 'reply' => 'Dua tahun React itu relevan. '.$followUp],
+                ['part' => 1, 'question' => $followUp, 'answer' => 'Eee, maksudnya gimana Kak?', 'directive' => 'clarify', 'reply' => 'Maksudnya bagian yang paling bikin pusing. '.$followUp],
+                ['part' => 1, 'question' => $followUp, 'answer' => 'Kurang tahu.', 'directive' => 'ngawur', 'reply' => 'x'],
+            ],
+        ]];
+        // What a chat model typically returns: chatter and a ``` fence around the JSON.
+        File::put(base_path($dir.'/a.json'), "Berikut dialognya:\n```json\n".json_encode($dialogue)."\n```\nSemoga membantu!");
+        File::put(base_path($dir.'/rusak.json'), '{rusak');
+
+        $this->artisan('voic:export-training-data', [
+            '--no-sessions' => true, '--seed' => 'none.json', '--manual' => $dir,
+            '--output' => $dir.'/out.jsonl', '--eval-output' => $dir.'/eval.jsonl', '--eval-ratio' => 0,
+        ])
+            ->expectsOutputToContain('rusak.json')
+            ->assertSuccessful();
+
+        $rows = array_map(fn ($line) => json_decode($line, true), file(base_path($dir.'/out.jsonl'), FILE_IGNORE_NEW_LINES));
+        File::deleteDirectory(base_path($dir));
+
+        // The broken third turn is cut, the two good ones remain, in the inference prompt format.
+        $this->assertCount(2, $rows);
+        $this->assertSame(['manual', 'manual'], array_column(array_column($rows, 'meta'), 'source'));
+        $this->assertSame(['follow_up', 'clarify'], array_column(array_column($rows, 'meta'), 'directive'));
+        $this->assertSame('Maksudnya bagian yang paling bikin pusing. '.$followUp, end($rows[1]['messages'])['content']);
     }
 }

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\File;
 
 #[Signature('voic:export-training-data
     {--seed=ai_service/datasets/seed/exam_seed_dialogues.json : Handwritten seed dialogues}
+    {--manual=ai_service/datasets/kimi : Folder of *.json dialogues written in the seed format (e.g. by Kimi on kimi.com)}
     {--output=ai_service/datasets/sft/voic_exam_sft.jsonl : Training split (chat JSONL)}
     {--eval-output=ai_service/datasets/sft/voic_exam_eval.jsonl : Held-out evaluation split}
     {--eval-ratio=0.12 : Share of examples kept for evaluation}
@@ -27,10 +28,28 @@ class ExportExamTrainingData extends Command
     {
         $examples = [];
 
-        foreach ($this->seedTurns($blueprint) as $turn) {
-            $examples[] = $this->example($examiner, $turn, 'seed');
+        $seedPath = base_path((string) $this->option('seed'));
+        if (File::exists($seedPath)) {
+            foreach ($this->seedTurns($blueprint, $this->loadDialogues($seedPath)) as $turn) {
+                $examples[] = $this->example($examiner, $turn, 'seed');
+            }
+        } else {
+            $this->components->warn("Seed file not found: {$seedPath}");
         }
         $seedCount = count($examples);
+
+        $manualDir = base_path((string) $this->option('manual'));
+        $manualDialogues = [];
+        foreach (File::isDirectory($manualDir) ? File::glob($manualDir.'/*.json') : [] as $file) {
+            $manualDialogues = array_merge($manualDialogues, $this->loadDialogues($file));
+        }
+        foreach ($this->seedTurns($blueprint, $manualDialogues) as $turn) {
+            $examples[] = $this->example($examiner, $turn, 'manual');
+        }
+        $manualCount = count($examples) - $seedCount;
+        if ($manualDialogues !== []) {
+            $this->line('  <fg=gray>→</> '.count($manualDialogues)." dialog manual dari {$this->option('manual')} ({$manualCount} contoh)");
+        }
 
         if (! $this->option('no-sessions')) {
             foreach ($this->sessionTurns($blueprint) as [$turn, $source]) {
@@ -61,29 +80,87 @@ class ExportExamTrainingData extends Command
         $this->write((string) $this->option('eval-output'), $eval);
 
         $this->components->info(sprintf(
-            'Exported %d examples (%d seed, %d from sessions): %d train, %d eval.',
-            count($examples), $seedCount, count($examples) - $seedCount, count($train), count($eval)
+            'Exported %d examples (%d seed, %d manual, %d from sessions): %d train, %d eval.',
+            count($examples), $seedCount, $manualCount, count($examples) - $seedCount - $manualCount, count($train), count($eval)
         ));
 
         return self::SUCCESS;
     }
 
     /**
-     * Expand the seed file into examiner turns with running history.
+     * Read dialogues in the seed format from a JSON file, keeping only well-formed ones.
+     * Tolerates what a chat model typically adds around the JSON (``` fences, a sentence before or after).
      *
      * @return list<array<string, mixed>>
      */
-    protected function seedTurns(ExamBlueprint $blueprint): array
+    protected function loadDialogues(string $path): array
     {
-        $path = base_path((string) $this->option('seed'));
-        if (! File::exists($path)) {
-            $this->components->warn("Seed file not found: {$path}");
+        $name = basename($path);
+        $raw = trim((string) File::get($path));
+        $raw = (string) preg_replace('/^ï»¿/', '', $raw);
+        $data = json_decode($raw, true);
+        if (! is_array($data)) {
+            // Cut to the outermost JSON array/object, dropping fences and chatter.
+            $start = strcspn($raw, '[{');
+            $end = max((int) strrpos($raw, ']'), (int) strrpos($raw, '}'));
+            $data = $end > $start ? json_decode(substr($raw, $start, $end - $start + 1), true) : null;
+        }
+        if (! is_array($data)) {
+            $this->components->warn("{$name}: bukan JSON yang valid (".json_last_error_msg().'), dilewati.');
 
             return [];
         }
+        if (isset($data['turns'])) {
+            $data = [$data];
+        }
 
+        $modes = ['wawancara', 'sidang', 'pitching'];
+        $directives = [ExaminerService::DIRECTIVE_REACT, ExaminerService::DIRECTIVE_FOLLOW_UP, ExaminerService::DIRECTIVE_CLARIFY, ExaminerService::DIRECTIVE_NEXT];
+        $dialogues = [];
+        foreach (array_values($data) as $number => $dialogue) {
+            $label = "{$name} dialog #".($number + 1);
+            if (! is_array($dialogue) || ! in_array($dialogue['mode'] ?? null, $modes, true) || ! is_array($dialogue['turns'] ?? null)) {
+                $this->components->warn("{$label}: mode/turns tidak valid, dilewati.");
+
+                continue;
+            }
+            $turns = [];
+            foreach (array_values($dialogue['turns']) as $turn) {
+                $ok = is_array($turn)
+                    && in_array((int) ($turn['part'] ?? 0), [1, 2, 3], true)
+                    && in_array($turn['directive'] ?? null, $directives, true);
+                foreach (['question', 'answer', 'reply'] as $field) {
+                    $ok = $ok && is_string($turn[$field] ?? null) && trim($turn[$field]) !== '';
+                }
+                if (! $ok) {
+                    // Stop at the first broken turn: later turns would refer to a history that is no longer there.
+                    $this->components->warn("{$label}: giliran ke-".(count($turns) + 1).' tidak lengkap, sisa dialog dipotong.');
+
+                    break;
+                }
+                $turns[] = ['part' => (int) $turn['part']] + array_map(fn ($value) => is_string($value) ? trim($value) : $value, $turn);
+            }
+            if ($turns === []) {
+                continue;
+            }
+            $dialogue['language'] = ($dialogue['language'] ?? 'id') === 'en' ? 'en' : 'id';
+            $dialogue['turns'] = $turns;
+            $dialogues[] = $dialogue;
+        }
+
+        return $dialogues;
+    }
+
+    /**
+     * Expand seed-format dialogues into examiner turns with running history.
+     *
+     * @param  list<array<string, mixed>>  $dialogues
+     * @return list<array<string, mixed>>
+     */
+    protected function seedTurns(ExamBlueprint $blueprint, array $dialogues): array
+    {
         $turns = [];
-        foreach ((array) json_decode(File::get($path), true) as $dialogue) {
+        foreach ($dialogues as $dialogue) {
             $history = [];
             $previous = null;
             foreach ($dialogue['turns'] ?? [] as $index => $seedTurn) {
