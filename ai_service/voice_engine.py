@@ -100,6 +100,29 @@ _HALLUCINATIONS = {
 }
 
 
+def decode_audio(path: str, sampling_rate: int = 16000):
+    """
+    Baca file audio (webm/opus dari browser, wav, mp3, ...) menjadi array float32 mono 16 kHz.
+    Sengaja tidak memakai faster_whisper.decode_audio: versi 1.2 memanggil av.open(metadata_errors=...),
+    parameter yang sudah dihapus di PyAV 19, sehingga SEMUA rekaman gagal dengan
+    "open() got an unexpected keyword argument 'metadata_errors'" pada instalasi baru.
+    """
+    import av
+    import numpy as np
+
+    resampler = av.audio.resampler.AudioResampler(format="s16", layout="mono", rate=sampling_rate)
+    chunks = []
+    with av.open(path, mode="r") as container:
+        for frame in container.decode(audio=0):
+            for resampled in resampler.resample(frame):
+                chunks.append(resampled.to_ndarray().reshape(-1))
+        for resampled in resampler.resample(None):  # keluarkan sisa sampel di dalam resampler
+            chunks.append(resampled.to_ndarray().reshape(-1))
+    if not chunks:
+        return np.zeros(0, dtype=np.float32)
+    return np.concatenate(chunks).astype(np.float32) / 32768.0
+
+
 def transcribe(audio_bytes: bytes, language: str = "id", prompt: Optional[str] = None) -> Dict:
     """Ubah rekaman jawaban menjadi teks. `prompt` berisi istilah topik agar ejaan lebih tepat."""
     model = _load_stt()
@@ -110,7 +133,7 @@ def transcribe(audio_bytes: bytes, language: str = "id", prompt: Optional[str] =
         path = handle.name
     try:
         segments, info = model.transcribe(
-            path,
+            decode_audio(path),
             language=language if language in ("id", "en") else None,
             beam_size=1,
             vad_filter=True,

@@ -43,7 +43,7 @@ class ExaminerSessionMemoryTest extends TestCase
             ['role' => 'assistant', 'content' => 'Halo, aku Kak Nadia. Boleh perkenalkan diri dulu?'],
             ['role' => 'user', 'content' => 'Saya Rina, saya membangun dashboard penjualan React untuk 40 toko retail di Malang.'],
         ];
-        for ($i = 1; $i <= 10; $i++) {
+        for ($i = 1; $i <= 16; $i++) {
             $history[] = ['role' => 'assistant', 'content' => "Menarik. Pertanyaan lanjutan nomor {$i}?"];
             $history[] = ['role' => 'user', 'content' => "Jawaban ke-{$i} tentang pengalaman kerja tim."];
         }
@@ -60,9 +60,35 @@ class ExaminerSessionMemoryTest extends TestCase
         $this->assertStringContainsString('dashboard penjualan React untuk 40 toko retail', $system);
         $this->assertStringContainsString('Kamu sudah bertanya: Boleh perkenalkan diri dulu?', $system);
 
-        // System prompt + at most 12 recent messages (word for word) + the current instruction.
+        // System prompt + at most RECENT_MESSAGES recent messages (word for word) + the current instruction.
         $this->assertLessThanOrEqual(1 + ExaminerService::RECENT_MESSAGES + 1, count($messages));
-        $this->assertSame('Jawaban ke-10 tentang pengalaman kerja tim.', $messages[count($messages) - 2]['content']);
+        $this->assertSame('Jawaban ke-16 tentang pengalaman kerja tim.', $messages[count($messages) - 2]['content']);
+    }
+
+    public function test_a_normal_exam_keeps_the_whole_conversation_word_for_word(): void
+    {
+        // 22 messages: about a full three-part exam. Nothing is condensed, so the prompt only ever grows at the end.
+        $history = array_slice($this->longHistory(), 0, 22);
+        $messages = app(ExaminerService::class)->buildMessages($this->turn($history));
+
+        $this->assertStringNotContainsString('Sebelumnya di sesi ini', $messages[0]['content']);
+        $this->assertCount(1 + 22 + 1, $messages);
+        $this->assertSame($history[0]['content'], $messages[1]['content']);
+    }
+
+    public function test_very_long_answers_are_condensed_before_the_context_overflows(): void
+    {
+        $history = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $history[] = ['role' => 'assistant', 'content' => "Pertanyaan nomor {$i}?"];
+            $history[] = ['role' => 'user', 'content' => "Jawaban panjang {$i}. ".str_repeat('Saya menjelaskan proyek ini dengan sangat rinci. ', 20)];
+        }
+        $messages = app(ExaminerService::class)->buildMessages($this->turn($history));
+
+        $verbatim = array_sum(array_map(fn ($message) => mb_strlen($message['content']), array_slice($messages, 1, -1)));
+        $this->assertLessThanOrEqual(ExaminerService::HISTORY_CHAR_BUDGET + 24 * 3, $verbatim);
+        $this->assertStringContainsString('Sebelumnya di sesi ini', $messages[0]['content']);
+        $this->assertStringContainsString('Jawaban panjang 12.', $messages[count($messages) - 2]['content']);
     }
 
     public function test_system_prompt_stays_identical_for_several_turns_so_the_model_cache_is_reused(): void

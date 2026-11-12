@@ -261,7 +261,12 @@ class ExamFlowTest extends TestCase
             $messages = $request['messages'];
             $instruction = $messages[count($messages) - 1]['content'];
 
-            return $request['directive'] === 'next' && str_contains($instruction, 'dengan kata-katamu sendiri');
+            // The per-turn instruction is a short tag (fast to read on a CPU); what the tag means is
+            // explained once in the system prompt.
+            return $request['directive'] === 'next'
+                && preg_match('/\[Bagian 1 - .+ \| LANJUT: ".+"\]$/su', $instruction) === 1
+                && str_contains($messages[0]['content'], '[LANJUT: "topik"]')
+                && str_contains($messages[0]['content'], 'dengan kata-katamu sendiri');
         });
     }
 
@@ -656,7 +661,10 @@ class ExamFlowTest extends TestCase
         $this->assertStringContainsString('Prof. Hendra', $messages[0]['content']);
         // History ends with the examiner question being answered, exactly like at inference time.
         $this->assertSame('assistant', $messages[count($messages) - 3]['role']);
-        $this->assertStringContainsString('Jawaban peserta: Saya memakai YOLOv8', $messages[count($messages) - 2]['content']);
+        // The answer comes first (as in the next turn's history), the task for this turn at the very end.
+        $this->assertStringStartsWith('Saya memakai YOLOv8', $messages[count($messages) - 2]['content']);
+        $this->assertMatchesRegularExpression('/\R\[Bagian \d - .+\]$/su', $messages[count($messages) - 2]['content']);
+        $this->assertStringNotContainsString('Bagian saat ini', $messages[0]['content']);
         $this->assertSame($reply->meta['reply'], $messages[count($messages) - 1]['content']);
 
         $this->postJson(route('exam.rate', [$session, $reply]), ['rating' => 'bad'])->assertOk();
@@ -676,6 +684,122 @@ class ExamFlowTest extends TestCase
         $foreignMessage = $first->messages()->first();
 
         $this->postJson(route('exam.rate', [$second, $foreignMessage]), ['rating' => 'good'])->assertNotFound();
+    }
+
+    public function test_online_speed_mode_lets_the_cloud_model_answer_first_and_falls_back_to_local(): void
+    {
+        config(['exam.speed_mode' => 'online', 'services.groq.key' => 'test-key']);
+        $localReply = 'Dua tahun di proyek React itu relevan. Bagian mana yang paling menantang?';
+        $cloudUp = true;
+        Http::fake(function ($request) use (&$cloudUp, $localReply) {
+            return match (true) {
+                str_contains($request->url(), 'api.groq.com') => $cloudUp
+                    ? Http::response(['choices' => [['message' => ['content' => 'Wah, 40 toko itu skala yang lumayan. Bagaimana kamu menjaga datanya tetap konsisten?']]]])
+                    : Http::response([], 500),
+                str_ends_with($request->url(), '/voice/status') => Http::response(['llm' => ['available' => true, 'models' => ['voic-coach:latest'], 'exam_model_ready' => true], 'stt' => ['available' => true], 'tts' => ['local' => true]]),
+                str_ends_with($request->url(), '/exam/respond') => Http::response(['reply' => $localReply]),
+                default => Http::response([], 503),
+            };
+        });
+
+        // The room is told to use the browser's instant speech recognition, and shows the engine honestly.
+        $this->getJson(route('exam.status'))
+            ->assertJsonPath('speed_mode', 'online')
+            ->assertJsonPath('engine', 'cloud_llm')
+            ->assertJsonPath('prefer_browser_stt', true)
+            ->assertJsonPath('stt_local', true);
+
+        $session = $this->startExam('wawancara', [1]);
+        $answer = ['answer' => 'Saya membangun dashboard penjualan React untuk 40 toko retail di Malang.', 'duration_seconds' => 15, 'timestamp_seconds' => 15];
+
+        $this->postJson(route('exam.answer', $session), $answer)
+            ->assertOk()
+            ->assertJsonPath('examiner_message.engine', 'cloud_llm');
+        Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/exam/respond'));
+
+        // Internet gone: the same turn is answered by the local model, without an error for the candidate.
+        $cloudUp = false;
+        $this->postJson(route('exam.answer', $session), $answer)
+            ->assertOk()
+            ->assertJsonPath('examiner_message.engine', 'local_llm')
+            ->assertJsonPath('examiner_message.text', $localReply);
+    }
+
+    public function test_offline_is_the_default_speed_mode_even_with_a_cloud_key(): void
+    {
+        config(['services.groq.key' => 'test-key']);
+        Http::fake([
+            '*/voice/status' => Http::response(['llm' => ['available' => true, 'models' => ['voic-coach:latest'], 'exam_model_ready' => true], 'stt' => ['available' => true], 'tts' => ['local' => true]]),
+            '*/exam/respond' => Http::response(['reply' => 'Menarik sekali. Apa bagian tersulitnya?']),
+            '*' => Http::response([], 503),
+        ]);
+
+        $this->getJson(route('exam.status'))
+            ->assertJsonPath('speed_mode', 'offline')
+            ->assertJsonPath('engine', 'local_llm')
+            ->assertJsonPath('prefer_browser_stt', false);
+
+        $session = $this->startExam('wawancara', [1]);
+        $this->postJson(route('exam.answer', $session), ['answer' => 'Saya membangun dashboard penjualan untuk 40 toko.', 'duration_seconds' => 15, 'timestamp_seconds' => 15])
+            ->assertOk()
+            ->assertJsonPath('examiner_message.engine', 'local_llm');
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.groq.com'));
+    }
+
+    public function test_prompt_only_grows_at_the_end_so_the_local_model_never_rereads_the_conversation(): void
+    {
+        // On a laptop CPU the model reads ~20 tokens per second: anything that changes earlier in the
+        // prompt costs seconds on every turn. So each turn must repeat the previous prompt word for word.
+        $sent = [];
+        Http::fake(function ($request) use (&$sent) {
+            if (str_ends_with($request->url(), '/exam/prime')) {
+                $sent[] = ['prime' => $request['messages']];
+
+                return Http::response(['ok' => true]);
+            }
+            if (str_ends_with($request->url(), '/exam/respond')) {
+                $sent[] = ['turn' => $request['messages']];
+
+                return Http::response(['reply' => 'Menarik, proyek itu terdengar menantang. Apa bagian tersulitnya?']);
+            }
+
+            return Http::response([], 503);
+        });
+
+        $session = $this->startExam('wawancara', [1, 2, 3]);
+        $answers = [
+            'Saya Rina, lulusan informatika, dua tahun membangun dashboard penjualan dengan React untuk 40 toko retail.',
+            'Bagian tersulitnya menyatukan data dari 40 toko yang formatnya berbeda, jadi saya membuat skrip pembersih data.',
+            'Saya tertarik karena ingin produk yang dipakai terus-menerus oleh banyak orang, bukan proyek sekali selesai.',
+            'Eee, mungkin teliti, sabar, dan suka belajar hal baru dari rekan satu tim.',
+        ];
+        foreach ($answers as $index => $answer) {
+            $this->postJson(route('exam.answer', $session), ['answer' => $answer, 'duration_seconds' => 20, 'timestamp_seconds' => $index * 30])->assertOk();
+        }
+
+        // The session start already let the model read the persona, the rules and the opening line.
+        $prime = $sent[0]['prime'];
+        $this->assertSame(['system', 'assistant', 'user'], array_column($prime, 'role'));
+        $this->assertStringContainsString('Kak Nadia', $prime[0]['content']);
+
+        $turns = array_values(array_filter(array_column($sent, 'turn')));
+        $this->assertCount(4, $turns);
+        $this->assertSame([$prime[0], $prime[1]], array_slice($turns[0], 0, 2));
+
+        for ($i = 1; $i < count($turns); $i++) {
+            $previous = $turns[$i - 1];
+            // Everything sent before is still there, unchanged, including the earlier answer with its tag...
+            $this->assertSame($previous, array_slice($turns[$i], 0, count($previous)), "Turn {$i} rewrote earlier parts of the prompt.");
+            // ...followed only by the examiner's reply and the new answer.
+            $this->assertCount(count($previous) + 2, $turns[$i]);
+            $this->assertSame('assistant', $turns[$i][count($previous)]['role']);
+            $this->assertStringStartsWith($answers[$i], end($turns[$i])['content']);
+        }
+
+        // The per-turn part is small: the answer plus a short tag (the full instructions used to be 250-380 characters).
+        foreach ($turns as $i => $turn) {
+            $this->assertLessThan(200, mb_strlen(end($turn)['content']) - mb_strlen($answers[$i]));
+        }
     }
 
     /**

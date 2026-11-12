@@ -187,9 +187,11 @@ class ExportExamTrainingData extends Command
                     $target = $seedTurn['reply'].' '.$following['question'];
                 }
 
-                $turns[] = $this->turn($blueprint, $dialogue['mode'], $dialogue['language'] ?? 'id', $dialogue['topic'] ?? null, $dialogue['context_material'] ?? null, (int) $seedTurn['part'], $directive, $examinerLine, $seedTurn['answer'], $history, $target, $index, 0, $planned);
+                $turn = $this->turn($blueprint, $dialogue['mode'], $dialogue['language'] ?? 'id', $dialogue['topic'] ?? null, $dialogue['context_material'] ?? null, (int) $seedTurn['part'], $directive, $examinerLine, $seedTurn['answer'], $history, $target, $index, 0, $planned);
+                $turns[] = $turn;
 
-                $history[] = ['role' => 'user', 'content' => $seedTurn['answer']];
+                // As at inference time: later turns see this answer exactly as it was sent (answer + turn tag).
+                $history[] = ['role' => 'user', 'content' => $seedTurn['answer'], 'prompt' => app(ExaminerService::class)->turnInstruction($turn)];
                 $previous = $seedTurn;
             }
         }
@@ -229,7 +231,7 @@ class ExportExamTrainingData extends Command
                         }
 
                         $history = $messages->slice(0, $position - 1)
-                            ->map(fn (SessionMessage $item) => ['role' => $item->sender === 'user' ? 'user' : 'assistant', 'content' => $item->message])
+                            ->map(fn (SessionMessage $item) => array_filter(['role' => $item->sender === 'user' ? 'user' : 'assistant', 'content' => $item->message, 'prompt' => $item->sender === 'user' ? ($item->meta['prompt'] ?? null) : null], fn ($value) => $value !== null))
                             ->values()
                             ->all();
 

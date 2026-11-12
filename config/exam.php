@@ -49,6 +49,14 @@ return [
     'ai_model' => env('VOIC_AI_MODEL'),
 
     /*
+    | "offline" (default): everything runs on this laptop (private, no internet), speed depends on the hardware.
+    | "online": for a laptop without a GPU at a booth with internet. A fast cloud model (GROQ_API_KEY or
+    | OPENAI_API_KEY) answers first and the browser recognises speech, so the examiner replies in 1-2 seconds.
+    | The local AI stays as the automatic fallback when the internet drops. Voice stays local (Piper).
+    */
+    'speed_mode' => env('VOIC_SPEED_MODE', 'offline'),
+
+    /*
     | Teacher model for `php artisan voic:teacher-generate` (distillation data), and the
     | local model that plays the candidate in those simulated sessions.
     */

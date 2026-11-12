@@ -268,7 +268,7 @@ class ExamController extends Controller
                 $this->attachRecording($practiceSession, $pending);
             }
 
-            $this->recordLatency($practiceSession, $latency + ['total_ms' => $elapsed(), 'voice' => $audioPath !== null]);
+            $this->recordLatency($practiceSession, $latency + ['total_ms' => $elapsed(), 'voice' => $audioPath !== null] + $flow->lastTimings());
 
             $send(['type' => 'done', 'state' => $payload]);
         }, 200, [

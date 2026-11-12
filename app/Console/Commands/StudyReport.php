@@ -63,14 +63,21 @@ class StudyReport extends Command
         if ($summary !== null) {
             File::put($dir.'/grafik.html', $this->chart($summary, count($complete)));
             $overall = $summary['metrics']['overall_band'];
-            $sentence = sprintf(
-                'Dari %d peserta yang mencoba %d kali, skor rata-rata naik dari %s ke %s (band 0-9, %s), dan skor %d peserta meningkat.',
-                count($complete), UserStudy::ATTEMPTS_FOR_SURVEY, $this->number($overall['before']), $this->number($overall['after']),
-                $this->change($overall), $summary['improved']
-            );
             $this->newLine();
-            $this->line('  <options=bold>Kalimat untuk pitch deck:</>');
-            $this->line('  '.$sentence);
+            if ($overall['after'] > $overall['before']) {
+                $this->line('  <options=bold>Kalimat untuk pitch deck:</>');
+                $this->line('  '.sprintf(
+                    'Dari %d peserta yang mencoba %d kali, skor rata-rata naik dari %s ke %s (band 0-9, %s), dan skor %d dari %d peserta meningkat.',
+                    count($complete), UserStudy::ATTEMPTS_FOR_SURVEY, $this->number($overall['before']), $this->number($overall['after']),
+                    $this->change($overall), $summary['improved'], count($complete)
+                ));
+            } else {
+                // Never hand the team a sentence that claims an improvement the data does not show.
+                $this->components->warn(sprintf(
+                    'Skor rata-rata belum naik (%s ke %s). Jangan klaim peningkatan skor di pitch deck; pakai hasil kuesioner, atau tambah peserta dan pastikan mode serta topiknya sama di ketiga latihan.',
+                    $this->number($overall['before']), $this->number($overall['after'])
+                ));
+            }
         }
 
         $this->newLine();

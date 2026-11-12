@@ -16,6 +16,7 @@ Prinsip desain:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -444,6 +445,40 @@ async def warmup():
         return {"ok": False, "model": await resolve_model(), "seconds": round(time.time() - started, 1), "error": describe_error(exc)}
 
 
+class PrimeRequest(BaseModel):
+    messages: List[ChatTurn]
+    model: Optional[str] = None
+
+
+_prime_tasks: set = set()
+
+
+@router.post("/prime")
+async def prime(req: PrimeRequest):
+    """
+    Bacakan awal prompt sebuah sesi (persona + aturan + salam pembuka) ke model SEKARANG, di latar belakang.
+    Ollama menyimpan hasilnya di cache, jadi saat peserta selesai menjawab pertanyaan pertama, model
+    tinggal membaca jawabannya saja. Tanpa ini, giliran pertama menunggu 25-45 detik di laptop CPU.
+    Langsung mengembalikan jawaban; pekerjaannya berjalan sambil peserta mendengarkan salam pembuka.
+    """
+    if is_cloud_model(req.model):
+        return {"ok": True, "skipped": "cloud"}
+    messages = [m.model_dump() for m in req.messages]
+
+    async def run() -> None:
+        stats: Dict = {}
+        try:
+            await ollama_chat(messages, num_predict=1, temperature=0.1, stats=stats, model=req.model)
+            print(f"[VOIC] Sesi dipanaskan: {stats.get('prompt_tokens', 0)} token dibaca dalam {stats.get('prompt_ms', 0) / 1000:.1f} dtk.")
+        except Exception as exc:
+            print(f"[VOIC] Pemanasan sesi dilewati: {describe_error(exc)}")
+
+    task = asyncio.create_task(run())
+    _prime_tasks.add(task)
+    task.add_done_callback(_prime_tasks.discard)
+    return {"ok": True}
+
+
 class CoachSummaryRequest(BaseModel):
     mode: str
     role_type: str
@@ -607,6 +642,7 @@ async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temper
     models = await candidate_models(model)
     for index, name in enumerate(models):
         sent = False
+        requested_at = time.time()
         try:
             async with httpx.AsyncClient(timeout=model_timeout(name)) as client:
                 async with client.stream("POST", f"{OLLAMA_BASE_URL}/api/chat", json=chat_payload(name, messages, True, num_predict, temperature)) as response:
@@ -623,9 +659,14 @@ async def ollama_stream(messages: List[Dict[str, str]], num_predict: int, temper
                             raise RuntimeError(str(data["error"]))
                         chunk = thinking.feed(data.get("message", {}).get("content", ""))
                         if chunk:
+                            if not sent and used is not None:
+                                # Waktu sampai token pertama = memuat model + membaca prompt (bagian yang tidak ada di cache).
+                                used["first_token_ms"] = int((time.time() - requested_at) * 1000)
                             sent = True
                             yield chunk
                         if data.get("done"):
+                            if used is not None:
+                                used["stats"] = ollama_stats(data)
                             break
                     rest = thinking.flush()
                     if rest:
@@ -675,9 +716,11 @@ async def respond_stream(req: RespondStreamRequest):
             if not text or (req.directive in ("react", "coach_close") and text.endswith("?")):
                 return None
             spoken.append(text)
+            tts_started = time.time()
             audio = await voice_engine.synthesize(text, req.role_type, req.language) if req.generate_voice else None
             if first_ms is None:
                 first_ms = int((time.time() - started) * 1000)
+                used["first_tts_ms"] = int((time.time() - tts_started) * 1000)
             return _line({"type": "sentence", "text": text, **audio_payload(audio, req.inline_audio)})
 
         try:
@@ -718,6 +761,10 @@ async def respond_stream(req: RespondStreamRequest):
             "model": used.get("model", EXAM_MODEL),
             "first_sentence_ms": first_ms,
             "latency_ms": int((time.time() - started) * 1000),
+            # Rincian untuk `php artisan voic:latency`: baca prompt, lalu suara kalimat pertama.
+            "first_token_ms": used.get("first_token_ms"),
+            "first_tts_ms": used.get("first_tts_ms"),
+            "stats": used.get("stats"),
         })
 
     return StreamingResponse(generate(), media_type="application/x-ndjson")

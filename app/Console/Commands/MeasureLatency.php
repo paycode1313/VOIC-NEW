@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 #[Signature('voic:latency
     {--live : Measure now: run simulated turns through the real AI and voice on this laptop}
     {--turns=6 : Turns to simulate with --live}
+    {--greeting=30 : With --live: seconds between the session start and the first answer (the candidate listens to the greeting and answers), during which the model warms up}
     {--days=14 : With recorded data: only turns from the last N days}')]
 #[Description('How long the candidate waits for the examiner: from recorded turns, or measured live on this laptop')]
 class MeasureLatency extends Command
@@ -96,6 +97,12 @@ class MeasureLatency extends Command
         ]);
         $flow->start($session, 'wawancara', [1, 3], 'id', 'Data Analyst di e-commerce');
         $this->components->info("Mengukur {$turns} giliran di laptop ini (model AI + suara penguji)…");
+        $greeting = max(0, (int) $this->option('greeting'));
+        if ($greeting > 0) {
+            // A real candidate first listens to the greeting and gives a first answer; the model uses that time to warm up.
+            $this->line("  <fg=gray>Menunggu {$greeting} dtk, seperti peserta yang mendengarkan salam pembuka lalu menjawab…</>");
+            sleep($greeting);
+        }
 
         $rows = [];
         try {
@@ -113,9 +120,10 @@ class MeasureLatency extends Command
                     }
                 });
                 $row['total_ms'] = $elapsed();
+                $row += $flow->lastTimings();
                 $row['engine'] = $session->messages()->where('sender', 'ai')->latest('id')->value('meta')['engine'] ?? '?';
                 $rows[] = $row;
-                $this->line(sprintf('  giliran %d · suara pertama %s · selesai %s · %s', $i + 1, $this->seconds($row['first_sound_ms'] ?? $row['first_sentence_ms']), $this->seconds($row['total_ms']), $row['engine']));
+                $this->line(sprintf('  giliran %d · baca prompt %s · suara pertama %s · selesai %s · %s', $i + 1, $this->seconds($row['llm_first_token_ms'] ?? null), $this->seconds($row['first_sound_ms'] ?? $row['first_sentence_ms']), $this->seconds($row['total_ms']), $row['engine']));
             }
         } finally {
             $session->deleteWithRecordings();
@@ -131,6 +139,8 @@ class MeasureLatency extends Command
     {
         $columns = [
             'stt_ms' => 'Suara peserta → teks',
+            'llm_first_token_ms' => 'Model membaca prompt (sampai kata pertama)',
+            'tts_first_ms' => 'Membuat suara kalimat pertama',
             'first_sentence_ms' => 'Sampai kalimat pertama penguji',
             'first_sound_ms' => 'Sampai suara penguji terdengar',
             'total_ms' => 'Sampai balasan selesai dibuat',

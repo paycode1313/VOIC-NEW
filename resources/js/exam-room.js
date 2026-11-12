@@ -206,7 +206,9 @@ export default function examRoom(config) {
                 this.aiStatus = await response.json();
                 this.engine = this.aiStatus.engine;
                 // Prefer fully local speech recognition when the AI laptop has Whisper ready.
-                if (this.aiStatus.stt_local && window.MediaRecorder) this.voiceMode = 'local';
+                // Speed mode "online": the browser's own recognition is instant, local Whisper takes seconds on a CPU.
+                const browserFirst = this.aiStatus.prefer_browser_stt && this.speechSupported;
+                if (this.aiStatus.stt_local && window.MediaRecorder && !browserFirst) this.voiceMode = 'local';
             } catch (e) { /* badges stay hidden */ }
         },
 

@@ -42,14 +42,28 @@ class ExaminerService
     /**
      * Messages sent word for word; anything older is condensed by sessionMemory().
      */
-    public const RECENT_MESSAGES = 12;
+    public const RECENT_MESSAGES = 24;
 
     /**
      * Older messages move into the memory block this many at a time. The system prompt (the start
-     * of the prompt) then stays identical for several turns, so Ollama reuses its cache and only
+     * of the prompt) then stays identical for many turns, so Ollama reuses its cache and only
      * reads the new answer: on a laptop CPU, re-reading the whole prompt costs 20-35 seconds.
+     * A normal 12-minute exam never reaches the first step.
      */
-    public const MEMORY_STEP = 8;
+    public const MEMORY_STEP = 12;
+
+    /**
+     * Characters of word-for-word history that safely fit the model's 4096-token context next to
+     * the persona, the memory block and the reply (Indonesian is roughly 3.3 characters per token).
+     */
+    public const HISTORY_CHAR_BUDGET = 7500;
+
+    /**
+     * Where the time of the last streamed reply went (reading the prompt, voicing the first sentence).
+     *
+     * @var array<string, int>
+     */
+    protected array $lastTimings = [];
 
     /**
      * Model chosen for this process instead of config('exam.ai_model') (used by the teacher command).
@@ -201,6 +215,25 @@ class ExaminerService
             }
         }
 
+        // Speed mode "online": a fast cloud model answers first (about a second); when it fails
+        // (no internet, quota), the local chain below takes over as if nothing happened.
+        if ($this->onlineFirst()) {
+            $cloud = $this->callCloudModel($messages, timeout: 8);
+            if ($cloud !== null && ($resolved = $this->resolveModelReply($cloud, $turn)) !== null) {
+                $result = $resolved + ['audio_url' => null, 'engine' => 'cloud_llm'];
+                if ($onSentence !== null) {
+                    // Voice sentence by sentence, so the first words are heard while the rest is still being synthesized.
+                    foreach ($this->sentences($result['text']) as $sentence) {
+                        $onSentence($sentence, $this->synthesize($baseUrl, $sentence, $turn, inline: true));
+                    }
+                } else {
+                    $result['audio_url'] = $this->synthesize($baseUrl, $result['text'], $turn);
+                }
+
+                return $result;
+            }
+        }
+
         // Streaming: sentences are spoken while the model is still writing. A pure reaction
         // is followed by a fixed announcement, so it is not worth streaming.
         if ($onSentence !== null && $turn['directive'] !== self::DIRECTIVE_REACT) {
@@ -243,6 +276,7 @@ class ExaminerService
      */
     protected function streamLocalModel(array $turn, array $messages, callable $onSentence): ?array
     {
+        $this->lastTimings = [];
         $spoken = [];
         $firstAudio = null;
         $model = null;
@@ -281,6 +315,10 @@ class ExaminerService
 
                     if (($event['type'] ?? null) === 'done') {
                         $model = $event['model'] ?? null;
+                        $this->lastTimings = array_filter([
+                            'llm_first_token_ms' => $event['first_token_ms'] ?? null,
+                            'tts_first_ms' => $event['first_tts_ms'] ?? null,
+                        ], fn ($value) => $value !== null);
                     }
 
                     if (($event['type'] ?? null) === 'sentence' && trim((string) $event['text']) !== '') {
@@ -319,6 +357,41 @@ class ExaminerService
         }
 
         return ['text' => $reply, 'reply' => $reply, 'audio_url' => $firstAudio, 'engine' => $this->engineFor($model)];
+    }
+
+    /**
+     * Timings of the last streamed reply, for voic:latency.
+     *
+     * @return array<string, int>
+     */
+    public function lastTimings(): array
+    {
+        return $this->lastTimings;
+    }
+
+    /**
+     * Let the local model read the start of a session's prompt (persona, rules, opening line) right
+     * now, in the background. When the candidate finishes their first answer the model then only
+     * reads that answer; without this the first turn waits 25-45 seconds on a laptop CPU.
+     * Never blocks and never fails the session: it is only a head start.
+     *
+     * @param  array<string, mixed>  $turn  The same fields a real turn has (history = the opening line)
+     */
+    public function prime(array $turn): void
+    {
+        $model = $this->ollamaModel();
+        if (OpenRouterClient::handles($model) || self::isCloudModel($model)) {
+            return;
+        }
+
+        try {
+            $messages = $this->buildMessages($turn + ['answer' => '', 'directive' => self::DIRECTIVE_REACT, 'planned_question' => null, 'transition' => null]);
+            // Everything except the last message (the answer that does not exist yet) is the shared start.
+            $messages[count($messages) - 1]['content'] = '.';
+            Http::connectTimeout(1)->timeout(3)->post($this->baseUrl().'/exam/prime', ['messages' => $messages, 'model' => $model]);
+        } catch (\Throwable $exception) {
+            Log::info('Session priming skipped: '.$exception->getMessage());
+        }
     }
 
     /**
@@ -389,7 +462,7 @@ class ExaminerService
      * Which engine will most likely answer the next turn, cached briefly, with the reason
      * when the local AI is not usable so the booth operator knows what to fix.
      *
-     * @return array{engine: string, model: ?string, stt_local: bool, tts_local: bool, reason: ?string, fix: ?string}
+     * @return array{engine: string, model: ?string, stt_local: bool, tts_local: bool, reason: ?string, fix: ?string, speed_mode?: string, prefer_browser_stt?: bool}
      */
     public function availability(): array
     {
@@ -399,7 +472,7 @@ class ExaminerService
     /**
      * Probe the local AI service and Ollama (uncached).
      *
-     * @return array{engine: string, model: ?string, stt_local: bool, tts_local: bool, reason: ?string, fix: ?string}
+     * @return array{engine: string, model: ?string, stt_local: bool, tts_local: bool, reason: ?string, fix: ?string, speed_mode?: string, prefer_browser_stt?: bool}
      */
     public function diagnose(): array
     {
@@ -468,8 +541,25 @@ class ExaminerService
             }
         }
 
-        if ($status['engine'] !== 'local_llm' && ((string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '')) {
+        if ($status['engine'] !== 'local_llm' && $this->cloudConfigured()) {
             $status['engine'] = 'cloud_llm';
+        }
+
+        // Speed mode "online": the cloud model answers first, and the browser's own (online) speech
+        // recognition is preferred because local Whisper needs 4-6 seconds per answer on a laptop CPU.
+        $status['speed_mode'] = Config::get('exam.speed_mode') === 'online' ? 'online' : 'offline';
+        $status['prefer_browser_stt'] = false;
+        if ($status['speed_mode'] === 'online') {
+            if ($this->cloudConfigured()) {
+                if (! OpenRouterClient::handles($chosen)) {
+                    $status['engine'] = 'cloud_llm';
+                    $status['model'] = (string) Config::get((string) Config::get('services.groq.key', '') !== '' ? 'services.groq.model' : 'services.openai.model');
+                }
+                $status['prefer_browser_stt'] = true;
+            } else {
+                $status['reason'] = 'VOIC_SPEED_MODE=online tetapi belum ada kunci AI cloud, jadi tetap memakai AI lokal.';
+                $status['fix'] = 'Buat API key gratis di console.groq.com/keys, isi GROQ_API_KEY di .env, lalu php artisan config:clear';
+            }
         }
 
         return $status;
@@ -486,15 +576,25 @@ class ExaminerService
         $history = $turn['history'];
         $overflow = max(0, count($history) - self::RECENT_MESSAGES);
         $condensed = intdiv($overflow + self::MEMORY_STEP - 1, self::MEMORY_STEP) * self::MEMORY_STEP;
+        // Very long answers: condense further (still in whole steps) rather than overflow the context,
+        // where the model would silently lose the start of the prompt, i.e. its persona.
+        $length = fn (int $from): int => array_sum(array_map(fn ($item) => min(700, mb_strlen((string) $item['content'])), array_slice($history, $from)));
+        while ($condensed < count($history) && $length($condensed) > self::HISTORY_CHAR_BUDGET) {
+            $condensed += self::MEMORY_STEP;
+        }
+        $condensed = min($condensed, count($history));
         $older = array_slice($history, 0, $condensed);
         $system = $this->systemPrompt($turn).$this->sessionMemory($older, $turn['language'] === 'en');
 
         $messages = [['role' => 'system', 'content' => $system]];
 
         foreach (array_slice($history, $condensed) as $item) {
+            // Earlier candidate messages are repeated exactly as they were sent (answer + turn tag), so
+            // the prompt is append-only. Only a very long answer is shortened (one cache miss, once).
+            $sent = $item['prompt'] ?? null;
             $messages[] = [
                 'role' => $item['role'] === 'user' ? 'user' : 'assistant',
-                'content' => Str::limit($item['content'], 700),
+                'content' => $sent !== null && mb_strlen($sent) <= 900 ? $sent : Str::limit($item['content'], 700),
             ];
         }
 
@@ -558,7 +658,8 @@ class ExaminerService
         if ($context) {
             $lines[] = ($isEn ? 'Background from the candidate: ' : 'Latar dari peserta: ').$context;
         }
-        $lines[] = ($isEn ? 'Current section: Part ' : 'Bagian saat ini: Bagian ').$turn['part'].' - '.$turn['part_title'];
+        // The current part is named in the turn instruction, not here: the system prompt must stay
+        // identical for the whole session so the model keeps its cache when a new part starts.
         $focusHints = [
             'fluency' => [$isEn ? 'speaking longer without long pauses' : 'bicara lebih panjang tanpa jeda lama', ''],
             'vocabulary' => [$isEn ? 'using precise, field-specific words' : 'memakai istilah yang tepat sesuai bidang', ''],
@@ -570,6 +671,7 @@ class ExaminerService
                 .($isEn ? '. Ask questions that give them room to practise it.' : '. Ajukan pertanyaan yang memberi ruang untuk melatih hal itu.');
         }
         $lines[] = implode("\n", array_map(fn ($rule, $i) => ($i + 1).'. '.$rule, $rules, array_keys($rules)));
+        $lines[] = $this->instructionLegend($isEn, coach: false);
 
         return implode("\n", $lines);
     }
@@ -638,12 +740,51 @@ class ExaminerService
             $lines[] = ($isEn ? 'Background from the person: ' : 'Latar dari peserta: ').$context;
         }
         $lines[] = implode("\n", array_map(fn ($rule, $i) => ($i + 1).'. '.$rule, $rules, array_keys($rules)));
+        $lines[] = $this->instructionLegend($isEn, coach: true);
 
         return implode("\n", $lines);
     }
 
     /**
-     * Instruction for one coaching turn.
+     * What the short tags at the end of each candidate message mean. This lives in the system prompt
+     * so the model reads it once per session: the per-turn instruction is then only a few tokens,
+     * which is what keeps the examiner fast on a laptop CPU (the long instructions used to cost
+     * 3-9 seconds of reading on every single turn).
+     */
+    protected function instructionLegend(bool $isEn, bool $coach): string
+    {
+        if ($coach) {
+            return $isEn
+                ? "Each message from the person ends with a tag in square brackets that tells you what to do this turn (never read it aloud):\n"
+                    ."[COACH] at most 4 spoken sentences: react to what they said, teach one concrete improvement (with a better example sentence in quotes if useful), then keep the conversation going.\n"
+                    ."[COACH | ONE MINUTE LEFT] the same, but start summarising the most important tip and ask for one last short try.\n"
+                    ."[CLOSE] time is up: close warmly in at most 3 sentences (one thing they already do well, the one habit to keep practising, an encouraging goodbye). Do not ask a question.\n"
+                    .'Extra tag TENSE = they looked tense on camera: start with one short, kind sentence that helps them relax. Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'
+                : "Setiap pesan peserta diakhiri tag dalam kurung siku yang memberi tahu tugasmu di giliran ini (jangan pernah dibacakan):\n"
+                    ."[LATIH] maksimal 4 kalimat lisan: tanggapi yang dia katakan, ajarkan satu perbaikan konkret (dengan contoh kalimat yang lebih baik dalam tanda kutip jika berguna), lalu jaga obrolan tetap berlanjut.\n"
+                    ."[LATIH | SISA SATU MENIT] sama, tetapi mulai rangkum tips paling penting dan minta satu percobaan singkat terakhir.\n"
+                    ."[TUTUP] waktu habis: tutup dengan hangat maksimal 3 kalimat (satu hal yang sudah bagus, satu kebiasaan yang perlu terus dilatih, salam penyemangat). Jangan bertanya.\n"
+                    .'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya. Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.';
+        }
+
+        return $isEn
+            ? "Each candidate message ends with a tag in square brackets: the current part of the exam and what to do this turn (never read it aloud):\n"
+                ."[REACT] ONE short sentence reacting specifically to the answer. Do not ask any question, an announcement follows.\n"
+                ."[PROBE] at most 2 sentences: a short specific reaction, then exactly ONE follow-up question that digs deeper into the answer (why, how, an example, or a number).\n"
+                ."[NEXT: \"topic\"] at most 3 sentences: react specifically to the answer, then move on naturally and ask about the topic in quotes in your own words, linking it to what they said if it fits. With \"ANNOUNCE: ...\" also mention that we are now moving to that part.\n"
+                ."[CLARIFY] the candidate did not understand or asked something back: in at most 2 sentences, explain your question more simply (maybe with a small example), then ask it again in different words.\n"
+                .'Extra tag TENSE = the candidate looked tense on camera: start with one short, kind sentence that helps them relax (for example, suggest a breath). Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'
+            : "Setiap pesan peserta diakhiri tag dalam kurung siku: bagian ujian saat ini dan tugasmu di giliran ini (jangan pernah dibacakan):\n"
+                ."[TANGGAPI] SATU kalimat pendek yang menanggapi jawaban secara spesifik. Jangan bertanya apa pun, setelah ini ada pengumuman.\n"
+                ."[GALI] maksimal 2 kalimat: tanggapan singkat yang spesifik, lalu tepat SATU pertanyaan lanjutan yang menggali jawaban itu lebih dalam (kenapa, bagaimana, contoh, atau angka).\n"
+                ."[LANJUT: \"topik\"] maksimal 3 kalimat: tanggapi jawaban secara spesifik, lalu beralih dengan luwes dan tanyakan topik dalam tanda kutip dengan kata-katamu sendiri, kaitkan dengan jawaban peserta bila cocok. Jika ada \"UMUMKAN: ...\", sebutkan juga bahwa kita sekarang masuk ke bagian itu.\n"
+                ."[JELASKAN] peserta belum paham atau balik bertanya: dalam maksimal 2 kalimat, jelaskan maksud pertanyaanmu dengan lebih sederhana (boleh dengan contoh kecil), lalu tanyakan lagi dengan kata-kata berbeda.\n"
+                .'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya (misalnya mengajak tarik napas). Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.';
+    }
+
+    /**
+     * Instruction for one coaching turn: the answer first (as it will appear in the history of the
+     * next turn), then the short tag explained by instructionLegend().
      *
      * @param  array<string, mixed>  $turn
      */
@@ -653,34 +794,31 @@ class ExaminerService
         $answer = trim((string) $turn['answer']);
 
         if ($turn['directive'] === self::DIRECTIVE_COACH_CLOSE) {
-            $task = $isEn
-                ? 'Time is up. Close the session warmly in at most 3 sentences: one thing they already do well, the one habit to keep practising, and an encouraging goodbye. Do not ask a question.'
-                : 'Waktu habis. Tutup sesi dengan hangat maksimal 3 kalimat: satu hal yang sudah bagus, satu kebiasaan yang perlu terus dilatih, lalu salam penyemangat. Jangan bertanya.';
-
-            return ($answer !== '' ? ($isEn ? 'They said: ' : 'Peserta berkata: ').$answer."\n" : '').'['.$task.']';
+            return ($answer !== '' ? $answer."\n" : '').'['.($isEn ? 'CLOSE' : 'TUTUP').']';
         }
 
-        $task = $isEn
-            ? 'Reply in at most 4 spoken sentences: react to what they said, teach one concrete improvement (with a better example sentence in quotes if useful), then keep the conversation going.'
-            : 'Balas maksimal 4 kalimat lisan: tanggapi yang dia katakan, ajarkan satu perbaikan konkret (dengan contoh kalimat yang lebih baik dalam tanda kutip jika berguna), lalu jaga obrolan tetap berlanjut.';
+        $tags = [$isEn ? 'COACH' : 'LATIH'];
         if (! empty($turn['wrap_up'])) {
-            $task .= $isEn
-                ? ' About one minute is left: start summarising the most important tip and ask for one last short try.'
-                : ' Waktu tinggal sekitar satu menit: mulai rangkum tips paling penting dan minta satu percobaan singkat terakhir.';
+            $tags[] = $isEn ? 'ONE MINUTE LEFT' : 'SISA SATU MENIT';
         }
 
-        return ($isEn ? 'They said: ' : 'Peserta berkata: ').($answer !== '' ? $answer : ($isEn ? '(silence)' : '(diam)'))."\n".'['.$task.']';
+        return ($answer !== '' ? $answer : ($isEn ? '(silence)' : '(diam)'))."\n".'['.implode(' | ', array_merge($tags, $this->visualTags($turn))).']';
     }
 
     /**
-     * The final user message: the candidate answer plus what to produce.
+     * The final user message: the candidate answer plus a short tag saying what to produce.
+     *
+     * Cache-friendly on purpose: the answer comes first, exactly as it will appear in the history of the
+     * next turn, and the only thing that changes per turn (a few tokens of tag) sits at the very end.
+     * The model then reads just the new answer instead of the whole prompt. The question is not repeated:
+     * it is the examiner message right before this one.
      *
      * @param  array<string, mixed>  $turn
      */
     public function turnInstruction(array $turn): string
     {
         if (self::isCoachDirective($turn['directive'])) {
-            return $this->coachInstruction($turn).$this->visualInstruction($turn);
+            return $this->coachInstruction($turn);
         }
 
         $isEn = $turn['language'] === 'en';
@@ -688,26 +826,18 @@ class ExaminerService
         $planned = trim((string) ($turn['planned_question'] ?? ''));
         $transition = trim((string) ($turn['transition'] ?? ''));
 
-        $task = match ($turn['directive']) {
-            self::DIRECTIVE_FOLLOW_UP => $isEn
-                ? 'Reply in at most 2 sentences: a short specific reaction, then exactly ONE follow-up question that digs deeper into this answer (why, how, an example, or a number).'
-                : 'Balas maksimal 2 kalimat: tanggapan singkat yang spesifik, lalu tepat SATU pertanyaan lanjutan yang menggali jawaban ini lebih dalam (kenapa, bagaimana, contoh, atau angka).',
-            self::DIRECTIVE_NEXT => ($isEn
-                ? 'Reply in at most 3 sentences: react specifically to this answer, then move on naturally and ask about this next topic in your own words, linking it to what they said if it fits: "'.$planned.'"'
-                : 'Balas maksimal 3 kalimat: tanggapi jawaban ini secara spesifik, lalu beralih dengan luwes dan tanyakan topik berikut dengan kata-katamu sendiri, kaitkan dengan jawaban peserta bila cocok: "'.$planned.'"')
-                .($transition !== '' ? ($isEn ? ' Mention that we are now moving to '.$transition.'.' : ' Sebutkan bahwa kita sekarang masuk ke '.$transition.'.') : ''),
-            self::DIRECTIVE_CLARIFY => $isEn
-                ? 'The candidate did not understand or asked something back. In at most 2 sentences, answer or explain the question more simply, maybe with a small example, then ask it again in different words.'
-                : 'Peserta belum paham atau balik bertanya. Dalam maksimal 2 kalimat, jawab atau jelaskan maksud pertanyaannya dengan lebih sederhana, boleh dengan contoh kecil, lalu tanyakan lagi dengan kata-kata berbeda.',
-            default => $isEn
-                ? 'Reply with ONE short sentence reacting specifically to this answer. Do not ask any question, an announcement follows.'
-                : 'Balas dengan SATU kalimat pendek yang menanggapi jawaban ini secara spesifik. Jangan bertanya apa pun, setelah ini ada pengumuman.',
+        $tags = [($isEn ? 'Part ' : 'Bagian ').$turn['part'].(trim((string) $turn['part_title']) !== '' ? ' - '.$turn['part_title'] : '')];
+        $tags[] = match ($turn['directive']) {
+            self::DIRECTIVE_FOLLOW_UP => $isEn ? 'PROBE' : 'GALI',
+            self::DIRECTIVE_NEXT => ($isEn ? 'NEXT' : 'LANJUT').': "'.$planned.'"',
+            self::DIRECTIVE_CLARIFY => $isEn ? 'CLARIFY' : 'JELASKAN',
+            default => $isEn ? 'REACT' : 'TANGGAPI',
         };
+        if ($turn['directive'] === self::DIRECTIVE_NEXT && $transition !== '') {
+            $tags[] = ($isEn ? 'ANNOUNCE: ' : 'UMUMKAN: ').$transition;
+        }
 
-        return ($isEn ? 'Question: ' : 'Pertanyaan: ').$turn['question']."\n"
-            .($isEn ? 'Candidate answer: ' : 'Jawaban peserta: ').$answer."\n"
-            .'['.$task.']'
-            .$this->visualInstruction($turn);
+        return $answer."\n".'['.implode(' | ', array_merge($tags, $this->visualTags($turn))).']';
     }
 
     /**
@@ -736,28 +866,22 @@ class ExaminerService
     }
 
     /**
-     * Extra line for the model so it can respond to the candidate's face, as a real examiner would.
+     * Tag for the model so it can respond to the candidate's face, as a real examiner would
+     * (what the tag asks for is explained once, in instructionLegend()).
      *
      * @param  array<string, mixed>  $turn
+     * @return list<string>
      */
-    protected function visualInstruction(array $turn): string
+    protected function visualTags(array $turn): array
     {
         $cue = $this->visualCue($turn);
         if ($cue === null || $turn['directive'] === self::DIRECTIVE_COACH_CLOSE) {
-            return '';
+            return [];
         }
 
         $isEn = $turn['language'] === 'en';
-        $note = match ($cue) {
-            'tense' => $isEn
-                ? 'Camera observation: the candidate looked tense while answering. Start with one short, kind sentence that helps them relax (for example, suggest a breath), then continue as instructed.'
-                : 'Pengamatan kamera: peserta terlihat tegang saat menjawab. Awali dengan satu kalimat singkat yang ramah untuk menenangkannya (misalnya mengajak tarik napas), lalu lanjutkan sesuai instruksi.',
-            default => $isEn
-                ? 'Camera observation: the candidate often looked away from the camera. Briefly and kindly remind them to keep eye contact, then continue as instructed.'
-                : 'Pengamatan kamera: peserta sering tidak menatap kamera. Ingatkan singkat dan sopan agar tetap menjaga kontak mata, lalu lanjutkan sesuai instruksi.',
-        };
 
-        return "\n[".$note.']';
+        return [$cue === 'tense' ? ($isEn ? 'TENSE' : 'TEGANG') : ($isEn ? 'LOOKING AWAY' : 'TIDAK MENATAP')];
     }
 
     /**
@@ -1127,11 +1251,39 @@ class ExaminerService
     }
 
     /**
+     * Whether a cloud key (Groq or OpenAI) is configured.
+     */
+    public function cloudConfigured(): bool
+    {
+        return (string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '';
+    }
+
+    /**
+     * Speed mode "online" (VOIC_SPEED_MODE=online) with a usable cloud key: the cloud model answers first.
+     */
+    public function onlineFirst(): bool
+    {
+        return Config::get('exam.speed_mode') === 'online' && $this->cloudConfigured();
+    }
+
+    /**
+     * Split a reply into spoken sentences.
+     *
+     * @return list<string>
+     */
+    protected function sentences(string $text): array
+    {
+        $parts = preg_split('/(?<=[.!?])\s+/u', trim($text)) ?: [];
+
+        return array_values(array_filter(array_map('trim', $parts), fn ($part) => $part !== '')) ?: [trim($text)];
+    }
+
+    /**
      * Call Groq or OpenAI when keys are configured.
      *
      * @param  list<array{role: string, content: string}>  $messages
      */
-    protected function callCloudModel(array $messages): ?string
+    protected function callCloudModel(array $messages, int $timeout = 12): ?string
     {
         $providers = [
             ['key' => (string) Config::get('services.groq.key', ''), 'url' => 'https://api.groq.com/openai/v1/chat/completions', 'model' => (string) Config::get('services.groq.model', 'llama-3.3-70b-versatile')],
@@ -1144,7 +1296,7 @@ class ExaminerService
             }
 
             try {
-                $response = Http::timeout(12)->withToken($provider['key'])->post($provider['url'], [
+                $response = Http::connectTimeout(3)->timeout($timeout)->withToken($provider['key'])->post($provider['url'], [
                     'model' => $provider['model'],
                     'messages' => $messages,
                     'temperature' => 0.75,

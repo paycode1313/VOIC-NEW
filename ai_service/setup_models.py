@@ -162,6 +162,10 @@ def setup_mediapipe(check: bool) -> bool:
 
 
 def main() -> None:
+    # Konsol Windows (cp1252) tidak bisa mencetak tanda centang/silang: paksa UTF-8 agar skrip tidak berhenti.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--gpu", action="store_true", help="Pakai model lebih besar untuk laptop dengan GPU NVIDIA")
     parser.add_argument("--check", action="store_true", help="Hanya cek kesiapan, tanpa mengunduh")

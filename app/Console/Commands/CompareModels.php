@@ -274,18 +274,16 @@ class CompareModels extends Command
     }
 
     /**
-     * The examiner's last question and the conversation right before it, short enough for a spreadsheet cell.
+     * The examiner's last line (the question being answered), short enough for a spreadsheet cell.
      *
      * @param  list<array{role: string, content: string}>  $messages
      */
     protected function examinerQuestion(array $messages): string
     {
-        $instruction = (string) end($messages)['content'];
-        if (preg_match('/^(?:Pertanyaan|Question):\s*(.+)$/mu', $instruction, $match)) {
-            return trim($match[1]);
-        }
+        // The question being answered is the examiner message right before the candidate's answer.
+        $question = $messages[count($messages) - 2] ?? null;
 
-        return mb_substr($instruction, 0, 300);
+        return mb_substr((string) (($question['role'] ?? null) === 'assistant' ? $question['content'] : end($messages)['content']), 0, 400);
     }
 
     /**

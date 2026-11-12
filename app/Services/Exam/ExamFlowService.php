@@ -36,6 +36,16 @@ class ExamFlowService
     ) {}
 
     /**
+     * Where the time of the last examiner reply went (see ExaminerService::lastTimings()).
+     *
+     * @return array<string, int>
+     */
+    public function lastTimings(): array
+    {
+        return $this->examiner->lastTimings();
+    }
+
+    /**
      * Initialise the exam and record the examiner's opening line.
      *
      * @param  list<int>  $parts
@@ -78,6 +88,7 @@ class ExamFlowService
 
         $audioUrl = $this->examiner->speak($opening, $definition['role_type'], $language);
         $message = $this->recordExaminerMessage($session, $opening, $audioUrl, $state, 'opening');
+        $this->primeModel($session);
 
         return $this->payload($session->refresh(), $message);
     }
@@ -113,6 +124,7 @@ class ExamFlowService
 
         $audioUrl = $this->examiner->speak($opening, $definition['role_type'], $language);
         $message = $this->recordExaminerMessage($session, $opening, $audioUrl, $state, 'opening');
+        $this->primeModel($session);
 
         return $this->payload($session->refresh(), $message);
     }
@@ -172,7 +184,7 @@ class ExamFlowService
         $directive = $closing ? ExaminerService::DIRECTIVE_COACH_CLOSE : ExaminerService::DIRECTIVE_COACH;
 
         $definition = $this->blueprint->mode($mode);
-        $reply = $this->examiner->respond([
+        $turn = [
             'session_type' => self::TYPE_COACH,
             'mode' => $mode,
             'role_type' => $definition['role_type'],
@@ -197,7 +209,9 @@ class ExamFlowService
             'session_id' => $session->id,
             'focus' => null,
             'visual' => $facial,
-        ], $onSentence);
+        ];
+        $this->rememberPrompt($session, $turn);
+        $reply = $this->examiner->respond($turn, $onSentence);
 
         $session->forceFill(['exam_state' => $state])->save();
 
@@ -282,7 +296,7 @@ class ExamFlowService
         }
 
         $definition = $this->blueprint->mode($mode);
-        $reply = $this->examiner->respond([
+        $turn = [
             'mode' => $mode,
             'role_type' => $definition['role_type'],
             'examiner_name' => $definition['examiner']['name'],
@@ -302,7 +316,9 @@ class ExamFlowService
             'session_id' => $session->id,
             'focus' => $state['focus'] ?? null,
             'visual' => $facial,
-        ], $onSentence);
+        ];
+        $this->rememberPrompt($session, $turn);
+        $reply = $this->examiner->respond($turn, $onSentence);
 
         $session->forceFill(['exam_state' => $state])->save();
 
@@ -572,14 +588,64 @@ class ExamFlowService
     {
         $history = $session->messages()
             ->orderBy('id')
-            ->get(['sender', 'message'])
-            ->map(fn (SessionMessage $message) => [
+            ->get(['sender', 'message', 'meta'])
+            ->map(fn (SessionMessage $message) => array_filter([
                 'role' => $message->sender === 'user' ? 'user' : 'assistant',
                 'content' => $message->message,
-            ]);
+                // The message exactly as the model saw it (answer + turn tag), see rememberPrompt().
+                'prompt' => $message->sender === 'user' ? ($message->meta['prompt'] ?? null) : null,
+            ], fn ($value) => $value !== null));
 
         // The answer just recorded is sent separately, unless no answer was recorded (time up).
         return ($includeLast ? $history : $history->slice(0, -1))->values()->all();
+    }
+
+    /**
+     * Give the model a head start: read this session's persona, rules and opening line now, while
+     * the candidate is still listening to the greeting (see ExaminerService::prime()).
+     */
+    protected function primeModel(PracticeSession $session): void
+    {
+        $state = $session->exam_state;
+        $definition = $this->blueprint->mode($state['mode']);
+        $coach = self::isCoach($state);
+
+        $this->examiner->prime([
+            'session_type' => $coach ? self::TYPE_COACH : null,
+            'mode' => $state['mode'],
+            'role_type' => $definition['role_type'],
+            'examiner_name' => $definition['examiner']['name'],
+            'coach_title' => $this->blueprint->text($definition['coach']['title'] ?? '', $state['language']),
+            'coach_skills' => $this->blueprint->text($definition['coach']['skills'] ?? '', $state['language']),
+            'language' => $state['language'],
+            'topic' => $state['topic'],
+            'context_material' => $session->feedback_notes['context_material'] ?? null,
+            'part' => (int) $state['part'],
+            'part_title' => '',
+            'focus' => $state['focus'] ?? null,
+            'history' => $this->history($session, includeLast: true),
+            'turn' => 0,
+            'session_id' => $session->id,
+        ]);
+    }
+
+    /**
+     * Keep the candidate message exactly as it is sent to the model (answer + turn tag). The next
+     * turns repeat it word for word in their history, so the prompt only ever grows at the end and
+     * the model reuses its cache instead of re-reading the conversation (seconds per turn on a CPU).
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    protected function rememberPrompt(PracticeSession $session, array $turn): void
+    {
+        if (trim((string) $turn['answer']) === '') {
+            return;
+        }
+
+        $answer = $session->messages()->where('sender', 'user')->latest('id')->first();
+        if ($answer !== null) {
+            $answer->update(['meta' => array_merge($answer->meta ?? [], ['prompt' => $this->examiner->turnInstruction($turn)])]);
+        }
     }
 
     /**

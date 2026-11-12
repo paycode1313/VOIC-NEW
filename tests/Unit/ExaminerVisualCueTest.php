@@ -50,10 +50,19 @@ class ExaminerVisualCueTest extends TestCase
         $examiner = app(ExaminerService::class);
 
         $instruction = $examiner->turnInstruction($this->turn(['tension' => 80, 'samples' => 10]));
-        $this->assertStringContainsString('Pengamatan kamera: peserta terlihat tegang', $instruction);
+        $this->assertStringEndsWith('| TEGANG]', $instruction);
+
+        $away = $examiner->turnInstruction($this->turn(['eye_contact' => 20, 'tension' => 0, 'samples' => 10]));
+        $this->assertStringEndsWith('| TIDAK MENATAP]', $away);
 
         $calm = $examiner->turnInstruction($this->turn(['tension' => 0, 'eye_contact' => 95, 'samples' => 10]));
-        $this->assertStringNotContainsString('Pengamatan kamera', $calm);
+        $this->assertStringNotContainsString('TEGANG', $calm);
+        $this->assertStringNotContainsString('TIDAK MENATAP', $calm);
+
+        // What the tags ask for is explained once, in the system prompt.
+        $system = $examiner->systemPrompt($this->turn(null));
+        $this->assertStringContainsString('TEGANG = peserta terlihat tegang di kamera', $system);
+        $this->assertStringContainsString('TIDAK MENATAP = peserta sering tidak menatap kamera', $system);
     }
 
     public function test_closing_coach_turn_has_no_camera_remark(): void
@@ -63,6 +72,6 @@ class ExaminerVisualCueTest extends TestCase
         $turn = $this->turn(['tension' => 80, 'samples' => 10], ExaminerService::DIRECTIVE_COACH_CLOSE);
 
         $this->assertNull($examiner->visualRemark($turn));
-        $this->assertStringNotContainsString('Pengamatan kamera', $examiner->turnInstruction($turn));
+        $this->assertStringEndsWith('[TUTUP]', $examiner->turnInstruction($turn));
     }
 }

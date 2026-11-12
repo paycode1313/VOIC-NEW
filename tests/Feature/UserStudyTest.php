@@ -109,6 +109,21 @@ class UserStudyTest extends TestCase
         $this->assertGreaterThan($attempts->first()->overall_band, $attempts->last()->overall_band);
     }
 
+    public function test_study_report_never_claims_an_improvement_the_data_does_not_show(): void
+    {
+        $strong = 'Saya analis data selama dua tahun di e-commerce. Contohnya, saya membuat dasbor penjualan dengan SQL dan Python yang menurunkan waktu laporan dari tiga hari menjadi dua jam, sehingga tim pemasaran bisa mengambil keputusan lebih cepat.';
+        $this->practise('P02', $strong);
+        $this->practise('P02', $strong);
+        $this->practise('P02', 'Eee, ya, anu, saya, eh, kurang tahu.');
+
+        $dir = 'storage/framework/testing/study_'.uniqid();
+        $this->artisan('voic:study-report', ['--output' => $dir])
+            ->expectsOutputToContain('Skor rata-rata belum naik')
+            ->doesntExpectOutputToContain('Kalimat untuk pitch deck')
+            ->assertSuccessful();
+        File::deleteDirectory(base_path($dir));
+    }
+
     public function test_study_report_without_data_explains_how_to_start(): void
     {
         $this->artisan('voic:study-report')->expectsOutputToContain('Kode peserta')->assertFailed();

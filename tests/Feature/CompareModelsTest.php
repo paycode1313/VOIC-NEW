@@ -20,7 +20,8 @@ class CompareModelsTest extends TestCase
         foreach (range(1, 4) as $i) {
             $examples[] = json_encode(['messages' => [
                 ['role' => 'system', 'content' => 'Kamu adalah Kak Nadia.'],
-                ['role' => 'user', 'content' => "Pertanyaan: Pertanyaan nomor {$i}?\nJawaban peserta: Jawaban {$i}.\n[Balas maksimal 2 kalimat.]"],
+                ['role' => 'assistant', 'content' => "Pertanyaan nomor {$i}?"],
+                ['role' => 'user', 'content' => "Jawaban {$i}.\n[Bagian 1 - Perkenalan. Balas maksimal 2 kalimat.]"],
                 ['role' => 'assistant', 'content' => 'Target.'],
             ], 'meta' => ['answer' => "Jawaban {$i}."]]);
         }
