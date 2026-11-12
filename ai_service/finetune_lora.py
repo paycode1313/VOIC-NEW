@@ -113,10 +113,11 @@ def main() -> None:
         print("Peringatan: < 200 contoh. Model bisa overfit; pertimbangkan --epochs 2 dan tambah data dari sesi yang dinilai 👍.")
 
     # Import berat ditunda agar `--help` tetap jalan tanpa GPU.
-    from datasets import Dataset
-    from trl import SFTConfig, SFTTrainer
+    # Unsloth must be imported before trl/transformers, otherwise its speed and memory patches are skipped.
     from unsloth import FastLanguageModel
     from unsloth.chat_templates import get_chat_template, train_on_responses_only
+    from datasets import Dataset
+    from trl import SFTConfig, SFTTrainer
 
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=args.base,
@@ -145,6 +146,12 @@ def main() -> None:
     train_ds = Dataset.from_list(train_rows).map(render, batched=True, remove_columns=["messages"])
     eval_ds = Dataset.from_list(eval_rows).map(render, batched=True, remove_columns=["messages"]) if eval_rows else None
 
+    # Colab's free T4 (Turing) has no bf16; newer TRL defaults to bf16=True and refuses to start.
+    import torch
+
+    bf16 = bool(torch.cuda.is_available() and torch.cuda.is_bf16_supported())
+    print(f"Presisi training: {'bf16' if bf16 else 'fp16'} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'tanpa GPU'})")
+
     trainer = SFTTrainer(
         model=model,
         train_dataset=train_ds,
@@ -166,6 +173,8 @@ def main() -> None:
             "seed": args.seed,
             "output_dir": os.path.join(args.output, "checkpoints"),
             "report_to": "none",
+            "bf16": bf16,
+            "fp16": not bf16,
         })),
         **tokenizer_kwarg(SFTTrainer, tokenizer),
     )
