@@ -104,12 +104,30 @@ print("✓ alat training terpasang")
             data_cell,
             code(f"""
 # 4. Latih model (± 20–40 menit). Di akhir otomatis dibuat file GGUF + Modelfile untuk Ollama.
-!python finetune_lora.py \\
-    --train datasets/sft/voic_exam_sft.jsonl \\
-    --eval datasets/sft/voic_exam_eval.jsonl \\
-    --base {BASE_MODEL} \\
-    --epochs 2 \\
-    --output outputs/voic-coach
+import subprocess, sys
+
+def train(batch):
+    command = [sys.executable, "finetune_lora.py",
+               "--train", "datasets/sft/voic_exam_sft.jsonl", "--eval", "datasets/sft/voic_exam_eval.jsonl",
+               "--base", "{BASE_MODEL}", "--epochs", "2", "--batch", str(batch), "--output", "outputs/voic-coach"]
+    lines = []
+    with open("training_log.txt", "a", encoding="utf-8") as log:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+        for line in process.stdout:
+            print(line, end="")
+            log.write(line)
+            lines.append(line)
+    return process.wait(), lines
+
+code, lines = train(2)
+if code != 0 and any("out of memory" in line.lower() for line in lines):
+    print("\\n>>> Memori GPU tidak cukup, mengulang dengan batch lebih kecil...\\n")
+    code, lines = train(1)
+if code != 0:
+    print("\\n" + "=" * 70 + "\\nRINGKASAN ERROR (kirim bagian ini ke Claude):\\n" + "=" * 70)
+    print("".join(lines[-25:]))
+    raise RuntimeError("Training gagal. Salin RINGKASAN ERROR di atas (atau file training_log.txt di panel Files).")
+print("\\n✓ Training selesai")
 """),
             code("""
 # 5. Simpan hasil ke Google Drive: folder VOIC-model.

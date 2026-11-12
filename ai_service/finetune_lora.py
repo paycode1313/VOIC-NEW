@@ -52,6 +52,35 @@ def load_examples(path: str) -> List[Dict]:
     return rows
 
 
+def sft_config_kwargs(config_cls, wanted: Dict) -> Dict:
+    """TRL renames options between versions (max_seq_length -> max_length, eval_strategy <-> evaluation_strategy).
+
+    Map each option to the name this installed version accepts, so Colab's newest TRL does not crash.
+    """
+    import dataclasses
+
+    accepted = {field.name for field in dataclasses.fields(config_cls)}
+    aliases = {
+        "max_seq_length": ["max_seq_length", "max_length"],
+        "eval_strategy": ["eval_strategy", "evaluation_strategy"],
+    }
+    kwargs = {}
+    for name, value in wanted.items():
+        for candidate in aliases.get(name, [name]):
+            if candidate in accepted:
+                kwargs[candidate] = value
+                break
+    return kwargs
+
+
+def tokenizer_kwarg(trainer_cls, tokenizer) -> Dict:
+    """Newer TRL takes the tokenizer as processing_class; older versions as tokenizer."""
+    import inspect
+
+    params = inspect.signature(trainer_cls.__init__).parameters
+    return {"processing_class": tokenizer} if "processing_class" in params else {"tokenizer": tokenizer}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--train", default="datasets/sft/voic_exam_sft.jsonl")
@@ -68,6 +97,7 @@ def main() -> None:
     parser.add_argument("--max-seq", type=int, default=3072)
     parser.add_argument("--quant", default="q4_k_m", help="Kuantisasi GGUF: q4_k_m (cepat) atau q8_0 (lebih akurat)")
     parser.add_argument("--seed", type=int, default=3407)
+    parser.add_argument("--batch", type=int, default=2, help="Turunkan ke 1 kalau GPU kehabisan memori (CUDA out of memory)")
     args = parser.parse_args()
 
     train_rows = load_examples(args.train)
@@ -117,27 +147,27 @@ def main() -> None:
 
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
         train_dataset=train_ds,
         eval_dataset=eval_ds,
-        args=SFTConfig(
-            dataset_text_field="text",
-            max_seq_length=args.max_seq,
-            per_device_train_batch_size=2,
-            gradient_accumulation_steps=4,
-            num_train_epochs=args.epochs,
-            learning_rate=args.lr,
-            lr_scheduler_type="cosine",
-            warmup_ratio=0.05,
-            weight_decay=0.01,
-            logging_steps=5,
-            eval_strategy="epoch" if eval_ds is not None else "no",
-            save_strategy="no",
-            optim="adamw_8bit",
-            seed=args.seed,
-            output_dir=os.path.join(args.output, "checkpoints"),
-            report_to="none",
-        ),
+        args=SFTConfig(**sft_config_kwargs(SFTConfig, {
+            "dataset_text_field": "text",
+            "max_seq_length": args.max_seq,
+            "per_device_train_batch_size": args.batch,
+            "gradient_accumulation_steps": max(1, 8 // args.batch),
+            "num_train_epochs": args.epochs,
+            "learning_rate": args.lr,
+            "lr_scheduler_type": "cosine",
+            "warmup_ratio": 0.05,
+            "weight_decay": 0.01,
+            "logging_steps": 5,
+            "eval_strategy": "epoch" if eval_ds is not None else "no",
+            "save_strategy": "no",
+            "optim": "adamw_8bit",
+            "seed": args.seed,
+            "output_dir": os.path.join(args.output, "checkpoints"),
+            "report_to": "none",
+        })),
+        **tokenizer_kwarg(SFTTrainer, tokenizer),
     )
     # Hitung loss hanya pada balasan penguji.
     trainer = train_on_responses_only(
