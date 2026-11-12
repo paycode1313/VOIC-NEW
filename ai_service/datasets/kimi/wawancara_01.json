@@ -1,0 +1,184 @@
+[
+  {
+    "mode": "wawancara",
+    "language": "en",
+    "topic": "Software Engineer backend at a logistics company",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Please introduce yourself. Briefly tell me about your education and your work experience so far.",
+        "answer": "Um, hello. My name is Rizky. I graduated from Universitas Indonesia, majoring in computer science. For the last three years I have worked as a backend developer at a logistics startup.",
+        "directive": "react",
+        "reply": "Computer science from Universitas Indonesia and three years as a backend developer, that is a solid foundation for this role."
+      },
+      {
+        "part": 1,
+        "question": "What made you interested in applying for this backend position at our logistics company?",
+        "answer": "Emm, I want to grow my career, Ms. Nadia. And logistics is a big industry.",
+        "directive": "follow_up",
+        "reply": "Wanting to grow in a big industry is a fair reason. You mentioned three years as a backend developer at a logistics startup. What is the one project from those three years that you are proudest of?"
+      },
+      {
+        "part": 2,
+        "question": "What is the one project from those three years that you are proudest of?",
+        "answer": "Um, we built a shipment tracking system. We used Node.js and PostgreSQL. It tracked thousands of packages every day.",
+        "directive": "follow_up",
+        "reply": "Node.js and PostgreSQL handling thousands of packages a day, that is substantial work. When you say we built it, which parts of that tracking system did you build with your own hands?"
+      },
+      {
+        "part": 2,
+        "question": "When you say we built it, which parts of that tracking system did you build with your own hands?",
+        "answer": "I made the tracking API, Ms. Nadia. And I helped set up Redis for caching the package locations.",
+        "directive": "react",
+        "reply": "The tracking API and the Redis caching for package locations, so your own work sat at the very core of that system."
+      },
+      {
+        "part": 2,
+        "question": "Tell me about the most difficult problem your team faced in that project and how it was solved.",
+        "answer": "The tracking data was often delayed, Ms. Nadia. We checked the message queue, and we fixed it in about two days.",
+        "directive": "follow_up",
+        "reply": "Delayed tracking data that took two days to fix must have been tense. When you say we checked the queue, what did you check with your own eyes, and what change did you personally apply?"
+      },
+      {
+        "part": 2,
+        "question": "When you say we checked the queue, what did you check with your own eyes, and what change did you personally apply?",
+        "answer": "Sorry, Ms. Nadia. Can you repeat that? I got nervous.",
+        "directive": "clarify",
+        "reply": "Relax, take a breath. I mean the delayed tracking problem that took two days. In that fix, what was the first thing you checked, and what change did you make?"
+      },
+      {
+        "part": 2,
+        "question": "In that fix, what was the first thing you checked, and what change did you make?",
+        "answer": "I checked the consumer, Ms. Nadia. It was stuck, so I restarted it, and I added a retry mechanism.",
+        "directive": "react",
+        "reply": "A stuck consumer that you restarted, plus a retry mechanism, those are concrete debugging actions."
+      },
+      {
+        "part": 2,
+        "question": "What would your teammates say is your biggest strength?",
+        "answer": "They say I am very detail-oriented, Ms. Nadia. I check everything twice before I merge.",
+        "directive": "follow_up",
+        "reply": "Checking everything twice before merging fits backend work well. Can you tell me about one specific incident where that carefulness saved your team from a real problem?"
+      },
+      {
+        "part": 3,
+        "question": "Can you tell me about one specific incident where that carefulness saved your team from a real problem?",
+        "answer": "Yes. Once, in a code review, I caught a missing database index. If it went live, the monthly report query would have taken forever. I added the index before the release.",
+        "directive": "react",
+        "reply": "Catching a missing index before release saved that monthly report query from melting down in production."
+      },
+      {
+        "part": 3,
+        "question": "Backend technology moves fast. Which skill do you most want to improve next?",
+        "answer": "System design, Ms. Nadia. I want to get better at designing big systems.",
+        "directive": "follow_up",
+        "reply": "System design is an honest target. You built the tracking API with Node.js and Redis. If you could redesign that system today, what is one thing you would do differently?"
+      },
+      {
+        "part": 3,
+        "question": "If you could redesign that system today, what is one thing you would do differently?",
+        "answer": "I would use Kafka from the start, Ms. Nadia. Our simple queue could not handle the load spikes.",
+        "directive": "react",
+        "reply": "Moving from a simple queue to Kafka from day one is a specific and practical change."
+      },
+      {
+        "part": 3,
+        "question": "Last question. What kind of team helps you do your best work?",
+        "answer": "A supportive team, Ms. Nadia. Where I can ask questions when I get stuck.",
+        "directive": "react",
+        "reply": "A supportive team with room to ask questions matches how you described yourself."
+      }
+    ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "en",
+    "topic": "Customer Service at a digital bank",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Please introduce yourself. Tell me a little about your background.",
+        "answer": "Hello, Ms. Nadia, thank you for having me. My name is Sari, I am 26 years old, I live in Bekasi with my family, and I have two cats at home. I graduated from Politeknik Negeri Jakarta, majoring in business administration, in 2021. After that I joined a telecom company, and I worked there for about three years in the call center, handling billing complaints, and my supervisor also let me train new agents because she said my voice sounds calm on the phone.",
+        "directive": "react",
+        "reply": "Three years in a call center handling billing complaints, plus training new agents, that is heavy direct customer experience."
+      },
+      {
+        "part": 1,
+        "question": "What made you interested in this customer service position at our digital bank?",
+        "answer": "Oh, many reasons, Ms. Nadia. I have liked banks since I was little because my mother worked near one. And digital banks are everywhere now, my friends use them to split bills. Honestly, my cousin also said this company pays well. And I just love talking to people. Last week I even spent two hours helping my neighbor complain about her e-wallet problem, and I felt so satisfied afterwards.",
+        "directive": "follow_up",
+        "reply": "Spending two unpaid hours on your neighbor's e-wallet complaint says a lot about your patience. You spent three years handling billing complaints at the telecom. What was the hardest complaint you handled there, and how did you solve it from start to finish?"
+      },
+      {
+        "part": 2,
+        "question": "What was the hardest complaint you handled there, and how did you solve it from start to finish?",
+        "answer": "Oh, the hardest one. There was a customer, Pak Budi, who was charged for a roaming package he never activated, around two hundred thousand rupiah. He shouted for almost ten minutes and even threatened to report us to the media. I just listened without cutting him off, then I checked the system and found the package was activated by a third-party app. I explained it calmly, I offered a full refund, and in the end he calmed down and thanked me.",
+        "directive": "follow_up",
+        "reply": "Letting him vent for ten minutes and then finding the third-party activation turned it around. After you offered the full refund, did Pak Budi accept it, and did the money actually reach his account?"
+      },
+      {
+        "part": 2,
+        "question": "After you offered the full refund, did Pak Budi accept it, and did the money actually reach his account?",
+        "answer": "Yes, he accepted, Ms. Nadia. The refund took about seven working days to reach him, or maybe five, the system was different back then. Anyway, that same month I won best agent. Oh, and that reminds me, during a promo period I once handled fifty calls in one day, no wait, sixty calls, my throat hurt so much that week.",
+        "directive": "follow_up",
+        "reply": "Winning best agent that same month is a strong result. You first said the refund took seven working days, then you said five. Which one is correct?"
+      },
+      {
+        "part": 2,
+        "question": "You first said the refund took seven working days, then you said five. Which one is correct?",
+        "answer": "Let me think, Ms. Nadia. I am quite sure it was seven working days for that refund. The five days must have been another case, I am sorry, I handled so many tickets.",
+        "directive": "react",
+        "reply": "Seven working days for that refund, mixed up with another case after hundreds of tickets, that is understandable."
+      },
+      {
+        "part": 2,
+        "question": "In this job you would handle complaints about failed transfers and blocked accounts. If an angry customer says her transfer failed, what would you do in the first two minutes?",
+        "answer": "Oh, before I answer, Ms. Nadia, may I ask something? Is this job work from home or from the office? And is the salary negotiable? My last job had tiring shifts, and the commute from Bekasi took almost two hours each way.",
+        "directive": "clarify",
+        "reply": "Fair questions. The training period is six months in the office, after that it becomes hybrid, and the salary range is fixed for new hires. Now, back to the failed transfer. If an angry customer says her transfer failed, what would you do in the first two minutes?"
+      },
+      {
+        "part": 2,
+        "question": "If an angry customer says her transfer failed, what would you do in the first two minutes?",
+        "answer": "Okay, six months then hybrid, thank you, Ms. Nadia. For the failed transfer, first I would apologize and let her vent, then I would ask for the transaction ID and check whether it is pending or failed, because sometimes a pending transfer settles by itself. If it is truly failed, I would escalate to the technical team and promise a callback, but I would not promise an exact time, because my trainer always said broken promises make customers even angrier.",
+        "directive": "follow_up",
+        "reply": "Checking pending versus failed before promising anything shows you listened to your trainer. When you escalate to the technical team, what exactly would you tell the customer at that moment?"
+      },
+      {
+        "part": 3,
+        "question": "When you escalate to the technical team, what exactly would you tell the customer at that moment?",
+        "answer": "I would say, I have checked your transfer and I am sorry, there is a technical problem on our side, I have reported it to the technical team with your transaction ID, and someone will call you back as soon as there is an update. Then I would put a note in the ticket with the ID, the time, the amount, and what she already tried, so the next agent does not make her repeat everything.",
+        "directive": "react",
+        "reply": "The transaction ID, the time, the amount, and a summary note in the ticket, that would spare her from repeating her story to three different people."
+      },
+      {
+        "part": 3,
+        "question": "The app and its features change every month. How do you keep your product knowledge up to date?",
+        "answer": "Oh, I love learning, Ms. Nadia. I follow fintech accounts on social media, and I read banking news every morning while feeding my cats, they wake me up at five anyway. I also joined an online community of customer service agents where we share scripts and tips, and just last month someone shared how they handled a phishing victim, which was really useful because scams are everywhere now.",
+        "directive": "react",
+        "reply": "An online community sharing real scripts, plus banking news every morning, that is more practical than any course."
+      },
+      {
+        "part": 3,
+        "question": "Following up on that phishing story. If a customer says she shared her OTP with a stranger ten minutes ago, what do you do first?",
+        "answer": "First I stay calm, Ms. Nadia, because if I panic she will panic too. Then I ask which account is at risk, and I tell her that the OTP means the stranger can get into her account, so we must act fast. I would connect her to the fraud team, help her change the password, and gently remind her that the bank never asks for an OTP, without making her feel stupid, because she already feels embarrassed.",
+        "directive": "follow_up",
+        "reply": "Keeping her calm and moving fast in the first minutes matters most with OTP fraud. You said you would connect her to the fraud team. Do you stay on the line with her during that, or does the handover happen some other way?"
+      },
+      {
+        "part": 3,
+        "question": "Do you stay on the line with her during that, or does the handover happen some other way?",
+        "answer": "Sorry, Ms. Nadia, what do you mean by stay on the line? I am not sure I follow.",
+        "directive": "clarify",
+        "reply": "Good question. I mean the handover to the fraud team. Would you keep the customer on your line and introduce her to the fraud agent, or pass her over cold and hang up?"
+      },
+      {
+        "part": 3,
+        "question": "Would you keep the customer on your line and introduce her to the fraud agent, or pass her over cold and hang up?",
+        "answer": "I would keep her on the line, Ms. Nadia. I would briefly explain the case to the fraud agent while she listens, so she feels safe and does not have to repeat everything. I did this many times at the telecom with the billing team, warm transfers, I mean.",
+        "directive": "react",
+        "reply": "Warm transfers where the customer hears you hand over her case, that is the same care as your detailed ticket notes."
+      }
+    ]
+  }
+]

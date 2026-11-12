@@ -19,7 +19,7 @@ Kalau jawaban Kimi terpotong di tengah (JSON tidak lengkap), ketik di chat yang 
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Ms. Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Software Engineer backend di perusahaan logistik", tipe peserta: gugup, jawabannya pendek-pendek. Wajib ada situasi: peserta bercerita pakai "kami" terus tanpa jelas perannya sendiri; dan peserta mengaku punya sifat (misalnya teliti/sabar/disiplin) tanpa contoh kejadian.
 - Dialog 2: topik "Customer Service di bank digital", tipe peserta: bertele-tele dan sering melenceng dari pertanyaan. Wajib ada situasi: angka di jawaban belakang berbeda dari jawaban sebelumnya; dan peserta balik bertanya soal posisi/perusahaan (jawab singkat dulu, lalu kembali ke pertanyaan).
@@ -34,9 +34,9 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
-- Tulis SELURUH dialog (question, answer, reply) dalam bahasa Inggris, dan isi "language": "en". Topik boleh diterjemahkan.
+- Tulis SELURUH dialog (question, answer, reply) dalam bahasa Inggris, dan isi "language": "en". Topik boleh diterjemahkan. Tidak perlu membuat versi terjemahan bahasa Indonesia.
 
 Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penjelasan apa pun sebelum atau sesudahnya. Contoh format (isinya jangan ditiru):
 
@@ -59,7 +59,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Sistem pakar diagnosa penyakit kucing metode forward chaining", tipe peserta: bertele-tele dan sering melenceng dari pertanyaan. Wajib ada situasi: peserta bilang hasilnya "lebih akurat/lebih baik" tanpa pembanding; dan peserta menyebut metode tanpa alasan memilihnya.
 - Dialog 2: topik "Pengaruh gaji dan lingkungan kerja terhadap kinerja karyawan pabrik", tipe peserta: sering bilang "tidak tahu" atau minta pertanyaan diulang. Wajib ada situasi: peserta memakai klaim terlalu umum seperti "pasti" atau "selalu"; dan peserta bingung ditanya keterbatasan penelitian.
@@ -74,7 +74,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -99,7 +99,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "KosHub, aplikasi cari dan bayar kos untuk mahasiswa", tipe peserta: sering bilang "tidak tahu" atau minta pertanyaan diulang. Wajib ada situasi: peserta bilang "tidak ada pesaing"; dan peserta bilang pertumbuhannya "pesat" tanpa angka.
 - Dialog 2: topik "PanenLink, menghubungkan petani sayur langsung ke restoran", tipe peserta: jawabannya umum dan kurang detail. Wajib ada situasi: peserta menyebut dana yang diminta tanpa rincian penggunaannya; dan angka pengguna/pendapatan di jawaban belakang berbeda dari sebelumnya.
@@ -114,7 +114,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -139,7 +139,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Akuntan junior di KAP", tipe peserta: suka balik bertanya ke penguji. Wajib ada situasi: peserta mengaku punya sifat (misalnya teliti/sabar/disiplin) tanpa contoh kejadian; dan cerita pengalaman berhenti tanpa menyebut hasil akhirnya.
 - Dialog 2: topik "Social Media Specialist di brand skincare", tipe peserta: angka atau faktanya tidak konsisten antar jawaban. Wajib ada situasi: peserta balik bertanya soal posisi/perusahaan (jawab singkat dulu, lalu kembali ke pertanyaan); dan peserta tidak paham pertanyaan dan minta diulang.
@@ -154,7 +154,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -179,7 +179,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Analisis sentimen ulasan aplikasi ojek online dengan Naive Bayes", tipe peserta: angka atau faktanya tidak konsisten antar jawaban. Wajib ada situasi: peserta menyebut metode tanpa alasan memilihnya; dan peserta tidak menyebut jumlah data/sampel/responden.
 - Dialog 2: topik "Rancang bangun sistem informasi posyandu berbasis web", tipe peserta: lancar dan percaya diri, tapi beberapa klaimnya kurang bukti. Wajib ada situasi: peserta bingung ditanya keterbatasan penelitian; dan angka di jawaban belakang berbeda dari jawaban sebelumnya.
@@ -194,7 +194,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -219,7 +219,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "BengkelGo, servis motor panggilan", tipe peserta: lancar dan percaya diri, tapi beberapa klaimnya kurang bukti. Wajib ada situasi: peserta bilang pertumbuhannya "pesat" tanpa angka; dan peserta bilang pasarnya "semua orang" atau "semua UMKM".
 - Dialog 2: topik "LansiaCare, pendamping lansia berbasis aplikasi", tipe peserta: gugup, jawabannya pendek-pendek. Wajib ada situasi: angka pengguna/pendapatan di jawaban belakang berbeda dari sebelumnya; dan peserta balik bertanya soal syarat investasi (jawab singkat dulu, lalu kembali ke pertanyaan).
@@ -234,7 +234,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -259,7 +259,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Guru SD di sekolah swasta", tipe peserta: sering bilang "tidak tahu" atau minta pertanyaan diulang. Wajib ada situasi: cerita pengalaman berhenti tanpa menyebut hasil akhirnya; dan angka di jawaban belakang berbeda dari jawaban sebelumnya.
 - Dialog 2: topik "Perawat di rumah sakit swasta", tipe peserta: jawabannya umum dan kurang detail. Wajib ada situasi: peserta tidak paham pertanyaan dan minta diulang; dan peserta bercerita pakai "kami" terus tanpa jelas perannya sendiri.
@@ -274,7 +274,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -299,7 +299,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Pengaruh literasi keuangan terhadap perilaku menabung mahasiswa", tipe peserta: jawabannya umum dan kurang detail. Wajib ada situasi: peserta tidak menyebut jumlah data/sampel/responden; dan peserta memakai klaim terlalu umum seperti "pasti" atau "selalu".
 - Dialog 2: topik "Prediksi harga cabai dengan LSTM", tipe peserta: kuat dan detail, penguji tetap menggali lebih dalam. Wajib ada situasi: angka di jawaban belakang berbeda dari jawaban sebelumnya; dan peserta bilang hasilnya "lebih akurat/lebih baik" tanpa pembanding.
@@ -314,7 +314,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -339,7 +339,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "SisaMakan, jual makanan sisa hari ini dari restoran dengan harga murah", tipe peserta: kuat dan detail, penguji tetap menggali lebih dalam. Wajib ada situasi: peserta bilang pasarnya "semua orang" atau "semua UMKM"; dan peserta menyebut dana yang diminta tanpa rincian penggunaannya.
 - Dialog 2: topik "TutorDekat, les privat SD dari mahasiswa sekitar", tipe peserta: suka balik bertanya ke penguji. Wajib ada situasi: peserta balik bertanya soal syarat investasi (jawab singkat dulu, lalu kembali ke pertanyaan); dan peserta bilang "tidak ada pesaing".
@@ -354,7 +354,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -379,7 +379,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "HR Generalist di pabrik garmen", tipe peserta: lancar dan percaya diri, tapi beberapa klaimnya kurang bukti. Wajib ada situasi: angka di jawaban belakang berbeda dari jawaban sebelumnya; dan peserta balik bertanya soal posisi/perusahaan (jawab singkat dulu, lalu kembali ke pertanyaan).
 - Dialog 2: topik "Sales Executive alat berat", tipe peserta: gugup, jawabannya pendek-pendek. Wajib ada situasi: peserta bercerita pakai "kami" terus tanpa jelas perannya sendiri; dan peserta mengaku punya sifat (misalnya teliti/sabar/disiplin) tanpa contoh kejadian.
@@ -394,7 +394,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -419,7 +419,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Efektivitas pembelajaran berbasis proyek terhadap hasil belajar IPA siswa SMP", tipe peserta: gugup, jawabannya pendek-pendek. Wajib ada situasi: peserta memakai klaim terlalu umum seperti "pasti" atau "selalu"; dan peserta bingung ditanya keterbatasan penelitian.
 - Dialog 2: topik "Monitoring kualitas air tambak udang berbasis IoT", tipe peserta: bertele-tele dan sering melenceng dari pertanyaan. Wajib ada situasi: peserta bilang hasilnya "lebih akurat/lebih baik" tanpa pembanding; dan peserta menyebut metode tanpa alasan memilihnya.
@@ -434,7 +434,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -459,7 +459,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "UMKMBooks, pembukuan otomatis lewat WhatsApp", tipe peserta: bertele-tele dan sering melenceng dari pertanyaan. Wajib ada situasi: peserta menyebut dana yang diminta tanpa rincian penggunaannya; dan angka pengguna/pendapatan di jawaban belakang berbeda dari sebelumnya.
 - Dialog 2: topik "RentKamera, sewa kamera dan lensa antar mahasiswa", tipe peserta: sering bilang "tidak tahu" atau minta pertanyaan diulang. Wajib ada situasi: peserta bilang "tidak ada pesaing"; dan peserta bilang pertumbuhannya "pesat" tanpa angka.
@@ -474,7 +474,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -499,7 +499,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Quality Control di pabrik makanan", tipe peserta: kuat dan detail, penguji tetap menggali lebih dalam. Wajib ada situasi: peserta balik bertanya soal posisi/perusahaan (jawab singkat dulu, lalu kembali ke pertanyaan); dan peserta tidak paham pertanyaan dan minta diulang.
 - Dialog 2: topik "Mobile Developer Flutter di startup kesehatan", tipe peserta: suka balik bertanya ke penguji. Wajib ada situasi: peserta mengaku punya sifat (misalnya teliti/sabar/disiplin) tanpa contoh kejadian; dan cerita pengalaman berhenti tanpa menyebut hasil akhirnya.
@@ -514,7 +514,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -539,7 +539,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Strategi komunikasi pemasaran UMKM batik melalui Instagram", tipe peserta: suka balik bertanya ke penguji. Wajib ada situasi: peserta bingung ditanya keterbatasan penelitian; dan angka di jawaban belakang berbeda dari jawaban sebelumnya.
 - Dialog 2: topik "Perbandingan algoritma K-Means dan DBSCAN untuk segmentasi pelanggan", tipe peserta: angka atau faktanya tidak konsisten antar jawaban. Wajib ada situasi: peserta menyebut metode tanpa alasan memilihnya; dan peserta tidak menyebut jumlah data/sampel/responden.
@@ -554,9 +554,9 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
-- Tulis SELURUH dialog (question, answer, reply) dalam bahasa Inggris, dan isi "language": "en". Topik boleh diterjemahkan.
+- Tulis SELURUH dialog (question, answer, reply) dalam bahasa Inggris, dan isi "language": "en". Topik boleh diterjemahkan. Tidak perlu membuat versi terjemahan bahasa Indonesia.
 
 Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penjelasan apa pun sebelum atau sesudahnya. Contoh format (isinya jangan ditiru):
 
@@ -579,7 +579,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "AirBersih, filter air isi ulang untuk desa", tipe peserta: angka atau faktanya tidak konsisten antar jawaban. Wajib ada situasi: angka pengguna/pendapatan di jawaban belakang berbeda dari sebelumnya; dan peserta balik bertanya soal syarat investasi (jawab singkat dulu, lalu kembali ke pertanyaan).
 - Dialog 2: topik "HalalCek, scan produk untuk cek sertifikat halal", tipe peserta: lancar dan percaya diri, tapi beberapa klaimnya kurang bukti. Wajib ada situasi: peserta bilang pertumbuhannya "pesat" tanpa angka; dan peserta bilang pasarnya "semua orang" atau "semua UMKM".
@@ -594,7 +594,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -619,7 +619,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Admin gudang di distributor sembako", tipe peserta: bertele-tele dan sering melenceng dari pertanyaan. Wajib ada situasi: peserta tidak paham pertanyaan dan minta diulang; dan peserta bercerita pakai "kami" terus tanpa jelas perannya sendiri.
 - Dialog 2: topik "Content Writer di media online", tipe peserta: sering bilang "tidak tahu" atau minta pertanyaan diulang. Wajib ada situasi: cerita pengalaman berhenti tanpa menyebut hasil akhirnya; dan angka di jawaban belakang berbeda dari jawaban sebelumnya.
@@ -634,7 +634,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -659,7 +659,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Pengaruh beban kerja terhadap stres perawat ICU", tipe peserta: sering bilang "tidak tahu" atau minta pertanyaan diulang. Wajib ada situasi: angka di jawaban belakang berbeda dari jawaban sebelumnya; dan peserta bilang hasilnya "lebih akurat/lebih baik" tanpa pembanding.
 - Dialog 2: topik "Aplikasi absensi karyawan dengan face recognition", tipe peserta: jawabannya umum dan kurang detail. Wajib ada situasi: peserta tidak menyebut jumlah data/sampel/responden; dan peserta memakai klaim terlalu umum seperti "pasti" atau "selalu".
@@ -674,7 +674,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -699,7 +699,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "KantinKu, pre-order makanan kantin sekolah", tipe peserta: jawabannya umum dan kurang detail. Wajib ada situasi: peserta balik bertanya soal syarat investasi (jawab singkat dulu, lalu kembali ke pertanyaan); dan peserta bilang "tidak ada pesaing".
 - Dialog 2: topik "ParkirPintar, sensor slot parkir di mal", tipe peserta: kuat dan detail, penguji tetap menggali lebih dalam. Wajib ada situasi: peserta bilang pasarnya "semua orang" atau "semua UMKM"; dan peserta menyebut dana yang diminta tanpa rincian penggunaannya.
@@ -714,7 +714,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -739,7 +739,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Business Analyst di perusahaan asuransi", tipe peserta: angka atau faktanya tidak konsisten antar jawaban. Wajib ada situasi: peserta bercerita pakai "kami" terus tanpa jelas perannya sendiri; dan peserta mengaku punya sifat (misalnya teliti/sabar/disiplin) tanpa contoh kejadian.
 - Dialog 2: topik "Barista dan shift leader di kedai kopi", tipe peserta: lancar dan percaya diri, tapi beberapa klaimnya kurang bukti. Wajib ada situasi: angka di jawaban belakang berbeda dari jawaban sebelumnya; dan peserta balik bertanya soal posisi/perusahaan (jawab singkat dulu, lalu kembali ke pertanyaan).
@@ -754,7 +754,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -779,7 +779,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Analisis kelayakan usaha budidaya jamur tiram", tipe peserta: lancar dan percaya diri, tapi beberapa klaimnya kurang bukti. Wajib ada situasi: peserta bilang hasilnya "lebih akurat/lebih baik" tanpa pembanding; dan peserta menyebut metode tanpa alasan memilihnya.
 - Dialog 2: topik "Implementasi enkripsi AES pada aplikasi chat", tipe peserta: gugup, jawabannya pendek-pendek. Wajib ada situasi: peserta memakai klaim terlalu umum seperti "pasti" atau "selalu"; dan peserta bingung ditanya keterbatasan penelitian.
@@ -794,7 +794,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -819,7 +819,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "SewaTenda, marketplace perlengkapan acara", tipe peserta: gugup, jawabannya pendek-pendek. Wajib ada situasi: peserta bilang "tidak ada pesaing"; dan peserta bilang pertumbuhannya "pesat" tanpa angka.
 - Dialog 2: topik "FitKampung, kelas olahraga murah di balai warga", tipe peserta: bertele-tele dan sering melenceng dari pertanyaan. Wajib ada situasi: peserta menyebut dana yang diminta tanpa rincian penggunaannya; dan angka pengguna/pendapatan di jawaban belakang berbeda dari sebelumnya.
@@ -834,7 +834,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -859,7 +859,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Staf administrasi di kantor desa", tipe peserta: jawabannya umum dan kurang detail. Wajib ada situasi: peserta mengaku punya sifat (misalnya teliti/sabar/disiplin) tanpa contoh kejadian; dan cerita pengalaman berhenti tanpa menyebut hasil akhirnya.
 - Dialog 2: topik "IT Support di kampus", tipe peserta: kuat dan detail, penguji tetap menggali lebih dalam. Wajib ada situasi: peserta balik bertanya soal posisi/perusahaan (jawab singkat dulu, lalu kembali ke pertanyaan); dan peserta tidak paham pertanyaan dan minta diulang.
@@ -874,7 +874,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -899,7 +899,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Pengaruh harga dan promosi terhadap keputusan pembelian di marketplace", tipe peserta: kuat dan detail, penguji tetap menggali lebih dalam. Wajib ada situasi: peserta menyebut metode tanpa alasan memilihnya; dan peserta tidak menyebut jumlah data/sampel/responden.
 - Dialog 2: topik "Deteksi berita hoaks berbahasa Indonesia dengan IndoBERT", tipe peserta: suka balik bertanya ke penguji. Wajib ada situasi: peserta bingung ditanya keterbatasan penelitian; dan angka di jawaban belakang berbeda dari jawaban sebelumnya.
@@ -914,7 +914,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -939,7 +939,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Mr. William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "DaurTekstil, olah limbah kain jadi produk", tipe peserta: suka balik bertanya ke penguji. Wajib ada situasi: peserta bilang pertumbuhannya "pesat" tanpa angka; dan peserta bilang pasarnya "semua orang" atau "semua UMKM".
 - Dialog 2: topik "CekKos, review kos terverifikasi", tipe peserta: angka atau faktanya tidak konsisten antar jawaban. Wajib ada situasi: angka pengguna/pendapatan di jawaban belakang berbeda dari sebelumnya; dan peserta balik bertanya soal syarat investasi (jawab singkat dulu, lalu kembali ke pertanyaan).
@@ -954,9 +954,9 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
-- Tulis SELURUH dialog (question, answer, reply) dalam bahasa Inggris, dan isi "language": "en". Topik boleh diterjemahkan.
+- Tulis SELURUH dialog (question, answer, reply) dalam bahasa Inggris, dan isi "language": "en". Topik boleh diterjemahkan. Tidak perlu membuat versi terjemahan bahasa Indonesia.
 
 Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penjelasan apa pun sebelum atau sesudahnya. Contoh format (isinya jangan ditiru):
 
@@ -979,7 +979,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Graphic Designer di agensi iklan", tipe peserta: gugup, jawabannya pendek-pendek. Wajib ada situasi: cerita pengalaman berhenti tanpa menyebut hasil akhirnya; dan angka di jawaban belakang berbeda dari jawaban sebelumnya.
 - Dialog 2: topik "Teller bank BUMN", tipe peserta: bertele-tele dan sering melenceng dari pertanyaan. Wajib ada situasi: peserta tidak paham pertanyaan dan minta diulang; dan peserta bercerita pakai "kami" terus tanpa jelas perannya sendiri.
@@ -994,7 +994,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -1019,7 +1019,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Tinjauan yuridis perlindungan data pribadi konsumen e-commerce", tipe peserta: bertele-tele dan sering melenceng dari pertanyaan. Wajib ada situasi: peserta tidak menyebut jumlah data/sampel/responden; dan peserta memakai klaim terlalu umum seperti "pasti" atau "selalu".
 - Dialog 2: topik "Perancangan ulang tata letak gudang dengan metode ABC", tipe peserta: sering bilang "tidak tahu" atau minta pertanyaan diulang. Wajib ada situasi: angka di jawaban belakang berbeda dari jawaban sebelumnya; dan peserta bilang hasilnya "lebih akurat/lebih baik" tanpa pembanding.
@@ -1034,7 +1034,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -1059,7 +1059,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "TernakPintar, pakan otomatis untuk peternak ayam", tipe peserta: sering bilang "tidak tahu" atau minta pertanyaan diulang. Wajib ada situasi: peserta bilang pasarnya "semua orang" atau "semua UMKM"; dan peserta menyebut dana yang diminta tanpa rincian penggunaannya.
 - Dialog 2: topik "GuruAI, bank soal adaptif untuk guru SMA", tipe peserta: jawabannya umum dan kurang detail. Wajib ada situasi: peserta balik bertanya soal syarat investasi (jawab singkat dulu, lalu kembali ke pertanyaan); dan peserta bilang "tidak ada pesaing".
@@ -1074,7 +1074,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -1099,7 +1099,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu".
+Mode: wawancara. Penguji: Kak Nadia, HR Recruiter, menyapa peserta dengan "kamu". Peserta memanggil penguji "Kak Nadia".
 Bagian: part 1 = Perkenalan, part 2 = Cerita Pengalaman, part 3 = Diskusi Mendalam.
 - Dialog 1: topik "Management Trainee di perusahaan retail", tipe peserta: suka balik bertanya ke penguji. Wajib ada situasi: angka di jawaban belakang berbeda dari jawaban sebelumnya; dan peserta balik bertanya soal posisi/perusahaan (jawab singkat dulu, lalu kembali ke pertanyaan).
 - Dialog 2: topik "Digital Marketing di UMKM fashion", tipe peserta: angka atau faktanya tidak konsisten antar jawaban. Wajib ada situasi: peserta bercerita pakai "kami" terus tanpa jelas perannya sendiri; dan peserta mengaku punya sifat (misalnya teliti/sabar/disiplin) tanpa contoh kejadian.
@@ -1114,7 +1114,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -1139,7 +1139,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda".
+Mode: sidang. Penguji: Prof. Hendra, dosen penguji sidang skripsi, menyapa peserta dengan "Anda". Peserta memanggil penguji "Prof. Hendra".
 Bagian: part 1 = Pembukaan, part 2 = Presentasi Inti, part 3 = Tanya Jawab Penguji.
 - Dialog 1: topik "Pengaruh kepemimpinan transformasional terhadap kepuasan kerja guru", tipe peserta: angka atau faktanya tidak konsisten antar jawaban. Wajib ada situasi: peserta memakai klaim terlalu umum seperti "pasti" atau "selalu"; dan peserta bingung ditanya keterbatasan penelitian.
 - Dialog 2: topik "Sistem pendukung keputusan pemilihan beasiswa metode SAW", tipe peserta: lancar dan percaya diri, tapi beberapa klaimnya kurang bukti. Wajib ada situasi: peserta bilang hasilnya "lebih akurat/lebih baik" tanpa pembanding; dan peserta menyebut metode tanpa alasan memilihnya.
@@ -1154,7 +1154,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 
@@ -1179,7 +1179,7 @@ Format keluaran: HANYA satu blok JSON valid (array berisi 2 dialog), tanpa penje
 ```text
 Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda".
+Mode: pitching. Penguji: Pak William, investor, menyapa peserta dengan "Anda". Peserta memanggil penguji "Pak William".
 Bagian: part 1 = Founder & Masalah, part 2 = Elevator Pitch, part 3 = Due Diligence.
 - Dialog 1: topik "LogistikDesa, kurir antar desa", tipe peserta: lancar dan percaya diri, tapi beberapa klaimnya kurang bukti. Wajib ada situasi: peserta menyebut dana yang diminta tanpa rincian penggunaannya; dan angka pengguna/pendapatan di jawaban belakang berbeda dari sebelumnya.
 - Dialog 2: topik "ResepSehat, katering diet untuk penderita diabetes", tipe peserta: gugup, jawabannya pendek-pendek. Wajib ada situasi: peserta bilang "tidak ada pesaing"; dan peserta bilang pertumbuhannya "pesat" tanpa angka.
@@ -1194,7 +1194,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - Tulis dalam bahasa Indonesia, "language": "id".
 

@@ -85,6 +85,20 @@ class TrimQuestionsTest(unittest.TestCase):
     def test_react_question_only_is_left_for_the_gate(self):
         self.assertEqual(exam_engine.trim_questions("Kenapa begitu?", "react"), "Kenapa begitu?")
 
+    def test_imperative_scripted_questions_count_as_questions(self):
+        # config/exam.php has 15 scripted questions like this, without a question mark.
+        reply = "Rilis tepat waktu itu hasil yang jelas. Ceritakan pencapaian yang paling kamu banggakan."
+        self.assertEqual(exam_engine.quality_issues(reply, "Kami rilis aplikasi tepat waktu untuk klien.", "next", "id"), [])
+        self.assertEqual(exam_engine.quality_issues("Clear result. Describe a time you made a mistake at work.", "We shipped on time for the client.", "next", "en"), [])
+        # An imperative plus a real question is still two questions.
+        two = "Rilis tepat waktu itu bagus. Ceritakan prosesnya. Berapa lama waktunya?"
+        self.assertIn("multiple_questions", exam_engine.quality_issues(two, "Kami rilis aplikasi tepat waktu.", "follow_up", "id"))
+        self.assertEqual(exam_engine.trim_questions(two, "follow_up"), "Rilis tepat waktu itu bagus. Ceritakan prosesnya.")
+        # A reaction must not slip an imperative question in either.
+        self.assertIn("react_with_question", exam_engine.quality_issues("Rilis tepat waktu itu bagus. Jelaskan prosesnya.", "Kami rilis aplikasi tepat waktu.", "react", "id"))
+        # Words that merely start the same way are not questions.
+        self.assertFalse(exam_engine.is_question("Shared ownership itu penting di tim."))
+
     def test_reply_without_question_is_unchanged(self):
         self.assertEqual(exam_engine.trim_questions("Baik, terima kasih.", "next"), "Baik, terima kasih.")
         self.assertEqual(exam_engine.trim_questions("A? B?", "coach"), "A? B?")

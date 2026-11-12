@@ -1,0 +1,184 @@
+[
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "Software Engineer backend di perusahaan logistik",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Tolong perkenalkan dirimu. Ceritakan singkat pendidikan dan pengalaman kerjamu selama ini.",
+        "answer": "Um, halo. Nama saya Rizky. Saya lulusan Universitas Indonesia, jurusan ilmu komputer. Selama tiga tahun terakhir saya bekerja sebagai backend developer di sebuah startup logistik.",
+        "directive": "react",
+        "reply": "Ilmu komputer dari Universitas Indonesia dan tiga tahun sebagai backend developer, itu fondasi yang kuat untuk peran ini."
+      },
+      {
+        "part": 1,
+        "question": "Apa yang membuatmu tertarik melamar posisi backend di perusahaan logistik kami?",
+        "answer": "Emm, saya ingin berkembang dalam karier, Kak Nadia. Dan logistik itu industri yang besar.",
+        "directive": "follow_up",
+        "reply": "Ingin berkembang di industri yang besar itu alasan yang wajar. Kamu menyebut tiga tahun sebagai backend developer di startup logistik. Proyek apa dari tiga tahun itu yang paling kamu banggakan?"
+      },
+      {
+        "part": 2,
+        "question": "Proyek apa dari tiga tahun itu yang paling kamu banggakan?",
+        "answer": "Um, kami membangun sistem pelacakan pengiriman. Kami pakai Node.js dan PostgreSQL. Sistem itu melacak ribuan paket setiap hari.",
+        "directive": "follow_up",
+        "reply": "Node.js dan PostgreSQL yang menangani ribuan paket sehari, itu pekerjaan yang berarti. Saat kamu bilang kami yang membangunnya, bagian mana dari sistem pelacakan itu yang benar-benar kamu kerjakan sendiri?"
+      },
+      {
+        "part": 2,
+        "question": "Saat kamu bilang kami yang membangunnya, bagian mana dari sistem pelacakan itu yang benar-benar kamu kerjakan sendiri?",
+        "answer": "Saya yang membuat API pelacakannya, Kak Nadia. Dan saya ikut menyiapkan Redis untuk caching lokasi paket.",
+        "directive": "react",
+        "reply": "API pelacakan dan caching Redis untuk lokasi paket, jadi kerjaanmu sendiri ada di inti sistem itu."
+      },
+      {
+        "part": 2,
+        "question": "Ceritakan masalah tersulit yang dihadapi timmu di proyek itu dan bagaimana menyelesaikannya.",
+        "answer": "Data pelacakan sering terlambat, Kak Nadia. Kami memeriksa antrian pesan, dan kami memperbaikinya dalam waktu sekitar dua hari.",
+        "directive": "follow_up",
+        "reply": "Data pelacakan yang terlambat dan butuh dua hari untuk diperbaiki pasti tegang. Saat kamu bilang kami memeriksa antrian, apa yang kamu periksa sendiri, dan perubahan apa yang kamu terapkan secara pribadi?"
+      },
+      {
+        "part": 2,
+        "question": "Saat kamu bilang kami memeriksa antrian, apa yang kamu periksa sendiri, dan perubahan apa yang kamu terapkan secara pribadi?",
+        "answer": "Maaf, Kak Nadia. Bisa diulang? Saya jadi gugup.",
+        "directive": "clarify",
+        "reply": "Santai, tarik napas. Maksud saya masalah pelacakan terlambat yang butuh dua hari itu. Dalam perbaikan itu, apa hal pertama yang kamu periksa, dan perubahan apa yang kamu lakukan?"
+      },
+      {
+        "part": 2,
+        "question": "Dalam perbaikan itu, apa hal pertama yang kamu periksa, dan perubahan apa yang kamu lakukan?",
+        "answer": "Saya memeriksa consumer-nya, Kak Nadia. Konsumennya macet, jadi saya restart, dan saya menambahkan mekanisme retry.",
+        "directive": "react",
+        "reply": "Consumer macet yang kamu restart, ditambah mekanisme retry, itu langkah debugging yang konkret."
+      },
+      {
+        "part": 2,
+        "question": "Menurut rekan-rekan setimmu, apa kelebihan terbesarmu?",
+        "answer": "Mereka bilang saya orang yang sangat teliti, Kak Nadia. Saya memeriksa semuanya dua kali sebelum merge.",
+        "directive": "follow_up",
+        "reply": "Memeriksa semuanya dua kali sebelum merge cocok untuk pekerjaan backend. Bisa ceritakan satu kejadian spesifik di mana kecermatan itu menyelamatkan timmu dari masalah nyata?"
+      },
+      {
+        "part": 3,
+        "question": "Bisa ceritakan satu kejadian spesifik di mana kecermatan itu menyelamatkan timmu dari masalah nyata?",
+        "answer": "Bisa. Sekali, di code review, saya menemukan index database yang hilang. Kalau rilis, query laporan bulanan itu akan berjalan sangat lama. Saya menambahkan index itu sebelum rilis.",
+        "directive": "react",
+        "reply": "Menemukan index yang hilang sebelum rilis menyelamatkan query laporan bulanan itu dari kegagalan di produksi."
+      },
+      {
+        "part": 3,
+        "question": "Teknologi backend berubah cepat. Keterampilan apa yang paling ingin kamu tingkatkan berikutnya?",
+        "answer": "System design, Kak Nadia. Saya ingin lebih jago merancang sistem yang besar.",
+        "directive": "follow_up",
+        "reply": "System design itu target yang jujur. Kamu membangun API pelacakan dengan Node.js dan Redis. Kalau kamu bisa merancang ulang sistem itu sekarang, satu hal apa yang akan kamu lakukan berbeda?"
+      },
+      {
+        "part": 3,
+        "question": "Kalau kamu bisa merancang ulang sistem itu sekarang, satu hal apa yang akan kamu lakukan berbeda?",
+        "answer": "Saya akan memakai Kafka sejak awal, Kak Nadia. Antrian sederhana kami tidak kuat menahan lonjakan beban.",
+        "directive": "react",
+        "reply": "Beralih dari antrian sederhana ke Kafka sejak hari pertama itu perubahan yang spesifik dan praktis."
+      },
+      {
+        "part": 3,
+        "question": "Pertanyaan terakhir. Tim seperti apa yang membuatmu bisa bekerja dengan baik?",
+        "answer": "Tim yang suportif, Kak Nadia. Di mana saya boleh bertanya kalau buntu.",
+        "directive": "react",
+        "reply": "Tim yang suportif dengan ruang untuk bertanya itu cocok dengan gambaran dirimu tadi."
+      }
+    ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "Customer Service di bank digital",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Tolong perkenalkan dirimu. Ceritakan sedikit latar belakangmu.",
+        "answer": "Halo, Kak Nadia, terima kasih sudah menerima saya. Nama saya Sari, usia 26 tahun, saya tinggal di Bekasi bersama keluarga, dan di rumah saya punya dua kucing. Saya lulusan Politeknik Negeri Jakarta, jurusan administrasi bisnis, tahun 2021. Setelah itu saya masuk perusahaan telekomunikasi, dan bekerja di sana sekitar tiga tahun di call center, menangani keluhan tagihan, dan supervisor saya juga mengizinkan saya melatih agen baru karena katanya suara saya terdengar tenang di telepon.",
+        "directive": "react",
+        "reply": "Tiga tahun di call center menangani keluhan tagihan, ditambah melatih agen baru, itu pengalaman langsung dengan pelanggan yang sangat banyak."
+      },
+      {
+        "part": 1,
+        "question": "Apa yang membuatmu tertarik pada posisi customer service di bank digital kami?",
+        "answer": "Oh, banyak alasannya, Kak Nadia. Saya memang suka bank sejak kecil karena ibu saya bekerja di dekat bank. Dan bank digital sekarang ada di mana-mana, teman-teman saya memakainya untuk patungan bayar. Jujur, sepupu saya juga bilang perusahaan ini gajinya bagus. Dan saya memang suka ngobrol dengan orang. Minggu lalu saya bahkan menghabiskan dua jam membantu tetangga saya mengadukan masalah e-wallet-nya, dan saya merasa sangat puas setelahnya.",
+        "directive": "follow_up",
+        "reply": "Menghabiskan dua jam tanpa dibayar untuk keluhan e-wallet tetanggamu itu menunjukkan kesabaranmu. Kamu menghabiskan tiga tahun menangani keluhan tagihan di telekomunikasi. Keluhan apa yang paling sulit kamu tangani di sana, dan bagaimana kamu menyelesaikannya dari awal sampai akhir?"
+      },
+      {
+        "part": 2,
+        "question": "Keluhan apa yang paling sulit kamu tangani di sana, dan bagaimana kamu menyelesaikannya dari awal sampai akhir?",
+        "answer": "Oh, yang paling sulit itu. Ada pelanggan, Pak Budi, yang ditagih paket roaming yang tidak pernah dia aktifkan, sekitar dua ratus ribu rupiah. Dia berteriak hampir sepuluh menit dan bahkan mengancam akan melaporkan kami ke media. Saya hanya mendengarkan tanpa memotongnya, lalu saya cek sistem dan ternyata paket itu diaktifkan oleh aplikasi pihak ketiga. Saya jelaskan dengan tenang, saya tawarkan pengembalian dana penuh, dan pada akhirnya dia tenang dan berterima kasih.",
+        "directive": "follow_up",
+        "reply": "Membiarkannya meluap sepuluh menit lalu menemukan aktivasi pihak ketiga itu membalikkan situasinya. Setelah kamu menawarkan pengembalian dana penuh, apakah Pak Budi menerimanya, dan apakah uangnya benar-benar masuk ke rekeningnya?"
+      },
+      {
+        "part": 2,
+        "question": "Setelah kamu menawarkan pengembalian dana penuh, apakah Pak Budi menerimanya, dan apakah uangnya benar-benar masuk ke rekeningnya?",
+        "answer": "Ya, dia menerima, Kak Nadia. Dana kembali itu butuh waktu sekitar tujuh hari kerja untuk sampai ke rekeningnya, atau mungkin lima, sistemnya memang beda dulu. Anyway, di bulan yang sama saya menang best agent. Oh, dan itu mengingatkan saya, dalam masa promo saya pernah menangani lima puluh telepon dalam sehari, eh, enam puluh, tenggorokan saya sakit sekali minggu itu.",
+        "directive": "follow_up",
+        "reply": "Menang best agent di bulan yang sama itu hasil yang kuat. Kamu tadi bilang dana kembali butuh tujuh hari kerja, lalu bilang lima. Yang mana yang benar?"
+      },
+      {
+        "part": 2,
+        "question": "Kamu tadi bilang dana kembali butuh tujuh hari kerja, lalu bilang lima. Yang mana yang benar?",
+        "answer": "Biar saya ingat, Kak Nadia. Saya cukup yakin tujuh hari kerja untuk pengembalian dana itu. Lima hari itu pasti kasus yang lain, maaf, saya menangani terlalu banyak tiket.",
+        "directive": "react",
+        "reply": "Tujuh hari kerja untuk pengembalian dana itu, tercampur dengan kasus lain setelah ratusan tiket, itu bisa dimaklumi."
+      },
+      {
+        "part": 2,
+        "question": "Di pekerjaan ini kamu akan menangani keluhan tentang transfer gagal dan rekening terblokir. Kalau ada pelanggan marah yang bilang transfernya gagal, apa yang akan kamu lakukan dalam dua menit pertama?",
+        "answer": "Oh, sebelum saya jawab, Kak Nadia, boleh tanya dulu? Pekerjaan ini work from home atau dari kantor? Dan apakah gajinya bisa nego? Pekerjaan saya sebelumnya punya shift yang melelahkan, dan perjalanan dari Bekasi butuh hampir dua jam sekali jalan.",
+        "directive": "clarify",
+        "reply": "Pertanyaan yang wajar. Masa training enam bulan di kantor, setelah itu menjadi hybrid, dan rentang gajinya tetap untuk karyawan baru. Sekarang, kembali ke transfer gagal itu. Kalau ada pelanggan marah yang bilang transfernya gagal, apa yang akan kamu lakukan dalam dua menit pertama?"
+      },
+      {
+        "part": 2,
+        "question": "Kalau ada pelanggan marah yang bilang transfernya gagal, apa yang akan kamu lakukan dalam dua menit pertama?",
+        "answer": "Oke, enam bulan lalu hybrid, terima kasih, Kak Nadia. Untuk transfer gagal, pertama saya minta maaf dan membiarkannya meluap, lalu saya minta ID transaksi dan cek apakah statusnya pending atau gagal, karena kadang transfer yang pending selesai sendiri. Kalau memang benar-benar gagal, saya eskalasi ke tim teknis dan menjanjikan panggilan balik, tapi saya tidak akan janji waktu pasti, karena trainer saya selalu bilang janji yang dilanggar membuat pelanggan semakin marah.",
+        "directive": "follow_up",
+        "reply": "Memeriksa pending atau gagal sebelum berjanji apa pun itu menunjukkan kamu mendengarkan trainer-mu. Saat kamu eskalasi ke tim teknis, apa persisnya yang akan kamu katakan ke pelanggan saat itu juga?"
+      },
+      {
+        "part": 3,
+        "question": "Saat kamu eskalasi ke tim teknis, apa persisnya yang akan kamu katakan ke pelanggan saat itu juga?",
+        "answer": "Saya akan bilang, saya sudah memeriksa transfer Anda dan saya minta maaf, ada masalah teknis di pihak kami, saya sudah melaporkannya ke tim teknis dengan ID transaksi Anda, dan seseorang akan menelepon Anda kembali begitu ada kabar. Lalu saya menulis catatan di tiket berisi ID, jam, jumlah, dan apa saja yang sudah dicoba pelanggan, supaya agen berikutnya tidak menyuruhnya mengulang cerita.",
+        "directive": "react",
+        "reply": "ID transaksi, jam, jumlah, dan catatan ringkasan di tiket, itu akan menyelamatkannya dari mengulang cerita ke tiga orang berbeda."
+      },
+      {
+        "part": 3,
+        "question": "Aplikasi dan fiturnya berubah setiap bulan. Bagaimana kamu menjaga pengetahuan produkmu tetap mutakhir?",
+        "answer": "Oh, saya suka belajar, Kak Nadia. Saya mengikuti akun-akun fintech di media sosial, dan saya membaca berita perbankan setiap pagi sambil memberi makan kucing, toh mereka membangunkan saya jam lima. Saya juga bergabung di komunitas online agen customer service tempat kami berbagi skrip dan tips, dan bulan lalu seseorang berbagi cara dia menangani korban phishing, yang sangat berguna karena penipuan sekarang ada di mana-mana.",
+        "directive": "react",
+        "reply": "Komunitas online yang berbagi skrip asli, ditambah berita perbankan setiap pagi, itu lebih praktis daripada kursus mana pun."
+      },
+      {
+        "part": 3,
+        "question": "Lanjut dari cerita phishing itu. Kalau ada pelanggan yang bilang dia membagikan OTP-nya ke orang asing sepuluh menit lalu, apa yang kamu lakukan pertama?",
+        "answer": "Pertama saya tetap tenang, Kak Nadia, karena kalau saya panik dia juga ikut panik. Lalu saya tanya rekening mana yang terancam, dan saya bilang bahwa OTP itu berarti orang asing itu bisa masuk ke rekeningnya, jadi kita harus bertindak cepat. Saya akan menghubungkannya dengan tim fraud, membantunya mengganti password, dan dengan lembut mengingatkan bahwa bank tidak pernah meminta OTP, tanpa membuatnya merasa bodoh, karena dia sudah merasa malu.",
+        "directive": "follow_up",
+        "reply": "Menenangkannya dan bergerak cepat di menit-menit awal itu yang paling penting dalam penipuan OTP. Kamu bilang akan menghubungkannya dengan tim fraud. Apakah kamu tetap di telepon bersamanya selama itu, atau proses serah terimanya berjalan dengan cara lain?"
+      },
+      {
+        "part": 3,
+        "question": "Apakah kamu tetap di telepon bersamanya selama itu, atau proses serah terimanya berjalan dengan cara lain?",
+        "answer": "Maaf, Kak Nadia, maksudnya tetap di telepon itu bagaimana? Saya kurang paham.",
+        "directive": "clarify",
+        "reply": "Pertanyaan bagus. Maksud saya serah terima ke tim fraud itu. Apakah kamu akan membiarkan pelanggan tetap di sambunganmu dan memperkenalkannya ke agen fraud, atau menyerahkannya langsung dan menutup telepon?"
+      },
+      {
+        "part": 3,
+        "question": "Apakah kamu akan membiarkan pelanggan tetap di sambunganmu dan memperkenalkannya ke agen fraud, atau menyerahkannya langsung dan menutup telepon?",
+        "answer": "Saya akan membiarkannya tetap di sambungan, Kak Nadia. Saya akan menjelaskan singkat kasusnya ke agen fraud sambil pelanggan mendengar, supaya dia merasa aman dan tidak perlu mengulang semuanya. Saya sering melakukan ini di telekomunikasi dengan tim tagihan, warm transfer, maksud saya.",
+        "directive": "react",
+        "reply": "Warm transfer di mana pelanggan mendengar kamu menyerahkan kasusnya, itu kepedulian yang sama dengan catatan tiketmu yang rinci."
+      }
+    ]
+  }
+]

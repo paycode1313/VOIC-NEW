@@ -18,6 +18,12 @@ PERSONA = {
     "pitching": ("Pak William, investor", "Anda", ["Founder & Masalah", "Elevator Pitch", "Due Diligence"]),
 }
 
+CALLED = {
+    "wawancara": ("Kak Nadia", "Ms. Nadia"),
+    "sidang": ("Prof. Hendra", "Prof. Hendra"),
+    "pitching": ("Pak William", "Mr. William"),
+}
+
 # Cara menggali yang sama dengan playbook di ExaminerService, supaya data Kimi mengajarkan perilaku yang sama.
 PLAYBOOK = {
     "wawancara": (
@@ -148,7 +154,7 @@ def prompt(number: int, mode: str, index: int) -> str:
     picks = [[situations[(index + k) % len(situations)] for k in (0, 1)],
              [situations[(index + k + 3) % len(situations)] for k in (0, 1)]]
     language_rule = (
-        'Tulis SELURUH dialog (question, answer, reply) dalam bahasa Inggris, dan isi "language": "en". Topik boleh diterjemahkan.'
+        'Tulis SELURUH dialog (question, answer, reply) dalam bahasa Inggris, dan isi "language": "en". Topik boleh diterjemahkan. Tidak perlu membuat versi terjemahan bahasa Indonesia.'
         if english else 'Tulis dalam bahasa Indonesia, "language": "id".'
     )
     dialogs = "\n".join(
@@ -157,7 +163,7 @@ def prompt(number: int, mode: str, index: int) -> str:
     )
     return f"""Kamu adalah penulis data latih untuk AI penguji lisan. Tulis 2 dialog simulasi lengkap.
 
-Mode: {mode}. Penguji: {examiner}, menyapa peserta dengan "{address}".
+Mode: {mode}. Penguji: {examiner}, menyapa peserta dengan "{address}". Peserta memanggil penguji "{CALLED[mode][1 if english else 0]}".
 Bagian: part 1 = {parts[0]}, part 2 = {parts[1]}, part 3 = {parts[2]}.
 {dialogs}
 
@@ -171,7 +177,7 @@ Aturan isi:
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
   - "follow_up": tanggapan singkat + TEPAT SATU pertanyaan lanjutan yang menggali bagian paling lemah dari jawaban. "question" giliran berikutnya HARUS sama persis dengan pertanyaan lanjutan itu.
-  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu mengulang pertanyaannya. "question" giliran berikutnya HARUS sama persis dengan pertanyaan yang diulang itu.
+  - "clarify": dipakai saat peserta bingung, bilang tidak tahu, minta diulang, atau balik bertanya. Reply menjelaskan dengan kata lebih sederhana atau menjawab singkat pertanyaan peserta, lalu menutup dengan pertanyaannya, cukup ditulis SATU kali (jangan diulang dua kali berturut-turut). "question" giliran berikutnya HARUS sama persis dengan pertanyaan penutup itu.
 - Campuran wajar: sekitar 40% react, 45% follow_up, 15% clarify. Situasi wajib di atas harus benar-benar muncul di jawaban peserta, dan penguji harus menggalinya dengan follow_up.
 - {language_rule}
 

@@ -24,7 +24,9 @@ FILES = {
     "finetune_lora.py": os.path.join(SERVICE, "finetune_lora.py"),
 }
 OUTPUT = os.path.join(SFT, "VOIC_latih_otomatis.ipynb")
-BASE_MODEL = "unsloth/Qwen3-4B-Instruct-2507"
+# Qwen2.5-3B: on the target laptop (CPU only, ~1.3 GB free RAM) a Qwen3-4B fine-tune averaged 177 s per
+# reply against 11.6 s for qwen2.5:3b at the same pass rate (eval 2026-11-12). Override with --base.
+BASE_MODEL = "unsloth/Qwen2.5-3B-Instruct"
 
 
 TRAIN = "datasets/sft/voic_exam_sft.jsonl"
@@ -205,6 +207,9 @@ python ai_service/eval_dialogue.py --models qwen2.5:3b voic-coach --show 5
 
 
 def main() -> int:
+    global BASE_MODEL
+    if "--base" in sys.argv:
+        BASE_MODEL = sys.argv[sys.argv.index("--base") + 1]
     missing = [path for path in FILES.values() if not os.path.exists(path)]
     if missing:
         print("File belum ada:", *missing, sep="\n  ")
@@ -222,6 +227,7 @@ def main() -> int:
     if rejected:
         reasons = ", ".join(f"{issue} {count}" for issue, count in rejected.most_common())
         print(f"  Dibuang karena gagal mutu: {sum(rejected.values())} masalah ({reasons})")
+    print(f"  Model dasar: {BASE_MODEL}")
     print("  Di Colab: File -> Upload notebook -> pilih file ini -> Runtime -> Run all")
     return 0
 

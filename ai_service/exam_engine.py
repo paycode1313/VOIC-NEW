@@ -260,6 +260,24 @@ def clean_reply(text: str, max_sentences: int = 3) -> str:
     return " ".join(sentences[:max_sentences]).strip()
 
 
+# Spoken questions without a question mark: the scripted questions themselves are often imperatives
+# ("Ceritakan pencapaian yang paling kamu banggakan.", "Describe a time you ...").
+IMPERATIVE_ASK = re.compile(
+    r"^[\"'“]?(?:coba\s+|tolong\s+|silakan\s+|please\s+)?"
+    r"(?:ceritakan|jelaskan|sebutkan|bayangkan|gambarkan|uraikan|describe|tell me|explain|walk me|share|give me|imagine)\b",
+    re.IGNORECASE,
+)
+
+
+def is_question(sentence: str) -> bool:
+    sentence = (sentence or "").strip()
+    return sentence.endswith("?") or bool(IMPERATIVE_ASK.match(sentence))
+
+
+def count_questions(text: str) -> int:
+    return sum(is_question(s) for s in re.split(r"(?<=[.?!])\s+", text or "") if s.strip())
+
+
 def trim_questions(reply: str, directive: str) -> str:
     """Satu giliran = satu pertanyaan. Model kecil sering menumpuk dua pertanyaan; potong setelah yang pertama.
 
@@ -269,11 +287,11 @@ def trim_questions(reply: str, directive: str) -> str:
     sentences = [s.strip() for s in re.split(r"(?<=[.?!])\s+", reply or "") if s.strip()]
     if directive in ("follow_up", "next", "clarify"):
         for index, sentence in enumerate(sentences):
-            if sentence.endswith("?"):
+            if is_question(sentence):
                 return " ".join(sentences[: index + 1])
         return reply
     if directive in ("react", "coach_close"):
-        kept = [s for s in sentences if not s.endswith("?")]
+        kept = [s for s in sentences if not is_question(s)]
         return " ".join(kept) if kept else reply
     return reply
 
@@ -295,7 +313,7 @@ def leaks_tag(text: str) -> bool:
 
 
 def _questions(text: str) -> List[str]:
-    return [s.strip() for s in re.split(r"(?<=[.?!])\s+", text or "") if s.strip().endswith("?")]
+    return [s.strip() for s in re.split(r"(?<=[.?!])\s+", text or "") if is_question(s)]
 
 
 def _opener(text: str) -> str:
@@ -348,7 +366,7 @@ def quality_issues(reply: str, answer: str, directive: str, language: str, earli
     if any(re.search(p, lowered) for p in BANNED_PATTERNS):
         issues.append("banned_template")
 
-    question_count = reply.count("?")
+    question_count = count_questions(reply)
     asks = directive in ("follow_up", "next", "clarify")
     if asks and question_count == 0:
         issues.append("follow_up_without_question")
@@ -786,7 +804,7 @@ async def respond_stream(req: RespondStreamRequest):
             # Satu potongan bisa memuat dua pertanyaan ("Kenapa? Lalu apa?"); simpan sampai pertanyaan pertama saja.
             text = trim_questions(clean_reply(sentence, max_sentences=3), req.directive)
             # Kalimat yang membacakan tag instruksi ("FOKUS: ...") tidak pernah diucapkan.
-            if not text or leaks_tag(text) or (req.directive in ("react", "coach_close") and text.endswith("?")):
+            if not text or leaks_tag(text) or (req.directive in ("react", "coach_close") and is_question(text)):
                 return None
             spoken.append(text)
             tts_started = time.time()
@@ -804,7 +822,7 @@ async def respond_stream(req: RespondStreamRequest):
                     line = await emit(sentence)
                     if line:
                         yield line
-                    if (asks and spoken and spoken[-1].endswith("?")) or len(spoken) >= max_sentences:
+                    if (asks and spoken and is_question(spoken[-1])) or len(spoken) >= max_sentences:
                         finished = True
                         break
                 if finished:
