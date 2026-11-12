@@ -102,6 +102,11 @@ class ConversationQualityTest(unittest.TestCase):
         reply = "Kecepatan real-time memang penting di pabrik. Bagaimana Anda membagi data latih dan data uji tersebut?"
         self.assertIn("repeated_question", exam_engine.quality_issues(reply, ANSWER, "follow_up", "id", self.EARLIER))
 
+    def test_a_clarification_may_re_ask_the_same_question(self):
+        reply = "Maksud saya, dari 2000 gambar itu berapa yang dipakai untuk latih dan berapa untuk uji. Bagaimana Anda membagi data latih dan data uji?"
+        answer = "Eh, maksudnya bagaimana ya Pak?"
+        self.assertNotIn("repeated_question", exam_engine.quality_issues(reply, answer, "clarify", "id", self.EARLIER))
+
     def test_a_new_question_on_the_same_topic_passes(self):
         reply = "Kecepatan real-time di pabrik tekstil masuk akal. Berapa FPS YOLOv8 Anda di perangkat produksi?"
         self.assertEqual(exam_engine.quality_issues(reply, ANSWER, "follow_up", "id", self.EARLIER), [])

@@ -336,7 +336,8 @@ def quality_issues(reply: str, answer: str, directive: str, language: str, earli
     if leaks_tag(reply):
         issues.append("leaked_tag")
     if earlier:
-        if directive in ("follow_up", "next", "clarify") and repeats_question(reply, earlier):
+        # A clarification is meant to re-ask the question after explaining it, so only new questions are checked.
+        if directive in ("follow_up", "next") and repeats_question(reply, earlier):
             issues.append("repeated_question")
         if _opener(reply) and _opener(reply) == _opener(earlier[-1]):
             issues.append("repeated_opener")

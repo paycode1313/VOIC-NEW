@@ -900,10 +900,11 @@ class ExaminerService
         if ($turn['directive'] === self::DIRECTIVE_NEXT && $transition !== '') {
             $tags[] = ($isEn ? 'ANNOUNCE: ' : 'UMUMKAN: ').$transition;
         }
-        if ($turn['directive'] === self::DIRECTIVE_FOLLOW_UP && ($focus = $this->signals->probeFocus($turn)) !== null) {
+        // skip_focus / skip_link: set only by the training export, for written replies that do not follow the hint.
+        if ($turn['directive'] === self::DIRECTIVE_FOLLOW_UP && empty($turn['skip_focus']) && ($focus = $this->signals->probeFocus($turn)) !== null) {
             $tags[] = ($isEn ? 'FOCUS: ' : 'FOKUS: ').$focus;
         }
-        if ($turn['directive'] === self::DIRECTIVE_NEXT && ($link = $this->signals->link($turn)) !== null) {
+        if ($turn['directive'] === self::DIRECTIVE_NEXT && empty($turn['skip_link']) && ($link = $this->signals->link($turn)) !== null) {
             $tags[] = ($isEn ? 'LINK: "' : 'KAITKAN: "').$link.'"';
         }
 

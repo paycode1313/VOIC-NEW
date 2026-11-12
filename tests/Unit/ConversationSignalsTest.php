@@ -90,6 +90,8 @@ class ConversationSignalsTest extends TestCase
     {
         // "untuk 10 persen saham" is the deal, not how the money is spent.
         $this->assertSame('funds', $this->signals()->gap($this->turn(['mode' => 'pitching', 'role_type' => 'investor', 'answer' => 'Kami sedang mencari pendanaan 1,5 miliar untuk 10 persen saham.']))[0]);
+        $this->assertSame('funds', $this->signals()->gap($this->turn(['mode' => 'pitching', 'role_type' => 'investor', 'answer' => 'Kami butuh 500 juta untuk 10 persen saham.']))[0]);
+        $this->assertNull($this->signals()->gap($this->turn(['mode' => 'pitching', 'role_type' => 'investor', 'part' => 1, 'answer' => 'Kami butuh 500 juta untuk 10 persen saham, dipakai untuk truk berpendingin dan merekrut dua orang tim lapangan.'])));
         $this->assertNull($this->signals()->gap($this->turn(['mode' => 'pitching', 'role_type' => 'investor', 'answer' => 'Kami mencari pendanaan 1,5 miliar, 60 persen dipakai untuk merekrut tim penjualan di tiga kota.'])));
 
         // "Datanya" is a data mention too.
@@ -193,6 +195,50 @@ class ConversationSignalsTest extends TestCase
 
         // Reactions and clarifications stay plain: no hint the model could misread.
         $this->assertStringNotContainsString('FOKUS', $examiner->turnInstruction($this->turn(['directive' => ExaminerService::DIRECTIVE_REACT, 'answer' => 'Kami membuat aplikasi, kami uji, kami rilis, kami evaluasi.'])));
+    }
+
+    public function test_numbers_spoken_as_words_count_as_numbers(): void
+    {
+        $thesis = ['mode' => 'sidang', 'role_type' => 'dosen_penguji', 'part' => 2];
+
+        // Speech-to-text often writes spoken numbers out; these answers do state the sample size.
+        $this->assertNotSame('sample', $this->signals()->gap($this->turn($thesis + ['answer' => 'Saya menyebar kuesioner ke seratus lima puluh responden di lima kedai kopi di Bandung.']))[0] ?? null);
+        $this->assertNotSame('no_example', $this->signals()->gap($this->turn(['part' => 2, 'answer' => 'Our data showed forty percent of users dropped off at the payment step, so I moved the tax display earlier.']))[0] ?? null);
+        $this->assertNotSame('no_number', $this->signals()->gap($this->turn(['mode' => 'pitching', 'role_type' => 'investor', 'answer' => 'Pertumbuhan kami pesat, naik tiga kali lipat dalam enam bulan terakhir.']))[0] ?? null);
+
+        // Without any number the gap is still found.
+        $this->assertSame('sample', $this->signals()->gap($this->turn($thesis + ['answer' => 'Saya mengambil data dari kuesioner yang disebar ke mahasiswa di kampus.']))[0]);
+    }
+
+    public function test_training_data_keeps_a_hint_only_when_the_written_reply_follows_it(): void
+    {
+        $signals = $this->signals();
+        $examiner = app(ExaminerService::class);
+        $we = $this->turn(['answer' => 'Kami membuat aplikasi, kami uji ke pengguna, kami perbaiki, dan kami rilis bulan lalu ke publik.']);
+
+        $this->assertTrue($signals->followsFocus($we, 'Rilis ke publik itu pencapaian. Di proyek itu, peran kamu sendiri apa?'));
+        $this->assertFalse($signals->followsFocus($we, 'Rilis ke publik itu pencapaian. Aplikasinya dibuat pakai framework apa?'));
+        // No gap in the answer means nothing to follow.
+        $this->assertTrue($signals->followsFocus($this->turn(['answer' => 'Tidak tahu, Kak.']), 'Tidak apa-apa, coba pikirkan sebentar.'));
+
+        $investor = $this->turn(['mode' => 'pitching', 'role_type' => 'investor', 'answer' => 'Sejauh ini tidak ada pesaing yang benar-benar melakukan hal yang sama dengan kami.']);
+        $this->assertTrue($signals->followsFocus($investor, 'Kalau begitu, pelanggan sekarang memakai cara apa untuk mengatasinya?'));
+
+        $history = [
+            ['role' => 'assistant', 'content' => 'Boleh perkenalkan diri?'],
+            ['role' => 'user', 'content' => 'Saya membangun dashboard penjualan React untuk 40 toko retail di Malang.'],
+        ];
+        $next = $this->turn([
+            'directive' => ExaminerService::DIRECTIVE_NEXT, 'history' => $history, 'answer' => 'Saya suka kerja tim.',
+            'planned_question' => 'Bagaimana kamu menjaga dashboard penjualan tetap cepat?',
+        ]);
+        $this->assertTrue($signals->followsLink($next, 'Tadi kamu cerita dashboard untuk 40 toko. Bagaimana kamu menjaga dashboard penjualan tetap cepat?'));
+        $this->assertFalse($signals->followsLink($next, 'Oke, kerja tim memang penting. Lanjut ke topik berikutnya.'));
+
+        // The export marks such turns, and the instruction then leaves the hint out.
+        $this->assertStringNotContainsString('FOKUS', $examiner->turnInstruction($we + ['skip_focus' => true]));
+        $this->assertStringNotContainsString('KAITKAN', $examiner->turnInstruction($next + ['skip_link' => true]));
+        $this->assertStringContainsString('FOKUS', $examiner->turnInstruction($we + ['skip_focus' => false]));
     }
 
     public function test_system_prompt_teaches_each_persona_how_to_dig(): void

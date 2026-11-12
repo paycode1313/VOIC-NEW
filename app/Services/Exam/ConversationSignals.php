@@ -28,6 +28,32 @@ class ConversationSignals
     /** Words that only scale the number before the noun ("50 juta pengguna"). */
     protected const MULTIPLIERS = ['juta', 'ribu', 'miliar', 'triliun', 'rb', 'jt', 'million', 'thousand', 'billion', 'k'];
 
+    /**
+     * A number said as digits or as words ("seratus lima puluh responden", "forty percent"): speech-to-text
+     * often writes spoken numbers out, and those answers do contain a number. "satu"/"one" alone is too common
+     * as an article to count.
+     */
+    protected const NUMBER = '/\d|\b(dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh|sebelas|belas|\w*puluh|\w*ratus|\w*ribu|juta|miliar|triliun|persen|setengah|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|\w+teen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion|percent|half)\b/u';
+
+    /** Words that show a reply probes a given gap kind (see gap()), checked on normalized text. */
+    protected const FOCUS_CUES = [
+        'contradiction' => '/\b(tadi|sebelumnya|yang benar|mana yang|earlier|before|which one|correct)\b/u',
+        'we' => '/\b(sendiri|peran\w*|bagianmu|bagian kamu|bagian anda|pribadi|yourself|your own|you personally|your role|your part)\b/u',
+        'trait' => '/\b(contoh\w*|kejadian|pernah|bukti\w*|misalnya|momen|ceritakan|cerita\w*|example|a time|instance|moment)\b/u',
+        'result' => '/\b(hasil\w*|akhirnya|dampak\w*|berhasil|ujungnya|berakhir|result\w*|outcome|impact|end up|ended)\b/u',
+        'competitors' => '/\b(pesaing|kompetitor|alternatif|sekarang|selama ini|sebelum ada|lewat siapa|lewat apa|cara apa|competitor\w*|alternative\w*|today|currently|right now|before)\b/u',
+        'no_number' => '/(\d|\b(berapa|angka\w*|persen|data\w*|how much|how many|number\w*|figure\w*|percent)\b)/u',
+        'broad_market' => '/\b(segmen\w*|pertama|lebih dulu|duluan|spesifik|siapa|seperti apa|mana|first|segment\w*|specific|who exactly|which)\b/u',
+        'funds' => '/\b(dana\w*|dipakai|digunakan|alokasi\w*|untuk apa|funds?|money|spend\w*|allocat\w*|use of)\b/u',
+        'comparison' => '/\b(dibanding\w*|pembanding|baseline|daripada|compar\w*|versus|than)\b/u',
+        'method_reason' => '/\b(kenapa|mengapa|alasan\w*|pertimbangan\w*|why|reason\w*)\b/u',
+        'sample' => '/(\d|\b(berapa|jumlah|sampel\w*|responden|data\w*|how much|how many|sample\w*|respondents?)\b)/u',
+        'overgeneral' => '/\b(keterbatasan\w*|batas\w*|selalu|pasti|kondisi|kapan|limitation\w*|limit\w*|always|when)\b/u',
+        // A short answer is followed up by any question that asks for one concrete thing.
+        'short' => '/\b(contoh\w*|misalnya|detail\w*|cerita\w*|konkret|spesifik|berapa|seperti apa|apa saja|momen|pernah|kegiatan apa|example|specific|tell me more|how much|how many|look like|what kind)\b/u',
+        'no_example' => '/\b(contoh\w*|misalnya|detail\w*|cerita\w*|konkret|spesifik|angka\w*|berapa|pernah|momen|kejadian|example|specific|number\w*|how much|how many|a time)\b/u',
+    ];
+
     public function __construct(protected SpeakingAnalyzer $analyzer) {}
 
     /**
@@ -107,6 +133,33 @@ class ConversationSignals
         }
 
         return $best === null ? null : Str::limit($best, 70, '');
+    }
+
+    /**
+     * Whether a written examiner reply digs into the gap probeFocus() would hint. Training data uses this:
+     * a FOKUS tag next to a reply that probes something else would teach the model to ignore the tag.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function followsFocus(array $turn, string $reply): bool
+    {
+        $gap = $this->gap($turn);
+        $cue = $gap === null ? null : (self::FOCUS_CUES[$gap[0]] ?? null);
+
+        return $cue === null || preg_match($cue, $this->analyzer->normalize($reply)) === 1;
+    }
+
+    /**
+     * Whether a written reply refers back to the earlier detail link() would hint (KAITKAN).
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function followsLink(array $turn, string $reply): bool
+    {
+        $link = $this->link($turn);
+
+        return $link === null
+            || $this->sharedStems($this->stems($this->analyzer->normalize($reply)), $this->stems($this->analyzer->normalize($link))) !== [];
     }
 
     /**
@@ -252,7 +305,7 @@ class ConversationSignals
             return ['competitors', $isEn ? 'claims no competitors (ask what customers use today)' : 'klaim tanpa pesaing (tanyakan apa yang dipakai pelanggan sekarang)'];
         }
 
-        $hasNumbers = (bool) preg_match('/\d|persen|juta|miliar|ribu|percent|million|billion|thousand/u', $text);
+        $hasNumbers = (bool) preg_match(self::NUMBER, $text);
         if (! $hasNumbers && preg_match('/\b(pesat|sangat besar|besar sekali|banyak sekali|potensial|meledak|viral|menjanjikan|huge|massive|fast[- ]growing|explosive|promising)\b/u', $text, $claim)) {
             return ['no_number', $isEn ? "says \"{$claim[1]}\" without a number" : "bilang \"{$claim[1]}\" tanpa angka"];
         }
@@ -263,7 +316,8 @@ class ConversationSignals
 
         // "untuk 10 persen saham" is the deal, not the use of the money: only real spending words count.
         $spending = '/\b(dipakai|digunakan|dialokasikan|alokasi\w*|untuk (?:biaya|membangun|membuka|merekrut|rekrut|ekspansi|pemasaran|marketing|operasional|pengembangan|gudang|tim|produk|riset|hiring)|use of funds|to (?:hire|build|expand|grow|fund)|spend\w*|allocat\w*)\b/u';
-        if (preg_match('/\b(pendanaan|investasi|dana|funding|raise|raising)\b/u', $text) && $hasNumbers && ! preg_match($spending, $text)) {
+        // "Kami butuh 500 juta untuk 10 persen saham" is a funding ask even without the word "dana".
+        if (preg_match('/\b(pendanaan|investasi|dana|modal|saham|funding|raise|raising|equity|stake)\b/u', $text) && $hasNumbers && ! preg_match($spending, $text)) {
             return ['funds', $isEn ? 'the use of funds is not explained' : 'penggunaan dana belum dijelaskan'];
         }
 
@@ -287,7 +341,7 @@ class ConversationSignals
             return ['method_reason', $isEn ? 'the reason for choosing the method is missing' : 'alasan memilih metode belum dijelaskan'];
         }
 
-        if (preg_match('/\b(data\w*|sampel\w*|responden\w*|populasi\w*|samples?|respondents?)\b/u', $text) && ! preg_match('/\d|ratus|ribu|puluh|hundred|thousand/u', $text)) {
+        if (preg_match('/\b(data\w*|sampel\w*|responden\w*|populasi\w*|samples?|respondents?)\b/u', $text) && ! preg_match(self::NUMBER, $text)) {
             return ['sample', $isEn ? 'the amount of data or sample is not stated' : 'jumlah data atau sampel belum disebut'];
         }
 
@@ -307,7 +361,7 @@ class ConversationSignals
             return ['short', $isEn ? 'the answer is still short, invite a concrete detail' : 'jawaban masih singkat, minta satu detail konkret'];
         }
 
-        if ($part !== 1 && ! $this->hasExample($text) && ! preg_match('/\d/u', $text)) {
+        if ($part !== 1 && ! $this->hasExample($text) && ! preg_match(self::NUMBER, $text)) {
             return ['no_example', $isEn ? 'no concrete example or number yet' : 'belum ada contoh konkret atau angka'];
         }
 

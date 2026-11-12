@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\PracticeSession;
 use App\Models\SessionMessage;
+use App\Services\Exam\ConversationSignals;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExaminerService;
 use Illuminate\Console\Attributes\Description;
@@ -160,6 +161,7 @@ class ExportExamTrainingData extends Command
     protected function seedTurns(ExamBlueprint $blueprint, array $dialogues): array
     {
         $turns = [];
+        $signals = app(ConversationSignals::class);
         foreach ($dialogues as $dialogue) {
             $history = [];
             $previous = null;
@@ -188,6 +190,10 @@ class ExportExamTrainingData extends Command
                 }
 
                 $turn = $this->turn($blueprint, $dialogue['mode'], $dialogue['language'] ?? 'id', $dialogue['topic'] ?? null, $dialogue['context_material'] ?? null, (int) $seedTurn['part'], $directive, $examinerLine, $seedTurn['answer'], $history, $target, $index, 0, $planned);
+                // Written dialogues (seed, Kimi) were not written against our FOKUS/KAITKAN hints. Keep a hint
+                // only where the reply actually follows it, otherwise the model learns that the tags do not matter.
+                $turn['skip_focus'] = ! $signals->followsFocus($turn, $target);
+                $turn['skip_link'] = ! $signals->followsLink($turn, $target);
                 $turns[] = $turn;
 
                 // As at inference time: later turns see this answer exactly as it was sent (answer + turn tag).

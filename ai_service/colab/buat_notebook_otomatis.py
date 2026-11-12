@@ -27,11 +27,45 @@ OUTPUT = os.path.join(SFT, "VOIC_latih_otomatis.ipynb")
 BASE_MODEL = "unsloth/Qwen3-4B-Instruct-2507"
 
 
-def bundle() -> str:
+TRAIN = "datasets/sft/voic_exam_sft.jsonl"
+
+
+def passing_train_rows() -> tuple:
+    """Training rows whose examiner reply passes the app's quality gate, plus the rejected reasons.
+
+    A bad written reply (two questions, a reaction that asks, a reply that ignores the answer) would be
+    learned as readily as a good one, so it never reaches the training run.
+    """
+    from collections import Counter
+
+    sys.path.insert(0, SERVICE)
+    from exam_engine import quality_issues
+
+    kept, rejected = [], Counter()
+    with open(FILES[TRAIN], encoding="utf-8") as handle:
+        for line in handle:
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            meta = row.get("meta", {})
+            earlier = [m["content"] for m in row["messages"][:-1] if m["role"] == "assistant"]
+            issues = quality_issues(row["messages"][-1]["content"], meta.get("answer", ""), meta.get("directive", "react"),
+                                    meta.get("language", "id"), earlier or None)
+            if issues:
+                rejected.update(issues)
+            else:
+                kept.append(line if line.endswith("\n") else line + "\n")
+    return kept, rejected
+
+
+def bundle(train_rows: list) -> str:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         for name, path in FILES.items():
-            archive.write(path, name)
+            if name == TRAIN:
+                archive.writestr(name, "".join(train_rows))
+            else:
+                archive.write(path, name)
     return base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
@@ -176,14 +210,18 @@ def main() -> int:
         print("File belum ada:", *missing, sep="\n  ")
         print("Jalankan dulu: php artisan voic:export-training-data")
         return 1
-    train = count_lines(FILES["datasets/sft/voic_exam_sft.jsonl"])
+    train_rows, rejected = passing_train_rows()
+    train = len(train_rows)
     evaluation = count_lines(FILES["datasets/sft/voic_exam_eval.jsonl"])
-    notebook = build(bundle(), train, evaluation)
+    notebook = build(bundle(train_rows), train, evaluation)
     with open(OUTPUT, "w", encoding="utf-8", newline="\n") as handle:
         json.dump(notebook, handle, indent=1, ensure_ascii=False)
         handle.write("\n")
     print(f"✓ {OUTPUT}")
     print(f"  {train} contoh latih, {evaluation} contoh uji, {os.path.getsize(OUTPUT) / 1024:.0f} KB")
+    if rejected:
+        reasons = ", ".join(f"{issue} {count}" for issue, count in rejected.most_common())
+        print(f"  Dibuang karena gagal mutu: {sum(rejected.values())} masalah ({reasons})")
     print("  Di Colab: File -> Upload notebook -> pilih file ini -> Runtime -> Run all")
     return 0
 

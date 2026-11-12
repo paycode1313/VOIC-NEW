@@ -3,22 +3,26 @@
 Kimi terlalu besar untuk dilatih di Colab, jadi Kimi dipakai sebagai **guru yang menulis contoh percakapan**.
 Model kecil (Qwen) dilatih meniru contoh-contoh itu di Colab, lalu dimasukkan ke Ollama sebagai `voic-coach`.
 
-## Langkah
+## Langkah (paling mudah: pakai paket prompt)
 
-1. Buka https://www.kimi.com (gratis), mulai chat baru.
-2. Salin seluruh isi **PROMPT** di bawah, ganti `<MODE>` dan `<TOPIK>`, lalu kirim.
-3. Salin jawaban Kimi (blok JSON), simpan sebagai file baru di folder ini, misalnya
-   `wawancara_01.json`, `sidang_01.json`, `pitching_01.json`. Satu file boleh berisi satu atau beberapa dialog.
-4. Ulangi dengan mode, topik, dan tipe peserta yang berbeda-beda. Makin banyak dan beragam, makin nyambung.
-   Target awal: **±30 dialog per mode** (sekitar 90 file/dialog). Di chat yang sama cukup ketik:
-   `Lanjut, buat 1 dialog lagi dengan topik <TOPIK LAIN> dan tipe peserta <TIPE LAIN>.`
-5. Ekspor ke format latih:
+1. Buka **`PROMPT_KIMI.md`** di folder ini: 30 prompt siap salin, masing-masing menghasilkan 2 dialog dengan
+   topik, tipe peserta, dan situasi yang sudah dipilihkan (total ±60 dialog, ±700 contoh latih).
+2. Untuk setiap prompt: buka https://www.kimi.com (gratis), **chat baru**, tempel prompt, kirim.
+3. Salin blok JSON jawaban Kimi, simpan di folder ini dengan nama yang tertulis di judul prompt (misalnya `sidang_05.json`).
+4. Cek kualitasnya kapan saja:
+   ```
+   python ai_service/datasets/kimi/cek_kimi.py
+   ```
+   File bertanda ✗ (RUSAK) dibuat ulang di Kimi. Balasan yang gagal mutu otomatis dibuang saat membuat notebook.
+5. Kalau sudah terkumpul:
    ```
    php artisan voic:export-training-data
+   python ai_service/colab/buat_notebook_otomatis.py
    ```
-   Dialog yang rusak akan dilewati dengan peringatan, jadi aman.
-6. Lanjutkan di notebook `ai_service/colab/latih_voic_coach.ipynb` (unggah kedua file `.jsonl`), lalu
-   `ollama create voic-coach -f Modelfile` di laptop.
+   lalu di Colab: File → Upload notebook → `ai_service/datasets/sft/VOIC_latih_otomatis.ipynb` → Runtime → Run all.
+
+Paket prompt dibuat oleh `buat_prompt_kimi.py`; ubah daftar topik di sana lalu jalankan ulang kalau ingin topik lain.
+Prompt manual di bawah tetap bisa dipakai untuk topik di luar paket.
 
 Mode yang tersedia dan bagian-bagiannya:
 
