@@ -10,6 +10,8 @@ gate yang sama dengan produksi (exam_engine.quality_issues):
   - grounded   : menyinggung isi jawaban peserta (active listening)
   - directive  : 'react' tanpa pertanyaan, 'follow_up' tepat satu pertanyaan
   - panjang    : 3-55 kata, tanpa template lama / bahasa yang salah
+  - nyambung   : tidak mengulang pertanyaan yang sudah diajukan, tidak membuka dua giliran
+                 dengan kata yang sama, dan tidak membacakan tag instruksi (FOKUS/KAITKAN)
 Skor akhir = persentase balasan tanpa masalah. Jalankan sebelum & sesudah fine-tune.
 """
 
@@ -27,7 +29,7 @@ from typing import Dict, List
 import httpx
 
 sys.path.insert(0, os.path.dirname(__file__))
-from exam_engine import OLLAMA_BASE_URL, clean_reply, quality_issues  # noqa: E402
+from exam_engine import OLLAMA_BASE_URL, clean_reply, earlier_examiner_lines, quality_issues, trim_questions  # noqa: E402
 
 
 def load(path: str) -> List[Dict]:
@@ -43,9 +45,10 @@ async def generate(client: httpx.AsyncClient, model: str, messages: List[Dict]) 
             "messages": messages,
             "stream": False,
             "think": False,
-            "options": {"temperature": 0.7, "top_p": 0.9, "repeat_penalty": 1.12, "num_predict": 90, "num_ctx": 4096},
+            "options": {"temperature": 0.7, "top_p": 0.9, "repeat_penalty": 1.12, "num_predict": 120, "num_ctx": 4096},
         },
-        timeout=60.0,
+        # CPU-only laptops need minutes for the first call (model load + ~1.3k prompt tokens).
+        timeout=httpx.Timeout(600.0, connect=10.0),
     )
     response.raise_for_status()
     return response.json().get("message", {}).get("content", "")
@@ -68,11 +71,13 @@ async def evaluate(model: str, rows: List[Dict], show: int) -> Dict:
             try:
                 raw = await generate(client, model, messages)
             except Exception as exc:  # model belum ada / Ollama mati
-                return {"model": model, "error": str(exc)}
+                return {"model": model, "error": f"{type(exc).__name__}: {exc}"}
             latencies.append(time.time() - started)
 
-            reply = clean_reply(raw, max_sentences=3 if directive == "follow_up" else 1)
-            issues = quality_issues(reply, meta.get("answer", ""), directive, meta.get("language", "id"))
+            # Sama dengan /exam/respond: batas kalimat per directive (+1 untuk kalimat tanggapan).
+            limit = {"next": 3, "follow_up": 2, "clarify": 2}.get(directive, 1)
+            reply = trim_questions(clean_reply(raw, max_sentences=limit + (1 if directive != "react" else 0)), directive)
+            issues = quality_issues(reply, meta.get("answer", ""), directive, meta.get("language", "id"), earlier_examiner_lines(messages))
             issues_counter.update(issues)
             if not issues:
                 passed += 1

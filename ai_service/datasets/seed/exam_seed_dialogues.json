@@ -451,5 +451,368 @@
         "reply": "Maksud saya, apakah pertanyaan uji yang Anda pakai hanya berasal dari satu angkatan atau satu jenis pertanyaan saja. Bagaimana Anda memastikan pertanyaan uji itu mewakili kebutuhan mahasiswa secara umum?"
       }
     ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "Product Manager di startup edtech",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Boleh perkenalkan diri dulu? Ceritakan singkat latar belakang pendidikan dan pengalamanmu.",
+        "answer": "Halo Kak, saya Sinta, lulusan Sistem Informasi ITS. Dua tahun terakhir saya jadi associate product di startup logistik, pegang fitur pelacakan paket untuk 30 kurir mitra.",
+        "directive": "next",
+        "planned_question": "Apa yang bikin kamu tertarik melamar posisi Product Manager di startup edtech ini?",
+        "reply": "Pegang fitur pelacakan paket buat 30 kurir mitra itu pengalaman produk yang nyata banget. Dari logistik ke edtech itu lompatan yang cukup jauh, apa sih yang bikin kamu tertarik pindah jadi Product Manager di startup edtech?"
+      },
+      {
+        "part": 1,
+        "question": "Pegang fitur pelacakan paket buat 30 kurir mitra itu pengalaman produk yang nyata banget. Dari logistik ke edtech itu lompatan yang cukup jauh, apa sih yang bikin kamu tertarik pindah jadi Product Manager di startup edtech?",
+        "answer": "Karena adik saya kesulitan belajar online waktu pandemi, aplikasinya ribet. Saya pengen bikin produk belajar yang sederhana.",
+        "directive": "follow_up",
+        "reply": "Cerita adikmu yang kesulitan belajar online itu alasan yang personal. Waktu itu, bagian mana dari aplikasinya yang paling bikin dia ribet?"
+      },
+      {
+        "part": 2,
+        "question": "Topiknya: Ceritakan saat kamu menghadapi tantangan besar dalam sebuah tim.",
+        "answer": "Waktu itu kami harus meluncurkan fitur pelacakan real-time dalam satu bulan. Kami rapat tiap pagi, kami bagi tugas antara tim mobile dan backend, lalu kami uji coba ke sepuluh kurir dulu sebelum rilis penuh. Akhirnya fitur itu rilis tepat waktu dan keluhan paket hilang turun banyak.",
+        "directive": "follow_up",
+        "reply": "Rilis tepat waktu dengan uji coba ke sepuluh kurir dulu itu langkah yang rapi. Dari semua yang dikerjakan tim, keputusan apa yang benar-benar kamu ambil sendiri di proyek itu?"
+      },
+      {
+        "part": 2,
+        "question": "Rilis tepat waktu dengan uji coba ke sepuluh kurir dulu itu langkah yang rapi. Dari semua yang dikerjakan tim, keputusan apa yang benar-benar kamu ambil sendiri di proyek itu?",
+        "answer": "Saya yang usul uji coba ke sepuluh kurir dulu, padahal awalnya mau langsung rilis ke semua. Dari uji coba itu ketemu bug GPS yang bikin lokasi loncat-loncat.",
+        "directive": "react",
+        "reply": "Inisiatif uji coba ke sepuluh kurir yang akhirnya menemukan bug GPS itu kontribusi pribadi yang jelas banget."
+      },
+      {
+        "part": 3,
+        "question": "Kalau ada rekan satu tim yang terus telat menyelesaikan bagiannya, apa yang akan kamu lakukan?",
+        "answer": "Saya akan ajak dia ngobrol empat mata dulu, cari tahu kenapa telat. Mungkin bebannya terlalu banyak atau ada yang nggak jelas di requirement-nya.",
+        "directive": "follow_up",
+        "reply": "Ngobrol empat mata dulu sebelum menyimpulkan itu pendekatan yang dewasa. Pernah nggak kamu benar-benar mengalaminya, dan obrolan itu berakhir seperti apa?"
+      },
+      {
+        "part": 3,
+        "question": "Ngobrol empat mata dulu sebelum menyimpulkan itu pendekatan yang dewasa. Pernah nggak kamu benar-benar mengalaminya, dan obrolan itu berakhir seperti apa?",
+        "answer": "Pernah, di tim logistik ada backend yang telat terus. Ternyata dia pegang dua proyek sekaligus. Saya bantu atur ulang prioritas sama lead-nya, dan dua sprint kemudian dia nggak telat lagi.",
+        "directive": "next",
+        "planned_question": "Berapa ekspektasi gaji kamu, dan apa dasar angka tersebut?",
+        "reply": "Bantu atur ulang prioritas sampai dia nggak telat lagi dalam dua sprint, itu bukti nyata, bukan teori. Nah, ngomongin hal yang lebih praktis, berapa ekspektasi gaji kamu untuk posisi ini dan apa dasar angkanya?"
+      },
+      {
+        "part": 3,
+        "question": "Bantu atur ulang prioritas sampai dia nggak telat lagi dalam dua sprint, itu bukti nyata, bukan teori. Nah, ngomongin hal yang lebih praktis, berapa ekspektasi gaji kamu untuk posisi ini dan apa dasar angkanya?",
+        "answer": "Hmm, maksudnya dasar angka itu gimana ya kak?",
+        "directive": "clarify",
+        "reply": "Maksudnya, angka itu kamu dapat dari mana, misalnya dari gaji sekarang, riset pasar, atau standar posisi serupa. Jadi berapa kisaran yang kamu harapkan dan apa patokannya?"
+      },
+      {
+        "part": 3,
+        "question": "Maksudnya, angka itu kamu dapat dari mana, misalnya dari gaji sekarang, riset pasar, atau standar posisi serupa. Jadi berapa kisaran yang kamu harapkan dan apa patokannya?",
+        "answer": "Oh gitu. Saya berharap sekitar 12 juta, karena dari riset di situs lowongan, PM dengan pengalaman dua tahun di Surabaya kisarannya 10 sampai 14 juta.",
+        "directive": "react",
+        "reply": "Dua belas juta dengan patokan riset kisaran 10 sampai 14 juta itu argumen yang masuk akal dan gampang dipertanggungjawabkan."
+      }
+    ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "Staf Marketing di perusahaan FMCG",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Apa kelebihan yang menurutmu jarang dimiliki kandidat lain?",
+        "answer": "Saya orangnya teliti banget dan mudah beradaptasi dengan lingkungan baru, Kak.",
+        "directive": "follow_up",
+        "reply": "Teliti dan gampang beradaptasi, dua modal penting di marketing. Boleh ceritakan satu momen waktu ketelitianmu benar-benar mencegah sebuah kesalahan?"
+      },
+      {
+        "part": 1,
+        "question": "Teliti dan gampang beradaptasi, dua modal penting di marketing. Boleh ceritakan satu momen waktu ketelitianmu benar-benar mencegah sebuah kesalahan?",
+        "answer": "Pernah, waktu magang di agensi saya cek ulang materi iklan sebelum tayang dan nemu harga promo salah ketik, harusnya 25 ribu tertulis 2.500. Kalau lolos, klien bisa rugi besar.",
+        "directive": "follow_up",
+        "reply": "Salah ketik 25 ribu jadi 2.500 itu bisa jadi bencana promo. Terus akhirnya gimana, materinya sempat diperbaiki tepat waktu dan apa kata atasanmu?"
+      },
+      {
+        "part": 1,
+        "question": "Salah ketik 25 ribu jadi 2.500 itu bisa jadi bencana promo. Terus akhirnya gimana, materinya sempat diperbaiki tepat waktu dan apa kata atasanmu?",
+        "answer": "Sempat diperbaiki dua jam sebelum tayang, dan atasan saya akhirnya minta saya jadi pengecek terakhir untuk semua materi klien itu.",
+        "directive": "next",
+        "planned_question": "Lingkungan kerja seperti apa yang bikin kamu paling produktif?",
+        "reply": "Dipercaya jadi pengecek terakhir untuk semua materi klien itu pengakuan yang jelas. Tadi kamu juga bilang gampang beradaptasi dengan lingkungan baru, nah lingkungan kerja seperti apa yang bikin kamu paling produktif?"
+      }
+    ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "Data Analyst di e-commerce",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Boleh perkenalkan diri dulu? Ceritakan singkat latar belakang pendidikan dan pengalamanmu.",
+        "answer": "Saya Bayu, lulusan statistika. Di magang terakhir saya bikin dashboard penjualan untuk 40 toko mitra pakai Looker Studio.",
+        "directive": "next",
+        "planned_question": "Apa satu keterampilan yang sedang kamu pelajari sekarang, dan kenapa?",
+        "reply": "Dashboard penjualan untuk 40 toko mitra pakai Looker Studio, itu langsung kepakai di bisnis. Ngomong-ngomong soal belajar, keterampilan apa yang lagi kamu pelajari sekarang, dan kenapa itu?"
+      },
+      {
+        "part": 1,
+        "question": "Dashboard penjualan untuk 40 toko mitra pakai Looker Studio, itu langsung kepakai di bisnis. Ngomong-ngomong soal belajar, keterampilan apa yang lagi kamu pelajari sekarang, dan kenapa itu?",
+        "answer": "Lagi belajar SQL lanjutan, karena query dashboard kemarin lambat banget waktu datanya membesar.",
+        "directive": "follow_up",
+        "reply": "Query dashboard yang melambat saat data membesar memang alasan bagus untuk belajar SQL lanjutan. Kira-kira selambat apa waktu itu, dan apa yang sudah kamu coba untuk mempercepatnya?"
+      },
+      {
+        "part": 3,
+        "question": "Bagaimana kamu memastikan pekerjaanmu tetap berkualitas saat dikejar waktu?",
+        "answer": "Di dashboard yang saya buat untuk 25 toko itu, saya selalu bikin checklist validasi angka sebelum kirim laporan mingguan.",
+        "directive": "follow_up",
+        "reply": "Checklist validasi angka sebelum laporan mingguan itu kebiasaan yang bagus. Supaya aku nggak salah catat, tadi kamu bilang 40 toko, sekarang 25 toko, yang benar yang mana?"
+      },
+      {
+        "part": 3,
+        "question": "Checklist validasi angka sebelum laporan mingguan itu kebiasaan yang bagus. Supaya aku nggak salah catat, tadi kamu bilang 40 toko, sekarang 25 toko, yang benar yang mana?",
+        "answer": "Oh iya, 40 toko totalnya, tapi yang aktif kirim data tiap minggu cuma 25.",
+        "directive": "next",
+        "planned_question": "Apa yang kamu lakukan kalau tidak setuju dengan keputusan atasan?",
+        "reply": "Oke, jelas, 40 toko terdaftar dan 25 yang aktif mengirim data, itu detail yang penting. Sekarang soal atasan, apa yang kamu lakukan kalau tidak setuju dengan keputusan dia?"
+      }
+    ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "id",
+    "topic": "UI Designer",
+    "turns": [
+      {
+        "part": 3,
+        "question": "Lima tahun lagi kamu ingin berada di posisi seperti apa, dan bagaimana peran ini membantumu ke sana?",
+        "answer": "Sebelum jawab, boleh tahu dulu kak, di sini jenjang karirnya seperti apa?",
+        "directive": "clarify",
+        "reply": "Biasanya dari staf ke senior dalam dua sampai tiga tahun, lalu bisa ke lead kalau kinerjanya konsisten. Dengan gambaran itu, lima tahun lagi kamu pengen ada di posisi mana?"
+      },
+      {
+        "part": 3,
+        "question": "Biasanya dari staf ke senior dalam dua sampai tiga tahun, lalu bisa ke lead kalau kinerjanya konsisten. Dengan gambaran itu, lima tahun lagi kamu pengen ada di posisi mana?",
+        "answer": "Saya pengen jadi lead tim UI, karena saya suka membimbing junior dan sekarang sudah sering review desain teman.",
+        "directive": "follow_up",
+        "reply": "Sudah sering review desain teman itu langkah awal yang pas menuju lead. Coba ceritakan satu kali review-mu benar-benar mengubah hasil kerja seorang junior, seperti apa kejadiannya?"
+      }
+    ]
+  },
+  {
+    "mode": "pitching",
+    "language": "id",
+    "topic": "TaniKu, marketplace pupuk asli untuk petani",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Bagaimana Anda pertama kali menemukan masalah ini?",
+        "answer": "Ayah saya petani jagung di Lamongan, beliau sering dapat pupuk palsu dari kios. Dari situ saya bikin TaniKu, marketplace pupuk yang langsung dari distributor resmi.",
+        "directive": "next",
+        "planned_question": "Siapa pelanggan pertama Anda dan berapa yang sudah memakai produknya?",
+        "reply": "Pupuk palsu dari kios yang dialami ayah Anda sendiri, itu titik awal yang sangat kuat. Lalu siapa pelanggan pertama TaniKu, dan berapa petani yang sudah benar-benar memakainya?"
+      },
+      {
+        "part": 1,
+        "question": "Pupuk palsu dari kios yang dialami ayah Anda sendiri, itu titik awal yang sangat kuat. Lalu siapa pelanggan pertama TaniKu, dan berapa petani yang sudah benar-benar memakainya?",
+        "answer": "Pertumbuhan pengguna kami pesat sekali, petani di grup WhatsApp sangat antusias dan banyak yang tanya-tanya.",
+        "directive": "follow_up",
+        "reply": "Antusiasme di grup WhatsApp itu sinyal awal yang bagus, tapi tanya-tanya belum tentu membeli. Pesat itu angkanya berapa, berapa petani yang sudah bertransaksi bulan ini?"
+      },
+      {
+        "part": 1,
+        "question": "Antusiasme di grup WhatsApp itu sinyal awal yang bagus, tapi tanya-tanya belum tentu membeli. Pesat itu angkanya berapa, berapa petani yang sudah bertransaksi bulan ini?",
+        "answer": "Bulan ini ada 120 petani yang transaksi, naik dari 40 bulan lalu. Rata-rata belanja 350 ribu per transaksi.",
+        "directive": "next",
+        "planned_question": "Siapa pesaing Anda, dan kenapa pelanggan memilih Anda?",
+        "reply": "Dari 40 ke 120 petani dalam sebulan dengan belanja rata-rata 350 ribu, itu traksi yang bisa diuji. Sekarang soal persaingan, siapa pesaing TaniKu dan kenapa petani memilih Anda?"
+      },
+      {
+        "part": 1,
+        "question": "Dari 40 ke 120 petani dalam sebulan dengan belanja rata-rata 350 ribu, itu traksi yang bisa diuji. Sekarang soal persaingan, siapa pesaing TaniKu dan kenapa petani memilih Anda?",
+        "answer": "Sebenarnya belum ada pesaing yang fokus ke pupuk asli, jadi kami yang pertama.",
+        "directive": "follow_up",
+        "reply": "Belum ada yang fokus ke pupuk asli justru bikin saya bertanya-tanya. Sebelum ada TaniKu, petani membeli pupuk lewat siapa, dan kenapa mereka mau pindah ke Anda?"
+      },
+      {
+        "part": 3,
+        "question": "Berapa dana yang Anda cari, dan untuk apa?",
+        "answer": "Kami mencari pendanaan 2 miliar rupiah dengan valuasi 15 miliar.",
+        "directive": "follow_up",
+        "reply": "Dua miliar dengan valuasi 15 miliar, angkanya jelas. Dana itu akan dipakai untuk apa saja, dan target apa yang mau Anda capai dalam 18 bulan?"
+      },
+      {
+        "part": 3,
+        "question": "Dua miliar dengan valuasi 15 miliar, angkanya jelas. Dana itu akan dipakai untuk apa saja, dan target apa yang mau Anda capai dalam 18 bulan?",
+        "answer": "Sebagian besar untuk gudang di tiga kabupaten dan tim lapangan, targetnya 2.000 petani aktif per bulan.",
+        "directive": "react",
+        "reply": "Gudang di tiga kabupaten dan target 2.000 petani aktif per bulan memberi saya gambaran yang lebih jelas soal rencana Anda."
+      }
+    ]
+  },
+  {
+    "mode": "pitching",
+    "language": "id",
+    "topic": "KopiLoop, langganan kopi untuk kantor",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Siapa target pelanggan Anda?",
+        "answer": "Target pasar kami semua kantor di Indonesia, karena semua orang butuh kopi.",
+        "directive": "follow_up",
+        "reply": "Semua kantor di Indonesia itu pasar yang terlalu luas untuk tahap awal. Kantor seperti apa, di kota mana, yang mau Anda menangkan lebih dulu?"
+      },
+      {
+        "part": 1,
+        "question": "Semua kantor di Indonesia itu pasar yang terlalu luas untuk tahap awal. Kantor seperti apa, di kota mana, yang mau Anda menangkan lebih dulu?",
+        "answer": "Kantor startup di Jakarta Selatan dengan 20 sampai 50 karyawan, mereka biasanya sudah pesan kopi online tiap hari.",
+        "directive": "next",
+        "planned_question": "Bagaimana model bisnis Anda menghasilkan uang?",
+        "reply": "Startup 20 sampai 50 karyawan di Jakarta Selatan yang sudah pesan kopi online tiap hari, itu segmen yang tajam. Dari kantor-kantor itu, bagaimana KopiLoop sebenarnya menghasilkan uang?"
+      },
+      {
+        "part": 1,
+        "question": "Startup 20 sampai 50 karyawan di Jakarta Selatan yang sudah pesan kopi online tiap hari, itu segmen yang tajam. Dari kantor-kantor itu, bagaimana KopiLoop sebenarnya menghasilkan uang?",
+        "answer": "Kami jual paket langganan 3 juta per bulan untuk 200 cup, margin kotor kami sekitar 35 persen.",
+        "directive": "follow_up",
+        "reply": "Tiga juta untuk 200 cup dengan margin kotor 35 persen, cukup sehat untuk awal. Berapa biaya Anda untuk mendapatkan satu kantor baru, dan berapa lama mereka bertahan berlangganan?"
+      }
+    ]
+  },
+  {
+    "mode": "sidang",
+    "language": "id",
+    "topic": "Klasifikasi penyakit daun padi menggunakan CNN",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Silakan jelaskan secara singkat latar belakang penelitian Anda.",
+        "answer": "Penelitian saya mengklasifikasi penyakit daun padi menggunakan CNN, karena petani sering terlambat mengenali penyakit blas dan hasil panen turun.",
+        "directive": "next",
+        "planned_question": "Apa rumusan masalah utama penelitian Anda?",
+        "reply": "Keterlambatan petani mengenali penyakit blas sampai panen turun, itu latar belakang yang konkret. Dari situ, apa rumusan masalah utama yang ingin Anda jawab dalam penelitian ini?"
+      },
+      {
+        "part": 1,
+        "question": "Keterlambatan petani mengenali penyakit blas sampai panen turun, itu latar belakang yang konkret. Dari situ, apa rumusan masalah utama yang ingin Anda jawab dalam penelitian ini?",
+        "answer": "Rumusan masalahnya bagaimana CNN dapat mengklasifikasi tiga penyakit daun padi. Hasilnya model saya lebih akurat.",
+        "directive": "follow_up",
+        "reply": "Tiga penyakit daun padi dengan CNN, rumusannya sudah jelas. Lebih akurat itu dibandingkan dengan metode apa, dan diukur memakai metrik apa?"
+      },
+      {
+        "part": 1,
+        "question": "Tiga penyakit daun padi dengan CNN, rumusannya sudah jelas. Lebih akurat itu dibandingkan dengan metode apa, dan diukur memakai metrik apa?",
+        "answer": "Dibandingkan SVM dengan fitur warna, akurasi CNN 92 persen sedangkan SVM 81 persen pada data uji.",
+        "directive": "next",
+        "planned_question": "Mengapa Anda memilih arsitektur CNN tersebut?",
+        "reply": "Selisih 92 dan 81 persen dari SVM pada data uji itu perbedaan yang cukup besar. Mengapa Anda memilih CNN, dan arsitektur spesifik apa yang Anda gunakan?"
+      },
+      {
+        "part": 3,
+        "question": "Bagaimana Anda mengumpulkan data penelitian?",
+        "answer": "Data saya ambil dari foto daun padi di sawah sekitar kampus dan dataset publik dari Kaggle.",
+        "directive": "follow_up",
+        "reply": "Gabungan foto sawah sekitar kampus dan dataset Kaggle bisa memperkaya variasi data. Berapa jumlah gambar dari masing-masing sumber, dan bagaimana Anda memastikan labelnya benar?"
+      },
+      {
+        "part": 3,
+        "question": "Gabungan foto sawah sekitar kampus dan dataset Kaggle bisa memperkaya variasi data. Berapa jumlah gambar dari masing-masing sumber, dan bagaimana Anda memastikan labelnya benar?",
+        "answer": "Totalnya 3.000 gambar, 1.200 dari sawah dan 1.800 dari Kaggle. Labelnya saya validasi bersama dosen agroteknologi. Hasil ini pasti bisa dipakai di semua daerah di Indonesia.",
+        "directive": "follow_up",
+        "reply": "Validasi label bersama dosen agroteknologi itu langkah yang kuat. Namun kalau sebagian datanya dari sawah sekitar kampus, apa dasar Anda menyebut pasti bisa dipakai di semua daerah, dan apa keterbatasannya?"
+      },
+      {
+        "part": 3,
+        "question": "Validasi label bersama dosen agroteknologi itu langkah yang kuat. Namun kalau sebagian datanya dari sawah sekitar kampus, apa dasar Anda menyebut pasti bisa dipakai di semua daerah, dan apa keterbatasannya?",
+        "answer": "Memang belum diuji di daerah lain, Prof. Itu keterbatasan penelitian saya, kondisi cahaya dan varietas padi bisa berbeda.",
+        "directive": "react",
+        "reply": "Pengakuan soal kondisi cahaya dan varietas padi yang berbeda itu justru menunjukkan Anda memahami batas penelitian sendiri."
+      }
+    ]
+  },
+  {
+    "mode": "sidang",
+    "language": "id",
+    "topic": "Pengaruh media sosial terhadap minat beli Gen Z",
+    "turns": [
+      {
+        "part": 3,
+        "question": "Bagaimana Anda menentukan sampel penelitian?",
+        "answer": "Maaf Prof, sampel itu maksudnya jumlahnya atau cara memilihnya?",
+        "directive": "clarify",
+        "reply": "Dua-duanya, berapa responden yang Anda ambil dan bagaimana cara memilih mereka. Jadi, siapa saja responden Anda dan bagaimana mereka terpilih?"
+      },
+      {
+        "part": 3,
+        "question": "Dua-duanya, berapa responden yang Anda ambil dan bagaimana cara memilih mereka. Jadi, siapa saja responden Anda dan bagaimana mereka terpilih?",
+        "answer": "Saya mengambil 150 responden mahasiswa Gen Z di Malang dengan purposive sampling, kriterianya aktif di Instagram minimal satu jam sehari.",
+        "directive": "next",
+        "planned_question": "Mengapa Anda menggunakan regresi linier berganda?",
+        "reply": "Seratus lima puluh mahasiswa dengan kriteria aktif di Instagram minimal satu jam sehari, kriterianya jelas. Lalu untuk analisisnya, mengapa Anda memilih regresi linier berganda?"
+      },
+      {
+        "part": 3,
+        "question": "Seratus lima puluh mahasiswa dengan kriteria aktif di Instagram minimal satu jam sehari, kriterianya jelas. Lalu untuk analisisnya, mengapa Anda memilih regresi linier berganda?",
+        "answer": "Saya menggunakan metode regresi linier berganda dengan tiga variabel bebas, yaitu intensitas, konten, dan influencer.",
+        "directive": "follow_up",
+        "reply": "Tiga variabel bebas itu sudah tergambar, tetapi alasannya belum Anda sebutkan. Apa pertimbangan Anda sehingga regresi linier berganda lebih tepat dibanding uji lain untuk data ini?"
+      },
+      {
+        "part": 3,
+        "question": "Tiga variabel bebas itu sudah tergambar, tetapi alasannya belum Anda sebutkan. Apa pertimbangan Anda sehingga regresi linier berganda lebih tepat dibanding uji lain untuk data ini?",
+        "answer": "Karena variabel terikatnya minat beli berskala interval dan saya ingin melihat pengaruh ketiga variabel bebas secara bersamaan. Uji asumsi klasiknya juga sudah terpenuhi.",
+        "directive": "next",
+        "planned_question": "Apa kontribusi penelitian Anda bagi bidang ini?",
+        "reply": "Skala interval dan uji asumsi klasik yang terpenuhi membuat pilihan itu bisa dipertanggungjawabkan. Terakhir, apa kontribusi penelitian Anda bagi pelaku usaha yang menyasar Gen Z?"
+      }
+    ]
+  },
+  {
+    "mode": "wawancara",
+    "language": "en",
+    "topic": "Marketing Associate",
+    "turns": [
+      {
+        "part": 2,
+        "question": "Your topic is: Describe a time you faced a big challenge in a team.",
+        "answer": "Last year we had to launch a campaign in two weeks. We split the work, we ran daily stand-ups and we shipped on time with a 20 percent higher click rate than planned.",
+        "directive": "follow_up",
+        "reply": "Shipping in two weeks with a click rate 20 percent above plan is a strong result. Within that team, which part of the campaign did you personally own?"
+      },
+      {
+        "part": 2,
+        "question": "Shipping in two weeks with a click rate 20 percent above plan is a strong result. Within that team, which part of the campaign did you personally own?",
+        "answer": "I wrote all the ad copy and ran the A/B tests on the headlines.",
+        "directive": "react",
+        "reply": "Owning the copy and the headline A/B tests explains a lot of that click rate."
+      }
+    ]
+  },
+  {
+    "mode": "pitching",
+    "language": "en",
+    "topic": "MealMate, meal planning app for students",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Who is your customer and how big is the market?",
+        "answer": "Every student in Southeast Asia needs this, the market is huge and nobody does it well.",
+        "directive": "follow_up",
+        "reply": "Every student in Southeast Asia is a big claim. How many students are actually using MealMate today, and how many of them pay?"
+      },
+      {
+        "part": 1,
+        "question": "Every student in Southeast Asia is a big claim. How many students are actually using MealMate today, and how many of them pay?",
+        "answer": "We have 800 weekly active users at two universities, and 60 of them pay 3 dollars a month.",
+        "directive": "next",
+        "planned_question": "What stops a bigger company from copying you?",
+        "reply": "Eight hundred weekly users with 60 paying at two universities gives me something real to look at. If this works, what stops a bigger food delivery app from copying it next quarter?"
+      }
+    ]
   }
 ]

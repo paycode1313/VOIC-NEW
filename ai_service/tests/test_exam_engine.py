@@ -69,6 +69,62 @@ class QualityGateTest(unittest.TestCase):
         self.assertEqual(exam_engine.clean_reply("Prof. Hendra: **Baik**, saya paham. [catatan]"), "Baik, saya paham.")
 
 
+class TrimQuestionsTest(unittest.TestCase):
+    """Eval qwen2.5:3b: 5 dari 15 balasan gagal karena dua pertanyaan dalam satu giliran."""
+
+    def test_follow_up_keeps_only_first_question(self):
+        reply = "Itu pilihan yang serius, Dimas. Apa tujuan spesifikmu di posisi ini? Kenapa fintech?"
+        trimmed = exam_engine.trim_questions(reply, "follow_up")
+        self.assertEqual(trimmed, "Itu pilihan yang serius, Dimas. Apa tujuan spesifikmu di posisi ini?")
+        self.assertNotIn("multiple_questions", exam_engine.quality_issues(trimmed, "Saya pengen kerja di produk fintech yang dipakai terus.", "follow_up", "id"))
+
+    def test_react_drops_question_but_keeps_statement(self):
+        reply = "Saran menambah variabel harga itu konkret. Bagaimana validitasnya dijaga?"
+        self.assertEqual(exam_engine.trim_questions(reply, "react"), "Saran menambah variabel harga itu konkret.")
+
+    def test_react_question_only_is_left_for_the_gate(self):
+        self.assertEqual(exam_engine.trim_questions("Kenapa begitu?", "react"), "Kenapa begitu?")
+
+    def test_reply_without_question_is_unchanged(self):
+        self.assertEqual(exam_engine.trim_questions("Baik, terima kasih.", "next"), "Baik, terima kasih.")
+        self.assertEqual(exam_engine.trim_questions("A? B?", "coach"), "A? B?")
+
+
+class ConversationQualityTest(unittest.TestCase):
+    """Cek 'nyambung': tidak mengulang pertanyaan, tidak monoton, tidak membacakan tag instruksi."""
+
+    EARLIER = [
+        "Halo, saya Prof. Hendra. Kenapa Anda memilih YOLOv8 untuk penelitian ini?",
+        "Menarik, dataset 2000 gambar itu cukup besar. Bagaimana Anda membagi data latih dan data uji?",
+    ]
+
+    def test_asking_the_same_question_again_is_flagged(self):
+        reply = "Kecepatan real-time memang penting di pabrik. Bagaimana Anda membagi data latih dan data uji tersebut?"
+        self.assertIn("repeated_question", exam_engine.quality_issues(reply, ANSWER, "follow_up", "id", self.EARLIER))
+
+    def test_a_new_question_on_the_same_topic_passes(self):
+        reply = "Kecepatan real-time di pabrik tekstil masuk akal. Berapa FPS YOLOv8 Anda di perangkat produksi?"
+        self.assertEqual(exam_engine.quality_issues(reply, ANSWER, "follow_up", "id", self.EARLIER), [])
+
+    def test_same_opener_twice_in_a_row_is_flagged(self):
+        reply = "Menarik, kecepatan real-time YOLOv8 untuk pabrik tekstil. Berapa FPS yang Anda capai?"
+        self.assertIn("repeated_opener", exam_engine.quality_issues(reply, ANSWER, "follow_up", "id", self.EARLIER))
+
+    def test_reading_the_instruction_tag_aloud_is_a_hard_failure(self):
+        reply = "FOKUS: klaim lebih akurat tanpa pembanding. Dibandingkan metode apa YOLOv8 Anda untuk pabrik tekstil?"
+        self.assertIn("leaked_tag", exam_engine.quality_issues(reply, ANSWER, "follow_up", "id"))
+        self.assertTrue(exam_engine.leaks_tag("Cek konsistensi: tadi 40 toko."))
+        self.assertFalse(exam_engine.leaks_tag("Saya ingin fokus pada cara Anda menguji model."))
+
+    def test_without_history_the_gate_behaves_as_before(self):
+        reply = "Kecepatan real-time memang krusial di lini produksi. Bagaimana Anda mengukur akurasi YOLOv8 dibanding model lain?"
+        self.assertEqual(exam_engine.quality_issues(reply, ANSWER, "follow_up", "id"), [])
+
+    def test_earlier_examiner_lines_skip_system_and_candidate(self):
+        messages = [{"role": "system", "content": "persona"}, {"role": "assistant", "content": "A?"}, {"role": "user", "content": "B"}]
+        self.assertEqual(exam_engine.earlier_examiner_lines(messages), ["A?"])
+
+
 class RespondEndpointTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -94,6 +150,16 @@ class RespondEndpointTest(unittest.TestCase):
         with open(exam_engine.HARVEST_FILE, encoding="utf-8") as handle:
             self.assertEqual(len(handle.readlines()), 1)
 
+    def test_second_question_is_trimmed_without_retry(self):
+        raw = ("Kecepatan real-time di pabrik tekstil memang alasan kuat. "
+               "Bagaimana Anda memvalidasi akurasi YOLOv8 pada data cacat kain? Berapa jumlah datanya?")
+        chat = mock.AsyncMock(return_value=raw)
+        with mock.patch.object(exam_engine, "ollama_chat", chat):
+            data = self.post().json()
+        self.assertEqual(data["reply"], raw.rsplit(" Berapa", 1)[0])
+        self.assertTrue(data["passed_quality"])
+        self.assertEqual(chat.await_count, 1)
+
     def test_bad_first_attempt_is_retried(self):
         bad = "Mengenai pembahasan 'YOLOv8' yang Saudara sampaikan barusan, poin tersebut saya catat. Namun bagaimana Saudara membuktikan validitasnya?"
         good = "Alasan kecepatan untuk pabrik tekstil cukup masuk akal. Berapa FPS YOLOv8 yang Anda capai saat diuji?"
@@ -102,6 +168,31 @@ class RespondEndpointTest(unittest.TestCase):
             data = self.post().json()
         self.assertEqual(fake.await_count, 2)
         self.assertEqual(data["reply"], good)
+
+    def test_tag_read_aloud_is_cut_and_the_rest_is_spoken(self):
+        leaked = "FOKUS: alasan memilih metode. Kenapa YOLOv8 dan bukan model lain untuk pabrik tekstil?"
+        with mock.patch.object(exam_engine, "ollama_chat", mock.AsyncMock(return_value=leaked)):
+            data = self.post().json()
+        self.assertEqual(data["reply"], "Kenapa YOLOv8 dan bukan model lain untuk pabrik tekstil?")
+        self.assertNotIn("leaked_tag", data["issues"])
+
+    def test_reply_that_is_only_a_tag_is_never_used(self):
+        with mock.patch.object(exam_engine, "ollama_chat", mock.AsyncMock(return_value="GALI | FOKUS: hasil belum disebut")):
+            data = self.post().json()
+        self.assertEqual(data["reply"], "")
+
+    def test_repeated_question_is_retried(self):
+        messages = MESSAGES[:1] + [{"role": "assistant", "content": "Bagaimana Anda mengukur akurasi YOLOv8 di pabrik tekstil?"}] + MESSAGES[1:]
+        repeat = "Kecepatan real-time memang penting. Bagaimana Anda mengukur akurasi YOLOv8 di pabrik tekstil?"
+        fresh = "Kecepatan real-time memang penting. Berapa FPS YOLOv8 di kamera lini produksi tekstil?"
+        fake = mock.AsyncMock(side_effect=[repeat, fresh])
+        with mock.patch.object(exam_engine, "ollama_chat", fake):
+            data = client.post("/exam/respond", json={
+                "mode": "sidang", "role_type": "dosen_penguji", "language": "id", "directive": "follow_up",
+                "part": 3, "question": "Kenapa memilih metode itu?", "answer": ANSWER, "messages": messages,
+            }).json()
+        self.assertEqual(fake.await_count, 2)
+        self.assertEqual(data["reply"], fresh)
 
     def test_ollama_down_returns_empty_reply(self):
         with mock.patch.object(exam_engine, "ollama_chat", mock.AsyncMock(side_effect=ConnectionError("down"))):

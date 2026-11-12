@@ -130,7 +130,8 @@ class VoiceEngineTest(unittest.TestCase):
         segment = mock.Mock(text=" Terima kasih.")
         model = mock.Mock()
         model.transcribe.return_value = ([segment], mock.Mock(duration=1.2))
-        with mock.patch.object(voice_engine, "_load_stt", return_value=model):
+        # The fake bytes are not real audio: decoding is tested by PyAV itself, not here.
+        with mock.patch.object(voice_engine, "_load_stt", return_value=model), mock.patch.object(voice_engine, "decode_audio", return_value=[0.0]):
             result = voice_engine.transcribe(b"x" * 2000, "id")
         self.assertEqual(result["text"], "")
 
@@ -138,7 +139,7 @@ class VoiceEngineTest(unittest.TestCase):
         segment = mock.Mock(text=" Saya memakai YOLOv8 ")
         model = mock.Mock()
         model.transcribe.return_value = ([segment], mock.Mock(duration=3.0))
-        with mock.patch.object(voice_engine, "_load_stt", return_value=model):
+        with mock.patch.object(voice_engine, "_load_stt", return_value=model), mock.patch.object(voice_engine, "decode_audio", return_value=[0.0]):
             result = voice_engine.transcribe(b"x" * 2000, "id", prompt="YOLOv8, cacat kain")
         self.assertEqual(result["text"], "Saya memakai YOLOv8")
         kwargs = model.transcribe.call_args.kwargs

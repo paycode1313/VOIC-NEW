@@ -59,6 +59,12 @@ class ExaminerService
     public const HISTORY_CHAR_BUDGET = 7500;
 
     /**
+     * Characters for the system prompt (persona, playbook, memory) plus the word-for-word history
+     * together. With the current turn and the reply on top this stays under 4096 tokens.
+     */
+    public const CONTEXT_CHAR_BUDGET = 11000;
+
+    /**
      * Where the time of the last streamed reply went (reading the prompt, voicing the first sentence).
      *
      * @var array<string, int>
@@ -75,7 +81,7 @@ class ExaminerService
      */
     protected ?string $lastModel = null;
 
-    public function __construct(protected SpeakingAnalyzer $analyzer, protected ExamBlueprint $blueprint, protected OpenRouterClient $openRouter) {}
+    public function __construct(protected SpeakingAnalyzer $analyzer, protected ExamBlueprint $blueprint, protected OpenRouterClient $openRouter, protected ConversationSignals $signals) {}
 
     /**
      * Model name for the AI service (Ollama). OpenRouter models are called from here instead.
@@ -576,25 +582,34 @@ class ExaminerService
         $history = $turn['history'];
         $overflow = max(0, count($history) - self::RECENT_MESSAGES);
         $condensed = intdiv($overflow + self::MEMORY_STEP - 1, self::MEMORY_STEP) * self::MEMORY_STEP;
-        // Very long answers: condense further (still in whole steps) rather than overflow the context,
-        // where the model would silently lose the start of the prompt, i.e. its persona.
-        $length = fn (int $from): int => array_sum(array_map(fn ($item) => min(700, mb_strlen((string) $item['content'])), array_slice($history, $from)));
-        while ($condensed < count($history) && $length($condensed) > self::HISTORY_CHAR_BUDGET) {
+        $isEn = $turn['language'] === 'en';
+        $persona = $this->systemPrompt($turn);
+
+        // Earlier candidate messages are repeated exactly as they were sent (answer + turn tag), so
+        // the prompt is append-only. Only a very long answer is shortened (one cache miss, once).
+        $sent = function (array $item): string {
+            $prompt = $item['prompt'] ?? null;
+
+            return $prompt !== null && mb_strlen($prompt) <= 900 ? $prompt : Str::limit((string) $item['content'], 700);
+        };
+        $length = fn (int $from): int => array_sum(array_map(fn ($item) => mb_strlen($sent($item)), array_slice($history, $from)));
+
+        // Long answers or a long persona: condense further (still in whole steps) rather than overflow the
+        // context, where the model would silently lose the start of the prompt, i.e. its persona.
+        $overBudget = fn (int $from): bool => $length($from) > self::HISTORY_CHAR_BUDGET
+            || mb_strlen($persona.$this->sessionMemory(array_slice($history, 0, $from), $isEn)) + $length($from) > self::CONTEXT_CHAR_BUDGET;
+        while ($condensed < count($history) && $overBudget($condensed)) {
             $condensed += self::MEMORY_STEP;
         }
         $condensed = min($condensed, count($history));
-        $older = array_slice($history, 0, $condensed);
-        $system = $this->systemPrompt($turn).$this->sessionMemory($older, $turn['language'] === 'en');
+        $system = $persona.$this->sessionMemory(array_slice($history, 0, $condensed), $isEn);
 
         $messages = [['role' => 'system', 'content' => $system]];
 
         foreach (array_slice($history, $condensed) as $item) {
-            // Earlier candidate messages are repeated exactly as they were sent (answer + turn tag), so
-            // the prompt is append-only. Only a very long answer is shortened (one cache miss, once).
-            $sent = $item['prompt'] ?? null;
             $messages[] = [
                 'role' => $item['role'] === 'user' ? 'user' : 'assistant',
-                'content' => $sent !== null && mb_strlen($sent) <= 900 ? $sent : Str::limit($item['content'], 700),
+                'content' => $sent($item),
             ];
         }
 
@@ -640,6 +655,9 @@ class ExaminerService
                 'If the answer is vague or very short, gently ask for a concrete example, a number, or the reason behind it.',
                 'If the candidate is nervous, jokes, or says they do not know, respond like a kind human in one short sentence, then keep going.',
                 'Never give the full model answer and never score the candidate during the exam.',
+                'Open your reply with a concrete detail from the last answer (a name, number, term or event) instead of generic praise, and do not start two turns in a row with the same word (such as "Interesting", "Okay", "Great").',
+                'Build your question from the candidate\'s own words, so it could only be asked of this person; do not ask something they already answered, even in different words.',
+                'If the candidate asks you something back (about the role, the company, your opinion), answer briefly and realistically as your character would, then return to your question.',
             ]
             : [
                 'Kamu sedang ngobrol langsung dalam simulasi ujian lisan. Gunakan kalimat lisan biasa: tanpa daftar, tanpa markdown, tanpa emoji, tanpa label nama.',
@@ -649,6 +667,9 @@ class ExaminerService
                 'Kalau jawabannya kabur atau sangat singkat, minta contoh konkret, angka, atau alasannya dengan sopan.',
                 'Kalau peserta gugup, bercanda, atau bilang tidak tahu, tanggapi seperti manusia yang ramah dalam satu kalimat pendek, lalu lanjutkan.',
                 'Jangan memberikan contoh jawaban lengkap dan jangan memberi nilai selama ujian berlangsung.',
+                'Buka tanggapan dengan detail konkret dari jawaban terakhir (nama, angka, istilah, atau kejadian), bukan pujian umum, dan jangan memulai dua giliran berturut-turut dengan kata yang sama (misalnya "Menarik", "Oke", "Wah", "Baik").',
+                'Susun pertanyaan dari kata-kata peserta sendiri, sehingga pertanyaan itu hanya cocok untuk orang ini; jangan menanyakan hal yang sudah dia jawab, walau dengan kalimat berbeda.',
+                'Kalau peserta balik bertanya (soal posisi, perusahaan, atau pendapatmu), jawab singkat dan realistis sesuai peranmu, lalu kembali ke pertanyaanmu.',
             ];
 
         $lines = [$persona];
@@ -671,6 +692,7 @@ class ExaminerService
                 .($isEn ? '. Ask questions that give them room to practise it.' : '. Ajukan pertanyaan yang memberi ruang untuk melatih hal itu.');
         }
         $lines[] = implode("\n", array_map(fn ($rule, $i) => ($i + 1).'. '.$rule, $rules, array_keys($rules)));
+        $lines[] = $this->playbook((string) $turn['role_type'], $isEn);
         $lines[] = $this->instructionLegend($isEn, coach: false);
 
         return implode("\n", $lines);
@@ -746,6 +768,44 @@ class ExaminerService
     }
 
     /**
+     * How an experienced examiner of this kind listens and digs, plus two short examples of the
+     * style. Static per session (part of the cached system prompt). The examples use topics that
+     * rarely come up, so a small model learns the pattern instead of copying the content.
+     */
+    public function playbook(string $roleType, bool $isEn): string
+    {
+        return match ($roleType) {
+            'investor' => $isEn
+                ? "How you dig, like an experienced investor: every big claim needs a number (users, revenue, monthly growth, CAC, retention). \"No competitors\" means asking what customers use today. Test a realistic market size, the business model, an edge that is hard to copy, the team, and what the money will be used for. When a number sounds too optimistic, ask for the assumption behind it.\n"
+                    ."Style examples (copy the pattern, not the content):\n"
+                    ."Founder: \"The market is huge and nobody is doing this yet.\" You: \"Huge and empty usually makes me cautious. How do your customers solve this problem today, before your product exists?\"\n"
+                    .'Founder: "We already have 300 users after two months." You: "Three hundred in two months is a decent start. How many of them are still active this month, and how many pay?"'
+                : "Cara Anda menggali seperti investor berpengalaman: setiap klaim besar harus ada angkanya (pengguna, pendapatan, pertumbuhan per bulan, CAC, retensi). Klaim \"tidak ada pesaing\" berarti tanyakan apa yang dipakai pelanggan sekarang. Uji ukuran pasar yang realistis, model bisnis, keunggulan yang sulit ditiru, tim, dan untuk apa dana dipakai. Kalau angka terdengar terlalu optimis, tanyakan asumsinya.\n"
+                    ."Contoh gaya (tiru polanya, bukan isinya):\n"
+                    ."Founder: \"Pasarnya besar sekali dan belum ada yang garap.\" Kamu: \"Pasar besar yang masih kosong biasanya justru bikin saya waspada. Sebelum ada produk Anda, pelanggan menyelesaikan masalah ini pakai cara apa?\"\n"
+                    .'Founder: "Dalam dua bulan kami sudah punya 300 pengguna." Kamu: "Tiga ratus pengguna dalam dua bulan itu awal yang lumayan. Berapa yang masih aktif bulan ini, dan berapa yang sudah membayar?"',
+            'dosen_penguji' => $isEn
+                ? "How you examine, like a thesis examiner: tie every answer back to the research problem and objectives. A claim that something is \"better\" or \"more accurate\" must say compared to what and measured by which metric. Ask why the method was chosen, how much data or how many respondents and how they were selected, validity and reliability, limitations, and the contribution of the research. Stay courteous, never belittle.\n"
+                    ."Style examples (copy the pattern, not the content):\n"
+                    ."Student: \"My model is more accurate for detecting leaf disease.\" You: \"More accurate is a strong claim. Compared with which method, and with what metric did you measure it?\"\n"
+                    .'Student: "I collected data from 50 respondents through a questionnaire." You: "Fifty respondents through a questionnaire, noted. How did you choose them, and is that number enough for the analysis you used?"'
+                : "Cara Anda menguji seperti dosen penguji sidang: kaitkan setiap jawaban ke rumusan masalah dan tujuan penelitian. Klaim \"lebih baik\" atau \"lebih akurat\" harus jelas dibandingkan dengan apa dan diukur dengan metrik apa. Tanyakan alasan memilih metode, jumlah data atau responden dan cara memilihnya, validitas dan reliabilitas, keterbatasan, serta kontribusi penelitian. Tetap santun, jangan menjatuhkan.\n"
+                    ."Contoh gaya (tiru polanya, bukan isinya):\n"
+                    ."Mahasiswa: \"Model saya lebih akurat untuk mendeteksi penyakit daun.\" Kamu: \"Lebih akurat itu klaim yang kuat. Dibandingkan dengan metode apa, dan dengan metrik apa Anda mengukurnya?\"\n"
+                    .'Mahasiswa: "Saya mengambil data dari 50 responden lewat kuesioner." Kamu: "Lima puluh responden lewat kuesioner, saya catat. Bagaimana Anda memilih mereka, dan apakah jumlah itu cukup untuk analisis yang Anda pakai?"',
+            default => $isEn
+                ? "How you dig, like an experienced recruiter: follow the STAR pattern (situation, task, action, result). When the candidate says \"we\" a lot, ask what they did themselves. When they claim a trait (hard-working, detail-oriented), ask for one real moment that shows it. When a story stops at the action, ask about the result or impact. Listen for motivation, teamwork and fit with the role.\n"
+                    ."Style examples (copy the pattern, not the content):\n"
+                    ."Candidate: \"We doubled the online store's sales in three months.\" You: \"Doubling sales in three months is a big jump. In that team, which part did you personally own?\"\n"
+                    .'Candidate: "I am very detail-oriented." You: "Detail-oriented, nice. Can you tell me about a time that habit actually saved a piece of work?"'
+                : "Cara kamu menggali seperti recruiter berpengalaman: kejar pola STAR (situasi, tugas, aksi, hasil). Kalau kandidat banyak bilang \"kami\", tanyakan apa yang dia kerjakan sendiri. Kalau dia mengaku punya sifat baik (teliti, pekerja keras), minta satu kejadian nyata yang membuktikannya. Kalau cerita berhenti di aksi, tanyakan hasil atau dampaknya. Perhatikan motivasi, kerja sama tim, dan kecocokan dengan posisi.\n"
+                    ."Contoh gaya (tiru polanya, bukan isinya):\n"
+                    ."Kandidat: \"Kami berhasil menaikkan penjualan toko online dua kali lipat dalam tiga bulan.\" Kamu: \"Dua kali lipat dalam tiga bulan itu lompatan besar. Di tim itu, bagian mana yang benar-benar kamu pegang sendiri?\"\n"
+                    .'Kandidat: "Saya orangnya teliti banget." Kamu: "Teliti, oke. Kapan terakhir kali ketelitianmu itu benar-benar menyelamatkan sebuah pekerjaan?"',
+        };
+    }
+
+    /**
      * What the short tags at the end of each candidate message mean. This lives in the system prompt
      * so the model reads it once per session: the per-turn instruction is then only a few tokens,
      * which is what keeps the examiner fast on a laptop CPU (the long instructions used to cost
@@ -772,13 +832,17 @@ class ExaminerService
                 ."[REACT] ONE short sentence reacting specifically to the answer. Do not ask any question, an announcement follows.\n"
                 ."[PROBE] at most 2 sentences: a short specific reaction, then exactly ONE follow-up question that digs deeper into the answer (why, how, an example, or a number).\n"
                 ."[NEXT: \"topic\"] at most 3 sentences: react specifically to the answer, then move on naturally and ask about the topic in quotes in your own words, linking it to what they said if it fits. With \"ANNOUNCE: ...\" also mention that we are now moving to that part.\n"
-                ."[CLARIFY] the candidate did not understand or asked something back: in at most 2 sentences, explain your question more simply (maybe with a small example), then ask it again in different words.\n"
+                ."[CLARIFY] the candidate did not understand or asked something back: in at most 2 sentences, explain your question more simply (maybe with a small example), then ask it again in different words. If they asked about something else (the role, the company, your view), answer that briefly first, then return to your question.\n"
+                ."Extra tag FOCUS: ... = what an experienced examiner noticed is missing or doubtful in the answer: make your question dig into exactly that, in your own words, without mentioning the tag (for \"check consistency\", ask politely which of the two is right).\n"
+                ."Extra tag LINK: ... = something the candidate said earlier in this session that fits the next topic: refer back to it naturally when you raise the topic (\"Earlier you mentioned ...\").\n"
                 .'Extra tag TENSE = the candidate looked tense on camera: start with one short, kind sentence that helps them relax (for example, suggest a breath). Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'
             : "Setiap pesan peserta diakhiri tag dalam kurung siku: bagian ujian saat ini dan tugasmu di giliran ini (jangan pernah dibacakan):\n"
                 ."[TANGGAPI] SATU kalimat pendek yang menanggapi jawaban secara spesifik. Jangan bertanya apa pun, setelah ini ada pengumuman.\n"
                 ."[GALI] maksimal 2 kalimat: tanggapan singkat yang spesifik, lalu tepat SATU pertanyaan lanjutan yang menggali jawaban itu lebih dalam (kenapa, bagaimana, contoh, atau angka).\n"
                 ."[LANJUT: \"topik\"] maksimal 3 kalimat: tanggapi jawaban secara spesifik, lalu beralih dengan luwes dan tanyakan topik dalam tanda kutip dengan kata-katamu sendiri, kaitkan dengan jawaban peserta bila cocok. Jika ada \"UMUMKAN: ...\", sebutkan juga bahwa kita sekarang masuk ke bagian itu.\n"
-                ."[JELASKAN] peserta belum paham atau balik bertanya: dalam maksimal 2 kalimat, jelaskan maksud pertanyaanmu dengan lebih sederhana (boleh dengan contoh kecil), lalu tanyakan lagi dengan kata-kata berbeda.\n"
+                ."[JELASKAN] peserta belum paham atau balik bertanya: dalam maksimal 2 kalimat, jelaskan maksud pertanyaanmu dengan lebih sederhana (boleh dengan contoh kecil), lalu tanyakan lagi dengan kata-kata berbeda. Kalau yang dia tanyakan hal lain (posisi, perusahaan, pendapatmu), jawab singkat dulu, lalu kembali ke pertanyaanmu.\n"
+                ."Tag tambahan FOKUS: ... = hal yang menurut penguji berpengalaman masih kurang atau meragukan dari jawaban itu: arahkan pertanyaanmu tepat ke situ dengan kata-katamu sendiri, tanpa menyebut tagnya (untuk \"cek konsistensi\", tanyakan dengan sopan mana yang benar).\n"
+                ."Tag tambahan KAITKAN: ... = hal yang pernah dikatakan peserta di sesi ini dan cocok dengan topik berikutnya: rujuk kembali secara alami saat membuka topik itu (\"Tadi Anda sempat menyebut ...\").\n"
                 .'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya (misalnya mengajak tarik napas). Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.';
     }
 
@@ -835,6 +899,12 @@ class ExaminerService
         };
         if ($turn['directive'] === self::DIRECTIVE_NEXT && $transition !== '') {
             $tags[] = ($isEn ? 'ANNOUNCE: ' : 'UMUMKAN: ').$transition;
+        }
+        if ($turn['directive'] === self::DIRECTIVE_FOLLOW_UP && ($focus = $this->signals->probeFocus($turn)) !== null) {
+            $tags[] = ($isEn ? 'FOCUS: ' : 'FOKUS: ').$focus;
+        }
+        if ($turn['directive'] === self::DIRECTIVE_NEXT && ($link = $this->signals->link($turn)) !== null) {
+            $tags[] = ($isEn ? 'LINK: "' : 'KAITKAN: "').$link.'"';
         }
 
         return $answer."\n".'['.implode(' | ', array_merge($tags, $this->visualTags($turn))).']';
@@ -1413,12 +1483,17 @@ class ExaminerService
         };
 
         // Part 1 is a warm-up: just invite more. Later parts ask for what is missing, then go deeper.
+        // A clear gap the examiner would notice (a "we" story, a claim without a comparison) comes first.
+        $targeted = $this->targetedProbe($turn);
         $candidates = match (true) {
             (int) ($turn['part'] ?? 0) === 1 => [...$elaborate, ...$example],
             $metrics['word_count'] < 12 || ! $metrics['has_example'] => [...$example, ...$evidence, ...$depth],
             ! $metrics['has_numbers'] => [...$evidence, ...$depth, ...$example],
             default => [...$depth, ...$evidence, ...$example],
         };
+        if ($targeted !== null) {
+            array_unshift($candidates, $targeted);
+        }
 
         $asked = implode(' ', array_map(fn ($item) => $item['content'], array_filter($turn['history'] ?? [], fn ($item) => $item['role'] !== 'user')));
 
@@ -1429,6 +1504,40 @@ class ExaminerService
         }
 
         return end($candidates) ?: '';
+    }
+
+    /**
+     * A scripted question aimed at the gap ConversationSignals found, for when no model is reachable.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function targetedProbe(array $turn): ?string
+    {
+        $gap = $this->signals->gap($turn);
+        if ($gap === null) {
+            return null;
+        }
+
+        $isEn = $turn['language'] === 'en';
+        $you = $turn['role_type'] === 'hrd' ? 'kamu' : 'Anda';
+
+        return match ($gap[0]) {
+            'contradiction' => $isEn
+                ? 'Just to be sure I have it right, earlier you gave a different number for that. Which one is correct?'
+                : 'Supaya saya tidak salah catat, tadi '.$you.' sempat menyebut angka yang berbeda untuk hal itu. Yang benar yang mana?',
+            'we' => $isEn ? 'You mentioned the team a lot. What did you personally do in that?' : 'Dari tadi banyak "kami", nah bagian yang benar-benar kamu kerjakan sendiri yang mana?',
+            'trait' => $isEn ? 'Can you tell me about one real moment where that trait actually showed?' : 'Boleh ceritakan satu kejadian nyata yang menunjukkan sifat itu?',
+            'result' => $isEn ? 'And how did it end, what was the result?' : 'Terus akhirnya gimana, hasilnya apa?',
+            'competitors' => $isEn ? 'If nobody does this yet, how do your customers solve the problem today?' : 'Kalau belum ada pesaing, sekarang pelanggan menyelesaikan masalah itu pakai cara apa?',
+            'no_number' => $isEn ? 'What number shows that today?' : 'Angka apa yang menunjukkan hal itu hari ini?',
+            'broad_market' => $isEn ? 'That is a very broad market. Which customer segment are you going after first?' : 'Itu pasar yang sangat luas. Segmen pelanggan mana yang Anda kejar pertama kali?',
+            'funds' => $isEn ? 'What exactly will the money be used for?' : 'Dananya nanti akan dipakai untuk apa saja persisnya?',
+            'comparison' => $isEn ? 'Compared with which method, and measured with what metric?' : 'Dibandingkan dengan metode apa, dan diukur dengan metrik apa?',
+            'method_reason' => $isEn ? 'Why did you choose that method over the alternatives?' : 'Mengapa Anda memilih metode itu dibanding alternatif lainnya?',
+            'sample' => $isEn ? 'How much data did you use, and how did you select it?' : 'Berapa jumlah data atau sampel yang Anda pakai, dan bagaimana cara memilihnya?',
+            'overgeneral' => $isEn ? 'Is that true in every case, and what are its limitations?' : 'Apakah itu berlaku di semua kasus, dan apa keterbatasannya?',
+            default => null,
+        };
     }
 
     /**

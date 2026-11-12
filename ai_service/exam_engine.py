@@ -237,6 +237,9 @@ def clean_reply(text: str, max_sentences: int = 3) -> str:
     if not text:
         return ""
     text = re.sub(r"\[[^\]]*\]", "", text)
+    # Model kecil kadang membacakan tag instruksi ("FOKUS: ..."); buang kalimat itu, sisanya tetap dipakai.
+    if leaks_tag(text):
+        text = " ".join(s for s in re.split(r"(?<=[.?!])\s+|\n+", text) if s.strip() and not leaks_tag(s))
     text = re.sub(r"[\*\#\_\`\~]+", "", text)
     text = re.sub(r"^\s*[\-•\d]+[\.\)]\s*", "", text, flags=re.MULTILINE)
     # Label pembicara = beberapa kata berhuruf kapital ("Prof. Hendra:"), bukan kalimat seperti "Bagus. Coba bilang:".
@@ -257,19 +260,86 @@ def clean_reply(text: str, max_sentences: int = 3) -> str:
     return " ".join(sentences[:max_sentences]).strip()
 
 
+def trim_questions(reply: str, directive: str) -> str:
+    """Satu giliran = satu pertanyaan. Model kecil sering menumpuk dua pertanyaan; potong setelah yang pertama.
+
+    Untuk react/coach_close (tidak boleh bertanya) buang kalimat tanya, selama masih ada kalimat lain.
+    Deterministik, jadi tetap jalan di laptop lambat yang tidak sempat retry.
+    """
+    sentences = [s.strip() for s in re.split(r"(?<=[.?!])\s+", reply or "") if s.strip()]
+    if directive in ("follow_up", "next", "clarify"):
+        for index, sentence in enumerate(sentences):
+            if sentence.endswith("?"):
+                return " ".join(sentences[: index + 1])
+        return reply
+    if directive in ("react", "coach_close"):
+        kept = [s for s in sentences if not s.endswith("?")]
+        return " ".join(kept) if kept else reply
+    return reply
+
+
 def content_words(text: str) -> set:
     words = re.findall(r"[a-zA-ZÀ-ɏ0-9]+", text.lower())
     return {w for w in words if len(w) > 3 and w not in STOPWORDS}
 
 
-def quality_issues(reply: str, answer: str, directive: str, language: str) -> List[str]:
-    """Daftar masalah kualitas. Kosong berarti balasan layak dipakai & dipanen."""
+# Tag instruksi dari Laravel (ExaminerService::turnInstruction) yang tidak boleh ikut diucapkan.
+LEAKED_TAG = re.compile(
+    r"\b(FOKUS|KAITKAN|UMUMKAN|GALI|LANJUT|TANGGAPI|JELASKAN|FOCUS|LINK|ANNOUNCE|PROBE|NEXT|REACT|CLARIFY)\b\s*[:|\]]"
+    r"|(?i:\bcek konsistensi\s*:|\bcheck consistency\s*:)"
+)
+
+
+def leaks_tag(text: str) -> bool:
+    return bool(LEAKED_TAG.search(text or ""))
+
+
+def _questions(text: str) -> List[str]:
+    return [s.strip() for s in re.split(r"(?<=[.?!])\s+", text or "") if s.strip().endswith("?")]
+
+
+def _opener(text: str) -> str:
+    match = re.match(r"\s*([^\W\d_]+)", (text or "").lower())
+    return match.group(1) if match else ""
+
+
+def repeats_question(reply: str, earlier: List[str]) -> bool:
+    """Pertanyaan yang isinya sama dengan pertanyaan penguji sebelumnya (kemiripan kata isi >= 60%)."""
+    previous = [content_words(q) for text in earlier for q in _questions(text)]
+    for question in _questions(reply):
+        words = content_words(question)
+        if len(words) < 3:
+            continue
+        for old in previous:
+            if len(old) >= 3 and len(words & old) / len(words | old) >= 0.6:
+                return True
+    return False
+
+
+def earlier_examiner_lines(messages: List[Dict[str, str]]) -> List[str]:
+    """Kalimat-kalimat penguji sebelumnya di prompt (untuk cek pengulangan)."""
+    return [m.get("content", "") for m in messages if m.get("role") == "assistant"]
+
+
+def quality_issues(reply: str, answer: str, directive: str, language: str, earlier: Optional[List[str]] = None) -> List[str]:
+    """Daftar masalah kualitas. Kosong berarti balasan layak dipakai & dipanen.
+
+    earlier = giliran penguji sebelumnya di sesi ini: dipakai untuk menolak pertanyaan yang diulang
+    dan pembuka yang sama dua kali berturut-turut ("Menarik, ... Menarik, ...").
+    """
     issues: List[str] = []
     lowered = reply.lower()
     words = reply.split()
 
     if not reply:
         return ["empty"]
+    if leaks_tag(reply):
+        issues.append("leaked_tag")
+    if earlier:
+        if directive in ("follow_up", "next", "clarify") and repeats_question(reply, earlier):
+            issues.append("repeated_question")
+        if _opener(reply) and _opener(reply) == _opener(earlier[-1]):
+            issues.append("repeated_opener")
     if len(words) < 3:
         issues.append("too_short")
     if len(words) > (85 if directive == "coach" else 55):
@@ -392,8 +462,8 @@ async def respond(req: RespondRequest):
             print(f"Exam model error: {error}")
             break
 
-        reply = clean_reply(raw, max_sentences=max_sentences + (1 if req.directive != "react" else 0))
-        issues = quality_issues(reply, req.answer, req.directive, req.language)
+        reply = trim_questions(clean_reply(raw, max_sentences=max_sentences + (1 if req.directive != "react" else 0)), req.directive)
+        issues = quality_issues(reply, req.answer, req.directive, req.language, earlier_examiner_lines(messages))
         if len(issues) < len(best_issues):
             best_reply, best_issues = reply, issues
         if not issues:
@@ -403,7 +473,7 @@ async def respond(req: RespondRequest):
             break
 
     # Balasan kosong = biarkan Laravel memakai composer offline.
-    hard_fail = {"empty", "banned_template", "wrong_language"}
+    hard_fail = {"empty", "banned_template", "wrong_language", "leaked_tag"}
     if not best_reply or hard_fail & set(best_issues):
         best_reply = ""
 
@@ -712,8 +782,10 @@ async def respond_stream(req: RespondStreamRequest):
         async def emit(sentence: str):
             nonlocal first_ms
             # A chunk can hold a short fragment glued to the next sentence ("Oke. Lalu ...?"); keep all of it.
-            text = clean_reply(sentence, max_sentences=3)
-            if not text or (req.directive in ("react", "coach_close") and text.endswith("?")):
+            # Satu potongan bisa memuat dua pertanyaan ("Kenapa? Lalu apa?"); simpan sampai pertanyaan pertama saja.
+            text = trim_questions(clean_reply(sentence, max_sentences=3), req.directive)
+            # Kalimat yang membacakan tag instruksi ("FOKUS: ...") tidak pernah diucapkan.
+            if not text or leaks_tag(text) or (req.directive in ("react", "coach_close") and text.endswith("?")):
                 return None
             spoken.append(text)
             tts_started = time.time()
@@ -747,7 +819,7 @@ async def respond_stream(req: RespondStreamRequest):
             yield _line({"type": "error", "message": describe_error(exc)})
 
         reply = " ".join(spoken)
-        issues = quality_issues(reply, req.answer, req.directive, req.language)
+        issues = quality_issues(reply, req.answer, req.directive, req.language, earlier_examiner_lines(messages))
         if reply and not issues:
             harvest({
                 "ts": int(time.time()), "session_id": req.session_id, "mode": req.mode, "role_type": req.role_type,
