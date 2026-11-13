@@ -80,7 +80,12 @@ class ExamFlowService
 
         $greeting = $isEn
             ? "Hi, I am {$examinerName}, {$examinerTitle}. This session has {$partCount} ".($partCount === 1 ? 'part' : 'parts')." and takes about {$minutes} minutes. Just relax and answer as naturally as you can."
-            : "Halo, saya {$examinerName}, {$examinerTitle}. Sesi ini terdiri dari {$partCount} bagian dan berlangsung sekitar {$minutes} menit. Santai saja, jawab senatural mungkin, anggap kita sedang ngobrol.";
+            // Spoken, in each examiner's own register (see ExaminerService::SPEAKING_STYLE).
+            : match ($definition['role_type']) {
+                'hrd' => "Halo, aku {$examinerName}, {$examinerTitle}. Kita bakal ngobrol sekitar {$minutes} menit, ada {$partCount} bagian. Santai aja ya, jawab senatural mungkin, anggap lagi ngobrol biasa.",
+                'investor' => "Halo, saya {$examinerName}, {$examinerTitle}. Kita punya sekitar {$minutes} menit, dibagi {$partCount} bagian. Santai aja, anggap kita lagi ngopi bareng dan Anda cerita soal startup Anda.",
+                default => "Selamat datang, saya {$examinerName}, {$examinerTitle}. Sidang simulasi ini ada {$partCount} bagian, kira-kira {$minutes} menit. Tenang saja, jawab dengan bahasa Anda sendiri.",
+            };
 
         $opening = trim($greeting.' '.$this->partIntro($state));
 
@@ -529,7 +534,9 @@ class ExamFlowService
 
             return $isEn
                 ? "Now let's move to Part 2, {$title}. I will give you a topic card. You have one minute to prepare and you can take notes, then speak for up to two minutes. I will not interrupt you. Your topic is: {$card['prompt']}"
-                : "Sekarang kita masuk ke Bagian 2, {$title}. Saya akan memberikan kartu topik. ".ucfirst($you)." punya satu menit untuk bersiap dan boleh membuat catatan, lalu bicara sampai dua menit tanpa saya sela. Topiknya: {$card['prompt']}";
+                : ($you === 'kamu'
+                    ? "Oke, sekarang kita masuk Bagian 2, {$title}. Nanti aku kasih satu topik. Kamu punya semenit buat siap-siap, boleh sambil nyatat, terus ngomong sampai dua menit, aku nggak bakal motong. Topiknya: {$card['prompt']}"
+                    : "Baik, sekarang kita masuk Bagian 2, {$title}. Saya kasih satu topik. Anda punya satu menit untuk siap-siap dan boleh mencatat, lalu bicara sampai dua menit tanpa saya potong. Topiknya: {$card['prompt']}");
         }
 
         $prefix = $isEn ? "Let's start Part {$part}, {$title}." : "Kita mulai Bagian {$part}, {$title}.";

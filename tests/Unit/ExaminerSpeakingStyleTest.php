@@ -1,0 +1,70 @@
+<?php
+
+namespace Tests\Unit;
+
+use App\Services\Exam\ExaminerService;
+use Tests\TestCase;
+
+class ExaminerSpeakingStyleTest extends TestCase
+{
+    /**
+     * @return array<string, mixed>
+     */
+    private function turn(string $roleType, string $name, string $language = 'id', ?string $sessionType = null): array
+    {
+        return [
+            'mode' => match ($roleType) {
+                'hrd' => 'wawancara',
+                'investor' => 'pitching',
+                default => 'sidang',
+            },
+            'role_type' => $roleType,
+            'examiner_name' => $name,
+            'language' => $language,
+            'topic' => null,
+            'context_material' => null,
+            'session_type' => $sessionType,
+            'coach_title' => 'Coach',
+            'coach_skills' => 'struktur jawaban',
+        ];
+    }
+
+    public function test_every_examiner_gets_a_spoken_style_in_exam_and_coach_prompts(): void
+    {
+        $examiner = app(ExaminerService::class);
+
+        foreach (['hrd' => 'Kak Nadia', 'investor' => 'Pak William', 'dosen_penguji' => 'Prof. Hendra'] as $role => $name) {
+            foreach ([null, 'coach'] as $sessionType) {
+                foreach (['id', 'en'] as $language) {
+                    $prompt = $examiner->systemPrompt($this->turn($role, $name, $language, $sessionType));
+                    $this->assertStringContainsString($examiner->speakingStyle($role, $language === 'en'), $prompt, "{$role} {$sessionType} {$language}");
+                }
+            }
+        }
+    }
+
+    public function test_styles_keep_each_examiner_in_character(): void
+    {
+        $examiner = app(ExaminerService::class);
+
+        // Kak Nadia drops "Anda"; Pak William and Prof. Hendra keep it but talk, not write.
+        $this->assertStringContainsString('"Anda"', $examiner->speakingStyle('hrd', false));
+        $this->assertStringContainsString('Hindari kata kaku seperti "tersebut"', $examiner->speakingStyle('hrd', false));
+        $this->assertStringContainsString('Tetap panggil "Anda"', $examiner->speakingStyle('investor', false));
+        $this->assertStringContainsString('Tetap panggil "Anda"', $examiner->speakingStyle('dosen_penguji', false));
+        $this->assertStringNotContainsString('bahasa formal', $examiner->systemPrompt($this->turn('dosen_penguji', 'Prof. Hendra')));
+        // An unknown role talks like the thesis examiner instead of failing.
+        $this->assertSame($examiner->speakingStyle('dosen_penguji', false), $examiner->speakingStyle('lainnya', false));
+    }
+
+    public function test_chinese_words_from_the_model_are_removed_before_speaking(): void
+    {
+        $examiner = app(ExaminerService::class);
+
+        $this->assertSame(
+            'Oke, fokus ke startup Jaksel itu masuk akal sebagai awal. Model bisnisnya gimana?',
+            $examiner->clean('Oke, fokus ke startup Jaksel itu masuk akal sebagai 切入点 awal. Model bisnisnya gimana?'),
+        );
+        $this->assertSame('Bagus sekali.', $examiner->clean('Bagus sekali 好的.'));
+    }
+}

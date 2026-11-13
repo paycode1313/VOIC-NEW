@@ -68,7 +68,7 @@ class ExamFlowTest extends TestCase
         $opening = $session->messages()->first();
         $this->assertSame('ai', $opening->sender);
         $this->assertStringContainsString('Kak Nadia', $opening->message);
-        $this->assertStringContainsString('perkenalkan diri', $opening->message);
+        $this->assertStringContainsString('kenalan dulu', $opening->message);
 
         $this->get(route('exam.room', $session))->assertOk()->assertSee('Mulai ujian');
     }

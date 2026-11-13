@@ -71,13 +71,35 @@ class ExaminerService
     public const CLOUD_RETRY_WAIT = 6;
 
     /**
-     * How Kak Nadia (HRD, Indonesian) talks: everyday spoken Indonesian, like a phone call with a
-     * friendly recruiter, not the formal written language of a letter.
+     * How each examiner talks out loud: spoken language like a real call, not the written language of a
+     * letter or a thesis. HRD is the most casual, the investor semi-casual and direct, the thesis examiner
+     * courteous but still spoken. Part of the cached system prompt.
+     *
+     * @var array<string, array{id: string, en: string}>
      */
-    public const CASUAL_HRD_ID = 'Gaya bahasamu: bahasa lisan sehari-hari yang santai seperti HR startup di telepon, bukan bahasa surat resmi. '
-        .'Pakai kata seperti "nggak", "udah", "gimana", "banget", "dikit", "kerjain", "beneran", dan partikel "sih", "nih", "ya", "kok", "dong" secukupnya. '
-        .'Hindari kata kaku seperti "tersebut", "merupakan", "apakah", "Anda", "sangat", "mengenai", "demikian". '
-        .'Kalimatmu pendek-pendek, dan boleh diawali reaksi spontan seperti "Oh gitu", "Wih", atau "Hmm, oke" (jangan pakai kata pembuka yang sama dua kali berturut-turut).';
+    public const SPEAKING_STYLE = [
+        'hrd' => [
+            'id' => 'Gaya bahasamu: bahasa lisan sehari-hari yang santai seperti HR startup di telepon, bukan bahasa surat resmi. '
+                .'Pakai kata seperti "nggak", "udah", "gimana", "banget", "dikit", "kerjain", "beneran", dan partikel "sih", "nih", "ya", "kok", "dong" secukupnya. '
+                .'Hindari kata kaku seperti "tersebut", "merupakan", "apakah", "Anda", "sangat", "mengenai", "demikian". '
+                .'Kalimatmu pendek-pendek, dan boleh diawali reaksi spontan seperti "Oh gitu", "Wih", atau "Hmm, oke" (jangan pakai kata pembuka yang sama dua kali berturut-turut).',
+            'en' => 'Your style: relaxed everyday spoken English, like a friendly recruiter on a call. Use contractions, short sentences and natural reactions such as "Oh nice" or "Hmm, okay"; avoid formal written phrases.',
+        ],
+        'investor' => [
+            'id' => 'Gaya bahasamu: lisan, lugas, dan semi-santai seperti investor di Jakarta yang lagi ngobrol sama founder, bukan bahasa proposal. '
+                .'Tetap panggil "Anda", tapi boleh pakai "gimana", "nggak", "udah", "aja", dan partikel "sih", "tuh", "ya" secukupnya. '
+                .'Hindari kata kaku seperti "tersebut", "merupakan", "apakah", "mengenai", "demikian", "adapun". '
+                .'Kalimatmu pendek dan to the point, boleh diawali reaksi spontan seperti "Oke", "Hmm", atau "Menarik nih" (jangan pakai kata pembuka yang sama dua kali berturut-turut).',
+            'en' => 'Your style: direct, punchy spoken English, like an investor chatting with a founder. Use contractions and short sentences; avoid pitch-deck jargon and formal written phrases.',
+        ],
+        'dosen_penguji' => [
+            'id' => 'Gaya bahasamu: bahasa lisan yang santun seperti dosen yang sedang bicara di ruang sidang, bukan bahasa tulisan skripsi. '
+                .'Tetap panggil "Anda", boleh pakai "coba", "nah", "ya", "kenapa", "gimana" sesekali, dan kalimat yang pendek. '
+                .'Hindari kata kaku seperti "tersebut", "merupakan", "demikian", "adapun", "apakah", "mengenai". '
+                .'Boleh diawali reaksi singkat seperti "Baik", "Nah", atau "Oke, saya catat" (jangan pakai kata pembuka yang sama dua kali berturut-turut).',
+            'en' => 'Your style: courteous but spoken English, like an examiner talking in the room rather than writing a report. Short sentences, contractions where natural, no stiff written phrases.',
+        ],
+    ];
 
     /**
      * Where the time of the last streamed reply went (reading the prompt, voicing the first sentence).
@@ -652,14 +674,16 @@ class ExaminerService
         $persona = match ($turn['role_type']) {
             'hrd' => $isEn
                 ? "You are {$name}, a warm and relaxed senior HR recruiter. You make candidates feel at ease, you sound like a real person chatting, and you are genuinely curious about their real experiences."
-                : "Kamu adalah {$name}, HR recruiter senior di startup yang hangat dan santai. Kamu bikin kandidat nyaman, bicaramu seperti orang sungguhan yang sedang ngobrol di telepon, dan kamu benar-benar penasaran dengan pengalaman nyata mereka. Panggil kandidat dengan 'kamu' dan dirimu 'aku'.\n".self::CASUAL_HRD_ID,
+                : "Kamu adalah {$name}, HR recruiter senior di startup yang hangat dan santai. Kamu bikin kandidat nyaman, bicaramu seperti orang sungguhan yang sedang ngobrol di telepon, dan kamu benar-benar penasaran dengan pengalaman nyata mereka. Panggil kandidat dengan 'kamu' dan dirimu 'aku'.",
             'investor' => $isEn
                 ? "You are {$name}, a sharp but friendly venture capital partner. You are direct, a bit playful, you love concrete numbers, and you test every claim."
                 : "Kamu adalah {$name}, partner venture capital yang tajam tapi bersahabat dan sedikit jenaka. Kamu lugas, suka angka konkret, dan menguji setiap klaim. Panggil founder dengan 'Anda'.",
             default => $isEn
                 ? "You are {$name}, a calm and fair lead thesis examiner. You respect the student, you speak formally but warmly, and you test methodology and reasoning."
-                : "Kamu adalah {$name}, dosen penguji utama yang tenang, adil, dan tetap hangat. Kamu menghargai mahasiswa, bicara dengan bahasa formal yang santun, dan menguji metodologi serta logika penelitian. Panggil mahasiswa dengan 'Anda'.",
+                : "Kamu adalah {$name}, dosen penguji utama yang tenang, adil, dan tetap hangat. Kamu menghargai mahasiswa, bicara dengan bahasa lisan yang santun dan tidak kaku, dan menguji metodologi serta logika penelitian. Panggil mahasiswa dengan 'Anda'.",
         };
+
+        $persona .= "\n".$this->speakingStyle((string) $turn['role_type'], $isEn);
 
         $rules = $isEn
             ? [
@@ -738,7 +762,7 @@ class ExaminerService
         $persona = match ($turn['role_type']) {
             'hrd' => $isEn
                 ? "You are {$name}, a friendly {$title} and senior recruiter. You talk like a supportive older sibling: relaxed, warm, a bit playful, never judging."
-                : "Kamu adalah {$name}, {$title} sekaligus HR recruiter senior. Gaya bicaramu seperti kakak yang suportif: santai, hangat, sedikit jenaka, tidak pernah menghakimi. Pakai 'aku' dan 'kamu'.\n".self::CASUAL_HRD_ID,
+                : "Kamu adalah {$name}, {$title} sekaligus HR recruiter senior. Gaya bicaramu seperti kakak yang suportif: santai, hangat, sedikit jenaka, tidak pernah menghakimi. Pakai 'aku' dan 'kamu'.",
             'investor' => $isEn
                 ? "You are {$name}, a {$title} who has heard thousands of pitches. Friendly, direct, practical, you love concrete examples."
                 : "Kamu adalah {$name}, {$title} yang sudah mendengar ribuan pitch. Ramah, lugas, praktis, dan suka contoh konkret. Panggil lawan bicara dengan 'Anda'.",
@@ -746,6 +770,8 @@ class ExaminerService
                 ? "You are {$name}, a patient {$title}. Calm, encouraging, precise with academic language."
                 : "Kamu adalah {$name}, {$title} yang sabar. Tenang, menyemangati, dan teliti soal bahasa ilmiah. Panggil mahasiswa dengan 'Anda'.",
         };
+
+        $persona .= "\n".$this->speakingStyle((string) $turn['role_type'], $isEn);
 
         $rules = $isEn
             ? [
@@ -783,6 +809,16 @@ class ExaminerService
     }
 
     /**
+     * The spoken style for this examiner (unknown roles talk like the thesis examiner).
+     */
+    public function speakingStyle(string $roleType, bool $isEn): string
+    {
+        $style = self::SPEAKING_STYLE[$roleType] ?? self::SPEAKING_STYLE['dosen_penguji'];
+
+        return $style[$isEn ? 'en' : 'id'];
+    }
+
+    /**
      * How an experienced examiner of this kind listens and digs, plus two short examples of the
      * style. Static per session (part of the cached system prompt). The examples use topics that
      * rarely come up, so a small model learns the pattern instead of copying the content.
@@ -797,8 +833,8 @@ class ExaminerService
                     .'Founder: "We already have 300 users after two months." You: "Three hundred in two months is a decent start. How many of them are still active this month, and how many pay?"'
                 : "Cara Anda menggali seperti investor berpengalaman: setiap klaim besar harus ada angkanya (pengguna, pendapatan, pertumbuhan per bulan, CAC, retensi). Klaim \"tidak ada pesaing\" berarti tanyakan apa yang dipakai pelanggan sekarang. Uji ukuran pasar yang realistis, model bisnis, keunggulan yang sulit ditiru, tim, dan untuk apa dana dipakai. Kalau angka terdengar terlalu optimis, tanyakan asumsinya.\n"
                     ."Contoh gaya (tiru polanya, bukan isinya):\n"
-                    ."Founder: \"Pasarnya besar sekali dan belum ada yang garap.\" Kamu: \"Pasar besar yang masih kosong biasanya justru bikin saya waspada. Sebelum ada produk Anda, pelanggan menyelesaikan masalah ini pakai cara apa?\"\n"
-                    .'Founder: "Dalam dua bulan kami sudah punya 300 pengguna." Kamu: "Tiga ratus pengguna dalam dua bulan itu awal yang lumayan. Berapa yang masih aktif bulan ini, dan berapa yang sudah membayar?"',
+                    ."Founder: \"Pasarnya besar sekali dan belum ada yang garap.\" Kamu: \"Hmm, pasar gede tapi masih kosong biasanya malah bikin saya waspada. Sebelum ada produk Anda, pelanggan ngatasin masalah ini pakai cara apa?\"\n"
+                    .'Founder: "Dalam dua bulan kami sudah punya 300 pengguna." Kamu: "Tiga ratus pengguna dalam dua bulan, lumayan tuh. Berapa yang masih aktif bulan ini, dan berapa yang udah bayar?"',
             'dosen_penguji' => $isEn
                 ? "How you examine, like a thesis examiner: tie every answer back to the research problem and objectives. A claim that something is \"better\" or \"more accurate\" must say compared to what and measured by which metric. Ask why the method was chosen, how much data or how many respondents and how they were selected, validity and reliability, limitations, and the contribution of the research. Stay courteous, never belittle.\n"
                     ."Style examples (copy the pattern, not the content):\n"
@@ -806,8 +842,8 @@ class ExaminerService
                     .'Student: "I collected data from 50 respondents through a questionnaire." You: "Fifty respondents through a questionnaire, noted. How did you choose them, and is that number enough for the analysis you used?"'
                 : "Cara Anda menguji seperti dosen penguji sidang: kaitkan setiap jawaban ke rumusan masalah dan tujuan penelitian. Klaim \"lebih baik\" atau \"lebih akurat\" harus jelas dibandingkan dengan apa dan diukur dengan metrik apa. Tanyakan alasan memilih metode, jumlah data atau responden dan cara memilihnya, validitas dan reliabilitas, keterbatasan, serta kontribusi penelitian. Tetap santun, jangan menjatuhkan.\n"
                     ."Contoh gaya (tiru polanya, bukan isinya):\n"
-                    ."Mahasiswa: \"Model saya lebih akurat untuk mendeteksi penyakit daun.\" Kamu: \"Lebih akurat itu klaim yang kuat. Dibandingkan dengan metode apa, dan dengan metrik apa Anda mengukurnya?\"\n"
-                    .'Mahasiswa: "Saya mengambil data dari 50 responden lewat kuesioner." Kamu: "Lima puluh responden lewat kuesioner, saya catat. Bagaimana Anda memilih mereka, dan apakah jumlah itu cukup untuk analisis yang Anda pakai?"',
+                    ."Mahasiswa: \"Model saya lebih akurat untuk mendeteksi penyakit daun.\" Kamu: \"Lebih akurat itu klaim yang kuat ya. Dibandingkan dengan metode apa, dan Anda ukur pakai metrik apa?\"\n"
+                    .'Mahasiswa: "Saya mengambil data dari 50 responden lewat kuesioner." Kamu: "Lima puluh responden lewat kuesioner, saya catat. Nah, cara Anda milih mereka gimana, dan jumlah segitu cukup nggak untuk analisis yang Anda pakai?"',
             default => $isEn
                 ? "How you dig, like an experienced recruiter: follow the STAR pattern (situation, task, action, result). When the candidate says \"we\" a lot, ask what they did themselves. When they claim a trait (hard-working, detail-oriented), ask for one real moment that shows it. When a story stops at the action, ask about the result or impact. Listen for motivation, teamwork and fit with the role.\n"
                     ."Style examples (copy the pattern, not the content):\n"
@@ -1249,7 +1285,11 @@ class ExaminerService
         // A speaker label is a short run of capitalised words ("Prof. Hendra:", "Kak Nadia:"), never a sentence like "Bagus. Coba bilang:".
         $text = preg_replace('/^\s*(?:[\p{Lu}][\p{L}\.]*)(?:\s[\p{Lu}][\p{L}\.]*){0,3}:\s+/u', '', trim($text)) ?? $text;
         $text = preg_replace('/\[[^\]]*\]/u', '', $text) ?? $text;
+        // Qwen models now and then slip a Chinese/Japanese/Korean word into Indonesian ("sebagai 切入点 awal");
+        // the voice cannot read it, and the sentence still makes sense without it.
+        $text = preg_replace('/[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}]+/u', '', $text) ?? $text;
         $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+        $text = preg_replace('/\s+([,.!?])/u', '$1', $text) ?? $text;
         // Only unwrap quotes around the whole reply; quoted example sentences inside must stay intact.
         if (preg_match('/^["“](.*)["”]$/us', $text, $wrapped) && ! preg_match('/["“”]/u', $wrapped[1])) {
             $text = trim($wrapped[1]);
