@@ -57,7 +57,7 @@ return [
     'speed_mode' => env('VOIC_SPEED_MODE', 'offline'),
 
     /*
-    | Examiner voice. "edge": Microsoft's natural neural voices over the internet (Kak Nadia = Gadis),
+    | Examiner voice. "edge": Microsoft's natural neural voices over the internet (VOIC-INTERVIEW = Gadis),
     | Piper as the fallback. "piper": the local, offline voice (more robotic). Empty: "edge" in the
     | online speed mode, "piper" otherwise.
     */
@@ -83,7 +83,7 @@ return [
                 'id' => 'Latihan interview dengan HR recruiter: dari perkenalan sampai pertanyaan situasional.',
                 'en' => 'Practise with an HR recruiter, from introductions to situational questions.',
             ],
-            'examiner' => ['name' => 'Kak Nadia', 'title' => ['id' => 'Senior HR Recruiter', 'en' => 'Senior HR Recruiter'], 'avatar' => 'images/avatars/hrd-portrait.webp',
+            'examiner' => ['name' => 'VOIC-INTERVIEW', 'title' => ['id' => 'Interview dengan HRD', 'en' => 'Interview with HR'], 'avatar' => 'images/avatars/hrd-portrait.webp',
                 // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
                 'rig' => ['eyes' => [[0.4395, 0.3164], [0.5586, 0.3164]], 'eyeW' => 0.0508, 'eyeH' => 0.0254, 'mouth' => [0.5, 0.4229], 'mouthW' => 0.1133, 'chin' => 0.5078]],
             'topic_label' => ['id' => 'Posisi yang dilamar', 'en' => 'Position you are applying for'],
@@ -92,8 +92,8 @@ return [
             'coach' => [
                 'title' => ['id' => 'Coach Wawancara', 'en' => 'Interview Coach'],
                 'opening' => [
-                    'id' => 'Halo, aku Kak Nadia! Sepuluh menit ke depan kita ngobrol santai ya, ini bukan tes kok. Aku bantu kamu latihan cara ngomong dan milih kata yang pas waktu wawancara. Cerita dulu dong, kamu lagi siap-siap wawancara buat posisi apa, dan bagian mana yang paling bikin deg-degan?',
-                    'en' => "Hi, I'm Nadia! For the next ten minutes we'll just chat, this isn't a test. I'll help you practise how to speak and which words to use in interviews. Tell me first, what role are you preparing for, and which part makes you most nervous?",
+                    'id' => 'Halo, aku VOIC Interview! Sepuluh menit ke depan kita ngobrol santai ya, ini bukan tes kok. Aku bantu kamu latihan cara ngomong dan milih kata yang pas waktu wawancara. Cerita dulu dong, kamu lagi siap-siap wawancara buat posisi apa, dan bagian mana yang paling bikin deg-degan?',
+                    'en' => "Hi, I'm VOIC Interview! For the next ten minutes we'll just chat, this isn't a test. I'll help you practise how to speak and which words to use in interviews. Tell me first, what role are you preparing for, and which part makes you most nervous?",
                 ],
                 'skills' => [
                     'id' => 'memperkenalkan diri dengan menarik, menjawab dengan pola STAR (situasi, tugas, aksi, hasil), memilih kata yang profesional tapi tetap natural, mengurangi kata pengisi seperti eh dan ehm, serta menjawab pertanyaan sulit seperti kelemahan, alasan resign, dan gaji',
@@ -206,7 +206,7 @@ return [
                 'id' => 'Simulasi sidang dengan dosen penguji: presentasi inti lalu tanya jawab metodologi.',
                 'en' => 'Defend your thesis: core presentation, then methodology Q&A.',
             ],
-            'examiner' => ['name' => 'Prof. Hendra', 'title' => ['id' => 'Dosen Penguji Utama', 'en' => 'Lead Examiner'], 'avatar' => 'images/avatars/dosen-portrait.webp',
+            'examiner' => ['name' => 'VOIC-SIDANG', 'title' => ['id' => 'Sidang dengan Dosen Penguji', 'en' => 'Thesis defense with an examiner'], 'avatar' => 'images/avatars/dosen-portrait.webp',
                 // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
                 'rig' => ['eyes' => [[0.4268, 0.3457], [0.5713, 0.3457]], 'eyeW' => 0.0449, 'eyeH' => 0.0215, 'mouth' => [0.501, 0.5068], 'mouthW' => 0.1367, 'chin' => 0.6104]],
             'topic_label' => ['id' => 'Judul skripsi', 'en' => 'Thesis title'],
@@ -215,8 +215,8 @@ return [
             'coach' => [
                 'title' => ['id' => 'Dosen Pembimbing', 'en' => 'Thesis Mentor'],
                 'opening' => [
-                    'id' => 'Halo, saya Prof. Hendra. Sepuluh menit ini anggap saja sesi bimbingan sebelum sidang, bukan ujian. Kita latih cara Anda menjelaskan penelitian dengan runtut dan meyakinkan. Coba ceritakan dulu, penelitian Anda tentang apa, dan pertanyaan penguji seperti apa yang paling Anda khawatirkan?',
-                    'en' => 'Hello, I am Professor Hendra. Think of these ten minutes as a supervision session before your defense, not an exam. We will practise explaining your research clearly and convincingly. First, what is your research about, and which examiner questions worry you most?',
+                    'id' => 'Halo, saya VOIC Sidang. Sepuluh menit ini anggap saja sesi bimbingan sebelum sidang, bukan ujian. Kita latih cara Anda menjelaskan penelitian dengan runtut dan meyakinkan. Coba ceritakan dulu, penelitian Anda tentang apa, dan pertanyaan penguji seperti apa yang paling Anda khawatirkan?',
+                    'en' => 'Hello, I am VOIC Sidang. Think of these ten minutes as a supervision session before your defense, not an exam. We will practise explaining your research clearly and convincingly. First, what is your research about, and which examiner questions worry you most?',
                 ],
                 'skills' => [
                     'id' => 'menjelaskan latar belakang, rumusan masalah, dan metode secara runtut, memakai istilah ilmiah yang tepat tanpa bertele-tele, menjawab kritik penguji dengan tenang, serta mengakui keterbatasan penelitian dengan elegan',
@@ -314,7 +314,7 @@ return [
                 'id' => 'Pitch di depan investor: problem, solusi, lalu dibedah habis di sesi due diligence.',
                 'en' => 'Pitch to an investor: problem, solution, then a due-diligence grilling.',
             ],
-            'examiner' => ['name' => 'Pak William', 'title' => ['id' => 'Partner Venture Capital', 'en' => 'Venture Capital Partner'], 'avatar' => 'images/avatars/investor-portrait.webp',
+            'examiner' => ['name' => 'VOIC-BISNIS', 'title' => ['id' => 'Pitching Bisnis dengan Investor', 'en' => 'Business pitch with an investor'], 'avatar' => 'images/avatars/investor-portrait.webp',
                 // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
                 'rig' => ['eyes' => [[0.4463, 0.2979], [0.5537, 0.2979]], 'eyeW' => 0.0449, 'eyeH' => 0.0195, 'mouth' => [0.5, 0.4111], 'mouthW' => 0.1035, 'chin' => 0.4951]],
             'topic_label' => ['id' => 'Nama dan bidang startup', 'en' => 'Startup name and sector'],
@@ -323,8 +323,8 @@ return [
             'coach' => [
                 'title' => ['id' => 'Mentor Startup', 'en' => 'Startup Mentor'],
                 'opening' => [
-                    'id' => 'Halo, saya William. Sepuluh menit ini kita ngobrol santai seperti sesi mentoring sebelum demo day, bukan penilaian. Saya bantu Anda bercerita tentang startup dengan cara yang bikin investor tertarik. Ceritakan dulu startup Anda dalam satu atau dua kalimat, dan bagian mana dari pitch yang paling sulit buat Anda?',
-                    'en' => 'Hi, I am William. These ten minutes are a relaxed mentoring chat before demo day, not an evaluation. I will help you tell your startup story in a way investors care about. Describe your startup in one or two sentences, and tell me which part of the pitch is hardest for you.',
+                    'id' => 'Halo, saya VOIC Bisnis. Sepuluh menit ini kita ngobrol santai seperti sesi mentoring sebelum demo day, bukan penilaian. Saya bantu Anda bercerita tentang startup dengan cara yang bikin investor tertarik. Ceritakan dulu startup Anda dalam satu atau dua kalimat, dan bagian mana dari pitch yang paling sulit buat Anda?',
+                    'en' => 'Hi, I am VOIC Bisnis. These ten minutes are a relaxed mentoring chat before demo day, not an evaluation. I will help you tell your startup story in a way investors care about. Describe your startup in one or two sentences, and tell me which part of the pitch is hardest for you.',
                 ],
                 'skills' => [
                     'id' => 'membuka pitch dengan masalah yang kuat, menjelaskan solusi dengan bahasa sederhana, menyebut angka traksi dan unit economics, menjawab pertanyaan investor dengan lugas, serta menutup dengan permintaan pendanaan yang jelas',

@@ -35,7 +35,8 @@
                         </span>
                         <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-12 w-12 rounded-full object-cover ring-4 ring-white dark:ring-[#16171b]" loading="lazy">
                     </div>
-                    <h2 class="mt-5 text-xl font-bold tracking-tight">{{ $blueprint->text($mode['title'], $language) }}</h2>
+                    <h2 class="mt-5 text-xl font-bold tracking-tight">{{ $mode['examiner']['name'] }}</h2>
+                    <p class="mt-1 text-sm font-semibold {{ $accent['text'] }}">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
                     <p class="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ $blueprint->text($mode['tagline'], $language) }}</p>
 
                     <ol class="mt-5 space-y-2 border-t border-black/5 pt-4 text-sm dark:border-white/10">
@@ -48,7 +49,7 @@
                     </ol>
 
                     <div class="mt-6 flex items-center justify-between text-sm">
-                        <span class="text-slate-500">{{ $mode['examiner']['name'] }} · ~12 {{ $isEn ? 'min' : 'menit' }}</span>
+                        <span class="text-slate-500">{{ $blueprint->text($mode['title'], $language) }} · ~12 {{ $isEn ? 'min' : 'menit' }}</span>
                         <span class="inline-flex items-center gap-1 font-semibold {{ $accent['text'] }}">
                             {{ $isEn ? 'Start' : 'Mulai' }}
                             <svg class="h-4 w-4 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>

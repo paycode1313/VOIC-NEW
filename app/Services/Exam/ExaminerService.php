@@ -667,7 +667,7 @@ class ExaminerService
         }
 
         $isEn = $turn['language'] === 'en';
-        $name = $turn['examiner_name'];
+        $name = self::spokenName((string) $turn['examiner_name']);
         $topic = $turn['topic'] ? Str::limit((string) $turn['topic'], 120) : null;
         $context = $turn['context_material'] ? Str::limit((string) $turn['context_material'], 500) : null;
 
@@ -753,7 +753,7 @@ class ExaminerService
     public function coachSystemPrompt(array $turn): string
     {
         $isEn = $turn['language'] === 'en';
-        $name = $turn['examiner_name'];
+        $name = self::spokenName((string) $turn['examiner_name']);
         $title = (string) ($turn['coach_title'] ?? '');
         $skills = (string) ($turn['coach_skills'] ?? '');
         $topic = $turn['topic'] ? Str::limit((string) $turn['topic'], 120) : null;
@@ -806,6 +806,19 @@ class ExaminerService
         $lines[] = $this->instructionLegend($isEn, coach: true);
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * How an examiner's name is said out loud: "VOIC-INTERVIEW" becomes "VOIC Interview", so neither the
+     * voice nor the model spells out a hyphenated all-caps word. Ordinary names are left alone.
+     */
+    public static function spokenName(string $name): string
+    {
+        if (! preg_match('/^([A-Z]+)-([A-Z][A-Z\-]*)$/', $name, $parts)) {
+            return $name;
+        }
+
+        return $parts[1].' '.Str::title(str_replace('-', ' ', strtolower($parts[2])));
     }
 
     /**

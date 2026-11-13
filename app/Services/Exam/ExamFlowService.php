@@ -73,19 +73,23 @@ class ExamFlowService
 
         $definition = $this->blueprint->mode($mode);
         $isEn = $language === 'en';
-        $examinerName = $definition['examiner']['name'];
-        $examinerTitle = $this->blueprint->text($definition['examiner']['title'], $language);
+        // Spoken form: "VOIC-INTERVIEW" is read aloud as "VOIC Interview".
+        $examinerName = ExaminerService::spokenName($definition['examiner']['name']);
         $partCount = count($parts);
         $minutes = max(3, $partCount * 4);
 
+        // Spoken, in each examiner's own register (see ExaminerService::SPEAKING_STYLE).
         $greeting = $isEn
-            ? "Hi, I am {$examinerName}, {$examinerTitle}. This session has {$partCount} ".($partCount === 1 ? 'part' : 'parts')." and takes about {$minutes} minutes. Just relax and answer as naturally as you can."
-            // Spoken, in each examiner's own register (see ExaminerService::SPEAKING_STYLE).
-            : match ($definition['role_type']) {
-                'hrd' => "Halo, aku {$examinerName}, {$examinerTitle}. Kita bakal ngobrol sekitar {$minutes} menit, ada {$partCount} bagian. Santai aja ya, jawab senatural mungkin, anggap lagi ngobrol biasa.",
-                'investor' => "Halo, saya {$examinerName}, {$examinerTitle}. Kita punya sekitar {$minutes} menit, dibagi {$partCount} bagian. Santai aja, anggap kita lagi ngopi bareng dan Anda cerita soal startup Anda.",
-                default => "Selamat datang, saya {$examinerName}, {$examinerTitle}. Sidang simulasi ini ada {$partCount} bagian, kira-kira {$minutes} menit. Tenang saja, jawab dengan bahasa Anda sendiri.",
-            };
+            ? match ($definition['role_type']) {
+                'hrd' => "Hi, I'm {$examinerName}, your HR interviewer today. We'll chat for about {$minutes} minutes in {$partCount} ".($partCount === 1 ? 'part' : 'parts').'. Just relax and answer as naturally as you can.',
+                'investor' => "Hi, I'm {$examinerName}, the investor hearing your pitch today. We have about {$minutes} minutes in {$partCount} ".($partCount === 1 ? 'part' : 'parts').'. Relax, just tell me about your startup.',
+                default => "Welcome, I'm {$examinerName}, your thesis examiner today. This mock defense has {$partCount} ".($partCount === 1 ? 'part' : 'parts')." and takes about {$minutes} minutes. Take your time and answer in your own words.",
+            }
+        : match ($definition['role_type']) {
+            'hrd' => "Halo, aku {$examinerName}, HRD yang bakal ngobrol sama kamu hari ini. Kita ngobrol sekitar {$minutes} menit, ada {$partCount} bagian. Santai aja ya, jawab senatural mungkin, anggap lagi ngobrol biasa.",
+            'investor' => "Halo, saya {$examinerName}, investor yang bakal dengerin pitch Anda hari ini. Kita punya sekitar {$minutes} menit, dibagi {$partCount} bagian. Santai aja, anggap kita lagi ngopi bareng dan Anda cerita soal startup Anda.",
+            default => "Selamat datang, saya {$examinerName}, dosen penguji Anda hari ini. Sidang simulasi ini ada {$partCount} bagian, kira-kira {$minutes} menit. Tenang saja, jawab dengan bahasa Anda sendiri.",
+        };
 
         $opening = trim($greeting.' '.$this->partIntro($state));
 
