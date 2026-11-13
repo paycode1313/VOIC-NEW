@@ -52,9 +52,16 @@ return [
     | "offline" (default): everything runs on this laptop (private, no internet), speed depends on the hardware.
     | "online": for a laptop without a GPU at a booth with internet. A fast cloud model (GROQ_API_KEY or
     | OPENAI_API_KEY) answers first and the browser recognises speech, so the examiner replies in 1-2 seconds.
-    | The local AI stays as the automatic fallback when the internet drops. Voice stays local (Piper).
+    | The local AI stays as the automatic fallback when the internet drops.
     */
     'speed_mode' => env('VOIC_SPEED_MODE', 'offline'),
+
+    /*
+    | Examiner voice. "edge": Microsoft's natural neural voices over the internet (Kak Nadia = Gadis),
+    | Piper as the fallback. "piper": the local, offline voice (more robotic). Empty: "edge" in the
+    | online speed mode, "piper" otherwise.
+    */
+    'tts_engine' => env('VOIC_TTS_ENGINE'),
 
     /*
     | Teacher model for `php artisan voic:teacher-generate` (distillation data), and the
@@ -100,18 +107,18 @@ return [
                     'question_count' => 3,
                     'followups' => 1,
                     'questions' => [
-                        ['id' => 'Boleh perkenalkan diri dulu? Ceritakan singkat latar belakang pendidikan dan pengalamanmu.', 'en' => 'Could you start by introducing yourself and your background?'],
-                        ['id' => 'Apa yang bikin kamu tertarik melamar posisi :topic ini?', 'en' => 'What made you interested in this :topic role?'],
-                        ['id' => 'Kalau teman dekatmu diminta menggambarkan kamu dalam tiga kata, kira-kira apa jawabannya?', 'en' => 'If a close friend described you in three words, what would they say?'],
-                        ['id' => 'Apa yang kamu ketahui tentang perusahaan atau bidang yang kamu lamar?', 'en' => 'What do you know about the company or field you are applying to?'],
-                        ['id' => 'Di luar pekerjaan, kegiatan apa yang paling kamu nikmati, dan apa yang kamu pelajari dari situ?', 'en' => 'Outside work, what do you enjoy most and what has it taught you?'],
-                        ['id' => 'Bagaimana kamu biasanya menjelaskan pekerjaan atau jurusanmu ke orang awam?', 'en' => 'How do you usually explain your work or major to someone outside the field?'],
-                        ['id' => 'Apa satu keterampilan yang sedang kamu pelajari sekarang, dan kenapa?', 'en' => 'What is one skill you are learning right now, and why?'],
-                        ['id' => 'Lingkungan kerja seperti apa yang bikin kamu paling produktif?', 'en' => 'What kind of work environment makes you most productive?'],
-                        ['id' => 'Siapa orang yang paling memengaruhi cara kamu bekerja?', 'en' => 'Who has influenced the way you work the most?'],
-                        ['id' => 'Kalau hari ini kamu diterima, apa yang ingin kamu pelajari di bulan pertama?', 'en' => 'If you were hired today, what would you want to learn in your first month?'],
-                        ['id' => 'Apa kelebihan yang menurutmu jarang dimiliki kandidat lain?', 'en' => 'What strength do you have that most candidates do not?'],
-                        ['id' => 'Apa kekurangan yang sedang kamu perbaiki?', 'en' => 'What weakness are you currently working on?'],
+                        ['id' => 'Boleh kenalan dulu? Ceritain dikit dong soal latar belakang pendidikan sama pengalamanmu.', 'en' => 'Could you start by introducing yourself and your background?'],
+                        ['id' => 'Kok kamu tertarik ngelamar posisi :topic ini, ceritanya gimana?', 'en' => 'What made you interested in this :topic role?'],
+                        ['id' => 'Kalau temen deketmu disuruh ngegambarin kamu dalam tiga kata, kira-kira dia bakal bilang apa?', 'en' => 'If a close friend described you in three words, what would they say?'],
+                        ['id' => 'Sejauh ini kamu udah tahu apa aja soal perusahaan atau bidang yang kamu lamar?', 'en' => 'What do you know about the company or field you are applying to?'],
+                        ['id' => 'Di luar kerjaan, kamu paling suka ngapain, dan dari situ kamu belajar apa?', 'en' => 'Outside work, what do you enjoy most and what has it taught you?'],
+                        ['id' => 'Biasanya kamu jelasin kerjaan atau jurusanmu ke orang awam gimana sih?', 'en' => 'How do you usually explain your work or major to someone outside the field?'],
+                        ['id' => 'Sekarang lagi belajar skill apa nih, dan kenapa itu?', 'en' => 'What is one skill you are learning right now, and why?'],
+                        ['id' => 'Kamu paling produktif kalau lingkungan kerjanya kayak gimana?', 'en' => 'What kind of work environment makes you most productive?'],
+                        ['id' => 'Siapa sih orang yang paling ngaruh ke cara kamu kerja?', 'en' => 'Who has influenced the way you work the most?'],
+                        ['id' => 'Misal hari ini kamu keterima, bulan pertama pengen belajar apa dulu?', 'en' => 'If you were hired today, what would you want to learn in your first month?'],
+                        ['id' => 'Menurutmu, kelebihan apa yang kamu punya tapi jarang dimiliki kandidat lain?', 'en' => 'What strength do you have that most candidates do not?'],
+                        ['id' => 'Ada kekurangan yang lagi kamu perbaiki nggak?', 'en' => 'What weakness are you currently working on?'],
                     ],
                 ],
                 2 => [
@@ -120,42 +127,42 @@ return [
                     'followups' => 1,
                     'cue_cards' => [
                         [
-                            'prompt' => ['id' => 'Ceritakan saat kamu menghadapi tantangan besar dalam sebuah tim.', 'en' => 'Describe a time you faced a big challenge in a team.'],
+                            'prompt' => ['id' => 'Ceritain dong, pernah ngadepin tantangan besar bareng tim kayak gimana.', 'en' => 'Describe a time you faced a big challenge in a team.'],
                             'points' => [
                                 'id' => ['Situasinya seperti apa', 'Apa tanggung jawabmu', 'Langkah konkret yang kamu ambil', 'Hasilnya dan apa yang kamu pelajari'],
                                 'en' => ['What the situation was', 'What your responsibility was', 'The concrete steps you took', 'The result and what you learned'],
                             ],
                         ],
                         [
-                            'prompt' => ['id' => 'Ceritakan pencapaian yang paling kamu banggakan.', 'en' => 'Describe the achievement you are most proud of.'],
+                            'prompt' => ['id' => 'Ceritain pencapaian yang paling bikin kamu bangga.', 'en' => 'Describe the achievement you are most proud of.'],
                             'points' => [
                                 'id' => ['Apa pencapaiannya', 'Kenapa itu sulit', 'Bagaimana kamu mencapainya', 'Dampaknya untuk orang lain atau tim'],
                                 'en' => ['What the achievement was', 'Why it was difficult', 'How you achieved it', 'Its impact on others or the team'],
                             ],
                         ],
                         [
-                            'prompt' => ['id' => 'Ceritakan saat kamu membuat kesalahan di pekerjaan atau organisasi.', 'en' => 'Describe a time you made a mistake at work or in an organisation.'],
+                            'prompt' => ['id' => 'Ceritain momen waktu kamu pernah bikin salah di kerjaan atau organisasi.', 'en' => 'Describe a time you made a mistake at work or in an organisation.'],
                             'points' => [
                                 'id' => ['Kesalahannya apa', 'Bagaimana kamu menyadarinya', 'Cara kamu memperbaikinya', 'Apa yang kamu lakukan berbeda sekarang'],
                                 'en' => ['What the mistake was', 'How you realised it', 'How you fixed it', 'What you do differently now'],
                             ],
                         ],
                         [
-                            'prompt' => ['id' => 'Ceritakan saat kamu harus belajar sesuatu yang baru dalam waktu singkat.', 'en' => 'Describe a time you had to learn something new very quickly.'],
+                            'prompt' => ['id' => 'Ceritain waktu kamu harus belajar hal baru dalam waktu singkat.', 'en' => 'Describe a time you had to learn something new very quickly.'],
                             'points' => [
                                 'id' => ['Apa yang harus dipelajari', 'Kenapa waktunya singkat', 'Cara kamu belajar', 'Hasilnya'],
                                 'en' => ['What you had to learn', 'Why time was short', 'How you learned it', 'The outcome'],
                             ],
                         ],
                         [
-                            'prompt' => ['id' => 'Ceritakan saat kamu meyakinkan orang lain untuk mengikuti idemu.', 'en' => 'Describe a time you convinced others to follow your idea.'],
+                            'prompt' => ['id' => 'Ceritain waktu kamu berhasil ngeyakinin orang lain buat ikut idemu.', 'en' => 'Describe a time you convinced others to follow your idea.'],
                             'points' => [
                                 'id' => ['Idenya apa', 'Siapa yang perlu diyakinkan', 'Cara kamu meyakinkan', 'Apa yang terjadi kemudian'],
                                 'en' => ['What the idea was', 'Who had to be convinced', 'How you persuaded them', 'What happened next'],
                             ],
                         ],
                         [
-                            'prompt' => ['id' => 'Ceritakan proyek atau kegiatan yang paling kamu nikmati.', 'en' => 'Describe the project or activity you enjoyed the most.'],
+                            'prompt' => ['id' => 'Ceritain proyek atau kegiatan yang paling kamu nikmatin.', 'en' => 'Describe the project or activity you enjoyed the most.'],
                             'points' => [
                                 'id' => ['Proyeknya apa', 'Peranmu', 'Bagian yang paling seru', 'Apa yang kamu bawa ke pekerjaan berikutnya'],
                                 'en' => ['What the project was', 'Your role', 'The most exciting part', 'What you took away from it'],
@@ -169,18 +176,18 @@ return [
                     'question_count' => 3,
                     'followups' => 2,
                     'questions' => [
-                        ['id' => 'Kalau ada rekan satu tim yang terus telat menyelesaikan bagiannya, apa yang akan kamu lakukan?', 'en' => 'If a teammate kept missing their deadlines, what would you do?'],
-                        ['id' => 'Bagaimana caramu mengatur prioritas kalau ada tiga tenggat penting di minggu yang sama?', 'en' => 'How would you prioritise three important deadlines in the same week?'],
-                        ['id' => 'Menurutmu, apa bedanya tim yang sekadar bekerja bareng dengan tim yang benar-benar solid?', 'en' => 'What separates a group that works together from a truly strong team?'],
-                        ['id' => 'Lima tahun lagi kamu ingin berada di posisi seperti apa, dan bagaimana peran ini membantumu ke sana?', 'en' => 'Where do you want to be in five years, and how does this role help?'],
-                        ['id' => 'Berapa ekspektasi gaji kamu, dan apa dasar angka tersebut?', 'en' => 'What is your salary expectation and how did you arrive at it?'],
-                        ['id' => 'Bagaimana kamu merespons kalau atasan memberi kritik di depan tim?', 'en' => 'How would you respond if your manager criticised you in front of the team?'],
-                        ['id' => 'Ceritakan bagaimana kamu akan menolak permintaan rekan kerja tanpa merusak hubungan.', 'en' => 'How would you say no to a colleague without damaging the relationship?'],
-                        ['id' => 'Kalau target tim terlihat mustahil, apa yang akan kamu lakukan di minggu pertama?', 'en' => 'If a team target looked impossible, what would you do in the first week?'],
-                        ['id' => 'Menurutmu, kapan sebaiknya seseorang pindah kerja?', 'en' => 'When do you think someone should change jobs?'],
-                        ['id' => 'Bagaimana kamu memastikan pekerjaanmu tetap berkualitas saat dikejar waktu?', 'en' => 'How do you keep quality high when time is short?'],
-                        ['id' => 'Apa yang kamu lakukan kalau tidak setuju dengan keputusan atasan?', 'en' => 'What do you do when you disagree with your manager\'s decision?'],
-                        ['id' => 'Teknologi AI makin banyak dipakai di kantor. Bagaimana kamu melihat itu untuk peranmu?', 'en' => 'AI is used more and more at work. How do you see that affecting your role?'],
+                        ['id' => 'Kalau ada temen setim yang bagiannya telat terus, kamu bakal ngapain?', 'en' => 'If a teammate kept missing their deadlines, what would you do?'],
+                        ['id' => 'Kalau ada tiga deadline penting di minggu yang sama, kamu ngatur prioritasnya gimana?', 'en' => 'How would you prioritise three important deadlines in the same week?'],
+                        ['id' => 'Menurutmu, bedanya tim yang cuma kerja bareng sama tim yang beneran solid itu apa?', 'en' => 'What separates a group that works together from a truly strong team?'],
+                        ['id' => 'Lima tahun lagi kamu pengen ada di posisi kayak gimana, dan peran ini bantu kamu ke sana gimana?', 'en' => 'Where do you want to be in five years, and how does this role help?'],
+                        ['id' => 'Ekspektasi gajimu berapa, dan angka itu dapetnya dari mana?', 'en' => 'What is your salary expectation and how did you arrive at it?'],
+                        ['id' => 'Kalau atasan ngritik kamu di depan tim, kamu bakal nanggepinnya gimana?', 'en' => 'How would you respond if your manager criticised you in front of the team?'],
+                        ['id' => 'Kalau ada rekan kerja minta tolong tapi kamu harus nolak, caranya gimana biar hubungannya tetap baik?', 'en' => 'How would you say no to a colleague without damaging the relationship?'],
+                        ['id' => 'Kalau target tim kelihatan mustahil, minggu pertama kamu bakal ngapain?', 'en' => 'If a team target looked impossible, what would you do in the first week?'],
+                        ['id' => 'Menurutmu, kapan sih waktu yang pas buat pindah kerja?', 'en' => 'When do you think someone should change jobs?'],
+                        ['id' => 'Kalau lagi dikejar waktu, gimana caranya kerjaanmu tetap bagus?', 'en' => 'How do you keep quality high when time is short?'],
+                        ['id' => 'Kalau kamu nggak setuju sama keputusan atasan, biasanya kamu ngapain?', 'en' => 'What do you do when you disagree with your manager\'s decision?'],
+                        ['id' => 'AI sekarang makin banyak dipakai di kantor. Menurutmu itu ngaruh ke peranmu nanti nggak?', 'en' => 'AI is used more and more at work. How do you see that affecting your role?'],
                     ],
                 ],
             ],

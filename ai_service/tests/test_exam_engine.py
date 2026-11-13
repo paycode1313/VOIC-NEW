@@ -99,6 +99,9 @@ class TrimQuestionsTest(unittest.TestCase):
         # A short lead-in clause before the imperative is still a question.
         self.assertTrue(exam_engine.is_question("Dari dua akun itu, ceritakan pengalaman paling membanggakanmu."))
         self.assertTrue(exam_engine.is_question("From those two years, tell me about your proudest project."))
+        # Casual spoken forms (Kak Nadia's questions) count too.
+        self.assertTrue(exam_engine.is_question("Ceritain dong, pernah ngadepin tantangan besar bareng tim kayak gimana."))
+        self.assertTrue(exam_engine.is_question("Oke, jelasin dikit cara kamu ngetesnya."))
         # Words that merely start the same way are not questions.
         self.assertFalse(exam_engine.is_question("Shared ownership itu penting di tim."))
 

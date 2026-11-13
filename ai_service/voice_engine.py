@@ -235,9 +235,10 @@ def synthesize_piper(text: str, role_type: str, language: str, output_dir: str) 
     return filename
 
 
-# Suara cadangan online (edge-tts) per persona, dipakai hanya jika Piper belum terpasang.
+# Suara online (edge-tts, suara neural Microsoft). Jauh lebih alami daripada Piper: dipakai lebih dulu
+# jika aplikasi meminta engine="edge" (mode cepat online), selain itu hanya cadangan jika Piper tidak ada.
 EDGE_VOICES = {
-    "id": {"dosen_penguji": ("id-ID-ArdiNeural", "-4Hz", "-4%"), "hrd": ("id-ID-GadisNeural", "-1Hz", "-5%"), "investor": ("id-ID-ArdiNeural", "-1Hz", "+10%")},
+    "id": {"dosen_penguji": ("id-ID-ArdiNeural", "-4Hz", "-4%"), "hrd": ("id-ID-GadisNeural", "+0Hz", "+0%"), "investor": ("id-ID-ArdiNeural", "-1Hz", "+10%")},
     "en": {"dosen_penguji": ("en-US-GuyNeural", "-5Hz", "-5%"), "hrd": ("en-US-JennyNeural", "+0Hz", "-4%"), "investor": ("en-US-BrianNeural", "+0Hz", "+10%")},
 }
 
@@ -257,8 +258,14 @@ async def synthesize_edge(text: str, role_type: str, language: str, output_dir: 
         return None
 
 
-async def synthesize(text: str, role_type: str = "hrd", language: str = "id", output_dir: str = AUDIO_OUTPUT_DIR) -> Optional[str]:
-    """TTS dengan prioritas lokal: Piper (offline) lalu edge-tts (online). None = biarkan browser bicara."""
+async def synthesize(text: str, role_type: str = "hrd", language: str = "id", output_dir: str = AUDIO_OUTPUT_DIR,
+                     prefer: Optional[str] = None) -> Optional[str]:
+    """TTS: Piper (offline) lalu edge-tts (online); prefer="edge" membalik urutannya. None = biarkan browser bicara."""
+    if prefer == "edge":
+        filename = await synthesize_edge(text, role_type, language, output_dir)
+        if filename:
+            return filename
+        return await asyncio.to_thread(synthesize_piper, text, role_type, language, output_dir)
     filename = await asyncio.to_thread(synthesize_piper, text, role_type, language, output_dir)
     if filename:
         return filename

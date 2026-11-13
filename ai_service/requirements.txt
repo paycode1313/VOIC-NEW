@@ -7,4 +7,4 @@ python-multipart>=0.0.9
 faster-whisper>=1.1.0
 piper-tts>=1.3.0
 # Cadangan TTS online jika suara Piper belum diunduh
-edge-tts>=6.1.10
+edge-tts>=7.3.1

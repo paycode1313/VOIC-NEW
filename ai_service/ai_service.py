@@ -85,6 +85,8 @@ class TTSRequest(BaseModel):
     role_type: Optional[str] = "dosen_penguji"
     language: Optional[str] = "id"
     inline: Optional[bool] = False
+    # "edge" = suara neural online lebih dulu (mode cepat online); kosong = Piper lokal lebih dulu.
+    engine: Optional[str] = None
 
 
 # =====================================================================
@@ -198,7 +200,7 @@ async def process_tts(req: TTSRequest):
     """Sintesis suara (Piper lokal, cadangan edge-tts). `inline=true` mengembalikan audio base64."""
     from exam_engine import audio_payload
 
-    audio_file = await generate_tts_audio(req.text, req.role_type or "dosen_penguji", req.language or "id")
+    audio_file = await generate_tts_audio(req.text, req.role_type or "dosen_penguji", req.language or "id", req.engine)
     if audio_file:
         payload = audio_payload(audio_file, bool(req.inline))
         return {
@@ -213,9 +215,9 @@ async def process_tts(req: TTSRequest):
     }
 
 
-async def generate_tts_audio(text: str, role_type: str, language: str = "id") -> Optional[str]:
-    """TTS untuk semua endpoint: Piper lokal lebih dulu, edge-tts online sebagai cadangan."""
-    return await voice_engine.synthesize(text, role_type or "dosen_penguji", language or "id", AUDIO_OUTPUT_DIR)
+async def generate_tts_audio(text: str, role_type: str, language: str = "id", engine: Optional[str] = None) -> Optional[str]:
+    """TTS untuk semua endpoint: Piper lokal lebih dulu, edge-tts online sebagai cadangan (engine="edge": sebaliknya)."""
+    return await voice_engine.synthesize(text, role_type or "dosen_penguji", language or "id", AUDIO_OUTPUT_DIR, prefer=engine)
 
 
 if __name__ == "__main__":

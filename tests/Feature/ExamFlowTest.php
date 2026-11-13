@@ -717,6 +717,8 @@ class ExamFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('examiner_message.engine', 'cloud_llm');
         Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/exam/respond'));
+        // Online also means the natural online voice (Piper stays the fallback inside the AI service).
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/tts') && $request['engine'] === 'edge');
 
         // Internet gone: the same turn is answered by the local model, without an error for the candidate.
         $cloudUp = false;
@@ -769,6 +771,7 @@ class ExamFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('examiner_message.engine', 'local_llm');
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.groq.com'));
+        Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/tts') && $request['engine'] !== 'piper');
     }
 
     public function test_prompt_only_grows_at_the_end_so_the_local_model_never_rereads_the_conversation(): void

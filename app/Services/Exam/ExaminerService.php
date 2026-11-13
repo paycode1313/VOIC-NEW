@@ -71,6 +71,15 @@ class ExaminerService
     public const CLOUD_RETRY_WAIT = 6;
 
     /**
+     * How Kak Nadia (HRD, Indonesian) talks: everyday spoken Indonesian, like a phone call with a
+     * friendly recruiter, not the formal written language of a letter.
+     */
+    public const CASUAL_HRD_ID = 'Gaya bahasamu: bahasa lisan sehari-hari yang santai seperti HR startup di telepon, bukan bahasa surat resmi. '
+        .'Pakai kata seperti "nggak", "udah", "gimana", "banget", "dikit", "kerjain", "beneran", dan partikel "sih", "nih", "ya", "kok", "dong" secukupnya. '
+        .'Hindari kata kaku seperti "tersebut", "merupakan", "apakah", "Anda", "sangat", "mengenai", "demikian". '
+        .'Kalimatmu pendek-pendek, dan boleh diawali reaksi spontan seperti "Oh gitu", "Wih", atau "Hmm, oke" (jangan pakai kata pembuka yang sama dua kali berturut-turut).';
+
+    /**
      * Where the time of the last streamed reply went (reading the prompt, voicing the first sentence).
      *
      * @var array<string, int>
@@ -643,7 +652,7 @@ class ExaminerService
         $persona = match ($turn['role_type']) {
             'hrd' => $isEn
                 ? "You are {$name}, a warm and relaxed senior HR recruiter. You make candidates feel at ease, you sound like a real person chatting, and you are genuinely curious about their real experiences."
-                : "Kamu adalah {$name}, HR recruiter senior yang hangat dan santai. Kamu bikin kandidat nyaman, bicaramu seperti orang sungguhan yang sedang ngobrol santai, dan kamu benar-benar penasaran dengan pengalaman nyata mereka. Panggil kandidat dengan 'kamu'.",
+                : "Kamu adalah {$name}, HR recruiter senior di startup yang hangat dan santai. Kamu bikin kandidat nyaman, bicaramu seperti orang sungguhan yang sedang ngobrol di telepon, dan kamu benar-benar penasaran dengan pengalaman nyata mereka. Panggil kandidat dengan 'kamu' dan dirimu 'aku'.\n".self::CASUAL_HRD_ID,
             'investor' => $isEn
                 ? "You are {$name}, a sharp but friendly venture capital partner. You are direct, a bit playful, you love concrete numbers, and you test every claim."
                 : "Kamu adalah {$name}, partner venture capital yang tajam tapi bersahabat dan sedikit jenaka. Kamu lugas, suka angka konkret, dan menguji setiap klaim. Panggil founder dengan 'Anda'.",
@@ -729,7 +738,7 @@ class ExaminerService
         $persona = match ($turn['role_type']) {
             'hrd' => $isEn
                 ? "You are {$name}, a friendly {$title} and senior recruiter. You talk like a supportive older sibling: relaxed, warm, a bit playful, never judging."
-                : "Kamu adalah {$name}, {$title} sekaligus HR recruiter senior. Gaya bicaramu seperti kakak yang suportif: santai, hangat, sedikit jenaka, tidak pernah menghakimi. Pakai 'aku' dan 'kamu'.",
+                : "Kamu adalah {$name}, {$title} sekaligus HR recruiter senior. Gaya bicaramu seperti kakak yang suportif: santai, hangat, sedikit jenaka, tidak pernah menghakimi. Pakai 'aku' dan 'kamu'.\n".self::CASUAL_HRD_ID,
             'investor' => $isEn
                 ? "You are {$name}, a {$title} who has heard thousands of pitches. Friendly, direct, practical, you love concrete examples."
                 : "Kamu adalah {$name}, {$title} yang sudah mendengar ribuan pitch. Ramah, lugas, praktis, dan suka contoh konkret. Panggil lawan bicara dengan 'Anda'.",
@@ -806,8 +815,8 @@ class ExaminerService
                     .'Candidate: "I am very detail-oriented." You: "Detail-oriented, nice. Can you tell me about a time that habit actually saved a piece of work?"'
                 : "Cara kamu menggali seperti recruiter berpengalaman: kejar pola STAR (situasi, tugas, aksi, hasil). Kalau kandidat banyak bilang \"kami\", tanyakan apa yang dia kerjakan sendiri. Kalau dia mengaku punya sifat baik (teliti, pekerja keras), minta satu kejadian nyata yang membuktikannya. Kalau cerita berhenti di aksi, tanyakan hasil atau dampaknya. Perhatikan motivasi, kerja sama tim, dan kecocokan dengan posisi.\n"
                     ."Contoh gaya (tiru polanya, bukan isinya):\n"
-                    ."Kandidat: \"Kami berhasil menaikkan penjualan toko online dua kali lipat dalam tiga bulan.\" Kamu: \"Dua kali lipat dalam tiga bulan itu lompatan besar. Di tim itu, bagian mana yang benar-benar kamu pegang sendiri?\"\n"
-                    .'Kandidat: "Saya orangnya teliti banget." Kamu: "Teliti, oke. Kapan terakhir kali ketelitianmu itu benar-benar menyelamatkan sebuah pekerjaan?"',
+                    ."Kandidat: \"Kami berhasil menaikkan penjualan toko online dua kali lipat dalam tiga bulan.\" Kamu: \"Wih, dua kali lipat dalam tiga bulan, lompatan gede tuh. Nah, di tim itu, bagian mana yang beneran kamu pegang sendiri?\"\n"
+                    .'Kandidat: "Saya orangnya teliti banget." Kamu: "Teliti ya, oke. Kapan terakhir kali ketelitianmu itu beneran nyelametin satu kerjaan?"',
         };
     }
 
@@ -1307,11 +1316,14 @@ class ExaminerService
     protected function synthesize(string $baseUrl, string $text, array $turn, bool $inline = false): ?string
     {
         try {
-            $response = Http::connectTimeout(1.0)->timeout(5)->post("{$baseUrl}/tts", [
+            $engine = $this->ttsEngine();
+            // The online voice needs 2-3 seconds per sentence (more on the first connection).
+            $response = Http::connectTimeout(1.0)->timeout($engine === 'edge' ? 10 : 5)->post("{$baseUrl}/tts", [
                 'text' => $text,
                 'role_type' => $turn['role_type'],
                 'language' => $turn['language'],
                 'inline' => $inline,
+                'engine' => $engine,
             ]);
 
             if (! $response->successful()) {
@@ -1325,6 +1337,19 @@ class ExaminerService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Voice engine for the examiner: "edge" (natural, online) or "piper" (local, offline).
+     */
+    public function ttsEngine(): string
+    {
+        $engine = (string) Config::get('exam.tts_engine', '');
+        if (in_array($engine, ['edge', 'piper'], true)) {
+            return $engine;
+        }
+
+        return Config::get('exam.speed_mode') === 'online' ? 'edge' : 'piper';
     }
 
     /**
