@@ -1368,6 +1368,13 @@ class ExaminerService
      */
     protected function synthesize(string $baseUrl, string $text, array $turn, bool $inline = false): ?string
     {
+        // A cloned voice (with the speaker's permission) speaks first; without internet or quota the
+        // usual voices below take over, so the exam never goes silent.
+        $cloned = $this->clonedVoice($text, (string) ($turn['role_type'] ?? ''));
+        if ($cloned !== null) {
+            return $cloned;
+        }
+
         try {
             $engine = $this->ttsEngine();
             // The online voice needs 2-3 seconds per sentence (more on the first connection).
@@ -1390,6 +1397,37 @@ class ExaminerService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    /**
+     * Speech in an ElevenLabs voice set up for this examiner (config exam.cloned_voices), as an inline
+     * MP3 data URI. Null when no voice is set for the role or the request fails.
+     */
+    protected function clonedVoice(string $text, string $roleType): ?string
+    {
+        $voiceId = trim((string) Config::get("exam.cloned_voices.{$roleType}", ''));
+        $key = (string) Config::get('services.elevenlabs.key', '');
+        if ($voiceId === '' || $key === '' || trim($text) === '') {
+            return null;
+        }
+
+        try {
+            $response = Http::connectTimeout(3)->timeout(10)
+                ->withHeaders(['xi-api-key' => $key, 'Accept' => 'audio/mpeg'])
+                ->post('https://api.elevenlabs.io/v1/text-to-speech/'.rawurlencode($voiceId).'?output_format=mp3_44100_64', [
+                    'text' => $text,
+                    // The model detects Indonesian or English from the text itself.
+                    'model_id' => (string) Config::get('services.elevenlabs.model', 'eleven_flash_v2_5'),
+                ]);
+            if ($response->successful() && str_starts_with((string) $response->header('Content-Type'), 'audio/')) {
+                return 'data:audio/mpeg;base64,'.base64_encode($response->body());
+            }
+            Log::warning("Cloned voice for {$roleType} failed: HTTP {$response->status()} ".Str::limit($response->body(), 200));
+        } catch (\Throwable $exception) {
+            Log::warning("Cloned voice for {$roleType} failed: ".$exception->getMessage());
+        }
+
+        return null;
     }
 
     /**

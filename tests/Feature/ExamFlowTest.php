@@ -728,6 +728,45 @@ class ExamFlowTest extends TestCase
             ->assertJsonPath('examiner_message.text', $localReply);
     }
 
+    public function test_a_cloned_voice_speaks_for_its_examiner_and_falls_back_when_it_fails(): void
+    {
+        config(['services.elevenlabs.key' => 'test-key', 'exam.cloned_voices.hrd' => 'voice-ghufron']);
+        $voiceUp = true;
+        Http::fake(function ($request) use (&$voiceUp) {
+            return match (true) {
+                str_contains($request->url(), 'api.elevenlabs.io') => $voiceUp
+                    ? Http::response('MP3', 200, ['Content-Type' => 'audio/mpeg'])
+                    : Http::response(['detail' => ['message' => 'quota exceeded']], 401),
+                str_ends_with($request->url(), '/exam/respond') => Http::response(['reply' => 'Empat puluh toko itu lumayan. Datanya kamu jaga konsisten gimana?']),
+                str_ends_with($request->url(), '/tts') => Http::response(['audio_file' => 'gadis.mp3']),
+                default => Http::response([], 503),
+            };
+        });
+        $answer = ['answer' => 'Saya membangun dashboard penjualan React untuk 40 toko retail di Malang.', 'duration_seconds' => 15, 'timestamp_seconds' => 15];
+
+        $session = $this->startExam('wawancara', [1]);
+        // The greeting is already in the cloned voice (inline audio is played, not stored).
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.elevenlabs.io')
+            && str_starts_with($request['text'], 'Halo, aku VOIC Interview'));
+
+        $this->postJson(route('exam.answer', $session), $answer)->assertOk();
+        Http::assertSent(fn ($request) => str_contains($request->url(), '/text-to-speech/voice-ghufron')
+            && str_starts_with($request['text'], 'Empat puluh toko itu lumayan')
+            && $request->hasHeader('xi-api-key', 'test-key')
+            && $request['model_id'] === 'eleven_flash_v2_5');
+        Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/tts'));
+
+        // Quota gone: the usual voice speaks, the exam carries on.
+        $voiceUp = false;
+        $response = $this->postJson(route('exam.answer', $session), $answer)->assertOk();
+        $this->assertStringEndsWith('/audio/gadis.mp3', $response->json('examiner_message.audio_url'));
+
+        // Other examiners have no cloned voice and never call ElevenLabs.
+        Http::fake(['*/tts' => Http::response(['audio_file' => 'ardi.mp3']), '*' => Http::response([], 503)]);
+        $this->startExam('sidang', [1]);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.elevenlabs.io'));
+    }
+
     public function test_cloud_model_waits_briefly_for_a_free_quota_instead_of_falling_back(): void
     {
         Sleep::fake();

@@ -64,6 +64,16 @@ return [
     'tts_engine' => env('VOIC_TTS_ENGINE'),
 
     /*
+    | Cloned voices (ElevenLabs voice IDs, needs ELEVENLABS_API_KEY), per examiner. Only use the voice of a
+    | real person who agreed to it. When set, this voice speaks first; the voices above are the fallback.
+    */
+    'cloned_voices' => [
+        'hrd' => env('VOIC_VOICE_INTERVIEW'),
+        'dosen_penguji' => env('VOIC_VOICE_SIDANG'),
+        'investor' => env('VOIC_VOICE_BISNIS'),
+    ],
+
+    /*
     | Teacher model for `php artisan voic:teacher-generate` (distillation data), and the
     | local model that plays the candidate in those simulated sessions.
     */

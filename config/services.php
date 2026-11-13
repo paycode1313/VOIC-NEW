@@ -57,6 +57,12 @@ return [
         'backoff' => 15,
     ],
 
+    'elevenlabs' => [
+        'key' => env('ELEVENLABS_API_KEY'),
+        // Flash v2.5: lowest latency, speaks Indonesian. eleven_multilingual_v2 sounds a bit richer but is slower.
+        'model' => env('ELEVENLABS_MODEL', 'eleven_flash_v2_5'),
+    ],
+
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),

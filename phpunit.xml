@@ -39,5 +39,9 @@
         <env name="GROQ_API_KEY" value="" force="true"/>
         <env name="OPENAI_API_KEY" value="" force="true"/>
         <env name="OPENROUTER_API_KEY" value="" force="true"/>
+        <env name="ELEVENLABS_API_KEY" value="" force="true"/>
+        <env name="VOIC_VOICE_INTERVIEW" value="" force="true"/>
+        <env name="VOIC_VOICE_SIDANG" value="" force="true"/>
+        <env name="VOIC_VOICE_BISNIS" value="" force="true"/>
     </php>
 </phpunit>
