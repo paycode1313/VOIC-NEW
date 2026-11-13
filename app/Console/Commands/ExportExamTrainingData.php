@@ -168,7 +168,7 @@ class ExportExamTrainingData extends Command
             foreach ($dialogue['turns'] ?? [] as $index => $seedTurn) {
                 // Rebuild the examiner line as the live flow says it: previous reply + scripted question.
                 $examinerLine = $seedTurn['question'];
-                if ($previous !== null && str_contains($previous['reply'], $seedTurn['question'])) {
+                if ($previous !== null && mb_stripos($previous['reply'], $seedTurn['question']) !== false) {
                     $examinerLine = $previous['reply'];
                 } elseif ($previous !== null && $previous['directive'] === ExaminerService::DIRECTIVE_REACT) {
                     $examinerLine = $previous['reply'].' '.$seedTurn['question'];
@@ -183,7 +183,7 @@ class ExportExamTrainingData extends Command
                 $target = $seedTurn['reply'];
                 $planned = $seedTurn['planned_question'] ?? null;
                 $following = $dialogue['turns'][$index + 1] ?? null;
-                if ($directive === ExaminerService::DIRECTIVE_REACT && $following !== null && (int) $following['part'] === (int) $seedTurn['part'] && ! str_contains($seedTurn['reply'], $following['question'])) {
+                if ($directive === ExaminerService::DIRECTIVE_REACT && $following !== null && (int) $following['part'] === (int) $seedTurn['part'] && mb_stripos($seedTurn['reply'], $following['question']) === false) {
                     $directive = ExaminerService::DIRECTIVE_NEXT;
                     $planned = $following['question'];
                     $target = $seedTurn['reply'].' '.$following['question'];

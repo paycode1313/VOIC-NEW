@@ -113,9 +113,9 @@ def check_dialog(dialog: Dict, label: str) -> Tuple[int, List[str]]:
         following = turns[index + 1] if index + 1 < len(turns) else None
         directive, target = turn["directive"], turn["reply"]
         # Sama seperti export: react + pertanyaan berikutnya di part yang sama = directive "next".
-        if directive == "react" and following and following["part"] == turn["part"] and following["question"] not in target:
+        if directive == "react" and following and following["part"] == turn["part"] and following["question"].lower() not in target.lower():
             directive, target = "next", f"{target} {following['question']}"
-        if turn["directive"] in ("follow_up", "clarify") and following and following["question"] not in turn["reply"]:
+        if turn["directive"] in ("follow_up", "clarify") and following and following["question"].lower() not in turn["reply"].lower():
             findings.append(f"SAMBUNG {label} giliran {index + 2}: \"question\" harus sama persis dengan pertanyaan di reply giliran {index + 1}")
 
         said = set().union(*(content_words(t["answer"]) for t in turns[: index + 1]))
