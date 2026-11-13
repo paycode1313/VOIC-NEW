@@ -1295,7 +1295,7 @@ class ExaminerService
     {
         $text = preg_replace('/[\*#_`~]+/u', '', $text) ?? $text;
         $text = preg_replace('/^\s*[\-•\d]+[\.\)]\s*/mu', '', $text) ?? $text;
-        // A speaker label is a short run of capitalised words ("Prof. Hendra:", "Kak Nadia:"), never a sentence like "Bagus. Coba bilang:".
+        // A speaker label is a short run of capitalised words ("Prof. Hendra:", "VOIC Interview:"), never a sentence like "Bagus. Coba bilang:".
         $text = preg_replace('/^\s*(?:[\p{Lu}][\p{L}\.]*)(?:\s[\p{Lu}][\p{L}\.]*){0,3}:\s+/u', '', trim($text)) ?? $text;
         $text = preg_replace('/\[[^\]]*\]/u', '', $text) ?? $text;
         // Qwen models now and then slip a Chinese/Japanese/Korean word into Indonesian ("sebagai 切入点 awal");

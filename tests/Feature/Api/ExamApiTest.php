@@ -22,7 +22,7 @@ class ExamApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(3, 'modes')
             ->assertJsonPath('modes.0.key', 'wawancara')
-            ->assertJsonPath('modes.1.examiner.name', 'Prof. Hendra');
+            ->assertJsonPath('modes.1.examiner.name', 'VOIC-SIDANG');
     }
 
     public function test_mobile_client_runs_a_full_exam_and_gets_a_real_report(): void
@@ -34,7 +34,7 @@ class ExamApiTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('part', 1);
         $sessionId = $start->json('session_id');
-        $this->assertStringContainsString('Prof. Hendra', $start->json('examiner_message.text'));
+        $this->assertStringContainsString('VOIC Sidang', $start->json('examiner_message.text'));
 
         for ($i = 0; $i < 8; $i++) {
             $turn = $this->postJson(route('api.v1.exam.answer', $sessionId), [

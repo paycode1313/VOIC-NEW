@@ -40,7 +40,7 @@ class ExamFlowTest extends TestCase
         $this->get(route('exam.setup', 'sidang'))
             ->assertOk()
             ->assertSee('Judul skripsi')
-            ->assertSee('Prof. Hendra');
+            ->assertSee('VOIC-SIDANG')->assertSee('Sidang dengan Dosen Penguji');
 
         $this->get('/latihan/tidak-ada')->assertNotFound();
     }
@@ -67,7 +67,7 @@ class ExamFlowTest extends TestCase
 
         $opening = $session->messages()->first();
         $this->assertSame('ai', $opening->sender);
-        $this->assertStringContainsString('Kak Nadia', $opening->message);
+        $this->assertStringContainsString('VOIC Interview', $opening->message);
         $this->assertStringContainsString('kenalan dulu', $opening->message);
 
         $this->get(route('exam.room', $session))->assertOk()->assertSee('Mulai ujian');
@@ -659,7 +659,7 @@ class ExamFlowTest extends TestCase
 
         $messages = $fromSession[0]['messages'];
         $this->assertSame('system', $messages[0]['role']);
-        $this->assertStringContainsString('Prof. Hendra', $messages[0]['content']);
+        $this->assertStringContainsString('VOIC Sidang', $messages[0]['content']);
         // History ends with the examiner question being answered, exactly like at inference time.
         $this->assertSame('assistant', $messages[count($messages) - 3]['role']);
         // The answer comes first (as in the next turn's history), the task for this turn at the very end.
@@ -808,7 +808,7 @@ class ExamFlowTest extends TestCase
         // The session start already let the model read the persona, the rules and the opening line.
         $prime = $sent[0]['prime'];
         $this->assertSame(['system', 'assistant', 'user'], array_column($prime, 'role'));
-        $this->assertStringContainsString('Kak Nadia', $prime[0]['content']);
+        $this->assertStringContainsString('VOIC Interview', $prime[0]['content']);
 
         $turns = array_values(array_filter(array_column($sent, 'turn')));
         $this->assertCount(4, $turns);

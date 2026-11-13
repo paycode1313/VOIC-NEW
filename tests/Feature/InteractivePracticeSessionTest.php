@@ -25,9 +25,12 @@ class InteractivePracticeSessionTest extends TestCase
 
         $this->actingAs($user)->get(route('exam.index'))
             ->assertOk()
-            ->assertSee('Prof. Hendra')
-            ->assertSee('Kak Nadia')
-            ->assertSee('Pak William');
+            ->assertSee('VOIC-SIDANG')
+            ->assertSee('VOIC-INTERVIEW')
+            ->assertSee('VOIC-BISNIS')
+            ->assertSee('Interview dengan HRD')
+            ->assertSee('Sidang dengan Dosen Penguji')
+            ->assertSee('Pitching Bisnis dengan Investor');
     }
 
     /**

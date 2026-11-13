@@ -67,4 +67,17 @@ class ExaminerSpeakingStyleTest extends TestCase
         );
         $this->assertSame('Bagus sekali.', $examiner->clean('Bagus sekali 好的.'));
     }
+
+    public function test_brand_names_are_spoken_as_words(): void
+    {
+        $this->assertSame('VOIC Interview', ExaminerService::spokenName('VOIC-INTERVIEW'));
+        $this->assertSame('VOIC Sidang', ExaminerService::spokenName('VOIC-SIDANG'));
+        $this->assertSame('VOIC Bisnis', ExaminerService::spokenName('VOIC-BISNIS'));
+        // Ordinary names stay as they are.
+        $this->assertSame('Kak Nadia', ExaminerService::spokenName('Kak Nadia'));
+        $this->assertSame('Prof. Hendra', ExaminerService::spokenName('Prof. Hendra'));
+
+        $prompt = app(ExaminerService::class)->systemPrompt($this->turn('investor', 'VOIC-BISNIS'));
+        $this->assertStringStartsWith('Kamu adalah VOIC Bisnis,', $prompt);
+    }
 }

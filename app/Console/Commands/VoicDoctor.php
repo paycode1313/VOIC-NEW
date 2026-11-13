@@ -78,7 +78,7 @@ class VoicDoctor extends Command
 
             $this->line('  Menguji satu giliran penguji…');
             $turn = [
-                'mode' => 'wawancara', 'role_type' => 'hrd', 'examiner_name' => 'Kak Nadia', 'language' => 'id',
+                'mode' => 'wawancara', 'role_type' => 'hrd', 'examiner_name' => 'VOIC-INTERVIEW', 'language' => 'id',
                 'topic' => 'Data Analyst', 'context_material' => null, 'part' => 1, 'part_title' => 'Perkenalan',
                 'directive' => ExaminerService::DIRECTIVE_FOLLOW_UP,
                 'question' => 'Boleh perkenalkan diri dulu?',
