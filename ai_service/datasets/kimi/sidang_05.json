@@ -1,0 +1,212 @@
+[
+  {
+    "mode": "sidang",
+    "language": "id",
+    "topic": "Analisis sentimen ulasan aplikasi ojek online dengan Naive Bayes",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Selamat pagi. Silakan perkenalkan diri Anda dan sebutkan judul penelitian Anda.",
+        "answer": "Selamat pagi Prof. Hendra, saya Sinta. Judul penelitian saya Analisis Sentimen Ulasan Aplikasi Ojek Online dengan Naive Bayes.",
+        "directive": "react",
+        "reply": "Naive Bayes untuk sentimen ulasan ojek online itu kombinasi topik dan metode yang aplikatif."
+      },
+      {
+        "part": 1,
+        "question": "Kenapa Anda tertarik meneliti ulasan aplikasi ojek online?",
+        "answer": "Karena ulasannya jumlahnya ribuan tiap hari dan belum terbaca manusia, Prof. Jadi menarik buat dianalisis.",
+        "directive": "follow_up",
+        "reply": "Ribuan ulasan per hari itu memang tidak mungkin dibaca satu per satu. Metode apa yang Anda gunakan dalam penelitian ini?"
+      },
+      {
+        "part": 1,
+        "question": "Metode apa yang Anda gunakan dalam penelitian ini?",
+        "answer": "Saya pakai Naive Bayes, Prof. Hendra.",
+        "directive": "follow_up",
+        "reply": "Anda menyebut Naive Bayes tanpa alasannya. Kenapa Anda memilih Naive Bayes, bukan metode klasifikasi lain?"
+      },
+      {
+        "part": 1,
+        "question": "Kenapa Anda memilih Naive Bayes, bukan metode klasifikasi lain?",
+        "answer": "Karena Naive Bayes lebih akurat untuk data teks, Prof.",
+        "directive": "follow_up",
+        "reply": "Lebih akurat untuk data teks itu klaim yang perlu pembanding. Lebih akurat dibanding metode apa?"
+      },
+      {
+        "part": 2,
+        "question": "Lebih akurat dibanding metode apa?",
+        "answer": "Maksudnya gimana ya Prof. Hendra?",
+        "directive": "clarify",
+        "reply": "Maksud saya begini, Anda menyatakan Naive Bayes lebih akurat. Lebih akurat dibanding metode apa?"
+      },
+      {
+        "part": 2,
+        "question": "Lebih akurat dibanding metode apa?",
+        "answer": "Oh, dibanding SVM, Prof. Dari jurnal yang saya baca, Naive Bayes sering menang untuk teks pendek.",
+        "directive": "react",
+        "reply": "Menang untuk teks pendek menurut jurnal itu rujukan teoretis, bukan bukti dari penelitian Anda sendiri."
+      },
+      {
+        "part": 2,
+        "question": "Apakah Anda sempat membandingkan Naive Bayes dengan SVM di penelitian Anda sendiri?",
+        "answer": "Belum sempat, Prof. Hendra. Saya fokus ke Naive Bayes saja.",
+        "directive": "react",
+        "reply": "Fokus ke Naive Bayes saja tanpa uji SVM berarti klaim lebih akurat tadi masih bersandar pada jurnal, belum pada data Anda sendiri."
+      },
+      {
+        "part": 2,
+        "question": "Bagaimana proses pengumpulan data Anda?",
+        "answer": "Saya scraping ulasan dari Play Store selama dua minggu, Prof.",
+        "directive": "follow_up",
+        "reply": "Scraping dua minggu dari Play Store itu sumber datanya jelas. Dari hasil itu, berapa banyak ulasan yang akhirnya Anda analisis?"
+      },
+      {
+        "part": 3,
+        "question": "Dari hasil itu, berapa banyak ulasan yang akhirnya Anda analisis?",
+        "answer": "Maksudnya yang sudah dibersihkan atau semua hasil scraping, Prof?",
+        "directive": "clarify",
+        "reply": "Maksud saya ulasan yang sudah bersih dan masuk proses klasifikasi. Dari hasil itu, berapa banyak ulasan yang akhirnya Anda analisis?"
+      },
+      {
+        "part": 3,
+        "question": "Dari hasil itu, berapa banyak ulasan yang akhirnya Anda analisis?",
+        "answer": "Seribu dua ratus ulasan, Prof. Hendra.",
+        "directive": "follow_up",
+        "reply": "Seribu dua ratus ulasan itu jumlah yang layak untuk Naive Bayes. Dari jumlah itu, berapa untuk data latih dan berapa untuk data uji?"
+      },
+      {
+        "part": 3,
+        "question": "Dari jumlah itu, berapa untuk data latih dan berapa untuk data uji?",
+        "answer": "Pembagiannya 80 banding 20, jadi 960 data latih dan 300 data uji, Prof.",
+        "directive": "follow_up",
+        "reply": "Pembagian 80 banding 20 dari seribu dua ratus mestinya 960 data latih dan 240 data uji, sedangkan 960 ditambah 300 jadi seribu dua ratus enam puluh. Mana yang benar?"
+      },
+      {
+        "part": 3,
+        "question": "Pembagian 80 banding 20 dari seribu dua ratus mestinya 960 data latih dan 240 data uji, sedangkan 960 ditambah 300 jadi seribu dua ratus enam puluh. Mana yang benar?",
+        "answer": "Maaf, Prof. Hendra. Total datanya memang seribu dua ratus enam puluh ulasan, saya salah sebut tadi.",
+        "directive": "react",
+        "reply": "Seribu dua ratus enam puluh dengan 960 latih dan 300 uji sekarang konsisten, tapi pembagiannya jadi sekitar 76 banding 24, bukan 80 banding 20."
+      },
+      {
+        "part": 3,
+        "question": "Berapa akurasi yang Anda peroleh?",
+        "answer": "89 persen, Prof.",
+        "directive": "follow_up",
+        "reply": "Angka 89 persen itu perlu jaminan. Bagaimana Anda memastikan akurasi itu bukan karena model hanya menghafal data latih?"
+      },
+      {
+        "part": 3,
+        "question": "Bagaimana Anda memastikan akurasi itu bukan karena model hanya menghafal data latih?",
+        "answer": "Saya pakai cross validation lima lipatan, Prof. Hendra. Hasilnya stabil di 87 sampai 89 persen.",
+        "directive": "react",
+        "reply": "Rentang 87 sampai 89 persen dari cross validation lima lipatan menunjukkan model yang cukup stabil."
+      }
+    ]
+  },
+  {
+    "mode": "sidang",
+    "language": "id",
+    "topic": "Rancang bangun sistem informasi posyandu berbasis web",
+    "turns": [
+      {
+        "part": 1,
+        "question": "Selamat pagi. Silakan perkenalkan diri Anda dan sebutkan judul penelitian Anda.",
+        "answer": "Selamat pagi Prof. Hendra, saya Bagas. Judul penelitian saya Rancang Bangun Sistem Informasi Posyandu Berbasis Web.",
+        "directive": "react",
+        "reply": "Rancang bangun untuk sistem posyandu itu konteks yang jelas, kesehatan ibu dan anak."
+      },
+      {
+        "part": 1,
+        "question": "Kenapa Anda memilih membangun sistem untuk posyandu?",
+        "answer": "Karena pencatatan posyandu masih manual, Prof. Sistem web saya ini pasti jauh lebih mempermudah.",
+        "directive": "follow_up",
+        "reply": "Anda bilang pasti lebih mempermudah, tapi klaim pasti itu butuh pembuktian. Siapa saja yang sudah membuktikan sistem ini mempermudah pekerjaan?"
+      },
+      {
+        "part": 1,
+        "question": "Siapa saja yang sudah membuktikan sistem ini mempermudah pekerjaan?",
+        "answer": "Sudah saya uji ke petugas posyandu, Prof. Mereka bilang enak dipakai.",
+        "directive": "react",
+        "reply": "Uji ke petugas langsung itu langkah pembuktian yang benar."
+      },
+      {
+        "part": 1,
+        "question": "Berapa orang petugas yang Anda uji, dan bagaimana Anda menilai enak dipakainya?",
+        "answer": "10 petugas, Prof. Hendra. Saya nilai dari mereka bisa input data tanpa saya bantu.",
+        "directive": "react",
+        "reply": "Sepuluh petugas dengan kriteria selesai input tanpa bantuan itu cara nilai yang sederhana dan jelas."
+      },
+      {
+        "part": 2,
+        "question": "Sistemnya mencakup fitur apa saja?",
+        "answer": "Ada pencatatan berat badan, tinggi badan, jadwal imunisasi, dan grafik pertumbuhan balita, Prof. Semua fitur pasti kepakai.",
+        "directive": "follow_up",
+        "reply": "Anda bilang semua fitur pasti kepakai. Dari catatan uji coba, fitur mana yang paling sering dipakai petugas?"
+      },
+      {
+        "part": 2,
+        "question": "Dari catatan uji coba, fitur mana yang paling sering dipakai petugas?",
+        "answer": "Fitur jadwal imunisasi, Prof. Soalnya jadwal imunisasi paling sering ditanyakan ibu-ibu.",
+        "directive": "react",
+        "reply": "Jadwal imunisasi yang paling sering ditanyakan ibu itu alasan masuk akal untuk fitur terbanyak dipakai."
+      },
+      {
+        "part": 2,
+        "question": "Bagaimana Anda memvalidasi bahwa sistem berjalan dengan benar?",
+        "answer": "Saya uji fungsi satu per satu, Prof. Semua tombol dan form saya cek, hasilnya selalu sesuai.",
+        "directive": "follow_up",
+        "reply": "Uji fungsi satu per satu itu black box testing. Berapa total kasus uji yang Anda jalankan, dan berapa yang berhasil?"
+      },
+      {
+        "part": 2,
+        "question": "Berapa total kasus uji yang Anda jalankan, dan berapa yang berhasil?",
+        "answer": "30 kasus uji, semuanya berhasil, Prof. Hendra.",
+        "directive": "follow_up",
+        "reply": "Tiga puluh kasus seratus persen berhasil itu rapi. Sepuluh petugas yang Anda sebut tadi berasal dari berapa posyandu?"
+      },
+      {
+        "part": 2,
+        "question": "Sepuluh petugas yang Anda sebut tadi berasal dari berapa posyandu?",
+        "answer": "Dari 5 posyandu, Prof. Masing-masing dua petugas.",
+        "directive": "follow_up",
+        "reply": "Lima posyandu dengan dua petugas tiap posyandu itu pembagian yang merata. Berapa lama masa uji coba di lapangan?"
+      },
+      {
+        "part": 3,
+        "question": "Berapa lama masa uji coba di lapangan?",
+        "answer": "Maksudnya dari sistem jadi atau dari mulai pembuatan, Prof?",
+        "directive": "clarify",
+        "reply": "Maksud saya sejak sistem dipakai petugas di posyandu sampai penelitian selesai. Berapa lama masa uji coba di lapangan?"
+      },
+      {
+        "part": 3,
+        "question": "Berapa lama masa uji coba di lapangan?",
+        "answer": "Empat bulan, Prof. Hendra.",
+        "directive": "react",
+        "reply": "Empat bulan pemakaian di lapangan itu cukup untuk melihat pola pemakaian harian."
+      },
+      {
+        "part": 3,
+        "question": "Apa keterbatasan penelitian Anda?",
+        "answer": "Maksudnya keterbatasan yang bagaimana ya Prof. Hendra?",
+        "directive": "clarify",
+        "reply": "Maksud saya hal yang belum tercapai atau kekurangan penelitian ini, misalnya cakupan data atau fitur yang belum ada. Apa keterbatasan penelitian Anda?"
+      },
+      {
+        "part": 3,
+        "question": "Apa keterbatasan penelitian Anda?",
+        "answer": "Cakupannya kecil, Prof. Sistem baru diuji di 5 posyandu. Dan soal kasus uji, sebenarnya yang terlaksana 25 kasus, bukan 30.",
+        "directive": "follow_up",
+        "reply": "Anda tadi menyebut 30 kasus uji, sekarang 25. Mana yang benar?"
+      },
+      {
+        "part": 3,
+        "question": "Anda tadi menyebut 30 kasus uji, sekarang 25. Mana yang benar?",
+        "answer": "Maaf, Prof. Hendra. Yang benar 25 kasus. Angka 30 itu rencana awal saya.",
+        "directive": "react",
+        "reply": "Dua puluh lima kasus yang terlaksana semuanya berhasil itu tetap wajar untuk skala penelitian ini."
+      }
+    ]
+  }
+]
