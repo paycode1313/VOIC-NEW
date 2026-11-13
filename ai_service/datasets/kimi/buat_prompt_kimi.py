@@ -171,7 +171,7 @@ Cara penguji menggali: {PLAYBOOK[mode]}
 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
-- Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
+- Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply"). Setiap giliran punya TEPAT 5 field (part, question, answer, directive, reply); jangan menulis "question" kedua setelah "reply", pertanyaan lanjutan cukup ada di "question" giliran berikutnya.
 - "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:

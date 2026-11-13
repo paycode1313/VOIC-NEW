@@ -263,7 +263,7 @@ def clean_reply(text: str, max_sentences: int = 3) -> str:
 # Spoken questions without a question mark: the scripted questions themselves are often imperatives
 # ("Ceritakan pencapaian yang paling kamu banggakan.", "Describe a time you ...").
 IMPERATIVE_ASK = re.compile(
-    r"^[\"'“]?(?:coba\s+|tolong\s+|silakan\s+|please\s+)?"
+    r"^(?:[^,.?!]{2,60},\s*)?[\"'“]?(?:coba\s+|tolong\s+|silakan\s+|please\s+)?"
     r"(?:ceritakan|jelaskan|sebutkan|bayangkan|gambarkan|uraikan|describe|tell me|explain|walk me|share|give me|imagine)\b",
     re.IGNORECASE,
 )

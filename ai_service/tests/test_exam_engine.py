@@ -96,6 +96,9 @@ class TrimQuestionsTest(unittest.TestCase):
         self.assertEqual(exam_engine.trim_questions(two, "follow_up"), "Rilis tepat waktu itu bagus. Ceritakan prosesnya.")
         # A reaction must not slip an imperative question in either.
         self.assertIn("react_with_question", exam_engine.quality_issues("Rilis tepat waktu itu bagus. Jelaskan prosesnya.", "Kami rilis aplikasi tepat waktu.", "react", "id"))
+        # A short lead-in clause before the imperative is still a question.
+        self.assertTrue(exam_engine.is_question("Dari dua akun itu, ceritakan pengalaman paling membanggakanmu."))
+        self.assertTrue(exam_engine.is_question("From those two years, tell me about your proudest project."))
         # Words that merely start the same way are not questions.
         self.assertFalse(exam_engine.is_question("Shared ownership itu penting di tim."))
 

@@ -49,16 +49,36 @@ ISSUE_TEXT = {
 }
 
 
+class DuplicateKey(ValueError):
+    pass
+
+
+def no_duplicate_keys(pairs):
+    """JSON quietly keeps the LAST of two equal keys (Python and PHP alike). Kimi sometimes writes a second
+    "question" after "reply" (the next question), which would silently overwrite the turn's real question."""
+    seen = {}
+    for key, value in pairs:
+        if key in seen:
+            raise DuplicateKey(f"field \"{key}\" muncul dua kali dalam satu giliran (mis. \"question\" kedua setelah \"reply\"); "
+                               f"hapus yang kedua, karena itu menimpa pertanyaan aslinya")
+        seen[key] = value
+    return seen
+
+
 def load(path: str) -> Tuple[Optional[list], Optional[str]]:
     raw = open(path, encoding="utf-8-sig").read().strip()
     try:
-        data = json.loads(raw)
+        data = json.loads(raw, object_pairs_hook=no_duplicate_keys)
+    except DuplicateKey as exc:
+        return None, str(exc)
     except json.JSONDecodeError:
         # Sama seperti export Laravel: ambil blok JSON terluar, buang ```json dan teks tambahan.
         start = min([i for i in (raw.find("["), raw.find("{")) if i >= 0], default=-1)
         end = max(raw.rfind("]"), raw.rfind("}"))
         try:
-            data = json.loads(raw[start:end + 1]) if start >= 0 and end > start else None
+            data = json.loads(raw[start:end + 1], object_pairs_hook=no_duplicate_keys) if start >= 0 and end > start else None
+        except DuplicateKey as exc:
+            return None, str(exc)
         except json.JSONDecodeError as exc:
             return None, f"JSON tidak valid ({exc.msg} di baris {exc.lineno}); kemungkinan jawaban Kimi terpotong"
     if isinstance(data, dict) and "turns" in data:
