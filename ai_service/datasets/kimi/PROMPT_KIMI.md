@@ -29,7 +29,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -69,7 +69,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -109,7 +109,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -149,7 +149,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -189,7 +189,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -229,7 +229,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -269,7 +269,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -309,7 +309,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -349,7 +349,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -389,7 +389,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -429,7 +429,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -469,7 +469,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -509,7 +509,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -549,7 +549,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -589,7 +589,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -629,7 +629,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -669,7 +669,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -709,7 +709,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -749,7 +749,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -789,7 +789,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -829,7 +829,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -869,7 +869,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -909,7 +909,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -949,7 +949,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -989,7 +989,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -1029,7 +1029,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -1069,7 +1069,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -1109,7 +1109,7 @@ Cara penguji menggali: Gali dengan pola STAR (situasi, tugas, aksi, hasil). Kala
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -1149,7 +1149,7 @@ Cara penguji menggali: Kalau peserta bilang "lebih akurat/lebih baik", tanyakan 
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.
@@ -1189,7 +1189,7 @@ Cara penguji menggali: Setiap klaim harus ada angkanya (pengguna, pendapatan, pe
 Aturan isi:
 - Tiap dialog 10 sampai 14 giliran, mencakup part 1, 2, dan 3 berurutan.
 - Tiap giliran: penguji bertanya ("question"), peserta menjawab ("answer"), penguji menanggapi ("reply").
-- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan.
+- "reply" WAJIB nyambung: sebut detail spesifik dari jawaban peserta (angka, nama alat, contoh). Jangan pujian umum seperti "bagus sekali", jangan memulai dua reply berturut-turut dengan kata yang sama, jangan mengulang pertanyaan yang sudah pernah ditanyakan. Kalau merujuk ucapan peserta ("tadi Anda menyebut ..."), hal itu HARUS benar-benar pernah diucapkan peserta di dialog ini; jangan mengarang.
 - Kalimat pendek dan enak diucapkan (akan diubah jadi suara). Tanpa emoji, markdown, atau daftar bernomor.
 - "directive" salah satu:
   - "react": reply 1-2 kalimat tanggapan, TANPA tanda tanya sama sekali.

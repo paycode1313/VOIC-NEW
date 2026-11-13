@@ -6,6 +6,7 @@
 Untuk setiap file dilaporkan:
 - RUSAK  : JSON/struktur tidak bisa dibaca; dialog atau sisa giliran akan DIBUANG saat export. Minta Kimi membuat ulang.
 - SAMBUNG: follow_up/clarify yang pertanyaan lanjutannya tidak dipakai di giliran berikutnya (riwayat jadi tidak nyambung).
+- KARANG : penguji merujuk ucapan peserta yang tidak pernah ada ("Tadi Anda menyebut ..."); perbaiki reply itu.
 - MUTU   : balasan penguji yang gagal pemeriksa kualitas aplikasi (dua pertanyaan, react bertanya, tidak menyentuh
            jawaban, dst.). Contoh seperti ini otomatis dibuang saat membuat notebook latih, tapi kalau banyak, lebih baik
            minta Kimi memperbaiki dialog itu.
@@ -19,7 +20,17 @@ from typing import Dict, List, Optional, Tuple
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))  # ai_service/
-from exam_engine import quality_issues  # noqa: E402
+from exam_engine import content_words, quality_issues  # noqa: E402
+
+# "Tadi Anda menyebut ...", "you mentioned ...": the examiner quotes the candidate. The quoted part must
+# come from what the candidate actually said, otherwise the model learns to invent references.
+import re  # noqa: E402
+
+REFERENCE = re.compile(
+    r"(?:tadi|sempat|sebelumnya|juga)\s+(?:\w+\s+){0,2}?(?:menyebut|bilang|mengatakan|cerita|menceritakan|menyinggung)\s+([^.,;?!]{3,90})"
+    r"|\byou\s+(?:also\s+)?(?:mentioned|said|told me|talked about)\s+([^.,;?!]{3,90})",
+    re.IGNORECASE,
+)
 
 MODES = {"wawancara", "sidang", "pitching"}
 DIRECTIVES = {"react", "follow_up", "clarify", "next"}
@@ -87,6 +98,15 @@ def check_dialog(dialog: Dict, label: str) -> Tuple[int, List[str]]:
         if turn["directive"] in ("follow_up", "clarify") and following and following["question"] not in turn["reply"]:
             findings.append(f"SAMBUNG {label} giliran {index + 2}: \"question\" harus sama persis dengan pertanyaan di reply giliran {index + 1}")
 
+        said = set().union(*(content_words(t["answer"]) for t in turns[: index + 1]))
+        for match in REFERENCE.finditer(turn["reply"]):
+            quoted = content_words(match.group(1) or match.group(2) or "")
+            # Words may be inflected ("membangun"/"bangun"), so compare 5-letter prefixes.
+            found = {w for w in quoted if any(w[:5] == s[:5] for s in said)}
+            if len(quoted) >= 2 and len(found) < len(quoted) / 2:
+                findings.append(f"KARANG {label} giliran {index + 1}: penguji merujuk hal yang tidak pernah diucapkan peserta: "
+                                f"\"{(match.group(1) or match.group(2)).strip()}\"")
+
         issues = quality_issues(target, turn["answer"], directive, language, earlier or None)
         if issues:
             reasons = ", ".join(ISSUE_TEXT.get(issue, issue) for issue in issues)
@@ -120,7 +140,7 @@ def main() -> int:
             file_findings += findings
             if isinstance(dialog, dict):
                 directive_mix.update(t["directive"] for t in dialog.get("turns", []) if isinstance(t, dict) and t.get("directive") in DIRECTIVES)
-        quality = sum(f.startswith("MUTU") for f in file_findings)
+        quality = sum(f.startswith(("MUTU", "KARANG")) for f in file_findings)
         broken = sum(f.startswith("RUSAK") for f in file_findings)
         totals.update(dialogs=len(data), turns=usable, quality=quality)
         mark = "✗" if broken else ("!" if file_findings else "✓")
