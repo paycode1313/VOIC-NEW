@@ -316,9 +316,18 @@ def _questions(text: str) -> List[str]:
     return [s.strip() for s in re.split(r"(?<=[.?!])\s+", text or "") if is_question(s)]
 
 
+NUMBER_WORDS = {
+    "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas", "seratus", "seribu",
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "twenty", "thirty", "forty", "fifty", "hundred",
+}
+
+
 def _opener(text: str) -> str:
+    """First word of a reply. Numbers do not count: "Lima puluh juta ..." then "Lima ratus juta ..." is not a
+    monotone opener, it is two different figures quoted back."""
     match = re.match(r"\s*([^\W\d_]+)", (text or "").lower())
-    return match.group(1) if match else ""
+    word = match.group(1) if match else ""
+    return "" if word in NUMBER_WORDS else word
 
 
 def repeats_question(reply: str, earlier: List[str]) -> bool:

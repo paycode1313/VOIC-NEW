@@ -116,6 +116,12 @@ class ConversationQualityTest(unittest.TestCase):
         reply = "Kecepatan real-time memang penting di pabrik. Bagaimana Anda membagi data latih dan data uji tersebut?"
         self.assertIn("repeated_question", exam_engine.quality_issues(reply, ANSWER, "follow_up", "id", self.EARLIER))
 
+    def test_quoting_two_figures_in_a_row_is_not_a_repeated_opener(self):
+        earlier = ["Lima puluh juta transaksi dan dua setengah juta komisi. Angkanya sekarang bisa dipertanggungjawabkan."]
+        reply = "Lima ratus juta untuk operasional dan marketing masih terlalu umum. Berapa untuk marketing?"
+        self.assertNotIn("repeated_opener", exam_engine.quality_issues(reply, "Lima ratus juta untuk operasional dan marketing.", "follow_up", "id", earlier))
+        self.assertIn("repeated_opener", exam_engine.quality_issues("Menarik, operasionalnya apa saja?", "Untuk operasional dan marketing.", "follow_up", "id", ["Menarik sekali, lima puluh juta itu."]))
+
     def test_a_clarification_may_re_ask_the_same_question(self):
         reply = "Maksud saya, dari 2000 gambar itu berapa yang dipakai untuk latih dan berapa untuk uji. Bagaimana Anda membagi data latih dan data uji?"
         answer = "Eh, maksudnya bagaimana ya Pak?"
