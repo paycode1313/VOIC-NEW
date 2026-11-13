@@ -33,5 +33,11 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Tests must not use the real cloud keys or speed mode from .env; tests that need them set them. -->
+        <env name="VOIC_SPEED_MODE" value="offline" force="true"/>
+        <env name="VOIC_AI_MODEL" value="" force="true"/>
+        <env name="GROQ_API_KEY" value="" force="true"/>
+        <env name="OPENAI_API_KEY" value="" force="true"/>
+        <env name="OPENROUTER_API_KEY" value="" force="true"/>
     </php>
 </phpunit>

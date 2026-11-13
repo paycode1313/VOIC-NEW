@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 
 /**
@@ -63,6 +64,11 @@ class ExaminerService
      * together. With the current turn and the reply on top this stays under 4096 tokens.
      */
     public const CONTEXT_CHAR_BUDGET = 11000;
+
+    /**
+     * Longest wait (seconds) for a cloud quota that frees up again before giving up on the cloud model.
+     */
+    public const CLOUD_RETRY_WAIT = 6;
 
     /**
      * Where the time of the last streamed reply went (reading the prompt, voicing the first sentence).
@@ -1357,7 +1363,7 @@ class ExaminerService
     protected function callCloudModel(array $messages, int $timeout = 12): ?string
     {
         $providers = [
-            ['key' => (string) Config::get('services.groq.key', ''), 'url' => 'https://api.groq.com/openai/v1/chat/completions', 'model' => (string) Config::get('services.groq.model', 'llama-3.3-70b-versatile')],
+            ['key' => (string) Config::get('services.groq.key', ''), 'url' => 'https://api.groq.com/openai/v1/chat/completions', 'model' => (string) Config::get('services.groq.model', 'qwen/qwen3.8-27b')],
             ['key' => (string) Config::get('services.openai.key', ''), 'url' => 'https://api.openai.com/v1/chat/completions', 'model' => (string) Config::get('services.openai.model', 'gpt-4o-mini')],
         ];
 
@@ -1367,17 +1373,29 @@ class ExaminerService
             }
 
             try {
-                $response = Http::connectTimeout(3)->timeout($timeout)->withToken($provider['key'])->post($provider['url'], [
+                $send = fn () => Http::connectTimeout(3)->timeout($timeout)->withToken($provider['key'])->post($provider['url'], [
                     'model' => $provider['model'],
                     'messages' => $messages,
                     'temperature' => 0.75,
                     'max_tokens' => 140,
                 ]);
+                $response = $send();
+                // Free tiers limit tokens per minute (Groq: 8000, about three turns). When the quota frees up
+                // within a few seconds, waiting is far quicker than the local model on a laptop CPU.
+                $retryAfter = (float) $response->header('retry-after');
+                if ($response->status() === 429 && $retryAfter > 0 && $retryAfter <= self::CLOUD_RETRY_WAIT) {
+                    Sleep::for((int) ceil($retryAfter * 1000))->milliseconds();
+                    $response = $send();
+                }
 
                 $reply = trim((string) $response->json('choices.0.message.content', ''));
                 if ($response->successful() && $reply !== '') {
                     return $reply;
                 }
+                // Without this the app silently falls back to the (slow) local model, e.g. when the
+                // provider retired the model or the free per-minute token quota ran out (429).
+                Log::warning("Cloud examiner model {$provider['model']} failed: HTTP {$response->status()} "
+                    .Str::limit((string) $response->json('error.message', $response->body()), 200));
             } catch (\Throwable $exception) {
                 Log::warning('Cloud examiner model failed: '.$exception->getMessage());
             }

@@ -12,6 +12,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
 class ExamFlowTest extends TestCase
@@ -723,6 +724,30 @@ class ExamFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('examiner_message.engine', 'local_llm')
             ->assertJsonPath('examiner_message.text', $localReply);
+    }
+
+    public function test_cloud_model_waits_briefly_for_a_free_quota_instead_of_falling_back(): void
+    {
+        Sleep::fake();
+        config(['exam.speed_mode' => 'online', 'services.groq.key' => 'test-key']);
+        $calls = 0;
+        Http::fake(function ($request) use (&$calls) {
+            if (! str_contains($request->url(), 'api.groq.com')) {
+                return Http::response([], 503);
+            }
+
+            return ++$calls === 1
+                ? Http::response(['error' => ['message' => 'Rate limit reached for tokens per minute']], 429, ['retry-after' => '2.5'])
+                : Http::response(['choices' => [['message' => ['content' => 'Wah, 40 toko itu skala yang lumayan. Bagaimana kamu menjaga datanya tetap konsisten?']]]]);
+        });
+
+        $session = $this->startExam('wawancara', [1]);
+        $this->postJson(route('exam.answer', $session), ['answer' => 'Saya membangun dashboard penjualan React untuk 40 toko retail di Malang.', 'duration_seconds' => 15, 'timestamp_seconds' => 15])
+            ->assertOk()
+            ->assertJsonPath('examiner_message.engine', 'cloud_llm');
+
+        $this->assertSame(2, $calls);
+        Sleep::assertSlept(fn ($duration) => $duration->totalMilliseconds === 2500.0);
     }
 
     public function test_offline_is_the_default_speed_mode_even_with_a_cloud_key(): void
