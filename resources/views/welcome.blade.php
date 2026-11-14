@@ -140,6 +140,6 @@
     </section>
 
     <footer class="border-t border-black/5 py-8 text-center text-sm text-slate-500 dark:border-white/5">
-        VOIC Prep · Voice & Optics Intelligent Coach · Innofest 2026
+        VOIC · Voice & Optics Intelligent Coach · Innofest 2026
     </footer>
 </x-exam-layout>

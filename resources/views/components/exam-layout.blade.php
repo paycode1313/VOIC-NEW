@@ -7,7 +7,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <title>{{ $title ? $title.' · ' : '' }}VOIC Prep</title>
+        <title>{{ $title ? $title.' · ' : '' }}VOIC</title>
         <meta name="theme-color" content="#f6f6f3">
         <link rel="icon" type="image/svg+xml" href="/icon.svg">
         <link rel="manifest" href="/manifest.json">
@@ -38,7 +38,7 @@
                     @endif
                     <a href="{{ url('/') }}" class="flex items-center gap-2 font-extrabold tracking-tight">
                         <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-black text-white dark:bg-white dark:text-slate-900">V</span>
-                        <span class="text-[15px]">VOIC <span class="font-semibold text-slate-400">Prep</span></span>
+                        <span class="text-[15px]">VOIC</span>
                     </a>
                     <nav class="ml-4 hidden items-center gap-1 text-sm font-semibold md:flex" aria-label="Navigasi utama">
                         @php

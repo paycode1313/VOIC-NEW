@@ -31,7 +31,7 @@
             <div class="flex shrink-0 items-center justify-between px-4 py-3 sm:px-6">
                 <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="flex items-center gap-2 font-extrabold tracking-tight">
                     <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-[11px] font-black text-slate-900">V</span>
-                    <span class="text-[15px]">VOIC <span class="font-semibold text-white/40">Prep</span></span>
+                    <span class="text-[15px]">VOIC</span>
                 </a>
                 <span class="text-xs text-white/50">{{ $blueprint->text($mode['title'], $language) }}</span>
             </div>

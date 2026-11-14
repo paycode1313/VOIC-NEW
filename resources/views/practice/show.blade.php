@@ -1134,7 +1134,7 @@
                             <div>
                                 <div class="flex items-center gap-2">
                                     <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                                        Analisis Diagnostik Penguji (GoPrep Oral Assessment)
+                                        Analisis Diagnostik Penguji
                                     </h3>
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300">
                                         4 Pilar Evaluasi
@@ -1190,7 +1190,7 @@
                                 <div class="flex items-center gap-2">
                                     <span class="w-7 h-7 rounded-lg bg-amber-400/20 text-amber-300 flex items-center justify-center text-sm font-bold">✨</span>
                                     <h4 class="text-sm font-bold text-white tracking-tight">
-                                        Rekomendasi Jawaban Emas Penguji (Answer Polishing ala GoPrep)
+                                        Rekomendasi Jawaban Emas Penguji
                                     </h4>
                                 </div>
                                 <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
