@@ -115,7 +115,7 @@ class BoothTest extends TestCase
 
     public function test_welcome_screen_shows_an_online_or_offline_chip_for_the_operator(): void
     {
-        $this->get(route('attract'))->assertSee(route('attract.status'), false);
+        $this->get(route('attract'))->assertSee('sambut\/status', false)->assertSee('Mode offline');
 
         $this->getJson(route('attract.status'))->assertOk()
             ->assertJsonStructure(['internet', 'cloud_ai', 'online_voice', 'ai_service']);
