@@ -514,7 +514,7 @@ class ExamFlowTest extends TestCase
         // A different browser (the phone) with no session can open the signed link, read-only.
         $this->flushSession();
         $path = substr($shareUrl, strlen('http://192.168.1.50:8000'));
-        $this->get($path)->assertOk()->assertSee('Masukan per jawaban')->assertDontSee('Hapus data saya');
+        $this->get($path)->assertOk()->assertSee('Masukan per jawaban')->assertDontSee('Hapus data saya')->assertDontSee('Bawa pulang rapormu');
 
         // Tampering with the link is rejected.
         $this->get(str_replace('expires=', 'expires=1', $path))->assertForbidden();

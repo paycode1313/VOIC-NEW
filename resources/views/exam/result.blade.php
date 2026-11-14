@@ -26,7 +26,7 @@
         {{-- Hero: the end screen of the call --}}
         <section class="relative isolate overflow-hidden rounded-3xl bg-[#121521] p-6 text-white sm:p-8" style="--glow: {{ $glow }}">
             <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(50%_90%_at_15%_50%,rgb(var(--glow)/0.45),transparent_70%)]"></div>
-            <div class="grid gap-8 md:grid-cols-[auto_1fr] md:items-center">
+            <div @class(["grid gap-8 md:grid-cols-[auto_1fr] md:items-center", "lg:grid-cols-[auto_1fr_auto]" => ! $shared])>
                 <div class="flex items-center justify-center gap-4">
                     <div class="relative flex h-36 w-36 items-center justify-center">
                         <svg class="absolute inset-0 -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
@@ -61,25 +61,33 @@
                         <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="rounded-full bg-white/10 px-5 py-2.5 text-sm font-bold hover:bg-white/15">{{ $isEn ? 'Other examiners' : 'Penguji lain' }}</a>
                     </div>
                 </div>
+                @unless ($shared)
+                    {{-- Take it home: QR to a signed, read-only copy of this report --}}
+                    <div class="flex flex-col items-center gap-3 rounded-2xl bg-white/[0.07] p-4 text-center ring-1 ring-white/10 md:col-span-2 md:flex-row md:text-left lg:col-span-1 lg:flex-col lg:text-center">
+                        <div id="report-qr" data-url="{{ $shareUrl }}" class="h-40 w-40 shrink-0 rounded-2xl bg-white p-2 [&_svg]:h-full [&_svg]:w-full" aria-label="{{ $isEn ? 'QR code to this report' : 'QR code rapor ini' }}"></div>
+                        <div>
+                            <p class="flex items-center justify-center gap-1.5 font-extrabold md:justify-start lg:justify-center">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
+                                {{ $isEn ? 'Take your report home' : 'Bawa pulang rapormu' }}
+                            </p>
+                            <p class="mt-1 max-w-[12rem] text-xs text-white/70 md:max-w-none lg:max-w-[12rem]">{{ $isEn ? 'Scan with your phone camera. Works for 7 days, no account.' : 'Pindai pakai kamera HP. Berlaku 7 hari, tanpa akun.' }}</p>
+                        </div>
+                    </div>
+                @endunless
             </div>
         </section>
 
-        {{-- Take it home: QR to a signed, read-only copy of this report --}}
         @unless ($shared)
-            <section class="mt-4 flex flex-col items-center gap-5 rounded-3xl border border-black/5 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03] sm:flex-row">
-                <div id="report-qr" data-url="{{ $shareUrl }}" class="h-32 w-32 shrink-0 rounded-xl bg-white p-1.5 [&_svg]:h-full [&_svg]:w-full" aria-label="{{ $isEn ? 'QR code to this report' : 'QR code rapor ini' }}"></div>
-                <div class="text-center sm:text-left">
-                    <p class="font-bold">{{ $isEn ? 'Take your report home' : 'Bawa pulang rapormu' }}</p>
-                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                        {{ $isEn ? 'Scan with your phone camera. The link works for 7 days, no account needed.' : 'Pindai dengan kamera HP. Tautan berlaku 7 hari, tanpa perlu akun.' }}
-                    </p>
+            @if (str_contains($shareUrl, '://localhost') || str_contains($shareUrl, '://127.0.0.1') || $canManage)
+            <section class="mt-4 flex flex-col items-center gap-2 rounded-3xl border border-black/5 bg-white px-5 py-3 text-center dark:border-white/10 dark:bg-white/[0.03] sm:flex-row sm:justify-between sm:text-left">
+                <div>
                     @if (str_contains($shareUrl, '://localhost') || str_contains($shareUrl, '://127.0.0.1'))
-                        <p class="mt-2 rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
+                        <p class="rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
                             {{ $isEn ? 'Operator: set VOIC_PUBLIC_URL (LAN IP or tunnel) so phones can open this.' : 'Operator: isi VOIC_PUBLIC_URL di .env (IP LAN atau tunnel) agar QR bisa dibuka di HP.' }}
                         </p>
                     @endif
                     @if ($canManage)
-                        <form method="POST" action="{{ route('exam.destroy', $session) }}" class="mt-3"
+                        <form method="POST" action="{{ route('exam.destroy', $session) }}" class="mt-1"
                               onsubmit="return confirm('{{ $isEn ? 'Delete this session, transcript and recordings permanently?' : 'Hapus sesi, transkrip, dan rekaman ini secara permanen?' }}')">
                             @csrf
                             @method('DELETE')
@@ -88,6 +96,7 @@
                     @endif
                 </div>
             </section>
+            @endif
             <script src="{{ asset('js/qrcode.min.js') }}"></script>
             <script>
                 (function () {
