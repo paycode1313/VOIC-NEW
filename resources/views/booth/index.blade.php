@@ -6,7 +6,7 @@
 <x-exam-layout title="Operator Booth">
     <div class="mx-auto max-w-5xl px-4 pb-20 pt-8 sm:px-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <h1 class="text-2xl font-extrabold tracking-tight">Operator booth</h1>
+            <h1 class="flex flex-wrap items-center gap-3 text-2xl font-extrabold tracking-tight">Operator booth @include('booth.partials.net-status')</h1>
             <div class="flex gap-2">
                 <a href="{{ route('attract') }}" class="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900">Buka layar sambut</a>
                 <a href="{{ route('booth.board') }}" target="_blank" class="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10">Buka papan skor ↗</a>

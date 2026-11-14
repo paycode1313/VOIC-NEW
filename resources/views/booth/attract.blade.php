@@ -33,6 +33,7 @@
                 @if ($today > 0)
                     <span class="hidden rounded-full bg-slate-900/[0.06] px-3 py-1.5 sm:inline">{{ $today }} orang sudah ditelepon hari ini</span>
                 @endif
+                @include('booth.partials.net-status')
                 <span class="rounded-full bg-slate-900/[0.06] px-3 py-1.5">Innofest 2026</span>
                 <span class="font-mono text-base text-slate-900" x-text="clock"></span>
             </div>

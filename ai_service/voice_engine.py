@@ -40,6 +40,17 @@ PIPER_VOICES = {
 # Kecepatan bicara per persona (length_scale Piper: < 1 lebih cepat, > 1 lebih lambat).
 PERSONA_PACE = {"hrd": 1.0, "dosen_penguji": 1.08, "investor": 0.92}
 
+# Piper Indonesia hanya punya satu pembicara. Agar tiga penguji tetap terdengar berbeda saat offline,
+# nada digeser per persona: header WAV ditulis dengan sample rate x faktor (nada naik/turun), dan
+# length_scale dikali faktor yang sama supaya kecepatan bicaranya tidak ikut berubah.
+PERSONA_PITCH = {"hrd": 1.06, "dosen_penguji": 0.8, "investor": 0.86}
+
+# Suara online: batas waktu per kalimat, lalu jeda sebelum mencoba lagi setelah gagal (internet putus),
+# supaya tiap kalimat tidak menunggu timeout dulu sebelum jatuh ke Piper.
+EDGE_TIMEOUT_SECONDS = 6.0
+EDGE_COOLDOWN_SECONDS = 30.0
+_edge_down_until = 0.0
+
 _stt_model = None
 _stt_lock = threading.Lock()
 _stt_error: Optional[str] = None
@@ -211,7 +222,8 @@ def synthesize_piper(text: str, role_type: str, language: str, output_dir: str) 
 
     filename = f"tts_{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}.wav"
     output_path = os.path.join(output_dir, filename)
-    pace = PERSONA_PACE.get(role_type, 1.0)
+    pitch = PERSONA_PITCH.get(role_type, 1.0)
+    pace = PERSONA_PACE.get(role_type, 1.0) * pitch
 
     try:
         with wave.open(output_path, "wb") as wav_file:
@@ -232,7 +244,24 @@ def synthesize_piper(text: str, role_type: str, language: str, output_dir: str) 
             pass
         return None
 
+    if pitch != 1.0:
+        _shift_wav_pitch(output_path, pitch)
     return filename
+
+
+def _shift_wav_pitch(path: str, factor: float) -> None:
+    """Putar WAV sedikit lebih cepat/lambat dengan menulis ulang sample rate di header (nada ikut bergeser)."""
+    try:
+        with wave.open(path, "rb") as src:
+            params = src.getparams()
+            frames = src.readframes(params.nframes)
+        with wave.open(path, "wb") as dst:
+            dst.setnchannels(params.nchannels)
+            dst.setsampwidth(params.sampwidth)
+            dst.setframerate(int(round(params.framerate * factor)))
+            dst.writeframes(frames)
+    except Exception as exc:
+        print(f"Piper pitch notice: {exc}")
 
 
 # Suara online (edge-tts, suara neural Microsoft). Jauh lebih alami daripada Piper: dipakai lebih dulu
@@ -251,14 +280,29 @@ async def synthesize_edge(text: str, role_type: str, language: str, output_dir: 
         import edge_tts
     except ImportError:
         return None
+    global _edge_down_until
+    if time.monotonic() < _edge_down_until:
+        return None  # internet baru saja gagal: langsung pakai suara offline
     voice, pitch, rate = EDGE_VOICES["en" if language == "en" else "id"].get(role_type, EDGE_VOICES["id"]["hrd"])
     filename = f"tts_{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}.mp3"
+    path = os.path.join(output_dir, filename)
     try:
-        await edge_tts.Communicate(text, voice, rate=rate, pitch=pitch).save(os.path.join(output_dir, filename))
+        await asyncio.wait_for(edge_tts.Communicate(text, voice, rate=rate, pitch=pitch).save(path), EDGE_TIMEOUT_SECONDS)
+        _edge_down_until = 0.0
         return filename
     except Exception as exc:
-        print(f"edge-tts notice: {exc}")
+        print(f"edge-tts notice: {type(exc).__name__} {exc} (suara offline dipakai {int(EDGE_COOLDOWN_SECONDS)} detik)")
+        _edge_down_until = time.monotonic() + EDGE_COOLDOWN_SECONDS
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
         return None
+
+
+def edge_online() -> bool:
+    """False selama jeda setelah edge-tts gagal (dipakai untuk penanda mode offline)."""
+    return time.monotonic() >= _edge_down_until
 
 
 async def synthesize(text: str, role_type: str = "hrd", language: str = "id", output_dir: str = AUDIO_OUTPUT_DIR,
@@ -297,5 +341,6 @@ def status() -> Dict:
         "tts": {
             "engine": tts_engine("id"),
             "local": tts_engine("id") == "piper",
+            "edge_online": edge_online(),
         },
     }

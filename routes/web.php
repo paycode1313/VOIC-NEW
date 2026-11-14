@@ -45,6 +45,7 @@ Route::prefix('latihan')->name('exam.')->controller(ExamController::class)->grou
 // Booth operator (PIN from VOIC_BOOTH_PIN)
 // Booth welcome screen (public, full screen) and "pick up the call" for the next visitor.
 Route::get('/sambut', [BoothController::class, 'attract'])->name('attract');
+Route::get('/sambut/status', [BoothController::class, 'status'])->middleware('throttle:30,1')->name('attract.status');
 Route::post('/sambut/angkat', [BoothController::class, 'pickUp'])->middleware('throttle:30,1')->name('attract.pickup');
 
 Route::prefix('booth')->name('booth.')->controller(BoothController::class)->group(function () {

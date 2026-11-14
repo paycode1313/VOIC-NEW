@@ -76,6 +76,14 @@ class BoothController extends Controller
     }
 
     /**
+     * Online/offline status for the operator chip on the booth screens.
+     */
+    public function status(ExaminerService $examiner): \Illuminate\Http\JsonResponse
+    {
+        return response()->json($examiner->connectivity());
+    }
+
+    /**
      * A visitor picks up the call: forget the previous visitor, then go to that examiner's setup.
      */
     public function pickUp(Request $request): RedirectResponse

@@ -2,6 +2,7 @@
 
 namespace App\Services\Exam;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -69,6 +70,11 @@ class ExaminerService
      * Longest wait (seconds) for a cloud quota that frees up again before giving up on the cloud model.
      */
     public const CLOUD_RETRY_WAIT = 6;
+
+    /** After the internet drops, skip the cloud for this long so every turn goes straight to the local AI. */
+    public const CLOUD_DOWN_KEY = 'voic.cloud.down';
+
+    public const CLOUD_DOWN_SECONDS = 30;
 
     /**
      * How each examiner talks out loud: spoken language like a real call, not the written language of a
@@ -1490,6 +1496,10 @@ class ExaminerService
      */
     protected function callCloudModel(array $messages, int $timeout = 12): ?string
     {
+        if (self::cloudPaused()) {
+            return null;
+        }
+
         $groq = ['key' => (string) Config::get('services.groq.key', ''), 'url' => 'https://api.groq.com/openai/v1/chat/completions'];
         $providers = [
             $groq + ['model' => (string) Config::get('services.groq.model', 'openai/gpt-oss-120b')],
@@ -1529,12 +1539,61 @@ class ExaminerService
                 // provider retired the model or the free per-minute token quota ran out (429).
                 Log::warning("Cloud examiner model {$provider['model']} failed: HTTP {$response->status()} "
                     .Str::limit((string) $response->json('error.message', $response->body()), 200));
+            } catch (ConnectionException $exception) {
+                // No internet (or the provider is unreachable): the other providers are on the same network.
+                Cache::put(self::CLOUD_DOWN_KEY, true, self::CLOUD_DOWN_SECONDS);
+                Log::warning('Cloud examiner unreachable, using the local AI for '.self::CLOUD_DOWN_SECONDS.'s: '.$exception->getMessage());
+
+                return null;
             } catch (\Throwable $exception) {
                 Log::warning('Cloud examiner model failed: '.$exception->getMessage());
             }
         }
 
         return null;
+    }
+
+    /**
+     * True while the cloud is skipped after a failed connection.
+     */
+    public static function cloudPaused(): bool
+    {
+        return Cache::has(self::CLOUD_DOWN_KEY);
+    }
+
+    /**
+     * Internet and voice status for the booth operator (cached briefly; no visitor data involved).
+     *
+     * @return array{internet: bool, cloud_ai: bool, online_voice: bool, ai_service: bool}
+     */
+    public function connectivity(): array
+    {
+        return Cache::remember('voic.connectivity', 15, function (): array {
+            $internet = false;
+            if (! self::cloudPaused()) {
+                try {
+                    Http::connectTimeout(2)->timeout(3)->head('https://api.groq.com');
+                    $internet = true;
+                } catch (\Throwable) {
+                    $internet = false;
+                }
+            }
+
+            $edgeOnline = null;
+            try {
+                $response = Http::connectTimeout(1)->timeout(2)->get($this->baseUrl().'/voice/status');
+                $edgeOnline = $response->successful() ? (bool) $response->json('tts.edge_online', true) : null;
+            } catch (\Throwable) {
+                $edgeOnline = null;
+            }
+
+            return [
+                'internet' => $internet,
+                'cloud_ai' => $internet && $this->cloudConfigured(),
+                'online_voice' => $internet && $edgeOnline !== false,
+                'ai_service' => $edgeOnline !== null,
+            ];
+        });
     }
 
     /**
