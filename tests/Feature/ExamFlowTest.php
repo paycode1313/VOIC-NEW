@@ -918,7 +918,7 @@ class ExamFlowTest extends TestCase
         $this->post(route('exam.start', 'sidang'), [
             'guest_name' => 'Rifai', 'campus' => 'Universitas Brawijaya', 'session_type' => 'coach', 'language' => 'id', 'consent' => '1',
         ])->assertRedirect();
-        $this->assertStringStartsWith('Halo Rifai dari Universitas Brawijaya, saya VOIC Sidang.', PracticeSession::latest('id')->firstOrFail()->messages()->first()->message);
+        $this->assertStringStartsWith('Halo Rifai dari Universitas Brawijaya, aku VOIC Sidang.', PracticeSession::latest('id')->firstOrFail()->messages()->first()->message);
 
         // The examiner model knows who it is talking to (system prompt).
         $prompt = app(ExaminerService::class)->systemPrompt([

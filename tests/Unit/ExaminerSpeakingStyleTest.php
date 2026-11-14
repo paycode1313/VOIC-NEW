@@ -47,11 +47,13 @@ class ExaminerSpeakingStyleTest extends TestCase
     {
         $examiner = app(ExaminerService::class);
 
-        // Kak Nadia drops "Anda"; Pak William and Prof. Hendra keep it but talk, not write.
+        // Every examiner says "kamu" and avoids stiff written words.
         $this->assertStringContainsString('"Anda"', $examiner->speakingStyle('hrd', false));
         $this->assertStringContainsString('Hindari kata kaku seperti "tersebut"', $examiner->speakingStyle('hrd', false));
-        $this->assertStringContainsString('Tetap panggil "Anda"', $examiner->speakingStyle('investor', false));
-        $this->assertStringContainsString('Tetap panggil "Anda"', $examiner->speakingStyle('dosen_penguji', false));
+        $this->assertStringContainsString('dengan "kamu"', $examiner->speakingStyle('investor', false));
+        $this->assertStringContainsString('Hindari kata kaku seperti "Anda"', $examiner->speakingStyle('investor', false));
+        $this->assertStringContainsString('dengan "kamu"', $examiner->speakingStyle('dosen_penguji', false));
+        $this->assertStringContainsString('Hindari kata kaku seperti "Anda"', $examiner->speakingStyle('dosen_penguji', false));
         $this->assertStringNotContainsString('bahasa formal', $examiner->systemPrompt($this->turn('dosen_penguji', 'Prof. Hendra')));
         // An unknown role talks like the thesis examiner instead of failing.
         $this->assertSame($examiner->speakingStyle('dosen_penguji', false), $examiner->speakingStyle('lainnya', false));
