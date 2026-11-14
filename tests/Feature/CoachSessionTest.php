@@ -28,9 +28,9 @@ class CoachSessionTest extends TestCase
         $this->get(route('exam.setup', 'wawancara'))->assertOk()
             ->assertSee('Ngobrol dengan coach')
             ->assertSee('Simulasi ujian')
-            ->assertSee("type: 'coach'", false);
+            ->assertSee('data-default-type="coach"', false);
 
-        $this->get(route('exam.setup', ['mode' => 'wawancara', 'type' => 'exam']))->assertSee("type: 'exam'", false);
+        $this->get(route('exam.setup', ['mode' => 'wawancara', 'type' => 'exam']))->assertSee('data-default-type="exam"', false);
     }
 
     public function test_coach_opens_with_a_friendly_question_and_a_ten_minute_timer(): void

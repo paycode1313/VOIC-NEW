@@ -24,7 +24,7 @@
 
 {{-- Setup as a short wizard: type your name and campus once, everything else is one tap per step. --}}
 <x-exam-layout :title="$blueprint->text($mode['title'], $language)" :back="route('exam.index', $isEn ? ['lang' => 'en'] : [])">
-    <div class="mx-auto max-w-2xl px-4 pb-20 pt-8 sm:px-6 sm:pt-12" style="--glow: {{ $glow }}"
+    <div class="mx-auto max-w-2xl px-4 pb-20 pt-8 sm:px-6 sm:pt-12" style="--glow: {{ $glow }}" data-default-type="{{ $wizard['type'] }}"
          x-data="{
             ...@js($wizard),
             get last() { return this.type === 'exam' ? 5 : 4 },
@@ -178,10 +178,20 @@
                     <input type="checkbox" name="consent" value="1" required @checked(old('consent'))
                            class="mt-0.5 h-4 w-4 rounded border-black/20 text-slate-900 focus:ring-slate-900">
                     <span class="text-slate-600 dark:text-slate-400">
-                        @if (config('exam.speed_mode') === 'online' || \App\Services\Exam\ExaminerService::isCloudModel(config('exam.ai_model')))
+                        @if (\App\Services\Exam\ExaminerService::isCloudModel(config('exam.ai_model')))
+                            {{-- A cloud examiner (e.g. kimi-k3:cloud) receives the text of the answers: name it. --}}
+                            @php
+                                $onlineAi = \App\Services\Exam\OpenRouterClient::handles(config('exam.ai_model'))
+                                    ? \Illuminate\Support\Str::after(config('exam.ai_model'), 'openrouter/').($isEn ? ' via OpenRouter' : ' lewat OpenRouter')
+                                    : config('exam.ai_model').($isEn ? ' via Ollama' : ' lewat Ollama');
+                            @endphp
                             {{ $isEn
-                                ? 'I agree that the text of my answers is sent to an online AI to reply, that the examiner voice is made by an online voice service, and that my answers are stored to build the report.'
-                                : 'Saya setuju teks jawaban saya dikirim ke AI online untuk dibalas, suara penguji dibuat layanan suara online, dan jawaban saya disimpan untuk membuat rapor.' }}
+                                ? 'I agree that my voice is turned into text, that the text of my answers is sent to an online AI ('.$onlineAi.') to reply, and that my answers are stored to build the report.'
+                                : 'Saya setuju suara saya diubah menjadi teks, teks jawaban saya dikirim ke AI online ('.$onlineAi.') untuk dibalas, dan jawaban saya disimpan untuk membuat rapor.' }}
+                        @elseif (config('exam.speed_mode') === 'online')
+                            {{ $isEn
+                                ? 'I agree that the text of my answers is sent to an online AI (Groq) to reply, that the examiner voice is made by an online voice service, and that my answers are stored to build the report.'
+                                : 'Saya setuju teks jawaban saya dikirim ke AI online (Groq) untuk dibalas, suara penguji dibuat layanan suara online, dan jawaban saya disimpan untuk membuat rapor.' }}
                         @else
                             {{ $isEn
                                 ? 'I agree that my voice is processed by the AI on this laptop (not sent to the internet), and that my answers are stored to build the report.'
