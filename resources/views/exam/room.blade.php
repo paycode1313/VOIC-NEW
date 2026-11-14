@@ -141,7 +141,7 @@
 
                     {{-- Name plate + status, top left (captions own the bottom, your camera the top right) --}}
                     <div class="pointer-events-none absolute left-3 top-3 flex flex-wrap items-center gap-2 sm:left-4 sm:top-4">
-                        <span class="rounded-lg bg-black/50 px-2.5 py-1 text-sm font-semibold backdrop-blur">{{ $examinerName }} <span class="hidden font-normal text-white/50 sm:inline">· {{ $examinerTitle }}</span></span>
+                        <span class="hidden rounded-lg bg-black/50 px-2.5 py-1 text-sm font-semibold backdrop-blur sm:inline">{{ $examinerName }} <span class="font-normal text-white/50">· {{ $examinerTitle }}</span></span>
                         <span class="inline-flex items-center gap-1.5 rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold backdrop-blur" aria-live="polite">
                             <span x-show="status === 'speaking'" class="flex h-3 items-end gap-[2px]" aria-hidden="true">
                                 <span class="voic-eq w-[3px] rounded-full bg-white"></span>
