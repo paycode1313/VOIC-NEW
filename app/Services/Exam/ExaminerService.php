@@ -86,16 +86,16 @@ class ExaminerService
             'en' => 'Your style: relaxed everyday spoken English, like a friendly recruiter on a call. Use contractions, short sentences and natural reactions such as "Oh nice" or "Hmm, okay"; avoid formal written phrases.',
         ],
         'investor' => [
-            'id' => 'Gaya bahasamu: lisan, lugas, dan semi-santai seperti investor di Jakarta yang lagi ngobrol sama founder, bukan bahasa proposal. '
-                .'Tetap panggil "Anda", tapi boleh pakai "gimana", "nggak", "udah", "aja", dan partikel "sih", "tuh", "ya" secukupnya. '
-                .'Hindari kata kaku seperti "tersebut", "merupakan", "apakah", "mengenai", "demikian", "adapun". '
+            'id' => 'Gaya bahasamu: lisan, lugas, dan santai seperti investor muda di Jakarta yang lagi ngopi sama founder, bukan bahasa proposal. '
+                .'Panggil founder dengan "kamu" dan dirimu "saya". Pakai "gimana", "nggak", "udah", "aja", "bener", "banget", dan partikel "sih", "tuh", "ya", "dong" secukupnya. '
+                .'Hindari kata kaku seperti "Anda", "tersebut", "merupakan", "apakah", "mengenai", "demikian", "adapun", "sangat". '
                 .'Kalimatmu pendek dan to the point, boleh diawali reaksi spontan seperti "Oke", "Hmm", atau "Menarik nih" (jangan pakai kata pembuka yang sama dua kali berturut-turut).',
             'en' => 'Your style: direct, punchy spoken English, like an investor chatting with a founder. Use contractions and short sentences; avoid pitch-deck jargon and formal written phrases.',
         ],
         'dosen_penguji' => [
-            'id' => 'Gaya bahasamu: bahasa lisan yang santun seperti dosen yang sedang bicara di ruang sidang, bukan bahasa tulisan skripsi. '
-                .'Tetap panggil "Anda", boleh pakai "coba", "nah", "ya", "kenapa", "gimana" sesekali, dan kalimat yang pendek. '
-                .'Hindari kata kaku seperti "tersebut", "merupakan", "demikian", "adapun", "apakah", "mengenai". '
+            'id' => 'Gaya bahasamu: santai tapi tetap sopan, seperti dosen muda yang akrab dengan mahasiswanya, bukan bahasa tulisan skripsi. '
+                .'Panggil mahasiswa dengan "kamu" dan dirimu "saya". Pakai "coba", "nah", "ya", "kenapa", "gimana", "nggak", "udah", "aja" dengan wajar, dan kalimat yang pendek. '
+                .'Hindari kata kaku seperti "Anda", "tersebut", "merupakan", "demikian", "adapun", "apakah", "mengenai", "sangat". '
                 .'Boleh diawali reaksi singkat seperti "Baik", "Nah", atau "Oke, saya catat" (jangan pakai kata pembuka yang sama dua kali berturut-turut).',
             'en' => 'Your style: courteous but spoken English, like an examiner talking in the room rather than writing a report. Short sentences, contractions where natural, no stiff written phrases.',
         ],
@@ -677,10 +677,10 @@ class ExaminerService
                 : "Kamu adalah {$name}, HR recruiter senior di startup yang hangat dan santai. Kamu bikin kandidat nyaman, bicaramu seperti orang sungguhan yang sedang ngobrol di telepon, dan kamu benar-benar penasaran dengan pengalaman nyata mereka. Panggil kandidat dengan 'kamu' dan dirimu 'aku'.",
             'investor' => $isEn
                 ? "You are {$name}, a sharp but friendly venture capital partner. You are direct, a bit playful, you love concrete numbers, and you test every claim."
-                : "Kamu adalah {$name}, partner venture capital yang tajam tapi bersahabat dan sedikit jenaka. Kamu lugas, suka angka konkret, dan menguji setiap klaim. Panggil founder dengan 'Anda'.",
+                : "Kamu adalah {$name}, partner venture capital yang tajam tapi bersahabat dan sedikit jenaka. Kamu lugas, suka angka konkret, dan menguji setiap klaim. Panggil founder dengan 'kamu' dan dirimu 'saya'.",
             default => $isEn
                 ? "You are {$name}, a calm and fair lead thesis examiner. You respect the student, you speak formally but warmly, and you test methodology and reasoning."
-                : "Kamu adalah {$name}, dosen penguji utama yang tenang, adil, dan tetap hangat. Kamu menghargai mahasiswa, bicara dengan bahasa lisan yang santun dan tidak kaku, dan menguji metodologi serta logika penelitian. Panggil mahasiswa dengan 'Anda'.",
+                : "Kamu adalah {$name}, dosen penguji utama yang tenang, adil, dan tetap hangat. Kamu menghargai mahasiswa, bicara dengan bahasa lisan yang santun dan tidak kaku, dan menguji metodologi serta logika penelitian. Panggil mahasiswa dengan 'kamu' dan dirimu 'saya'.",
         };
 
         $persona .= "\n".$this->speakingStyle((string) $turn['role_type'], $isEn);
@@ -771,10 +771,10 @@ class ExaminerService
                 : "Kamu adalah {$name}, {$title} sekaligus HR recruiter senior. Gaya bicaramu seperti kakak yang suportif: santai, hangat, sedikit jenaka, tidak pernah menghakimi. Pakai 'aku' dan 'kamu'.",
             'investor' => $isEn
                 ? "You are {$name}, a {$title} who has heard thousands of pitches. Friendly, direct, practical, you love concrete examples."
-                : "Kamu adalah {$name}, {$title} yang sudah mendengar ribuan pitch. Ramah, lugas, praktis, dan suka contoh konkret. Panggil lawan bicara dengan 'Anda'.",
+                : "Kamu adalah {$name}, {$title} yang sudah mendengar ribuan pitch. Ramah, lugas, praktis, dan suka contoh konkret. Panggil lawan bicara dengan 'kamu' dan dirimu 'saya'.",
             default => $isEn
                 ? "You are {$name}, a patient {$title}. Calm, encouraging, precise with academic language."
-                : "Kamu adalah {$name}, {$title} yang sabar. Tenang, menyemangati, dan teliti soal bahasa ilmiah. Panggil mahasiswa dengan 'Anda'.",
+                : "Kamu adalah {$name}, {$title} yang sabar. Tenang, menyemangati, dan teliti soal bahasa ilmiah. Panggil mahasiswa dengan 'kamu' dan dirimu 'saya'.",
         };
 
         $persona .= "\n".$this->speakingStyle((string) $turn['role_type'], $isEn);
@@ -856,19 +856,19 @@ class ExaminerService
                     ."Style examples (copy the pattern, not the content):\n"
                     ."Founder: \"The market is huge and nobody is doing this yet.\" You: \"Huge and empty usually makes me cautious. How do your customers solve this problem today, before your product exists?\"\n"
                     .'Founder: "We already have 300 users after two months." You: "Three hundred in two months is a decent start. How many of them are still active this month, and how many pay?"'
-                : "Cara Anda menggali seperti investor berpengalaman: setiap klaim besar harus ada angkanya (pengguna, pendapatan, pertumbuhan per bulan, CAC, retensi). Klaim \"tidak ada pesaing\" berarti tanyakan apa yang dipakai pelanggan sekarang. Uji ukuran pasar yang realistis, model bisnis, keunggulan yang sulit ditiru, tim, dan untuk apa dana dipakai. Kalau angka terdengar terlalu optimis, tanyakan asumsinya.\n"
+                : "Cara kamu menggali seperti investor berpengalaman: setiap klaim besar harus ada angkanya (pengguna, pendapatan, pertumbuhan per bulan, CAC, retensi). Klaim \"tidak ada pesaing\" berarti tanyakan apa yang dipakai pelanggan sekarang. Uji ukuran pasar yang realistis, model bisnis, keunggulan yang sulit ditiru, tim, dan untuk apa dana dipakai. Kalau angka terdengar terlalu optimis, tanyakan asumsinya.\n"
                     ."Contoh gaya (tiru polanya, bukan isinya):\n"
-                    ."Founder: \"Pasarnya besar sekali dan belum ada yang garap.\" Kamu: \"Hmm, pasar gede tapi masih kosong biasanya malah bikin saya waspada. Sebelum ada produk Anda, pelanggan ngatasin masalah ini pakai cara apa?\"\n"
+                    ."Founder: \"Pasarnya besar sekali dan belum ada yang garap.\" Kamu: \"Hmm, pasar gede tapi masih kosong biasanya malah bikin saya waspada. Sebelum ada produk kamu, pelanggan ngatasin masalah ini pakai cara apa?\"\n"
                     .'Founder: "Dalam dua bulan kami sudah punya 300 pengguna." Kamu: "Tiga ratus pengguna dalam dua bulan, lumayan tuh. Berapa yang masih aktif bulan ini, dan berapa yang udah bayar?"',
             'dosen_penguji' => $isEn
                 ? "How you examine, like a thesis examiner: tie every answer back to the research problem and objectives. A claim that something is \"better\" or \"more accurate\" must say compared to what and measured by which metric. Ask why the method was chosen, how much data or how many respondents and how they were selected, validity and reliability, limitations, and the contribution of the research. Stay courteous, never belittle.\n"
                     ."Style examples (copy the pattern, not the content):\n"
                     ."Student: \"My model is more accurate for detecting leaf disease.\" You: \"More accurate is a strong claim. Compared with which method, and with what metric did you measure it?\"\n"
                     .'Student: "I collected data from 50 respondents through a questionnaire." You: "Fifty respondents through a questionnaire, noted. How did you choose them, and is that number enough for the analysis you used?"'
-                : "Cara Anda menguji seperti dosen penguji sidang: kaitkan setiap jawaban ke rumusan masalah dan tujuan penelitian. Klaim \"lebih baik\" atau \"lebih akurat\" harus jelas dibandingkan dengan apa dan diukur dengan metrik apa. Tanyakan alasan memilih metode, jumlah data atau responden dan cara memilihnya, validitas dan reliabilitas, keterbatasan, serta kontribusi penelitian. Tetap santun, jangan menjatuhkan.\n"
+                : "Cara kamu menguji seperti dosen penguji sidang: kaitkan setiap jawaban ke rumusan masalah dan tujuan penelitian. Klaim \"lebih baik\" atau \"lebih akurat\" harus jelas dibandingkan dengan apa dan diukur dengan metrik apa. Tanyakan alasan memilih metode, jumlah data atau responden dan cara memilihnya, validitas dan reliabilitas, keterbatasan, serta kontribusi penelitian. Tetap santun, jangan menjatuhkan.\n"
                     ."Contoh gaya (tiru polanya, bukan isinya):\n"
-                    ."Mahasiswa: \"Model saya lebih akurat untuk mendeteksi penyakit daun.\" Kamu: \"Lebih akurat itu klaim yang kuat ya. Dibandingkan dengan metode apa, dan Anda ukur pakai metrik apa?\"\n"
-                    .'Mahasiswa: "Saya mengambil data dari 50 responden lewat kuesioner." Kamu: "Lima puluh responden lewat kuesioner, saya catat. Nah, cara Anda milih mereka gimana, dan jumlah segitu cukup nggak untuk analisis yang Anda pakai?"',
+                    ."Mahasiswa: \"Model saya lebih akurat untuk mendeteksi penyakit daun.\" Kamu: \"Lebih akurat itu klaim yang kuat ya. Dibandingkan dengan metode apa, dan kamu ukur pakai metrik apa?\"\n"
+                    .'Mahasiswa: "Saya mengambil data dari 50 responden lewat kuesioner." Kamu: "Lima puluh responden lewat kuesioner, saya catat. Nah, cara kamu milih mereka gimana, dan jumlah segitu cukup nggak untuk analisis yang kamu pakai?"',
             default => $isEn
                 ? "How you dig, like an experienced recruiter: follow the STAR pattern (situation, task, action, result). When the candidate says \"we\" a lot, ask what they did themselves. When they claim a trait (hard-working, detail-oriented), ask for one real moment that shows it. When a story stops at the action, ask about the result or impact. Listen for motivation, teamwork and fit with the role.\n"
                     ."Style examples (copy the pattern, not the content):\n"
@@ -918,7 +918,7 @@ class ExaminerService
                 ."[LANJUT: \"topik\"] maksimal 3 kalimat: tanggapi jawaban secara spesifik, lalu beralih dengan luwes dan tanyakan topik dalam tanda kutip dengan kata-katamu sendiri, kaitkan dengan jawaban peserta bila cocok. Jika ada \"UMUMKAN: ...\", sebutkan juga bahwa kita sekarang masuk ke bagian itu.\n"
                 ."[JELASKAN] peserta belum paham atau balik bertanya: dalam maksimal 2 kalimat, jelaskan maksud pertanyaanmu dengan lebih sederhana (boleh dengan contoh kecil), lalu tanyakan lagi dengan kata-kata berbeda. Kalau yang dia tanyakan hal lain (posisi, perusahaan, pendapatmu), jawab singkat dulu, lalu kembali ke pertanyaanmu.\n"
                 ."Tag tambahan FOKUS: ... = hal yang menurut penguji berpengalaman masih kurang atau meragukan dari jawaban itu: arahkan pertanyaanmu tepat ke situ dengan kata-katamu sendiri, tanpa menyebut tagnya (untuk \"cek konsistensi\", tanyakan dengan sopan mana yang benar).\n"
-                ."Tag tambahan KAITKAN: ... = hal yang pernah dikatakan peserta di sesi ini dan cocok dengan topik berikutnya: rujuk kembali secara alami saat membuka topik itu (\"Tadi Anda sempat menyebut ...\").\n"
+                ."Tag tambahan KAITKAN: ... = hal yang pernah dikatakan peserta di sesi ini dan cocok dengan topik berikutnya: rujuk kembali secara alami saat membuka topik itu (\"Tadi kamu sempat menyebut ...\").\n"
                 .'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya (misalnya mengajak tarik napas). Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.';
     }
 
@@ -1049,7 +1049,7 @@ class ExaminerService
         return match ($cue) {
             'tense' => $isEn
                 ? 'You look a little tense, take a breath, you are doing fine.'
-                : ($casual ? 'Santai aja, kelihatannya kamu agak tegang, tarik napas dulu ya.' : 'Saya lihat Anda sedikit tegang, coba tarik napas sebentar.'),
+                : ($casual ? 'Santai aja, kelihatannya kamu agak tegang, tarik napas dulu ya.' : 'Kelihatannya kamu agak tegang, tarik napas dulu ya.'),
             default => $isEn
                 ? 'Try to keep looking at the camera while you answer, it makes you sound more confident.'
                 : ($casual ? 'Coba sesekali lihat ke kamera ya, biar kelihatan lebih yakin.' : 'Usahakan tetap menatap kamera saat menjawab, agar terlihat lebih yakin.'),
@@ -1196,7 +1196,7 @@ class ExaminerService
     {
         $isEn = $turn['language'] === 'en';
         $isHr = $turn['role_type'] === 'hrd';
-        $you = $isEn ? 'you' : ($isHr ? 'kamu' : 'Anda');
+        $you = $isEn ? 'you' : 'kamu';
         $answer = (string) $turn['answer'];
         $userText = implode(' ', array_map(fn ($item) => $item['content'], array_filter($turn['history'] ?? [], fn ($item) => $item['role'] === 'user'))).' '.$answer;
         $all = $this->analyzer->analyzeAnswer($userText, 0, '', $turn['mode']);
@@ -1216,7 +1216,7 @@ class ExaminerService
 
             return $isEn
                 ? "Our time is up. {$good} {$practice} Good luck, you are going to do great!"
-                : "Waktu kita sudah habis. {$good} {$practice} Semangat, ".($isHr ? 'aku yakin kamu bisa' : 'saya yakin Anda bisa').'!';
+                : "Waktu kita sudah habis. {$good} {$practice} Semangat, ".($isHr ? 'aku yakin kamu bisa' : 'saya yakin kamu bisa').'!';
         }
 
         if ($this->analyzer->soundsUnsure($answer)) {
@@ -1598,25 +1598,25 @@ class ExaminerService
         $metrics = $this->analyzer->analyzeAnswer((string) $turn['answer'], 0, (string) $turn['question'], $turn['mode']);
         $phrase = $echoPhrase ? $this->analyzer->keyPhrase((string) $turn['answer'], $turn['mode']) : null;
         $about = $phrase !== null ? ($isEn ? " about {$phrase}" : " soal {$phrase}") : '';
-        $you = $turn['role_type'] === 'hrd' ? 'kamu' : 'Anda';
+        $you = 'kamu';
 
         $example = match ($turn['role_type']) {
             'investor' => [$isEn ? "Can you give me a real case{$about} from an actual customer?" : "Bisa beri contoh kasus nyata{$about} dari pelanggan sungguhan?"],
-            'dosen_penguji' => [$isEn ? "Could you elaborate{$about} with a concrete example from your research?" : "Bisa Anda jelaskan lebih rinci{$about}, dengan contoh konkret dari penelitian Anda?"],
+            'dosen_penguji' => [$isEn ? "Could you elaborate{$about} with a concrete example from your research?" : "Bisa kamu jelaskan lebih rinci{$about}, dengan contoh konkret dari penelitian kamu?"],
             default => [$isEn ? "Can you walk me through a specific moment{$about}? What exactly did you do?" : "Boleh ceritakan momen spesifiknya{$about}? Apa yang {$you} lakukan persisnya?"],
         };
         $evidence = match ($turn['role_type']) {
             'investor' => [$isEn ? 'What numbers back that up today?' : 'Angka apa yang mendukung klaim itu saat ini?'],
-            'dosen_penguji' => [$isEn ? 'How did you measure that, and what were the results?' : 'Bagaimana Anda mengukurnya, dan berapa hasilnya?'],
+            'dosen_penguji' => [$isEn ? 'How did you measure that, and what were the results?' : 'Gimana cara kamu ngukurnya, dan hasilnya berapa?'],
             default => [$isEn ? 'What was the result in the end, can you put a number on it?' : 'Terus hasil akhirnya gimana, ada angka atau dampak yang bisa disebut?'],
         };
         $depth = match ($turn['role_type']) {
             'investor' => $isEn
                 ? ['And what happens to the business if that assumption turns out wrong?', 'Why would a customer pay for this instead of doing nothing?', 'What would you need from an investor to prove that faster?']
-                : ['Lalu apa yang terjadi pada bisnis Anda kalau asumsi itu ternyata salah?', 'Kenapa pelanggan mau membayar untuk ini, bukan tetap pakai cara lama?', 'Apa yang Anda butuhkan dari investor untuk membuktikan itu lebih cepat?'],
+                : ['Lalu apa yang terjadi pada bisnis kamu kalau asumsi itu ternyata salah?', 'Kenapa pelanggan mau membayar untuk ini, bukan tetap pakai cara lama?', 'Apa yang kamu butuhkan dari investor untuk membuktikan itu lebih cepat?'],
             'dosen_penguji' => $isEn
                 ? ['What is the main limitation of that approach?', 'Why is that approach more suitable than the alternatives?', 'How would your conclusion change if the data were different?']
-                : ['Lalu apa keterbatasan utama dari pendekatan tersebut?', 'Mengapa pendekatan itu lebih tepat dibanding alternatif lainnya?', 'Bagaimana kesimpulan Anda berubah jika datanya berbeda?'],
+                : ['Terus, keterbatasan utama pendekatan itu apa?', 'Kenapa pendekatan itu lebih pas dibanding alternatif lain?', 'Kalau datanya beda, kesimpulanmu berubah nggak?'],
             default => $isEn
                 ? ['If you could redo it, what would you do differently?', 'How did the people around you react to that?', 'What did that experience teach you about yourself?']
                 : ['Kalau bisa diulang, apa yang bakal kamu lakukan berbeda?', 'Terus gimana respons orang-orang di sekitarmu waktu itu?', 'Dari pengalaman itu, apa yang kamu pelajari tentang dirimu sendiri?'],
@@ -1628,7 +1628,7 @@ class ExaminerService
                 : ['Bisa dijelaskan sedikit lebih jauh, kenapa begitu?', 'Bisa beri satu contoh konkretnya?'],
             'dosen_penguji' => $isEn
                 ? ['Could you elaborate a little further?', 'What is the reasoning behind that?']
-                : ['Bisa Anda uraikan sedikit lebih lengkap?', 'Apa alasan di balik hal tersebut?'],
+                : ['Bisa diceritain sedikit lebih lengkap?', 'Alasannya apa?'],
             default => $isEn
                 ? ['Tell me a bit more, I would love to get to know you better.', 'Why is that, is there a small example?']
                 : ['Boleh cerita sedikit lebih lengkap? Saya pengen kenal kamu lebih jauh.', 'Kenapa begitu? Ada contoh kecilnya?'],
@@ -1671,7 +1671,7 @@ class ExaminerService
         }
 
         $isEn = $turn['language'] === 'en';
-        $you = $turn['role_type'] === 'hrd' ? 'kamu' : 'Anda';
+        $you = 'kamu';
 
         return match ($gap[0]) {
             'contradiction' => $isEn
@@ -1682,11 +1682,11 @@ class ExaminerService
             'result' => $isEn ? 'And how did it end, what was the result?' : 'Terus akhirnya gimana, hasilnya apa?',
             'competitors' => $isEn ? 'If nobody does this yet, how do your customers solve the problem today?' : 'Kalau belum ada pesaing, sekarang pelanggan menyelesaikan masalah itu pakai cara apa?',
             'no_number' => $isEn ? 'What number shows that today?' : 'Angka apa yang menunjukkan hal itu hari ini?',
-            'broad_market' => $isEn ? 'That is a very broad market. Which customer segment are you going after first?' : 'Itu pasar yang sangat luas. Segmen pelanggan mana yang Anda kejar pertama kali?',
+            'broad_market' => $isEn ? 'That is a very broad market. Which customer segment are you going after first?' : 'Itu pasar yang luas banget. Segmen pelanggan mana yang mau kamu kejar duluan?',
             'funds' => $isEn ? 'What exactly will the money be used for?' : 'Dananya nanti akan dipakai untuk apa saja persisnya?',
             'comparison' => $isEn ? 'Compared with which method, and measured with what metric?' : 'Dibandingkan dengan metode apa, dan diukur dengan metrik apa?',
-            'method_reason' => $isEn ? 'Why did you choose that method over the alternatives?' : 'Mengapa Anda memilih metode itu dibanding alternatif lainnya?',
-            'sample' => $isEn ? 'How much data did you use, and how did you select it?' : 'Berapa jumlah data atau sampel yang Anda pakai, dan bagaimana cara memilihnya?',
+            'method_reason' => $isEn ? 'Why did you choose that method over the alternatives?' : 'Kenapa kamu milih metode itu, bukan alternatif lainnya?',
+            'sample' => $isEn ? 'How much data did you use, and how did you select it?' : 'Berapa jumlah data atau sampel yang kamu pakai, dan bagaimana cara memilihnya?',
             'overgeneral' => $isEn ? 'Is that true in every case, and what are its limitations?' : 'Apakah itu berlaku di semua kasus, dan apa keterbatasannya?',
             default => null,
         };
@@ -1713,7 +1713,7 @@ class ExaminerService
                 ? ['Oke, :phrase. Noted.', 'Baik, poin :phrase saya tangkap.', 'Menarik, :phrase.', 'Oke, saya catat :phrase.']
                 : ['Oke, noted.', 'Baik, saya tangkap.', 'Oke, jelas.', 'Baik.'],
             default => $withPhrase
-                ? ['Baik, saya catat penjelasan Anda mengenai :phrase.', 'Terima kasih, bagian :phrase cukup jelas.', 'Baik, :phrase, saya pahami.', 'Poin Anda tentang :phrase sudah saya catat.']
+                ? ['Oke, saya catat penjelasanmu soal :phrase.', 'Terima kasih, bagian :phrase cukup jelas.', 'Baik, :phrase, saya pahami.', 'Poin kamu tentang :phrase sudah saya catat.']
                 : ['Baik, terima kasih atas penjelasannya.', 'Baik, saya pahami.', 'Terima kasih.', 'Baik, cukup jelas.'],
         };
     }

@@ -60,8 +60,8 @@
                     <p x-show="isCoach" x-cloak class="mt-3 text-sm leading-relaxed text-white/60">{{ $isEn ? 'This is not a test. Talk naturally, ask anything, and your coach will show you how to say it better.' : 'Ini bukan tes. Ngobrol aja senatural mungkin, boleh nanya apa pun, nanti coach kasih tahu cara ngomong yang lebih pas.' }}</p>
                     <p x-show="!isCoach" class="mt-3 text-sm leading-relaxed text-white/60">
                         {{ $isEn
-                            ? "{$examinerName} speaks first. Answer out loud; when you pause for a moment, your answer is sent automatically."
-                            : "{$examinerName} bakal ngomong duluan. Jawab pakai suara; kalau kamu diam sebentar, jawabanmu otomatis terkirim." }}
+                            ? "{$examinerName} speaks first. To answer, hold the mic button (or Space) while you talk and let go to send. Hold it while they talk to cut in."
+                            : "{$examinerName} bakal ngomong duluan. Mau jawab? Tahan tombol mic (atau Spasi) sambil ngomong, lepas buat kirim. Mau motong? Tahan aja." }}
                     </p>
 
                     <div class="mx-auto mt-6 max-w-sm space-y-3 lg:mx-0">
@@ -141,7 +141,6 @@
 
                     {{-- Name plate + status, top left (captions own the bottom, your camera the top right) --}}
                     <div class="pointer-events-none absolute left-3 top-3 flex flex-wrap items-center gap-2 sm:left-4 sm:top-4">
-                        <span class="hidden rounded-lg bg-black/50 px-2.5 py-1 text-sm font-semibold backdrop-blur sm:inline">{{ $examinerName }} <span class="font-normal text-white/65">· {{ $examinerTitle }}</span></span>
                         <span class="inline-flex items-center gap-1.5 rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold backdrop-blur" aria-live="polite">
                             <span x-show="status === 'speaking'" class="flex h-3 items-end gap-[2px]" aria-hidden="true">
                                 <span class="voic-eq w-[3px] rounded-full bg-white"></span>
@@ -159,8 +158,8 @@
                             </span>
                             <span x-text="{
                                 speaking: t('Sedang bicara', 'Speaking'),
-                                listening: vad.speaking ? t('Mendengarkan…', 'Listening…') : t('Giliranmu', 'Your turn'),
-                                long_turn: t('Mendengarkan, nggak menyela', 'Listening, no interruptions'),
+                                listening: holding ? t('Mendengarkan kamu…', 'Listening to you…') : t('Giliranmu', 'Your turn'),
+                                long_turn: t('Mendengarkan, nggak dipotong', 'Listening, no interruptions'),
                                 thinking: t('Lagi mikir…', 'Thinking…'),
                                 prep: t('Waktu persiapan', 'Preparation'),
                                 finishing: t('Menyusun rapor', 'Building report'),
@@ -168,30 +167,6 @@
                                 ready: t('Siap', 'Ready')
                             }[status]"></span>
                         </span>
-                    </div>
-
-                    {{-- AI engine chip, under the name plate: details on demand --}}
-                    <div x-data="{ open: false }" x-show="engine" x-cloak class="absolute left-3 top-12 z-20 text-left sm:left-4 sm:top-14">
-                        <button type="button" @click="open = !open" :aria-expanded="open"
-                                class="inline-flex items-center gap-1.5 rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold backdrop-blur hover:bg-black/70">
-                            <span class="h-1.5 w-1.5 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-400' : 'bg-emerald-400'"></span>
-                            <span x-text="{ local_llm: t('AI lokal', 'Local AI'), ollama_cloud: (aiStatus?.model || 'AI') + ' · cloud', openrouter: (aiStatus?.model || 'AI') + ' · cloud', cloud_llm: t('AI cloud', 'Cloud AI'), offline_composer: t('Mode cadangan', 'Fallback mode') }[engine]"></span>
-                        </button>
-                        <div x-show="open" x-transition.opacity @click.outside="open = false"
-                             class="absolute left-0 mt-2 w-72 max-w-[80vw] rounded-2xl border border-white/10 bg-[#161a28]/95 p-3 text-xs text-white/80 shadow-xl backdrop-blur">
-                            <p class="font-semibold text-white" x-text="engine === 'offline_composer'
-                                ? t('AI belum aktif: penguji memakai jawaban cadangan.', 'AI is off: the examiner uses fallback replies.')
-                                : t('AI berjalan normal.', 'AI is running normally.')"></p>
-                            <template x-if="aiStatus?.reason">
-                                <div class="mt-2 rounded-xl bg-amber-400/10 p-2 text-amber-200">
-                                    <p x-text="aiStatus.reason"></p>
-                                    <p x-show="aiStatus.fix" class="mt-1 break-words font-mono text-xs" x-text="aiStatus.fix"></p>
-                                </div>
-                            </template>
-                            <p class="mt-2 text-white/60" x-text="t('Telinga: ', 'Ears: ') + (voiceMode === 'local' ? t('Whisper lokal', 'local Whisper') : voiceMode === 'browser' ? t('browser', 'browser') : t('ketik', 'typing'))
-                                + (firstSentenceMs ? ' · ' + t('respon ', 'reply ') + (firstSentenceMs / 1000).toFixed(1) + t(' dtk', 's') : '')"></p>
-                            <button type="button" class="mt-2 font-semibold text-white underline" @click="checkEngine()">{{ $isEn ? 'Check again' : 'Cek ulang' }}</button>
-                        </div>
                     </div>
 
                     {{-- Cue card (Part 2), floating over the call --}}
@@ -204,7 +179,7 @@
                                       x-text="(status === 'prep' ? t('Persiapan ', 'Prep ') : t('Bicara ', 'Talk ')) + countdownLabel"></span>
                             </div>
                             <p class="mt-3 text-lg font-bold leading-snug" x-text="cueCard.prompt"></p>
-                            <p class="mt-3 text-sm text-slate-500">{{ $isEn ? 'You should say:' : ($mode['role_type'] === 'hrd' ? 'Yang perlu kamu sampaikan:' : 'Yang perlu Anda sampaikan:') }}</p>
+                            <p class="mt-3 text-sm text-slate-500">{{ $isEn ? 'You should say:' : 'Yang perlu kamu sampaikan:' }}</p>
                             <ul class="mt-1.5 space-y-1 text-sm">
                                 <template x-for="point in cueCard.points" :key="point">
                                     <li class="flex gap-2"><span class="text-slate-500 dark:text-slate-400">•</span><span x-text="point"></span></li>
@@ -226,10 +201,10 @@
                         <p x-show="subtitle && !(cueCard && (status === 'prep' || status === 'long_turn'))"
                            class="max-w-3xl rounded-xl bg-black/65 px-4 py-2 text-center text-base font-medium leading-relaxed backdrop-blur sm:text-lg"
                            :class="status === 'speaking' ? 'opacity-100' : 'opacity-75'" x-text="subtitle"></p>
-                        <p x-show="!typingMode && (liveAnswer || (voiceMode === 'local' && vad.speaking))" x-cloak
+                        <p x-show="!typingMode && (holding || status === 'long_turn')" x-cloak
                            class="max-w-3xl rounded-xl bg-sky-500/20 px-4 py-1.5 text-center text-sm text-sky-100 ring-1 ring-sky-400/30 backdrop-blur">
                             <span class="font-semibold">{{ $isEn ? 'You' : 'Kamu' }}:</span>
-                            <span x-text="voiceMode === 'local' ? t('merekam… ', 'recording… ') + recordSeconds + t(' dtk', 's') : finalText"></span>
+                            <span x-text="voiceMode === 'local' || !liveAnswer ? t('lagi ngomong… ', 'talking… ') + recordSeconds + t(' dtk', 's') : finalText"></span>
                             <span class="text-sky-200/60" x-text="interim"></span>
                         </p>
                     </div>
@@ -284,10 +259,10 @@
             <div class="mx-auto w-full max-w-3xl shrink-0 px-3 pt-3 sm:px-5">
                 <p x-show="errorMessage" x-cloak class="mb-2 rounded-xl bg-rose-500/15 px-3 py-2 text-center text-sm text-rose-200" x-text="errorMessage"></p>
                 <p x-show="!errorMessage && !typingMode && !liveAnswer" class="text-center text-xs text-white/65"
-                   x-text="hint || (status === 'long_turn' ? t('Tekan tombol mic kalau sudah selesai', 'Tap the mic when you are done')
-                        : status === 'listening' ? t('Jeda sebentar atau tekan mic untuk kirim', 'Pause for a second or tap the mic to send')
-                        : status === 'thinking' ? t('Jawabanmu lagi diproses…', 'Processing your answer…')
-                        : t('Mic aktif setelah penguji selesai bicara', 'The mic opens after the examiner finishes'))"></p>
+                   x-text="hint || (status === 'long_turn' ? t('Ngomong sampai selesai, lalu ketuk mic', 'Talk until you are done, then tap the mic')
+                        : status === 'listening' ? (holding ? t('Lepas kalau sudah selesai', 'Let go when you are done') : t('Tahan mic (atau Spasi) sambil ngomong', 'Hold the mic (or Space) while you talk'))
+                        : status === 'speaking' ? t('Mau motong? Tahan mic', 'Want to cut in? Hold the mic')
+                        : '\u00a0')"></p>
                 <template x-if="typingMode">
                     <form @submit.prevent="status === 'error' ? retry() : submitAnswer()" class="flex items-end gap-2">
                         <textarea x-model="typed" rows="1" :disabled="!(status === 'listening' || status === 'long_turn' || status === 'error')"
@@ -301,75 +276,71 @@
                 </template>
             </div>
 
-            {{-- Control bar --}}
-            <div class="flex shrink-0 items-center justify-center gap-2 px-3 py-3 sm:gap-3 sm:py-4">
-                {{-- Mic: answer / send --}}
-                <button type="button" x-show="!typingMode" @click="submitAnswer()" :disabled="!(status === 'listening' || status === 'long_turn')"
-                        class="relative inline-flex h-14 w-14 items-center justify-center rounded-full transition disabled:cursor-not-allowed"
-                        :class="isListening ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-white/10 text-white/65'"
-                        :aria-label="t('Selesai menjawab', 'Done answering')" :title="t('Selesai menjawab', 'Done answering')">
-                    <span x-show="isListening && vad.speaking" class="absolute inset-0 animate-ping rounded-full bg-sky-400/40"></span>
-                    <svg class="relative h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 006 6.92V20H8a1 1 0 100 2h8a1 1 0 100-2h-3v-2.08A7 7 0 0019 11z"/></svg>
-                </button>
-
+            {{-- Control bar: camera, hold-to-talk mic, menu, end --}}
+            <div class="flex shrink-0 items-center justify-center gap-4 px-3 py-3 sm:gap-6 sm:py-4">
                 {{-- Camera --}}
                 <button type="button" @click="toggleCamera()"
                         class="inline-flex h-12 w-12 items-center justify-center rounded-full transition"
-                        :class="cameraOn ? 'bg-white/10 hover:bg-white/15' : 'bg-white/10 text-white/60 hover:bg-white/15'"
+                        :class="cameraOn ? 'bg-white/10 hover:bg-white/15' : 'bg-white/10 text-white/65 hover:bg-white/15'"
                         :aria-label="cameraOn ? t('Matikan kamera', 'Turn camera off') : t('Nyalakan kamera', 'Turn camera on')"
                         :title="cameraOn ? t('Matikan kamera', 'Turn camera off') : t('Nyalakan kamera (kontak mata & ekspresi, diproses di perangkatmu)', 'Turn camera on (eye contact & expression, processed on your device)')">
                     <svg x-show="cameraOn" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
                     <svg x-show="!cameraOn" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M12 18.75H4.5a2.25 2.25 0 01-2.25-2.25V9m12.841 9.091L16.5 19.5m-1.409-1.409c.407-.407.659-.97.659-1.591v-9a2.25 2.25 0 00-2.25-2.25h-9c-.621 0-1.184.252-1.591.659m12.182 12.182L2.909 5.909M1.5 4.5l1.409 1.409"/></svg>
                 </button>
 
-                {{-- Repeat the question --}}
-                <button type="button" @click="repeatQuestion()" :disabled="status !== 'listening'"
-                        class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/15 disabled:opacity-35"
-                        :aria-label="t('Ulangi pertanyaan', 'Repeat question')" :title="t('Ulangi pertanyaan', 'Repeat question')">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992V4.356M2.985 19.644v-4.992h4.992m0 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg>
+                {{-- The mic: hold to talk, hold while the examiner talks to cut in. Part 2: tap to finish. --}}
+                <button type="button" data-ptt x-show="!typingMode" :disabled="!canPress"
+                        @pointerdown.prevent="$el.setPointerCapture?.($event.pointerId); pressMic()"
+                        @pointerup="releaseMic()" @pointercancel="releaseMic()" @contextmenu.prevent
+                        @keydown.enter.prevent="pressMic()" @keyup.enter.prevent="releaseMic()"
+                        class="relative inline-flex h-[4.5rem] w-[4.5rem] touch-none select-none items-center justify-center rounded-full transition disabled:cursor-not-allowed"
+                        :class="holding || status === 'long_turn' ? 'scale-110 bg-sky-500 text-white shadow-lg shadow-sky-500/40'
+                            : (canPress ? 'bg-white text-slate-900 hover:bg-slate-100' : 'bg-white/10 text-white/50')"
+                        :aria-pressed="holding"
+                        :aria-label="status === 'long_turn' ? t('Selesai bicara', 'Done talking') : t('Tahan untuk bicara', 'Hold to talk')"
+                        :title="status === 'long_turn' ? t('Ketuk kalau sudah selesai', 'Tap when you are done') : t('Tahan untuk bicara (atau tahan Spasi)', 'Hold to talk (or hold Space)')">
+                    <span x-show="holding || status === 'long_turn'" class="absolute inset-0 rounded-full bg-sky-400/40" :style="`transform: scale(${1 + Math.min(micLevel, 100) / 220})`"></span>
+                    <svg class="pointer-events-none relative h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 006 6.92V20H8a1 1 0 100 2h8a1 1 0 100-2h-3v-2.08A7 7 0 0019 11z"/></svg>
                 </button>
 
-                {{-- Captions --}}
-                <button type="button" @click="captions = !captions"
-                        class="inline-flex h-12 w-12 items-center justify-center rounded-full text-xs font-black transition"
-                        :class="captions ? 'bg-white text-slate-900' : 'bg-white/10 text-white/60 hover:bg-white/15'"
-                        :aria-pressed="captions" :aria-label="t('Takarir', 'Captions')" :title="t('Takarir', 'Captions')">CC</button>
-
-                {{-- Voice or typing --}}
-                <button type="button" x-show="speechSupported || aiStatus?.stt_local"
-                        @click="stopListening(true); voiceMode = typingMode ? ((aiStatus?.stt_local && micReady) ? 'local' : (speechSupported ? 'browser' : 'typing')) : 'typing'; if (status === 'listening') startListening()"
-                        class="inline-flex h-12 w-12 items-center justify-center rounded-full transition"
-                        :class="typingMode ? 'bg-white text-slate-900' : 'bg-white/10 hover:bg-white/15'"
-                        :aria-label="typingMode ? t('Jawab dengan suara', 'Answer by voice') : t('Ketik saja', 'Type instead')" :title="typingMode ? t('Jawab dengan suara', 'Answer by voice') : t('Ketik saja', 'Type instead')">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path stroke-linecap="round" d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
-                </button>
-
-                {{-- Transcript --}}
-                <button type="button" @click="panel = !panel"
-                        class="inline-flex h-12 w-12 items-center justify-center rounded-full transition"
-                        :class="panel ? 'bg-white text-slate-900' : 'bg-white/10 hover:bg-white/15'"
-                        :aria-pressed="panel" :aria-label="t('Transkrip', 'Transcript')" :title="t('Transkrip', 'Transcript')">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
-                </button>
-
-                {{-- Settings: interrupting --}}
+                {{-- Everything else, out of the way --}}
                 <div x-data="{ more: false }" class="relative">
                     <button type="button" @click="more = !more" @click.outside="more = false"
-                            class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/15" :aria-expanded="more" :aria-label="t('Pengaturan lainnya', 'More settings')" :title="t('Lainnya', 'More')">
+                            class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/15" :aria-expanded="more" :aria-label="t('Menu lainnya', 'More')" :title="t('Lainnya', 'More')">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
                     </button>
-                    <div x-show="more" x-cloak x-transition.opacity class="absolute bottom-14 left-1/2 w-64 -translate-x-1/2 rounded-2xl bg-[#161a28] p-3 text-left text-xs shadow-xl ring-1 ring-white/10">
-                        <label class="flex cursor-pointer items-start gap-2">
-                            <input type="checkbox" x-model="bargeIn" class="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/10 text-sky-500 focus:ring-0">
-                            <span><span class="font-semibold">{{ $isEn ? 'Allow interrupting' : 'Boleh menyela' }}</span><br>
-                                <span class="text-white/65">{{ $isEn ? 'Speaking while the examiner talks stops them. Use a headset.' : 'Ngomong saat penguji bicara akan memotongnya. Pakai headset.' }}</span></span>
-                        </label>
+                    <div x-show="more" x-cloak x-transition.opacity class="absolute bottom-14 left-1/2 z-40 w-64 -translate-x-1/2 rounded-2xl bg-[#161a28] p-1.5 text-left text-sm shadow-xl ring-1 ring-white/10">
+                        <button type="button" @click="more = false; repeatQuestion()" :disabled="status !== 'listening'"
+                                class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/10 disabled:opacity-40">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992V4.356M2.985 19.644v-4.992h4.992m0 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg>
+                            {{ $isEn ? 'Repeat the question' : 'Ulangi pertanyaan' }}
+                        </button>
+                        <button type="button" @click="captions = !captions" :aria-pressed="captions"
+                                class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/10">
+                            <span class="inline-flex w-4 shrink-0 justify-center text-xs font-black">CC</span>
+                            <span class="flex-1" x-text="captions ? t('Sembunyikan teks', 'Hide captions') : t('Tampilkan teks', 'Show captions')"></span>
+                        </button>
+                        <button type="button" x-show="speechSupported || aiStatus?.stt_local"
+                                @click="more = false; stopListening(true); holding = false; voiceMode = typingMode ? ((aiStatus?.stt_local && micReady && !aiStatus?.prefer_browser_stt) ? 'local' : (speechSupported ? 'browser' : 'typing')) : 'typing'"
+                                class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/10">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path stroke-linecap="round" d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+                            <span x-text="typingMode ? t('Jawab pakai suara', 'Answer by voice') : t('Ketik saja', 'Type instead')"></span>
+                        </button>
+                        <button type="button" @click="more = false; panel = !panel" :aria-pressed="panel"
+                                class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-white/10">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+                            <span x-text="panel ? t('Tutup transkrip', 'Close transcript') : t('Lihat transkrip', 'Show transcript')"></span>
+                        </button>
+                        <p x-show="engine" class="mt-1 flex items-center gap-2 border-t border-white/10 px-3 pb-1.5 pt-2.5 text-xs text-white/65">
+                            <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-400' : 'bg-emerald-400'"></span>
+                            <span x-text="engine === 'offline_composer' ? t('AI belum aktif, pakai jawaban cadangan', 'AI is off, using fallback replies') : t('AI aktif', 'AI is on')"></span>
+                        </p>
                     </div>
                 </div>
 
                 {{-- Leave --}}
                 <button type="button" @click="if (confirm(isCoach ? t('Akhiri obrolan dan lihat catatan coaching?', 'End the chat and see your coaching notes?') : t('Akhiri sesi dan lihat rapor dari jawaban sejauh ini?', 'End the session and see the report for answers so far?'))) finish()"
-                        class="ml-1 inline-flex h-12 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-bold transition hover:bg-rose-500 sm:ml-3">
+                        class="inline-flex h-12 items-center gap-2 rounded-full bg-rose-600 px-5 text-sm font-bold transition hover:bg-rose-500">
                     <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.72c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 00-2.67-1.85.996.996 0 01-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
                     <span class="hidden sm:inline">{{ $isEn ? 'End' : 'Akhiri' }}</span>
                 </button>

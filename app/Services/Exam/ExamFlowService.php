@@ -91,8 +91,8 @@ class ExamFlowService
             }
         : match ($definition['role_type']) {
             'hrd' => "Halo{$who}, aku {$examinerName}, HRD yang bakal ngobrol sama kamu hari ini. Kita ngobrol sekitar {$minutes} menit, ada {$partCount} bagian. Santai aja ya, jawab senatural mungkin, anggap lagi ngobrol biasa.",
-            'investor' => "Halo{$who}, saya {$examinerName}, investor yang bakal dengerin pitch Anda hari ini. Kita punya sekitar {$minutes} menit, dibagi {$partCount} bagian. Santai aja, anggap kita lagi ngopi bareng dan Anda cerita soal startup Anda.",
-            default => "Selamat datang{$who}, saya {$examinerName}, dosen penguji Anda hari ini. Sidang simulasi ini ada {$partCount} bagian, kira-kira {$minutes} menit. Tenang saja, jawab dengan bahasa Anda sendiri.",
+            'investor' => "Halo{$who}, saya {$examinerName}, investor yang bakal dengerin pitch kamu hari ini. Kita punya sekitar {$minutes} menit, dibagi {$partCount} bagian. Santai aja, anggap kita lagi ngopi bareng dan kamu cerita soal startup-mu.",
+            default => "Halo{$who}, selamat datang. Saya {$examinerName}, dosen penguji kamu hari ini. Sidang simulasinya ada {$partCount} bagian, kira-kira {$minutes} menit. Tenang aja, jawab pakai bahasamu sendiri.",
         };
 
         $opening = trim($greeting.' '.$this->partIntro($state));
@@ -490,7 +490,7 @@ class ExamFlowService
                 'directive' => ExaminerService::DIRECTIVE_REACT,
                 'scripted' => $state['language'] === 'en'
                     ? 'That brings us to the end of the session. Thank you, you did well to get through all of it. Your feedback report is ready.'
-                    : 'Baik, itu tadi pertanyaan terakhir. Terima kasih, sesi latihan sudah selesai. Laporan evaluasi Anda sudah siap.',
+                    : 'Oke, itu tadi pertanyaan terakhir. Makasih ya, sesi latihannya udah selesai. Rapormu udah siap.',
                 'planned_question' => null,
                 'transition' => null,
             ];
@@ -541,16 +541,16 @@ class ExamFlowService
         $part = (int) $state['part'];
         $title = $this->blueprint->text($this->blueprint->part($state['mode'], $part)['title'] ?? '', $state['language']);
 
-        $you = ($this->blueprint->mode($state['mode'])['role_type'] ?? '') === 'hrd' ? 'kamu' : 'Anda';
+        $isHr = ($this->blueprint->mode($state['mode'])['role_type'] ?? '') === 'hrd';
 
         if ($part === 2) {
             $card = $this->blueprint->cueCard($state['mode'], (int) ($state['plan'][2] ?? 0), $state['language'], $state['topic']);
 
             return $isEn
                 ? "Now let's move to Part 2, {$title}. I will give you a topic card. You have one minute to prepare and you can take notes, then speak for up to two minutes. I will not interrupt you. Your topic is: {$card['prompt']}"
-                : ($you === 'kamu'
+                : ($isHr
                     ? "Oke, sekarang kita masuk Bagian 2, {$title}. Nanti aku kasih satu topik. Kamu punya semenit buat siap-siap, boleh sambil nyatat, terus ngomong sampai dua menit, aku nggak bakal motong. Topiknya: {$card['prompt']}"
-                    : "Baik, sekarang kita masuk Bagian 2, {$title}. Saya kasih satu topik. Anda punya satu menit untuk siap-siap dan boleh mencatat, lalu bicara sampai dua menit tanpa saya potong. Topiknya: {$card['prompt']}");
+                    : "Oke, sekarang kita masuk Bagian 2, {$title}. Saya kasih satu topik. Kamu punya semenit buat siap-siap, boleh sambil nyatat, terus ngomong sampai dua menit, saya nggak bakal motong. Topiknya: {$card['prompt']}");
         }
 
         $prefix = $isEn ? "Let's start Part {$part}, {$title}." : "Kita mulai Bagian {$part}, {$title}.";

@@ -13,18 +13,16 @@
  *   browser : Web Speech API (needs internet in Chrome/Edge)
  *   typing  : keyboard fallback
  *
- * Barge-in (optional, needs a headset): speaking while the examiner talks
- * stops the examiner and starts listening, like a real conversation.
+ * Push to talk: hold the mic button (or Space) while you speak, release to
+ * send. Holding it while the examiner talks cuts them off. Only Part 2 (the
+ * two-minute talk) records hands-free, ended by the timer or a tap.
  */
 
 import TalkingAvatar from './avatar';
 
 const MEDIAPIPE_VERSION = '0.10.14';
 const LOCAL_MEDIAPIPE = '/vendor/mediapipe';
-const END_SILENCE_MS = 1100; // pause that ends a normal answer
-const END_SILENCE_SHORT_MS = 1700; // more patience while the answer is still very short
 const MIN_SPEECH_MS = 250; // ignore clicks and coughs
-const BARGE_IN_MS = 350;
 const MAX_ANSWER_MS = 90000;
 
 export default function examRoom(config) {
@@ -75,6 +73,7 @@ export default function examRoom(config) {
         vad: { speaking: false, speechMs: 0, silenceMs: 0, aboveMs: 0, lastTick: 0 },
         recordSeconds: 0,
         bargeIn: false,
+        holding: false,
         cameraOn: false,
         cameraStream: null,
         faceLandmarker: null,
@@ -142,6 +141,17 @@ export default function examRoom(config) {
             this.$watch('vad.speaking', (speaking) => avatar?.setUserTalking(Boolean(speaking)));
             this.$nextTick(() => this.startAvatar());
             window.addEventListener('beforeunload', () => this.teardown());
+            const typingTarget = (e) => !('ptt' in (e.target?.dataset || {})) && (/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target?.tagName || '') || e.target?.isContentEditable);
+            window.addEventListener('keydown', (e) => {
+                if (e.code !== 'Space' || e.repeat || !this.started || typingTarget(e)) return;
+                e.preventDefault();
+                this.pressMic();
+            });
+            window.addEventListener('keyup', (e) => {
+                if (e.code !== 'Space' || typingTarget(e)) return;
+                e.preventDefault();
+                this.releaseMic();
+            });
         },
 
         // ----- Live avatar ---------------------------------------------------
@@ -280,11 +290,7 @@ export default function examRoom(config) {
                 this.vad.lastTick = now;
                 const loud = level > this.speechThreshold;
 
-                if (this.status === 'speaking' && this.bargeIn) {
-                    // Interrupting needs to be clearly louder than the examiner's echo.
-                    this.vad.aboveMs = level > this.speechThreshold * 1.8 ? this.vad.aboveMs + delta : 0;
-                    if (this.vad.aboveMs > BARGE_IN_MS) this.interrupt();
-                } else if (this.voiceMode === 'local' && this.isListening && this.recorder) {
+                if (this.voiceMode === 'local' && this.isListening && this.recorder && (this.holding || this.status === 'long_turn')) {
                     this.trackSpeech(loud, delta);
                 }
 
@@ -307,10 +313,8 @@ export default function examRoom(config) {
 
             if (this.status === 'long_turn') return; // Part 2: only the timer or the button ends it
 
-            const patience = vad.speechMs < 1500 ? END_SILENCE_SHORT_MS : END_SILENCE_MS;
-            if (vad.speaking && vad.silenceMs > patience) {
-                this.submitAnswer();
-            } else if (Date.now() - this.answerStartedAt > MAX_ANSWER_MS) {
+            if (Date.now() - this.answerStartedAt > MAX_ANSWER_MS) {
+                this.holding = false;
                 this.submitAnswer();
             }
         },
@@ -324,8 +328,8 @@ export default function examRoom(config) {
             if (this.voiceMode !== 'typing') await this.ensureMic();
             if (this.isCoach) this.startCoachTimer();
             const opening = this.state.examiner_message;
-            await this.playSentences([{ text: opening?.text || '', audio_url: opening?.audio_url || null }]);
-            this.afterExaminerTurn();
+            // Cut off (mic held): pressMic already handed the turn over.
+            if (await this.playSentences([{ text: opening?.text || '', audio_url: opening?.audio_url || null }])) this.afterExaminerTurn();
         },
 
         // ----- Examiner voice: a queue of sentences -----------------------
@@ -401,8 +405,56 @@ export default function examRoom(config) {
 
         async repeatQuestion() {
             if (this.isListening) this.stopListening(true);
-            await this.playSentences(this.lastTurn.length ? this.lastTurn : [{ text: this.subtitle, audio_url: null }]);
-            this.afterExaminerTurn();
+            if (await this.playSentences(this.lastTurn.length ? this.lastTurn : [{ text: this.subtitle, audio_url: null }])) this.afterExaminerTurn();
+        },
+
+        // ----- Push to talk ---------------------------------------------------
+
+        get canPress() {
+            return !this.typingMode && ['speaking', 'listening', 'long_turn'].includes(this.status);
+        },
+
+        async pressMic() {
+            if (this.typingMode || this.holding) return;
+            // Part 2 records hands-free: a tap ends the talk.
+            if (this.status === 'long_turn') return this.submitAnswer();
+            if (this.status === 'speaking') {
+                // Cut the examiner off, like in a real call.
+                this.stopVoice();
+                this.startListening();
+            }
+            if (this.status !== 'listening') return;
+            if (!this.micStream && !(await this.ensureMic())) return;
+            this.holding = true;
+            this.hint = '';
+            this.errorMessage = '';
+            this.finalText = '';
+            this.interim = '';
+            this.answerStartedAt = Date.now();
+            this.recordSeconds = 0;
+            this.vad = { speaking: false, speechMs: 0, silenceMs: 0, aboveMs: 0, lastTick: 0 };
+            if (this.voiceMode === 'local') this.startRecording();
+            else if (this.voiceMode === 'browser') this.startRecognition();
+        },
+
+        async releaseMic() {
+            if (!this.holding) return;
+            this.holding = false;
+            if (this.status !== 'listening') return;
+            const heldMs = Date.now() - (this.answerStartedAt || Date.now());
+            if (this.voiceMode === 'browser') {
+                // Stop listening, then give the recogniser a moment to deliver its last words.
+                const recognition = this.recognition;
+                this.recognition = null;
+                if (recognition) { try { recognition.stop(); } catch (e) { /* ignore */ } }
+                await new Promise((resolve) => setTimeout(resolve, 700));
+            }
+            if (heldMs < 500) {
+                this.stopListening(true);
+                this.hint = this.t('Tahan tombol mic selama kamu bicara, lepas kalau sudah.', 'Keep holding the mic while you talk, let go when done.');
+                return;
+            }
+            this.submitAnswer();
         },
 
         // ----- Coaching timer -----------------------------------------------
@@ -421,7 +473,7 @@ export default function examRoom(config) {
 
         onCoachTimeUp() {
             if (this.state.completed) return;
-            const silent = this.status === 'listening' && !this.liveAnswer.trim() && !this.typed.trim() && !(this.voiceMode === 'local' && this.vad.speaking);
+            const silent = this.status === 'listening' && !this.holding && !this.liveAnswer.trim() && !this.typed.trim() && !(this.voiceMode === 'local' && this.vad.speaking);
             // Mid-answer: let them finish; the server closes on that turn. Otherwise close now.
             if (silent) return this.sendTimeUp();
             this.timeUpPending = true;
@@ -457,6 +509,8 @@ export default function examRoom(config) {
             this.vad = { speaking: false, speechMs: 0, silenceMs: 0, aboveMs: 0, lastTick: 0 };
             this.status = longTurn ? 'long_turn' : 'listening';
 
+            this.holding = false;
+            if (!longTurn) return;
             if (this.voiceMode === 'local') return this.startRecording();
             if (this.voiceMode === 'browser') return this.startRecognition();
         },
@@ -515,7 +569,7 @@ export default function examRoom(config) {
 
         armSilenceTimer() {
             clearTimeout(this.silenceTimer);
-            if (this.status !== 'listening') return;
+            if (this.status !== 'listening' || this.holding || !this.recognition) return;
             this.silenceTimer = setTimeout(() => {
                 if (this.liveAnswer.split(/\s+/).length >= 2) this.submitAnswer();
             }, 1400);
@@ -577,14 +631,17 @@ export default function examRoom(config) {
                 const blob = await this.stopRecording();
                 if (!blob || blob.size < 2000 || !this.vad.speaking) {
                     // Nothing was said: keep listening instead of sending silence.
-                    this.hint = this.t('Belum terdengar suara, silakan bicara.', 'I did not hear anything yet, go ahead.');
+                    this.hint = this.t('Suaramu belum kedengaran. Tahan mic sambil ngomong ya.', 'I could not hear you. Hold the mic while you talk.');
                     return wasLongTurn ? this.startLongTurn() : this.startListening();
                 }
                 form.append('audio', blob, 'answer.webm');
             } else {
-                this.stopListening();
                 pendingText = (this.typingMode ? this.typed : this.liveAnswer).trim();
-                if (!pendingText) return;
+                this.stopListening();
+                if (!pendingText) {
+                    if (!this.typingMode) this.hint = this.t('Suaramu belum kedengaran. Tahan mic sambil ngomong ya.', 'I could not hear you. Hold the mic while you talk.');
+                    return;
+                }
                 form.append('answer', pendingText);
                 this.status = 'thinking';
                 this.pushUser(pendingText);
