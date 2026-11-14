@@ -27,7 +27,7 @@
         <div class="pointer-events-none absolute inset-0 -z-10 opacity-[0.07] [background-image:linear-gradient(white_1px,transparent_1px),linear-gradient(90deg,white_1px,transparent_1px)] [background-size:56px_56px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]"></div>
 
         {{-- Top bar --}}
-        <div class="flex shrink-0 items-center justify-between px-6 py-5 lg:px-12">
+        <div class="flex shrink-0 items-center justify-between px-6 py-4 lg:px-12">
             <img src="/images/logo/voic-logo-horizontal-dark.svg" alt="VOIC" class="h-9 w-auto lg:h-11" width="156" height="44">
             <div class="flex items-center gap-3 text-sm font-semibold text-white/80">
                 @if ($today > 0)
@@ -38,20 +38,20 @@
             </div>
         </div>
 
-        <div class="mx-auto grid min-h-0 w-full max-w-7xl flex-1 items-center gap-10 px-6 pb-6 lg:grid-cols-[1.1fr_1fr] lg:px-12">
+        <div class="mx-auto grid min-h-0 w-full max-w-7xl flex-1 items-center gap-10 overflow-y-auto px-6 pb-6 lg:grid-cols-[1.1fr_1fr] lg:overflow-visible lg:px-12">
             {{-- Pitch --}}
             <div>
                 <p class="inline-flex items-center gap-2 rounded-full bg-emerald-400/15 px-3 py-1 text-sm font-bold text-emerald-300">
                     <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-400"></span>3 penguji AI lagi online
                 </p>
-                <h1 class="mt-5 text-5xl font-extrabold leading-[1.02] tracking-tight xl:text-7xl">
+                <h1 class="mt-5 text-5xl font-extrabold leading-[1.02] tracking-tight xl:text-6xl [@media(min-height:900px)]:xl:text-7xl">
                     Berani ditelepon<br><span class="bg-clip-text text-transparent transition-all duration-1000" :style="'background-image: linear-gradient(90deg, rgb(' + caller.glow + '), #7dd3fc)'">penguji AI?</span>
                 </h1>
                 <p class="mt-5 max-w-xl text-lg text-white/75 xl:text-xl">
                     Latihan wawancara kerja, sidang skripsi, atau pitching bisnis lewat video call. Penguji nyimak jawabanmu, nanya balik, lalu kasih rapor.
                 </p>
 
-                <ol class="mt-8 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
+                <ol class="mt-6 grid max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
                     @foreach (['Tulis nama', 'Pilih penguji', 'Ngobrol ±12 menit', 'Dapat rapor'] as $n => $step)
                         <li class="rounded-2xl bg-white/[0.06] px-3 py-3 ring-1 ring-white/10">
                             <span class="text-xs font-bold text-white/65">0{{ $n + 1 }}</span>
@@ -61,7 +61,7 @@
                 </ol>
 
                 {{-- Or call a specific examiner --}}
-                <div class="mt-8 flex flex-wrap gap-3">
+                <div class="mt-6 flex flex-wrap gap-3">
                     @foreach ($callers as $c)
                         <form method="POST" action="{{ route('attract.pickup') }}">
                             @csrf
@@ -81,10 +81,10 @@
 
             {{-- Incoming call --}}
             <div class="flex flex-col items-center">
-                <div class="relative w-full max-w-md rounded-[2rem] bg-white/[0.06] p-7 text-center shadow-2xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-xl">
+                <div class="relative w-full max-w-md rounded-[2rem] bg-white/[0.06] p-6 text-center shadow-2xl shadow-black/40 ring-1 ring-white/10 backdrop-blur-xl [@media(min-height:900px)]:p-7">
                     <p class="text-sm font-bold uppercase tracking-[0.2em] text-white/75">Panggilan masuk…</p>
 
-                    <div class="relative mx-auto mt-6 h-40 w-40 xl:h-48 xl:w-48">
+                    <div class="relative mx-auto mt-4 h-32 w-32 [@media(min-height:900px)]:mt-6 [@media(min-height:900px)]:h-48 [@media(min-height:900px)]:w-48">
                         <span class="voic-ring absolute inset-0 rounded-full border-2" style="border-color: rgb(var(--glow) / 0.7)"></span>
                         <span class="voic-ring absolute inset-0 rounded-full border-2 [animation-delay:600ms]" style="border-color: rgb(var(--glow) / 0.5)"></span>
                         <span class="voic-ring absolute inset-0 rounded-full border-2 [animation-delay:1200ms]" style="border-color: rgb(var(--glow) / 0.3)"></span>
@@ -94,18 +94,18 @@
                         </template>
                     </div>
 
-                    <h2 class="mt-6 text-3xl font-extrabold tracking-tight" x-text="caller.name"></h2>
+                    <h2 class="mt-4 text-3xl font-extrabold tracking-tight" x-text="caller.name"></h2>
                     <p class="mt-1 text-base font-semibold transition-colors duration-700" :style="'color: rgb(' + caller.glow + ')'" x-text="caller.title"></p>
 
                     {{-- Live caption, typed out like the real call --}}
-                    <div class="mt-5 flex min-h-[5.5rem] items-start rounded-2xl bg-black/50 px-4 py-3 text-left">
+                    <div class="mt-4 flex min-h-[4.75rem] items-start rounded-2xl bg-black/50 px-4 py-3 text-left">
                         <span class="mr-2 mt-1.5 flex h-3 shrink-0 items-end gap-[2px]" aria-hidden="true">
                             <span class="voic-eq w-[3px] rounded-full bg-white"></span><span class="voic-eq w-[3px] rounded-full bg-white [animation-delay:150ms]"></span><span class="voic-eq w-[3px] rounded-full bg-white [animation-delay:300ms]"></span>
                         </span>
                         <p class="text-base leading-relaxed text-white" aria-live="off"><span x-text="typed"></span><span class="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-white/80 align-middle"></span></p>
                     </div>
 
-                    <div class="mt-7 flex items-start justify-center gap-14">
+                    <div class="mt-5 flex items-start justify-center gap-14">
                         <div class="flex flex-col items-center gap-2">
                             <button type="button" @click="next(true)" aria-label="Penguji berikutnya"
                                     class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-rose-600 text-white shadow-lg shadow-rose-900/40 transition hover:scale-105 hover:bg-rose-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
@@ -126,8 +126,8 @@
                 </div>
 
                 {{-- Phones --}}
-                <div class="mt-6 flex items-center gap-4 rounded-2xl bg-white/[0.06] p-3 pr-5 ring-1 ring-white/10">
-                    <div id="attract-qr" data-url="{{ $startUrl }}" class="h-24 w-24 shrink-0 rounded-xl bg-white p-1.5 [&_svg]:h-full [&_svg]:w-full"></div>
+                <div class="mt-4 flex items-center gap-4 rounded-2xl bg-white/[0.06] p-3 pr-5 ring-1 ring-white/10">
+                    <div id="attract-qr" data-url="{{ $startUrl }}" class="h-20 w-20 shrink-0 rounded-xl bg-white p-1.5 [&_svg]:h-full [&_svg]:w-full"></div>
                     <div>
                         <p class="font-bold">Atau coba dari HP kamu</p>
                         <p class="mt-0.5 text-sm text-white/75">Pindai, pilih penguji, ngobrol. Gratis, tanpa daftar.</p>

@@ -74,6 +74,41 @@ class BoothTest extends TestCase
         $this->assertTrue(session('booth_unlocked'));
     }
 
+    public function test_welcome_screen_is_public_and_shows_the_examiners_calling(): void
+    {
+        $this->get(route('attract'))->assertOk()
+            ->assertSee('Berani ditelepon')
+            ->assertSee('VOIC-INTERVIEW')
+            ->assertSee('VOIC-SIDANG')
+            ->assertSee('VOIC-BISNIS')
+            ->assertSee('Angkat')
+            ->assertSee('http://192.168.1.50:8000/latihan')
+            ->assertSee("sessionStorage.setItem('voic_kiosk', '1')", false);
+    }
+
+    public function test_picking_up_forgets_the_previous_visitor_and_opens_that_examiner(): void
+    {
+        $this->withSession([
+            'active_guest_session_id' => 5,
+            'guest_session_token' => 'abc',
+            'guest_name' => 'Budi',
+            'study_code' => 'X1',
+        ])->post(route('attract.pickup'), ['mode' => 'pitching'])->assertRedirect(route('exam.setup', 'pitching'));
+
+        $this->assertNull(session('active_guest_session_id'));
+        $this->assertNull(session('guest_session_token'));
+        $this->assertNull(session('guest_name'));
+        $this->assertNull(session('study_code'));
+
+        $this->post(route('attract.pickup'), ['mode' => 'nope'])->assertNotFound();
+    }
+
+    public function test_pages_send_an_idle_kiosk_back_to_the_welcome_screen_but_not_the_call(): void
+    {
+        $this->get(route('exam.index'))->assertSee("sessionStorage.getItem('voic_kiosk')", false);
+        $this->get(route('attract'))->assertDontSee('Masih di sini?');
+    }
+
     public function test_next_visitor_requires_the_operator(): void
     {
         $this->post(route('booth.next'))->assertForbidden();
