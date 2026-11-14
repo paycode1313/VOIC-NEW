@@ -129,5 +129,31 @@
         </main>
 
         {{ $after ?? '' }}
+
+        @unless ($call)
+            {{-- Booth kiosk: if this tab came from the welcome screen, go back there when the visitor walks away. --}}
+            <script>
+                (function () {
+                    try { if (sessionStorage.getItem('voic_kiosk') !== '1') return; } catch (e) { return; }
+                    var IDLE = 120, WARN = 15, idle = 0, box = null;
+                    function reset() { idle = 0; if (box) { box.remove(); box = null; } }
+                    ['pointerdown', 'keydown', 'wheel', 'touchstart', 'mousemove'].forEach(function (e) { addEventListener(e, reset, { passive: true }); });
+                    setInterval(function () {
+                        idle++;
+                        if (idle >= IDLE + WARN) { location.href = @js(route('attract')); return; }
+                        if (idle < IDLE) return;
+                        if (!box) {
+                            box = document.createElement('div');
+                            box.setAttribute('role', 'alertdialog');
+                            box.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm';
+                            box.innerHTML = '<div class="w-full max-w-sm rounded-3xl bg-white p-6 text-center text-slate-900 shadow-2xl"><p class="text-lg font-extrabold">Masih di sini?</p><p class="mt-1 text-sm text-slate-600">Kembali ke layar awal dalam <b data-left></b> detik.</p><button type="button" class="mt-5 w-full rounded-full bg-slate-900 px-5 py-3 font-bold text-white">Lanjutkan</button></div>';
+                            box.querySelector('button').addEventListener('click', reset);
+                            document.body.appendChild(box);
+                        }
+                        box.querySelector('[data-left]').textContent = IDLE + WARN - idle;
+                    }, 1000);
+                })();
+            </script>
+        @endunless
     </body>
 </html>

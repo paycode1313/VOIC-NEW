@@ -63,6 +63,32 @@ class BoothController extends Controller
     }
 
     /**
+     * Public welcome screen for the booth laptop: an examiner "calling in" on a loop.
+     * Shows no personal data, only today's session count.
+     */
+    public function attract(): View
+    {
+        return view('booth.attract', [
+            'modes' => $this->blueprint->modes(),
+            'today' => PracticeSession::query()->takenByPeople()->whereNotNull('exam_mode')->whereDate('created_at', today())->count(),
+            'startUrl' => rtrim((string) (config('exam.public_url') ?: url('/')), '/').'/latihan',
+        ]);
+    }
+
+    /**
+     * A visitor picks up the call: forget the previous visitor, then go to that examiner's setup.
+     */
+    public function pickUp(Request $request): RedirectResponse
+    {
+        $mode = (string) $request->input('mode');
+        abort_unless(array_key_exists($mode, config('exam.modes')), 404);
+
+        $this->forgetVisitor($request);
+
+        return redirect()->route('exam.setup', $mode);
+    }
+
+    /**
      * Check the PIN.
      */
     public function unlock(Request $request): RedirectResponse
@@ -86,9 +112,17 @@ class BoothController extends Controller
     {
         abort_unless($this->unlocked($request), 403);
 
-        $request->session()->forget(['active_guest_session_id', 'guest_session_token', 'pending_claim_session_id', 'guest_name', 'guest_institution']);
+        $this->forgetVisitor($request);
 
         return redirect()->route('exam.index')->with('status', 'Siap untuk pengunjung berikutnya!');
+    }
+
+    /**
+     * Drop the guest's access to their session so the next visitor cannot open it.
+     */
+    protected function forgetVisitor(Request $request): void
+    {
+        $request->session()->forget(['active_guest_session_id', 'guest_session_token', 'pending_claim_session_id', 'guest_name', 'guest_institution', 'study_code']);
     }
 
     /**
