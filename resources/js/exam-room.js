@@ -90,6 +90,10 @@ export default function examRoom(config) {
         coachRemaining: config.initialState?.remaining_seconds ?? null,
         coachTimer: null,
         timeUpPending: false,
+        // Video-call layout: transcript side panel, live captions, call clock (seconds since joining).
+        panel: false,
+        captions: true,
+        elapsed: 0,
 
         get isEn() {
             return this.config.language === 'en';

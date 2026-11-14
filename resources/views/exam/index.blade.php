@@ -8,15 +8,15 @@
         <section class="mx-auto max-w-2xl text-center">
             <span class="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300">
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                {{ $isEn ? 'AI examiner that actually listens' : 'Penguji AI yang benar-benar mendengarkan' }}
+                {{ $isEn ? 'Three AI examiners, online now' : 'Tiga penguji AI, lagi online' }}
             </span>
             <h1 class="mt-5 text-4xl font-extrabold tracking-tight sm:text-5xl">
-                {{ $isEn ? 'Practise speaking like it is the real thing.' : 'Latihan bicara, rasa ujian sungguhan.' }}
+                {{ $isEn ? 'Who do you want to practise with?' : 'Mau latihan sama siapa hari ini?' }}
             </h1>
             <p class="mt-4 text-base text-slate-600 dark:text-slate-400 sm:text-lg">
                 {{ $isEn
-                    ? 'A three-part mock session with a voice examiner, then a band-score report with feedback on every answer.'
-                    : 'Simulasi tiga bagian dengan penguji bersuara, lalu rapor band score dan masukan untuk setiap jawabanmu.' }}
+                    ? 'Pick an examiner and talk face to face, like a video call. Afterwards you get a report with feedback on every answer.'
+                    : 'Pilih penguji, lalu ngobrol tatap muka seperti video call. Setelah selesai, kamu dapat rapor dan masukan untuk tiap jawaban.' }}
             </p>
             <div class="mt-4 inline-flex rounded-full bg-black/5 p-1 text-xs font-semibold dark:bg-white/10">
                 <a href="{{ route('exam.index') }}" class="rounded-full px-3 py-1 {{ $isEn ? 'text-slate-500' : 'bg-white text-slate-900 shadow-sm dark:bg-white/15 dark:text-white' }}">Indonesia</a>
@@ -24,35 +24,47 @@
             </div>
         </section>
 
-        <section class="mt-12 grid gap-4 md:grid-cols-3" aria-label="{{ $isEn ? 'Practice modes' : 'Mode latihan' }}">
+        {{-- Each examiner is a call you can join, like picking a contact in a video-call app. --}}
+        <section class="mt-12 grid gap-5 md:grid-cols-3" aria-label="{{ $isEn ? 'Practice modes' : 'Mode latihan' }}">
             @foreach ($modes as $key => $mode)
-                @php $accent = $accents[$mode['accent']] ?? $accents['indigo']; @endphp
-                <a href="{{ route('exam.setup', ['mode' => $key] + ($isEn ? ['lang' => 'en'] : [])) }}"
-                   class="group relative flex flex-col rounded-3xl border border-black/5 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/[0.03] {{ $accent['border'] }}">
-                    <div class="flex items-start justify-between">
-                        <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl {{ $accent['soft'] }}">
-                            @include('exam.partials.icon', ['name' => $mode['icon']])
+                @php
+                    $accent = $accents[$mode['accent']] ?? $accents['indigo'];
+                    $glow = ['amber' => '245 158 11', 'indigo' => '99 102 241', 'violet' => '139 92 246'][$mode['accent']] ?? '99 102 241';
+                @endphp
+                <a href="{{ route('exam.setup', ['mode' => $key] + ($isEn ? ['lang' => 'en'] : [])) }}" style="--glow: {{ $glow }}"
+                   class="group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.03]">
+                    {{-- Video tile --}}
+                    <div class="relative isolate flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#121521]">
+                        <div class="pointer-events-none absolute inset-0 -z-10 opacity-70 transition duration-500 group-hover:opacity-100 [background:radial-gradient(60%_75%_at_50%_45%,rgb(var(--glow)/0.55),transparent_72%)]"></div>
+                        <div class="relative">
+                            <span class="voic-ring absolute inset-0 rounded-full border-2 opacity-0 transition group-hover:opacity-100" style="border-color: rgb(var(--glow) / 0.6)"></span>
+                            <img src="{{ asset($mode['examiner']['avatar']) }}" alt="{{ $mode['examiner']['name'] }}" loading="lazy"
+                                 class="relative h-28 w-28 rounded-full object-cover shadow-2xl ring-4 ring-white/15 transition duration-500 group-hover:scale-105 sm:h-32 sm:w-32">
+                        </div>
+                        <span class="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>{{ $isEn ? 'Online' : 'Online' }}
                         </span>
-                        <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-12 w-12 rounded-full object-cover ring-4 ring-white dark:ring-[#16171b]" loading="lazy">
+                        <span class="absolute right-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-[11px] font-semibold text-white/80 backdrop-blur">~12 {{ $isEn ? 'min' : 'menit' }}</span>
+                        <span class="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
+                            @include('exam.partials.icon', ['name' => $mode['icon']])
+                            {{ $blueprint->text($mode['title'], $language) }}
+                        </span>
                     </div>
-                    <h2 class="mt-5 text-xl font-bold tracking-tight">{{ $mode['examiner']['name'] }}</h2>
-                    <p class="mt-1 text-sm font-semibold {{ $accent['text'] }}">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
-                    <p class="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ $blueprint->text($mode['tagline'], $language) }}</p>
 
-                    <ol class="mt-5 space-y-2 border-t border-black/5 pt-4 text-sm dark:border-white/10">
-                        @foreach ($mode['parts'] as $number => $part)
-                            <li class="flex items-center gap-3">
-                                <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-bold text-slate-600 dark:bg-white/10 dark:text-slate-300">{{ $number }}</span>
-                                <span class="font-medium">{{ $blueprint->text($part['title'], $language) }}</span>
-                            </li>
-                        @endforeach
-                    </ol>
+                    <div class="flex flex-1 flex-col p-5">
+                        <h2 class="text-xl font-extrabold tracking-tight">{{ $mode['examiner']['name'] }}</h2>
+                        <p class="mt-0.5 text-sm font-semibold" style="color: rgb(var(--glow))">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
+                        <p class="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{{ $blueprint->text($mode['tagline'], $language) }}</p>
 
-                    <div class="mt-6 flex items-center justify-between text-sm">
-                        <span class="text-slate-500">{{ $blueprint->text($mode['title'], $language) }} · ~12 {{ $isEn ? 'min' : 'menit' }}</span>
-                        <span class="inline-flex items-center gap-1 font-semibold {{ $accent['text'] }}">
-                            {{ $isEn ? 'Start' : 'Mulai' }}
-                            <svg class="h-4 w-4 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        <div class="mt-4 flex flex-wrap gap-1.5">
+                            @foreach ($mode['parts'] as $number => $part)
+                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-white/10 dark:text-slate-300">{{ $number }}. {{ $blueprint->text($part['title'], $language) }}</span>
+                            @endforeach
+                        </div>
+
+                        <span class="mt-5 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-bold text-white shadow-sm transition group-hover:brightness-110" style="background: rgb(var(--glow))">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+                            {{ $isEn ? 'Start the call' : 'Mulai panggilan' }}
                         </span>
                     </div>
                 </a>

@@ -70,7 +70,7 @@ class ExamFlowTest extends TestCase
         $this->assertStringContainsString('VOIC Interview', $opening->message);
         $this->assertStringContainsString('kenalan dulu', $opening->message);
 
-        $this->get(route('exam.room', $session))->assertOk()->assertSee('Mulai ujian');
+        $this->get(route('exam.room', $session))->assertOk()->assertSee('Gabung sekarang')->assertSee('Akhiri');
     }
 
     public function test_room_ships_the_live_avatar_with_its_face_rig(): void

@@ -1,4 +1,4 @@
-@props(['title' => null, 'back' => null, 'backLabel' => null, 'fullHeight' => false])
+@props(['title' => null, 'back' => null, 'backLabel' => null, 'fullHeight' => false, 'call' => false])
 
 {{-- The single page shell for the whole site (practice, dashboard, history, auth). --}}
 <!DOCTYPE html>
@@ -25,7 +25,9 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-[#f6f6f3] text-slate-900 dark:bg-[#0c0d10] dark:text-slate-100 {{ $fullHeight ? 'h-dvh overflow-hidden flex flex-col' : 'min-h-screen' }}">
+    <body class="font-sans antialiased {{ $call ? 'bg-[#0b0d12] text-white' : 'bg-[#f6f6f3] text-slate-900 dark:bg-[#0c0d10] dark:text-slate-100' }} {{ $fullHeight ? 'h-dvh overflow-hidden flex flex-col' : 'min-h-screen' }}">
+        {{-- A call (the exam room) is full screen, like a video call: no site header. --}}
+        @unless ($call)
         <header x-data="{ menu: false, account: false }" class="shrink-0 border-b border-black/5 dark:border-white/5 bg-[#f6f6f3]/85 dark:bg-[#0c0d10]/85 backdrop-blur sticky top-0 z-30">
             <div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
                 <div class="flex min-w-0 items-center gap-3">
@@ -114,6 +116,7 @@
                 @endauth
             </div>
         </header>
+        @endunless
 
         @if (session('status') && ! request()->routeIs('login', 'password.*', 'verification.*') && ! in_array(session('status'), ['verification-link-sent', 'profile-updated', 'password-updated'], true))
             <div class="mx-auto mt-4 max-w-6xl px-4 sm:px-6">
