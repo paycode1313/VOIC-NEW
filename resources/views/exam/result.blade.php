@@ -37,7 +37,7 @@
                         <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="absolute h-[6.5rem] w-[6.5rem] rounded-full object-cover opacity-25">
                         <div class="relative text-center">
                             <p class="text-4xl font-extrabold tracking-tight">{{ number_format($band, 1) }}</p>
-                            <p class="text-[11px] font-semibold uppercase tracking-wider text-white/60">Band</p>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-white/60">Band</p>
                         </div>
                     </div>
                 </div>
@@ -52,7 +52,7 @@
                     </div>
                     <h1 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $report['level'] }}</h1>
                     <p class="mt-2 max-w-2xl text-white/70">{{ $session->ai_conclusion }}</p>
-                    <p class="mt-3 text-sm text-white/45">{{ $session->created_at->translatedFormat('d M Y, H:i') }} · {{ $stats['answers'] }} {{ $isEn ? 'answers' : 'jawaban' }}</p>
+                    <p class="mt-3 text-sm text-white/65">{{ $session->created_at->translatedFormat('d M Y, H:i') }} · {{ $stats['answers'] }} {{ $isEn ? 'answers' : 'jawaban' }}</p>
                     <div class="mt-5 flex flex-wrap gap-2">
                         <a href="{{ route('exam.setup', ['mode' => $modeKey] + ($isEn ? ['lang' => 'en'] : [])) }}" class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white hover:brightness-110" style="background: rgb(var(--glow))">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
@@ -178,17 +178,17 @@
                                 <p class="text-xs font-semibold text-slate-500">{{ $isEn ? 'Part' : 'Bagian' }} {{ $item['part'] }}{{ $item['kind'] === 'long_turn' ? ($isEn ? ' · Long turn' : ' · Cue card') : '' }}</p>
                                 <p class="mt-0.5 font-semibold">{{ $item['question'] }}</p>
                             </div>
-                            <svg class="mt-1 h-5 w-5 shrink-0 text-slate-400 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            <svg class="mt-1 h-5 w-5 shrink-0 text-slate-500 dark:text-slate-400 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                         </summary>
                         <div class="space-y-4 px-5 pb-5 sm:pl-[4.75rem]">
                             <div>
-                                <p class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ $isEn ? 'Your answer' : 'Jawabanmu' }}</p>
+                                <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ $isEn ? 'Your answer' : 'Jawabanmu' }}</p>
                                 @if ($canManage && ! empty($item['has_recording']) && ! empty($item['message_id']))
                                     <audio controls preload="none" class="mt-2 h-9 w-full max-w-md" src="{{ route('exam.recording', [$session, $item['message_id']]) }}">
                                         {{ $isEn ? 'Your browser cannot play this recording.' : 'Browser tidak bisa memutar rekaman ini.' }}
                                     </audio>
                                 @endif
-                                <p class="mt-1 leading-relaxed">{!! $item['answer'] !== '' ? $highlight($item['answer']) : '<span class="text-slate-400">'.($isEn ? '(no answer)' : '(tidak menjawab)').'</span>' !!}</p>
+                                <p class="mt-1 leading-relaxed">{!! $item['answer'] !== '' ? $highlight($item['answer']) : '<span class="text-slate-500 dark:text-slate-400">'.($isEn ? '(no answer)' : '(tidak menjawab)').'</span>' !!}</p>
                                 <p class="mt-2 text-xs text-slate-500">
                                     {{ $item['metrics']['word_count'] }} {{ $isEn ? 'words' : 'kata' }}
                                     @if ($item['metrics']['wpm']) · {{ $item['metrics']['wpm'] }} {{ $isEn ? 'wpm' : 'kata/mnt' }} @endif
@@ -199,7 +199,7 @@
                             <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                 @foreach ($item['scores'] as $key => $score)
                                     <div class="rounded-xl bg-[#f6f6f3] px-3 py-2 dark:bg-white/5">
-                                        <p class="text-[11px] text-slate-500">{{ $report['criteria'][$key]['label'] }}</p>
+                                        <p class="text-xs text-slate-500">{{ $report['criteria'][$key]['label'] }}</p>
                                         <p class="font-bold">{{ number_format($score, 1) }}</p>
                                     </div>
                                 @endforeach
@@ -209,7 +209,9 @@
                                 <ul class="space-y-1.5 text-sm">
                                     @foreach ($item['notes'] as $note)
                                         <li class="flex gap-2">
-                                            <span aria-hidden="true">{{ ['good' => '✅', 'warn' => '⚠️', 'tip' => '💡'][$note['type']] ?? '•' }}</span>
+                                            @php $noteColor = ['good' => 'bg-emerald-500', 'warn' => 'bg-amber-500', 'tip' => 'bg-sky-500'][$note['type']] ?? 'bg-slate-400'; @endphp
+                                            <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full {{ $noteColor }}" aria-hidden="true"></span>
+                                            <span class="sr-only">{{ ['good' => $isEn ? 'Strength:' : 'Kekuatan:', 'warn' => $isEn ? 'Watch out:' : 'Perhatikan:', 'tip' => $isEn ? 'Tip:' : 'Saran:'][$note['type']] ?? '' }}</span>
                                             <span>{{ $note['text'] }}</span>
                                         </li>
                                     @endforeach
@@ -236,7 +238,7 @@
         <details class="mt-10 rounded-3xl border border-black/5 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03]">
             <summary class="cursor-pointer font-bold">{{ $isEn ? 'Full transcript' : 'Transkrip lengkap' }}</summary>
             @if ($canRate)
-                <p class="mt-2 text-xs text-slate-500">{{ $isEn ? 'Rate the examiner replies: 👍 natural and on-topic, 👎 off. Good replies are used to train the local AI.' : 'Nilai balasan penguji: 👍 nyambung & natural, 👎 kurang pas. Balasan yang bagus dipakai untuk melatih AI lokal.' }}</p>
+                <p class="mt-2 text-xs text-slate-500">{{ $isEn ? 'Rate the examiner replies: thumbs up if natural and on-topic, thumbs down if off. Good replies are used to train the local AI.' : 'Nilai balasan penguji: jempol ke atas kalau nyambung & natural, ke bawah kalau kurang pas. Balasan yang bagus dipakai untuk melatih AI lokal.' }}</p>
             @endif
             <div class="mt-4 space-y-3 text-sm">
                 @foreach ($transcript as $line)
@@ -246,8 +248,8 @@
                         <p class="flex-1 leading-relaxed">{{ $line->message }}</p>
                         @if ($rateable)
                             <div class="flex shrink-0 gap-1">
-                                <button type="button" @click="rate('good')" :class="rating === 'good' ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'opacity-40 hover:opacity-100'" class="rounded-full px-1.5 py-0.5" aria-label="{{ $isEn ? 'Good reply' : 'Balasan bagus' }}">👍</button>
-                                <button type="button" @click="rate('bad')" :class="rating === 'bad' ? 'bg-rose-100 dark:bg-rose-500/20' : 'opacity-40 hover:opacity-100'" class="rounded-full px-1.5 py-0.5" aria-label="{{ $isEn ? 'Bad reply' : 'Balasan kurang pas' }}">👎</button>
+                                <button type="button" @click="rate('good')" :class="rating === 'good' ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'opacity-40 hover:opacity-100'" class="rounded-full px-1.5 py-0.5" aria-label="{{ $isEn ? 'Good reply' : 'Balasan bagus' }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V2.75a.75.75 0 01.75-.75 2.25 2.25 0 012.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48a4.53 4.53 0 01-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M6.633 10.25H5.25a2.25 2.25 0 00-2.25 2.25v6a2.25 2.25 0 002.25 2.25h.654"/></svg></button>
+                                <button type="button" @click="rate('bad')" :class="rating === 'bad' ? 'bg-rose-100 dark:bg-rose-500/20' : 'opacity-40 hover:opacity-100'" class="rounded-full px-1.5 py-0.5" aria-label="{{ $isEn ? 'Bad reply' : 'Balasan kurang pas' }}"><svg class="h-4 w-4 rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 012.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 00.322-1.672V2.75a.75.75 0 01.75-.75 2.25 2.25 0 012.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 01-2.649 7.521c-.388.482-.987.729-1.605.729H13.48a4.53 4.53 0 01-1.423-.23l-3.114-1.04a4.501 4.501 0 00-1.423-.23H5.904M6.633 10.25H5.25a2.25 2.25 0 00-2.25 2.25v6a2.25 2.25 0 002.25 2.25h.654"/></svg></button>
                             </div>
                         @endif
                     </div>

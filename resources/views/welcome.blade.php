@@ -32,10 +32,10 @@
 
             {{-- Preview of a call, built from the real room's pieces --}}
             <div class="overflow-hidden rounded-3xl bg-[#0b0d12] p-3 shadow-2xl shadow-black/20 ring-1 ring-black/10 dark:ring-white/10" aria-hidden="true" style="--glow: 99 102 241">
-                <div class="flex items-center justify-between px-2 pb-3 pt-1 text-[11px] font-semibold text-white">
+                <div class="flex items-center justify-between px-2 pb-3 pt-1 text-xs font-semibold text-white">
                     <span class="inline-flex items-center gap-2">
                         <span class="inline-flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 font-bold uppercase tracking-wider text-rose-300"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400"></span>Live</span>
-                        VOIC-SIDANG <span class="font-mono text-white/40">06:42</span>
+                        VOIC-SIDANG <span class="font-mono text-white/65">06:42</span>
                     </span>
                     <span class="rounded-full bg-white px-2 py-0.5 text-slate-900">Bagian 3 · Tanya Jawab</span>
                 </div>
@@ -47,12 +47,12 @@
                             <img src="{{ asset('images/avatars/dosen-portrait.webp') }}" alt="" class="relative h-24 w-24 rounded-full object-cover ring-[3px] ring-white/90 sm:h-32 sm:w-32">
                         </div>
                     </div>
-                    <span class="absolute left-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-md bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    <span class="absolute left-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-md bg-black/50 px-2 py-0.5 text-xs font-semibold text-white">
                         <span class="flex h-2.5 items-end gap-[2px]"><span class="voic-eq w-[2px] rounded-full bg-white"></span><span class="voic-eq w-[2px] rounded-full bg-white [animation-delay:150ms]"></span><span class="voic-eq w-[2px] rounded-full bg-white [animation-delay:300ms]"></span></span>
                         Sedang bicara
                     </span>
                     <div class="absolute right-2.5 top-2.5 flex aspect-video w-24 items-center justify-center rounded-lg bg-[#1b1f2e] ring-2 ring-sky-400/70 sm:w-32">
-                        <span class="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white">Kamu</span>
+                        <span class="rounded-full bg-white/10 px-2 py-1 text-xs font-bold text-white">Kamu</span>
                     </div>
                     <p class="absolute inset-x-4 bottom-3 mx-auto max-w-md rounded-lg bg-black/65 px-3 py-1.5 text-center text-xs leading-relaxed text-white sm:text-sm">
                         Delapan puluh tujuh persen di data pabrik itu lumayan kuat. Dari lima jenis cacat, mana yang paling susah dideteksi?
@@ -62,9 +62,9 @@
                     <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500"><svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 006 6.92V20H8a1 1 0 100 2h8a1 1 0 100-2h-3v-2.08A7 7 0 0019 11z"/></svg></span>
                     <span class="h-8 w-8 rounded-full bg-white/10"></span>
                     <span class="h-8 w-8 rounded-full bg-white/10"></span>
-                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-[9px] font-black text-slate-900">CC</span>
+                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-black text-slate-900">CC</span>
                     <span class="h-8 w-8 rounded-full bg-white/10"></span>
-                    <span class="ml-2 inline-flex h-8 items-center rounded-full bg-rose-600 px-3 text-[11px] font-bold text-white">Akhiri</span>
+                    <span class="ml-2 inline-flex h-8 items-center rounded-full bg-rose-600 px-3 text-xs font-bold text-white">Akhiri</span>
                 </div>
             </div>
         </div>
@@ -106,7 +106,7 @@
                     ['Bagian 3 · Diskusi', 'Pertanyaan situasional dan metodologi. Penguji menguji alasan, bukti, dan batasan argumenmu.'],
                 ] as $i => [$title, $body])
                     <div>
-                        <span class="text-sm font-bold text-slate-400">0{{ $i + 1 }}</span>
+                        <span class="text-sm font-bold text-slate-500 dark:text-slate-400">0{{ $i + 1 }}</span>
                         <h3 class="mt-1 font-bold">{{ $title }}</h3>
                         <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{{ $body }}</p>
                     </div>
@@ -120,11 +120,11 @@
         <div class="rounded-3xl border border-black/5 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
             <h2 class="text-xl font-extrabold tracking-tight">Rapor yang bisa ditindaklanjuti</h2>
             <ul class="mt-4 space-y-2.5 text-sm text-slate-600 dark:text-slate-400">
-                <li>✓ Band score 0–9 untuk kelancaran, kosakata, isi, dan delivery</li>
-                <li>✓ Kata pengisi ("eh", "ehm") ditandai langsung di transkrip</li>
-                <li>✓ Versi jawaban yang lebih kuat untuk jawaban terlemah</li>
-                <li>✓ Putar ulang rekamanmu, dan grafik perkembangan antar sesi</li>
-                <li>✓ Bawa pulang lewat QR code, tanpa perlu akun</li>
+                <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Band score 0–9 untuk kelancaran, kosakata, isi, dan delivery</span></li>
+                <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Kata pengisi ("eh", "ehm") ditandai langsung di transkrip</span></li>
+                <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Versi jawaban yang lebih kuat untuk jawaban terlemah</span></li>
+                <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Putar ulang rekamanmu, dan grafik perkembangan antar sesi</span></li>
+                <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Bawa pulang lewat QR code, tanpa perlu akun</span></li>
             </ul>
         </div>
         <div class="rounded-3xl bg-slate-900 p-6 text-white dark:bg-white dark:text-slate-900">

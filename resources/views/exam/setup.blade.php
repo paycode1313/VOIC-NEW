@@ -98,13 +98,13 @@
                 <h2 class="text-3xl font-extrabold tracking-tight" x-text="'{{ $isEn ? 'Hi' : 'Hai' }} ' + name + ', {{ $isEn ? 'what kind of call?' : 'mau latihan yang mana?' }}'"></h2>
                 <div class="mt-6 grid gap-3">
                     @foreach ([
-                        'coach' => [$isEn ? 'Chat with a coach' : 'Ngobrol dengan coach', $isEn ? config('exam.coach_minutes').' min · relaxed, no score' : config('exam.coach_minutes').' menit · santai, tanpa nilai', $isEn ? 'You get tips on how to answer and which words to use.' : 'Kamu diajari cara menjawab dan milih kata, sambil ngobrol.', '💬'],
-                        'exam' => [$isEn ? 'Mock exam' : 'Simulasi ujian', $isEn ? 'Feels like the real thing · report with scores' : 'Rasa ujian sungguhan · ada rapor nilai', $isEn ? 'Afterwards you get a band score and feedback per answer.' : 'Setelahnya kamu dapat band score dan masukan per jawaban.', '🎯'],
+                        'coach' => [$isEn ? 'Chat with a coach' : 'Ngobrol dengan coach', $isEn ? config('exam.coach_minutes').' min · relaxed, no score' : config('exam.coach_minutes').' menit · santai, tanpa nilai', $isEn ? 'You get tips on how to answer and which words to use.' : 'Kamu diajari cara menjawab dan milih kata, sambil ngobrol.', 'chat'],
+                        'exam' => [$isEn ? 'Mock exam' : 'Simulasi ujian', $isEn ? 'Feels like the real thing · report with scores' : 'Rasa ujian sungguhan · ada rapor nilai', $isEn ? 'Afterwards you get a band score and feedback per answer.' : 'Setelahnya kamu dapat band score dan masukan per jawaban.', 'target'],
                     ] as $value => [$label, $meta, $body, $emoji])
                         <button type="button" @click="pick('type', '{{ $value }}')"
                                 class="flex items-start gap-4 rounded-3xl border bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md dark:bg-white/[0.03]"
                                 :class="type === '{{ $value }}' ? 'border-[rgb(var(--glow))] ring-2 ring-[rgb(var(--glow)/0.3)]' : 'border-black/10 dark:border-white/10'">
-                            <span class="text-3xl" aria-hidden="true">{{ $emoji }}</span>
+                            <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white" style="background: rgb(var(--glow))">@if ($emoji === 'chat')<svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>@else<svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>@endif</span>
                             <span>
                                 <span class="block text-lg font-bold">{{ $label }}</span>
                                 <span class="block text-xs font-semibold text-slate-500">{{ $meta }}</span>
@@ -145,7 +145,7 @@
                                 <span class="block text-lg font-bold">{{ $option['label'] }}</span>
                                 <span class="block text-sm text-slate-500">{{ $option['meta'] }}</span>
                             </span>
-                            <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                            <svg class="h-5 w-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                         </button>
                     @endforeach
                 </div>
@@ -165,12 +165,12 @@
                     ] as [$goto, $label, $expression])
                         <button type="button" @click="step = {{ $goto }}" class="flex w-full items-center justify-between gap-4 px-5 py-3.5 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.03]">
                             <span class="text-slate-500">{{ $label }}</span>
-                            <span class="flex items-center gap-2 font-semibold"><span x-text="{{ $expression }}"></span><span class="text-xs font-normal text-slate-400">{{ $isEn ? 'change' : 'ubah' }}</span></span>
+                            <span class="flex items-center gap-2 font-semibold"><span x-text="{{ $expression }}"></span><span class="text-xs font-normal text-slate-500 dark:text-slate-400">{{ $isEn ? 'change' : 'ubah' }}</span></span>
                         </button>
                     @endforeach
                     <button type="button" x-show="type === 'exam'" @click="step = 4" class="flex w-full items-center justify-between gap-4 px-5 py-3.5 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.03]">
                         <span class="text-slate-500">{{ $isEn ? 'Length' : 'Durasi' }}</span>
-                        <span class="flex items-center gap-2 font-semibold"><span x-text="parts.length === 3 ? '{{ $isEn ? 'Full mock' : 'Simulasi penuh' }}' : '{{ $isEn ? 'Part' : 'Bagian' }} ' + parts.join(', ')"></span><span class="text-xs font-normal text-slate-400">{{ $isEn ? 'change' : 'ubah' }}</span></span>
+                        <span class="flex items-center gap-2 font-semibold"><span x-text="parts.length === 3 ? '{{ $isEn ? 'Full mock' : 'Simulasi penuh' }}' : '{{ $isEn ? 'Part' : 'Bagian' }} ' + parts.join(', ')"></span><span class="text-xs font-normal text-slate-500 dark:text-slate-400">{{ $isEn ? 'change' : 'ubah' }}</span></span>
                     </button>
                 </div>
 
@@ -214,7 +214,7 @@
 
                 @php $studyCode = old('study_code', session('study_code')); @endphp
                 <details class="mt-6 text-sm" @if ($studyCode) open @endif>
-                    <summary class="cursor-pointer text-center font-semibold text-slate-400">{{ $isEn ? 'Have a trial participant code?' : 'Punya kode peserta uji coba?' }}</summary>
+                    <summary class="cursor-pointer text-center font-semibold text-slate-500 dark:text-slate-400">{{ $isEn ? 'Have a trial participant code?' : 'Punya kode peserta uji coba?' }}</summary>
                     <input name="study_code" type="text" maxlength="20" value="{{ $studyCode }}" autocomplete="off"
                            placeholder="{{ $isEn ? 'e.g. P01' : 'mis. P01' }}"
                            class="mt-3 w-full rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] uppercase placeholder:normal-case focus:border-slate-900 focus:ring-slate-900 dark:border-white/10 dark:bg-white/5">

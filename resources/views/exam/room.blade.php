@@ -30,10 +30,10 @@
         <div x-show="!started" class="flex min-h-0 flex-1 flex-col">
             <div class="flex shrink-0 items-center justify-between px-4 py-3 sm:px-6">
                 <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="flex items-center gap-2 font-extrabold tracking-tight">
-                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-[11px] font-black text-slate-900">V</span>
+                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-xs font-black text-slate-900">V</span>
                     <span class="text-[15px]">VOIC</span>
                 </a>
-                <span class="text-xs text-white/50">{{ $blueprint->text($mode['title'], $language) }}</span>
+                <span class="text-xs text-white/65">{{ $blueprint->text($mode['title'], $language) }}</span>
             </div>
 
             <div class="mx-auto grid min-h-0 w-full max-w-6xl flex-1 items-center gap-6 overflow-y-auto px-4 pb-8 sm:px-6 lg:grid-cols-[1.4fr_1fr] lg:gap-10">
@@ -84,7 +84,7 @@
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
                             <span x-text="isCoach ? t('Mulai ngobrol', 'Start chatting') : t('Gabung sekarang', 'Join now')"></span>
                         </button>
-                        <p class="text-xs text-white/40">{{ $isEn ? 'Use Chrome or Edge. Headphones help.' : 'Pakai Chrome atau Edge. Headset bikin lebih jernih.' }}</p>
+                        <p class="text-xs text-white/65">{{ $isEn ? 'Use Chrome or Edge. Headphones help.' : 'Pakai Chrome atau Edge. Headset bikin lebih jernih.' }}</p>
                     </div>
                 </div>
             </div>
@@ -96,16 +96,16 @@
             {{-- Top bar: who, which part, how long --}}
             <div class="flex shrink-0 items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
                 <div class="flex min-w-0 items-center gap-3">
-                    <span class="inline-flex items-center gap-1.5 rounded-md bg-rose-500/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-300">
+                    <span class="inline-flex items-center gap-1.5 rounded-md bg-rose-500/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-300">
                         <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400"></span>Live
                     </span>
                     <span class="truncate text-sm font-semibold">{{ $examinerName }}</span>
-                    <span class="hidden font-mono text-sm text-white/50 sm:inline" x-text="isCoach ? coachClock : (Math.floor(elapsed / 60) + ':' + String(elapsed % 60).padStart(2, '0'))"></span>
+                    <span class="hidden font-mono text-sm text-white/65 sm:inline" x-text="isCoach ? coachClock : (Math.floor(elapsed / 60) + ':' + String(elapsed % 60).padStart(2, '0'))"></span>
                 </div>
                 <ol x-show="!isCoach" class="flex min-w-0 items-center gap-1 overflow-x-auto text-xs font-semibold">
                     <template x-for="p in state.parts" :key="p.number">
                         <li class="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1"
-                            :class="p.status === 'current' ? 'bg-white text-slate-900' : (p.status === 'done' ? 'text-emerald-300' : 'text-white/40')">
+                            :class="p.status === 'current' ? 'bg-white text-slate-900' : (p.status === 'done' ? 'text-emerald-300' : 'text-white/65')">
                             <template x-if="p.status === 'done'"><svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></template>
                             <span x-text="'{{ $isEn ? 'Part' : 'Bagian' }} ' + p.number"></span>
                             <span class="hidden lg:inline" x-text="'· ' + p.title"></span>
@@ -141,7 +141,7 @@
 
                     {{-- Name plate + status, top left (captions own the bottom, your camera the top right) --}}
                     <div class="pointer-events-none absolute left-3 top-3 flex flex-wrap items-center gap-2 sm:left-4 sm:top-4">
-                        <span class="hidden rounded-lg bg-black/50 px-2.5 py-1 text-sm font-semibold backdrop-blur sm:inline">{{ $examinerName }} <span class="font-normal text-white/50">· {{ $examinerTitle }}</span></span>
+                        <span class="hidden rounded-lg bg-black/50 px-2.5 py-1 text-sm font-semibold backdrop-blur sm:inline">{{ $examinerName }} <span class="font-normal text-white/65">· {{ $examinerTitle }}</span></span>
                         <span class="inline-flex items-center gap-1.5 rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold backdrop-blur" aria-live="polite">
                             <span x-show="status === 'speaking'" class="flex h-3 items-end gap-[2px]" aria-hidden="true">
                                 <span class="voic-eq w-[3px] rounded-full bg-white"></span>
@@ -173,7 +173,7 @@
                     {{-- AI engine chip, under the name plate: details on demand --}}
                     <div x-data="{ open: false }" x-show="engine" x-cloak class="absolute left-3 top-12 z-20 text-left sm:left-4 sm:top-14">
                         <button type="button" @click="open = !open" :aria-expanded="open"
-                                class="inline-flex items-center gap-1.5 rounded-lg bg-black/50 px-2.5 py-1 text-[11px] font-semibold backdrop-blur hover:bg-black/70">
+                                class="inline-flex items-center gap-1.5 rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold backdrop-blur hover:bg-black/70">
                             <span class="h-1.5 w-1.5 rounded-full" :class="engine === 'offline_composer' ? 'bg-amber-400' : 'bg-emerald-400'"></span>
                             <span x-text="{ local_llm: t('AI lokal', 'Local AI'), ollama_cloud: (aiStatus?.model || 'AI') + ' · cloud', openrouter: (aiStatus?.model || 'AI') + ' · cloud', cloud_llm: t('AI cloud', 'Cloud AI'), offline_composer: t('Mode cadangan', 'Fallback mode') }[engine]"></span>
                         </button>
@@ -185,7 +185,7 @@
                             <template x-if="aiStatus?.reason">
                                 <div class="mt-2 rounded-xl bg-amber-400/10 p-2 text-amber-200">
                                     <p x-text="aiStatus.reason"></p>
-                                    <p x-show="aiStatus.fix" class="mt-1 break-words font-mono text-[10px]" x-text="aiStatus.fix"></p>
+                                    <p x-show="aiStatus.fix" class="mt-1 break-words font-mono text-xs" x-text="aiStatus.fix"></p>
                                 </div>
                             </template>
                             <p class="mt-2 text-white/60" x-text="t('Telinga: ', 'Ears: ') + (voiceMode === 'local' ? t('Whisper lokal', 'local Whisper') : voiceMode === 'browser' ? t('browser', 'browser') : t('ketik', 'typing'))
@@ -207,7 +207,7 @@
                             <p class="mt-3 text-sm text-slate-500">{{ $isEn ? 'You should say:' : ($mode['role_type'] === 'hrd' ? 'Yang perlu kamu sampaikan:' : 'Yang perlu Anda sampaikan:') }}</p>
                             <ul class="mt-1.5 space-y-1 text-sm">
                                 <template x-for="point in cueCard.points" :key="point">
-                                    <li class="flex gap-2"><span class="text-slate-400">•</span><span x-text="point"></span></li>
+                                    <li class="flex gap-2"><span class="text-slate-500 dark:text-slate-400">•</span><span x-text="point"></span></li>
                                 </template>
                             </ul>
                             <div x-show="status === 'prep'" class="mt-4">
@@ -244,8 +244,8 @@
                             </div>
                             <span x-show="cameraOn && expression" x-cloak x-text="expressionLabel()"
                                   :class="expression === 'tense' || expression === 'away' ? 'bg-amber-500/90' : 'bg-emerald-600/90'"
-                                  class="absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold"></span>
-                            <span class="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md bg-black/50 px-1.5 py-0.5 text-[10px] font-semibold">
+                                  class="absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-xs font-semibold"></span>
+                            <span class="absolute bottom-1.5 left-1.5 inline-flex items-center gap-1 rounded-md bg-black/50 px-1.5 py-0.5 text-xs font-semibold">
                                 <svg x-show="!isListening" class="h-3 w-3 text-rose-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M3 3l18 18M9 9v3a3 3 0 005.1 2.1M15 9.3V6a3 3 0 00-5.9-.8M19 11a7 7 0 01-1.1 3.8M5 11a7 7 0 0011 5.7M12 18v3"/></svg>
                                 <span x-show="isListening" x-cloak class="flex h-2.5 items-end gap-[2px]" aria-hidden="true">
                                     <template x-for="i in 3" :key="i">
@@ -270,7 +270,7 @@
                     <div x-ref="transcript" class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4 text-sm">
                         <template x-for="item in transcript" :key="item.id">
                             <div :class="item.sender === 'user' ? 'text-right' : ''">
-                                <p class="mb-0.5 text-[11px] font-semibold text-white/40" x-text="item.sender === 'user' ? t('Kamu', 'You') : '{{ $examinerName }}'"></p>
+                                <p class="mb-0.5 text-xs font-semibold text-white/65" x-text="item.sender === 'user' ? t('Kamu', 'You') : '{{ $examinerName }}'"></p>
                                 <p class="inline-block max-w-[92%] rounded-2xl px-3 py-2 text-left"
                                    :class="item.sender === 'user' ? 'bg-sky-500/20 text-sky-50' : 'bg-white/5 text-white/90'"
                                    x-text="item.message"></p>
@@ -283,7 +283,7 @@
             {{-- Messages and typing box --}}
             <div class="mx-auto w-full max-w-3xl shrink-0 px-3 pt-3 sm:px-5">
                 <p x-show="errorMessage" x-cloak class="mb-2 rounded-xl bg-rose-500/15 px-3 py-2 text-center text-sm text-rose-200" x-text="errorMessage"></p>
-                <p x-show="!errorMessage && !typingMode && !liveAnswer" class="text-center text-xs text-white/45"
+                <p x-show="!errorMessage && !typingMode && !liveAnswer" class="text-center text-xs text-white/65"
                    x-text="hint || (status === 'long_turn' ? t('Tekan tombol mic kalau sudah selesai', 'Tap the mic when you are done')
                         : status === 'listening' ? t('Jeda sebentar atau tekan mic untuk kirim', 'Pause for a second or tap the mic to send')
                         : status === 'thinking' ? t('Jawabanmu lagi diproses…', 'Processing your answer…')
@@ -293,7 +293,7 @@
                         <textarea x-model="typed" rows="1" :disabled="!(status === 'listening' || status === 'long_turn' || status === 'error')"
                                   @keydown.enter="if (!$event.shiftKey) { $event.preventDefault(); status === 'error' ? retry() : submitAnswer() }"
                                   placeholder="{{ $isEn ? 'Type your answer, Enter to send' : 'Ketik jawabanmu, Enter untuk kirim' }}"
-                                  class="flex-1 resize-none rounded-2xl border-0 bg-white/10 px-4 py-3 text-[15px] text-white placeholder:text-white/40 focus:ring-2 focus:ring-white/30 disabled:opacity-50"></textarea>
+                                  class="flex-1 resize-none rounded-2xl border-0 bg-white/10 px-4 py-3 text-[15px] text-white placeholder:text-white/65 focus:ring-2 focus:ring-white/30 disabled:opacity-50"></textarea>
                         <button type="submit" :disabled="!typed.trim()" class="h-12 shrink-0 rounded-full bg-white px-5 text-sm font-bold text-slate-900 disabled:opacity-40">
                             {{ $isEn ? 'Send' : 'Kirim' }}
                         </button>
@@ -306,7 +306,7 @@
                 {{-- Mic: answer / send --}}
                 <button type="button" x-show="!typingMode" @click="submitAnswer()" :disabled="!(status === 'listening' || status === 'long_turn')"
                         class="relative inline-flex h-14 w-14 items-center justify-center rounded-full transition disabled:cursor-not-allowed"
-                        :class="isListening ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-white/10 text-white/50'"
+                        :class="isListening ? 'bg-sky-500 text-white hover:bg-sky-400' : 'bg-white/10 text-white/65'"
                         :aria-label="t('Selesai menjawab', 'Done answering')" :title="t('Selesai menjawab', 'Done answering')">
                     <span x-show="isListening && vad.speaking" class="absolute inset-0 animate-ping rounded-full bg-sky-400/40"></span>
                     <svg class="relative h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 006 6.92V20H8a1 1 0 100 2h8a1 1 0 100-2h-3v-2.08A7 7 0 0019 11z"/></svg>
@@ -333,14 +333,14 @@
                 <button type="button" @click="captions = !captions"
                         class="inline-flex h-12 w-12 items-center justify-center rounded-full text-xs font-black transition"
                         :class="captions ? 'bg-white text-slate-900' : 'bg-white/10 text-white/60 hover:bg-white/15'"
-                        :aria-pressed="captions" :title="t('Takarir', 'Captions')">CC</button>
+                        :aria-pressed="captions" :aria-label="t('Takarir', 'Captions')" :title="t('Takarir', 'Captions')">CC</button>
 
                 {{-- Voice or typing --}}
                 <button type="button" x-show="speechSupported || aiStatus?.stt_local"
                         @click="stopListening(true); voiceMode = typingMode ? ((aiStatus?.stt_local && micReady) ? 'local' : (speechSupported ? 'browser' : 'typing')) : 'typing'; if (status === 'listening') startListening()"
                         class="inline-flex h-12 w-12 items-center justify-center rounded-full transition"
                         :class="typingMode ? 'bg-white text-slate-900' : 'bg-white/10 hover:bg-white/15'"
-                        :title="typingMode ? t('Jawab dengan suara', 'Answer by voice') : t('Ketik saja', 'Type instead')">
+                        :aria-label="typingMode ? t('Jawab dengan suara', 'Answer by voice') : t('Ketik saja', 'Type instead')" :title="typingMode ? t('Jawab dengan suara', 'Answer by voice') : t('Ketik saja', 'Type instead')">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path stroke-linecap="round" d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
                 </button>
 
@@ -348,21 +348,21 @@
                 <button type="button" @click="panel = !panel"
                         class="inline-flex h-12 w-12 items-center justify-center rounded-full transition"
                         :class="panel ? 'bg-white text-slate-900' : 'bg-white/10 hover:bg-white/15'"
-                        :title="t('Transkrip', 'Transcript')">
+                        :aria-pressed="panel" :aria-label="t('Transkrip', 'Transcript')" :title="t('Transkrip', 'Transcript')">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
                 </button>
 
                 {{-- Settings: interrupting --}}
                 <div x-data="{ more: false }" class="relative">
                     <button type="button" @click="more = !more" @click.outside="more = false"
-                            class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/15" :title="t('Lainnya', 'More')">
+                            class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/15" :aria-expanded="more" :aria-label="t('Pengaturan lainnya', 'More settings')" :title="t('Lainnya', 'More')">
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
                     </button>
                     <div x-show="more" x-cloak x-transition.opacity class="absolute bottom-14 left-1/2 w-64 -translate-x-1/2 rounded-2xl bg-[#161a28] p-3 text-left text-xs shadow-xl ring-1 ring-white/10">
                         <label class="flex cursor-pointer items-start gap-2">
                             <input type="checkbox" x-model="bargeIn" class="mt-0.5 h-4 w-4 rounded border-white/20 bg-white/10 text-sky-500 focus:ring-0">
                             <span><span class="font-semibold">{{ $isEn ? 'Allow interrupting' : 'Boleh menyela' }}</span><br>
-                                <span class="text-white/50">{{ $isEn ? 'Speaking while the examiner talks stops them. Use a headset.' : 'Ngomong saat penguji bicara akan memotongnya. Pakai headset.' }}</span></span>
+                                <span class="text-white/65">{{ $isEn ? 'Speaking while the examiner talks stops them. Use a headset.' : 'Ngomong saat penguji bicara akan memotongnya. Pakai headset.' }}</span></span>
                         </label>
                     </div>
                 </div>
