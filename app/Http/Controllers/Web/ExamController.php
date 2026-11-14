@@ -93,6 +93,8 @@ class ExamController extends Controller
             'language' => $language,
             'context_material' => $request->validated('context_material'),
             'topic' => $topic,
+            // Campus (or school/company): the examiner greets the candidate with name and campus.
+            'campus' => $request->filled('campus') ? trim((string) $request->validated('campus')) : null,
         ];
 
         // User trial: the participant code is remembered for the next practice on this device.

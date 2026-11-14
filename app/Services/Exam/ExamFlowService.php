@@ -5,6 +5,7 @@ namespace App\Services\Exam;
 use App\Models\PracticeSession;
 use App\Models\SessionMessage;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 /**
  * Drives a three-part mock exam turn by turn.
@@ -75,20 +76,23 @@ class ExamFlowService
         $isEn = $language === 'en';
         // Spoken form: "VOIC-INTERVIEW" is read aloud as "VOIC Interview".
         $examinerName = ExaminerService::spokenName($definition['examiner']['name']);
+        // "Halo Rifai dari Universitas Brawijaya, aku ...": the call starts with the candidate's own name.
+        $candidate = $this->candidate($session);
+        $who = $candidate ? ' '.$candidate['name'].($candidate['campus'] ? ($isEn ? ' from ' : ' dari ').$candidate['campus'] : '') : '';
         $partCount = count($parts);
         $minutes = max(3, $partCount * 4);
 
         // Spoken, in each examiner's own register (see ExaminerService::SPEAKING_STYLE).
         $greeting = $isEn
             ? match ($definition['role_type']) {
-                'hrd' => "Hi, I'm {$examinerName}, your HR interviewer today. We'll chat for about {$minutes} minutes in {$partCount} ".($partCount === 1 ? 'part' : 'parts').'. Just relax and answer as naturally as you can.',
-                'investor' => "Hi, I'm {$examinerName}, the investor hearing your pitch today. We have about {$minutes} minutes in {$partCount} ".($partCount === 1 ? 'part' : 'parts').'. Relax, just tell me about your startup.',
-                default => "Welcome, I'm {$examinerName}, your thesis examiner today. This mock defense has {$partCount} ".($partCount === 1 ? 'part' : 'parts')." and takes about {$minutes} minutes. Take your time and answer in your own words.",
+                'hrd' => "Hi{$who}, I'm {$examinerName}, your HR interviewer today. We'll chat for about {$minutes} minutes in {$partCount} ".($partCount === 1 ? 'part' : 'parts').'. Just relax and answer as naturally as you can.',
+                'investor' => "Hi{$who}, I'm {$examinerName}, the investor hearing your pitch today. We have about {$minutes} minutes in {$partCount} ".($partCount === 1 ? 'part' : 'parts').'. Relax, just tell me about your startup.',
+                default => "Welcome{$who}, I'm {$examinerName}, your thesis examiner today. This mock defense has {$partCount} ".($partCount === 1 ? 'part' : 'parts')." and takes about {$minutes} minutes. Take your time and answer in your own words.",
             }
         : match ($definition['role_type']) {
-            'hrd' => "Halo, aku {$examinerName}, HRD yang bakal ngobrol sama kamu hari ini. Kita ngobrol sekitar {$minutes} menit, ada {$partCount} bagian. Santai aja ya, jawab senatural mungkin, anggap lagi ngobrol biasa.",
-            'investor' => "Halo, saya {$examinerName}, investor yang bakal dengerin pitch Anda hari ini. Kita punya sekitar {$minutes} menit, dibagi {$partCount} bagian. Santai aja, anggap kita lagi ngopi bareng dan Anda cerita soal startup Anda.",
-            default => "Selamat datang, saya {$examinerName}, dosen penguji Anda hari ini. Sidang simulasi ini ada {$partCount} bagian, kira-kira {$minutes} menit. Tenang saja, jawab dengan bahasa Anda sendiri.",
+            'hrd' => "Halo{$who}, aku {$examinerName}, HRD yang bakal ngobrol sama kamu hari ini. Kita ngobrol sekitar {$minutes} menit, ada {$partCount} bagian. Santai aja ya, jawab senatural mungkin, anggap lagi ngobrol biasa.",
+            'investor' => "Halo{$who}, saya {$examinerName}, investor yang bakal dengerin pitch Anda hari ini. Kita punya sekitar {$minutes} menit, dibagi {$partCount} bagian. Santai aja, anggap kita lagi ngopi bareng dan Anda cerita soal startup Anda.",
+            default => "Selamat datang{$who}, saya {$examinerName}, dosen penguji Anda hari ini. Sidang simulasi ini ada {$partCount} bagian, kira-kira {$minutes} menit. Tenang saja, jawab dengan bahasa Anda sendiri.",
         };
 
         $opening = trim($greeting.' '.$this->partIntro($state));
@@ -128,6 +132,10 @@ class ExamFlowService
 
         $definition = $this->blueprint->mode($mode);
         $opening = $this->blueprint->text($definition['coach']['opening'] ?? '', $language);
+        if ($candidate = $this->candidate($session)) {
+            $who = $candidate['name'].($candidate['campus'] ? ($language === 'en' ? ' from ' : ' dari ').$candidate['campus'] : '');
+            $opening = preg_replace('/^(Halo|Hi|Hello),/u', '$1 '.addcslashes($who, '\\$').',', $opening, 1) ?? $opening;
+        }
 
         $session->forceFill(['exam_state' => $state])->save();
 
@@ -203,6 +211,7 @@ class ExamFlowService
             'language' => $state['language'],
             'topic' => $state['topic'],
             'context_material' => $session->feedback_notes['context_material'] ?? null,
+            'candidate' => $this->candidate($session),
             'part' => 1,
             'part_title' => $this->blueprint->text($definition['coach']['title'] ?? '', $state['language']),
             'directive' => $directive,
@@ -312,6 +321,7 @@ class ExamFlowService
             'language' => $state['language'],
             'topic' => $state['topic'],
             'context_material' => $session->feedback_notes['context_material'] ?? null,
+            'candidate' => $this->candidate($session),
             'part' => $part,
             'part_title' => $this->blueprint->text($partDefinition['title'] ?? '', $state['language']),
             'directive' => $directive,
@@ -631,6 +641,7 @@ class ExamFlowService
             'language' => $state['language'],
             'topic' => $state['topic'],
             'context_material' => $session->feedback_notes['context_material'] ?? null,
+            'candidate' => $this->candidate($session),
             'part' => (int) $state['part'],
             'part_title' => '',
             'focus' => $state['focus'] ?? null,
@@ -697,6 +708,23 @@ class ExamFlowService
      * @param  array<string, mixed>  $state
      * @param  array<string, mixed>  $extra
      */
+    /**
+     * Who is on the call: first name (guest name, or the account name) and campus. Null without a real name.
+     *
+     * @return array{name: string, campus: ?string}|null
+     */
+    public function candidate(PracticeSession $session): ?array
+    {
+        $notes = $session->feedback_notes ?? [];
+        $name = trim((string) ($notes['guest_name'] ?? $session->user?->name ?? ''));
+        if ($name === '' || in_array(mb_strtolower($name), ['pengunjung', 'pengunjung booth'], true)) {
+            return null;
+        }
+        $campus = trim((string) ($notes['campus'] ?? ''));
+
+        return ['name' => Str::limit(Str::of($name)->explode(' ')->first(), 30, ''), 'campus' => $campus !== '' ? Str::limit($campus, 80, '') : null];
+    }
+
     protected function recordExaminerMessage(PracticeSession $session, string $text, ?string $audioUrl, array $state, string $kind, int $timestampSeconds = 0, ?string $engine = null, ?string $reply = null, ?int $answeredPart = null, array $extra = []): SessionMessage
     {
         return $session->messages()->create([

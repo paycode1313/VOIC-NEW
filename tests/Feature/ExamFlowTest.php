@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\PracticeSession;
 use App\Models\User;
 use App\Services\Exam\ExamFlowService;
+use App\Services\Exam\ExaminerService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -898,6 +899,39 @@ class ExamFlowTest extends TestCase
     /**
      * @param  list<int>  $parts
      */
+    public function test_the_examiner_greets_the_guest_by_name_and_campus_and_keeps_knowing_them(): void
+    {
+        $this->offline();
+        $this->get(route('exam.setup', 'wawancara'))->assertOk()
+            ->assertSee('Kenalan dulu, yuk')->assertSee('Kampus / sekolah')->assertSee('Quality Assurance');
+
+        $this->post(route('exam.start', 'wawancara'), [
+            'guest_name' => 'Rifai Pratama', 'campus' => 'Universitas Brawijaya', 'topic' => 'Quality Assurance',
+            'session_type' => 'exam', 'language' => 'id', 'parts' => [1], 'consent' => '1',
+        ])->assertRedirect();
+        $session = PracticeSession::latest('id')->firstOrFail();
+
+        $this->assertSame('Universitas Brawijaya', $session->feedback_notes['campus']);
+        $this->assertStringStartsWith('Halo Rifai dari Universitas Brawijaya, aku VOIC Interview', $session->messages()->first()->message);
+
+        // The coach greets the same way.
+        $this->post(route('exam.start', 'sidang'), [
+            'guest_name' => 'Rifai', 'campus' => 'Universitas Brawijaya', 'session_type' => 'coach', 'language' => 'id', 'consent' => '1',
+        ])->assertRedirect();
+        $this->assertStringStartsWith('Halo Rifai dari Universitas Brawijaya, saya VOIC Sidang.', PracticeSession::latest('id')->firstOrFail()->messages()->first()->message);
+
+        // The examiner model knows who it is talking to (system prompt).
+        $prompt = app(ExaminerService::class)->systemPrompt([
+            'mode' => 'wawancara', 'role_type' => 'hrd', 'examiner_name' => 'VOIC-INTERVIEW', 'language' => 'id', 'topic' => null,
+            'context_material' => null, 'candidate' => app(ExamFlowService::class)->candidate($session),
+        ]);
+        $this->assertStringContainsString('Kamu sedang bicara dengan Rifai dari Universitas Brawijaya.', $prompt);
+
+        // Without a name the greeting stays generic.
+        $this->post(route('exam.start', 'wawancara'), ['session_type' => 'exam', 'language' => 'id', 'parts' => [1], 'consent' => '1'])->assertRedirect();
+        $this->assertStringStartsWith('Halo, aku VOIC Interview', PracticeSession::latest('id')->firstOrFail()->messages()->first()->message);
+    }
+
     private function startExam(string $mode, array $parts): PracticeSession
     {
         $this->post(route('exam.start', $mode), [

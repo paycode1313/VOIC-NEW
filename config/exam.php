@@ -98,6 +98,19 @@ return [
                 'rig' => ['eyes' => [[0.4395, 0.3164], [0.5586, 0.3164]], 'eyeW' => 0.0508, 'eyeH' => 0.0254, 'mouth' => [0.5, 0.4229], 'mouthW' => 0.1133, 'chin' => 0.5078]],
             'topic_label' => ['id' => 'Posisi yang dilamar', 'en' => 'Position you are applying for'],
             'topic_placeholder' => ['id' => 'Contoh: Frontend Developer di startup fintech', 'en' => 'e.g. Frontend Developer at a fintech startup'],
+            // Picked with one tap in the setup wizard (nothing to type besides name and campus).
+            'topics' => [
+                ['id' => 'Frontend Developer', 'en' => 'Frontend Developer'],
+                ['id' => 'Backend Developer', 'en' => 'Backend Developer'],
+                ['id' => 'Quality Assurance', 'en' => 'Quality Assurance'],
+                ['id' => 'Data Analyst', 'en' => 'Data Analyst'],
+                ['id' => 'UI/UX Designer', 'en' => 'UI/UX Designer'],
+                ['id' => 'Digital Marketing', 'en' => 'Digital Marketing'],
+                ['id' => 'Admin & Keuangan', 'en' => 'Admin & Finance'],
+                ['id' => 'Customer Service', 'en' => 'Customer Service'],
+                ['id' => 'Management Trainee', 'en' => 'Management Trainee'],
+                ['id' => 'Magang (internship)', 'en' => 'Internship'],
+            ],
             'context_label' => ['id' => 'Ringkasan CV / pengalaman (opsional)', 'en' => 'CV summary / experience (optional)'],
             'coach' => [
                 'title' => ['id' => 'Coach Wawancara', 'en' => 'Interview Coach'],
@@ -221,6 +234,19 @@ return [
                 'rig' => ['eyes' => [[0.4268, 0.3457], [0.5713, 0.3457]], 'eyeW' => 0.0449, 'eyeH' => 0.0215, 'mouth' => [0.501, 0.5068], 'mouthW' => 0.1367, 'chin' => 0.6104]],
             'topic_label' => ['id' => 'Judul skripsi', 'en' => 'Thesis title'],
             'topic_placeholder' => ['id' => 'Contoh: Deteksi cacat kain menggunakan YOLOv8', 'en' => 'e.g. Fabric defect detection using YOLOv8'],
+            // Picked with one tap in the setup wizard (nothing to type besides name and campus).
+            'topics' => [
+                ['id' => 'Sistem informasi berbasis web', 'en' => 'Web-based information system'],
+                ['id' => 'Machine learning / AI', 'en' => 'Machine learning / AI'],
+                ['id' => 'Aplikasi mobile', 'en' => 'Mobile app'],
+                ['id' => 'Jaringan & IoT', 'en' => 'Networking & IoT'],
+                ['id' => 'Analisis sentimen / data mining', 'en' => 'Sentiment analysis / data mining'],
+                ['id' => 'Manajemen & bisnis', 'en' => 'Management & business'],
+                ['id' => 'Akuntansi & keuangan', 'en' => 'Accounting & finance'],
+                ['id' => 'Pendidikan', 'en' => 'Education'],
+                ['id' => 'Kesehatan & keperawatan', 'en' => 'Health & nursing'],
+                ['id' => 'Psikologi', 'en' => 'Psychology'],
+            ],
             'context_label' => ['id' => 'Abstrak (opsional, membuat pertanyaan lebih spesifik)', 'en' => 'Abstract (optional, makes questions more specific)'],
             'coach' => [
                 'title' => ['id' => 'Dosen Pembimbing', 'en' => 'Thesis Mentor'],
@@ -329,6 +355,19 @@ return [
                 'rig' => ['eyes' => [[0.4463, 0.2979], [0.5537, 0.2979]], 'eyeW' => 0.0449, 'eyeH' => 0.0195, 'mouth' => [0.5, 0.4111], 'mouthW' => 0.1035, 'chin' => 0.4951]],
             'topic_label' => ['id' => 'Nama dan bidang startup', 'en' => 'Startup name and sector'],
             'topic_placeholder' => ['id' => 'Contoh: KasirKu, aplikasi kasir untuk UMKM', 'en' => 'e.g. KasirKu, a POS app for small shops'],
+            // Picked with one tap in the setup wizard (nothing to type besides name and campus).
+            'topics' => [
+                ['id' => 'Aplikasi kasir untuk UMKM', 'en' => 'POS app for small shops'],
+                ['id' => 'Platform edukasi online', 'en' => 'Online learning platform'],
+                ['id' => 'Marketplace hasil tani', 'en' => 'Farm produce marketplace'],
+                ['id' => 'Aplikasi kesehatan', 'en' => 'Health app'],
+                ['id' => 'Fintech pembayaran', 'en' => 'Payments fintech'],
+                ['id' => 'Bisnis kuliner', 'en' => 'Food & beverage business'],
+                ['id' => 'Jasa logistik & kurir', 'en' => 'Logistics & delivery'],
+                ['id' => 'Aplikasi wisata lokal', 'en' => 'Local travel app'],
+                ['id' => 'Fashion & thrifting', 'en' => 'Fashion & thrifting'],
+                ['id' => 'Platform kos & properti', 'en' => 'Rental & property platform'],
+            ],
             'context_label' => ['id' => 'Ringkasan pitch deck (opsional)', 'en' => 'Pitch deck summary (optional)'],
             'coach' => [
                 'title' => ['id' => 'Mentor Startup', 'en' => 'Startup Mentor'],

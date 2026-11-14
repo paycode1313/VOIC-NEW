@@ -712,6 +712,12 @@ class ExaminerService
             ];
 
         $lines = [$persona];
+        if (! empty($turn['candidate']['name'])) {
+            $campus = $turn['candidate']['campus'] ?? null;
+            $lines[] = $isEn
+                ? 'You are talking with '.$turn['candidate']['name'].($campus ? ' from '.$campus : '').'. Use their name now and then (not in every turn).'
+                : 'Kamu sedang bicara dengan '.$turn['candidate']['name'].($campus ? ' dari '.$campus : '').'. Sesekali panggil dia dengan namanya (jangan di setiap giliran).';
+        }
         if ($topic) {
             $lines[] = ($isEn ? 'Session topic: ' : 'Topik sesi: ').$topic;
         }
@@ -796,6 +802,12 @@ class ExaminerService
             ];
 
         $lines = [$persona];
+        if (! empty($turn['candidate']['name'])) {
+            $campus = $turn['candidate']['campus'] ?? null;
+            $lines[] = $isEn
+                ? 'You are talking with '.$turn['candidate']['name'].($campus ? ' from '.$campus : '').'. Use their name now and then (not in every turn).'
+                : 'Kamu sedang bicara dengan '.$turn['candidate']['name'].($campus ? ' dari '.$campus : '').'. Sesekali panggil dia dengan namanya (jangan di setiap giliran).';
+        }
         if ($topic) {
             $lines[] = ($isEn ? 'They are preparing for: ' : 'Peserta sedang bersiap untuk: ').$topic;
         }
