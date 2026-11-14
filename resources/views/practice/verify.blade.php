@@ -10,15 +10,9 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800,900&display=swap" rel="stylesheet" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <!-- Theme Initialization Script -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('voic_theme');
-            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
+            try { localStorage.removeItem('voic_theme'); } catch (e) {}
         })();
     </script>
 </head>
@@ -36,21 +30,6 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <!-- Theme Toggle Button -->
-                <button type="button"
-                        onclick="
-                            const isDark = document.documentElement.classList.toggle('dark');
-                            localStorage.setItem('voic_theme', isDark ? 'dark' : 'light');
-                        "
-                        class="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 transition cursor-pointer"
-                        title="Ganti Mode Tampilan (Gelap / Terang)">
-                    <svg class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    <svg class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                </button>
 
                 <button type="button" onclick="window.print()" class="hidden sm:inline-flex items-center px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-navy-800/90 hover:bg-slate-200 dark:hover:bg-navy-700 border border-slate-300 dark:border-navy-700 rounded-lg transition">
                     <svg class="w-3.5 h-3.5 me-1.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

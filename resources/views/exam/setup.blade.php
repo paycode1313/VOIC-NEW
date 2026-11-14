@@ -24,7 +24,7 @@
 
 {{-- Setup as a short wizard: type your name and campus once, everything else is one tap per step. --}}
 <x-exam-layout :title="$blueprint->text($mode['title'], $language)" :back="route('exam.index', $isEn ? ['lang' => 'en'] : [])">
-    <div class="mx-auto max-w-2xl px-4 pb-20 pt-8 sm:px-6 sm:pt-12" style="--glow: {{ $glow }}" data-default-type="{{ $wizard['type'] }}"
+    <div class="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6 sm:pt-12" style="--glow: {{ $glow }}" data-default-type="{{ $wizard['type'] }}"
          x-data="{
             ...@js($wizard),
             get last() { return this.type === 'exam' ? 5 : 4 },
@@ -34,8 +34,52 @@
             same(a, b) { return JSON.stringify(a) === JSON.stringify(b) },
          }">
 
-        {{-- Who you are about to call --}}
-        <div class="flex items-center gap-4">
+        <div class="lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-12 xl:gap-16">
+
+        {{-- Laptop: the examiner who is about to call, with the steps as a checklist --}}
+        <aside class="hidden lg:block lg:sticky lg:top-24">
+            <div class="relative isolate overflow-hidden rounded-[2rem] bg-[#121521] p-8 text-white shadow-2xl shadow-slate-900/20">
+                <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(70%_60%_at_50%_25%,rgb(var(--glow)/0.55),transparent_70%)]"></div>
+                <div class="pointer-events-none absolute inset-0 -z-10 opacity-30 [background-image:linear-gradient(rgb(255_255_255/0.06)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.06)_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(circle_at_50%_30%,black,transparent_75%)]"></div>
+                <div class="flex items-center justify-between text-xs font-semibold">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1"><span class="h-2 w-2 rounded-full bg-emerald-400"></span>{{ $isEn ? 'Online' : 'Online' }}</span>
+                    <span class="rounded-full bg-white/10 px-3 py-1 text-white/75">{{ $isEn ? 'Video call' : 'Video call' }}</span>
+                </div>
+                <div class="relative mx-auto mt-6 flex h-40 w-40 items-center justify-center">
+                    <span class="voic-ring absolute inset-0 rounded-full" style="box-shadow: 0 0 0 2px rgb(var(--glow) / 0.6)"></span>
+                    <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-40 w-40 rounded-full object-cover ring-4 ring-white/10">
+                </div>
+                <p class="mt-6 text-center text-2xl font-extrabold tracking-tight">{{ $examinerName }}</p>
+                <p class="mt-1 text-center text-sm font-semibold" style="color: rgb(var(--glow))">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
+                <p class="mt-3 text-center text-sm text-white/75" x-show="name" x-cloak x-text="'{{ $isEn ? 'Ready to call' : 'Siap menelepon' }} ' + name + (campus ? ' {{ $isEn ? 'from' : 'dari' }} ' + campus : '')"></p>
+
+                <ol class="mt-7 space-y-1.5 text-sm">
+                    @foreach ([
+                        [1, $isEn ? 'Get to know you' : 'Kenalan', 'true'],
+                        [2, $isEn ? 'Coach or mock exam' : 'Ngobrol atau simulasi', 'true'],
+                        [3, $isEn ? 'Topic' : 'Topik', 'true'],
+                        [4, $isEn ? 'Length' : 'Durasi', "type === 'exam'"],
+                        [0, $isEn ? 'Get the call' : 'Ditelepon', 'true'],
+                    ] as [$n, $label, $visible])
+                        @php $at = $n === 0 ? 'last' : $n; @endphp
+                        <li x-show="{{ $visible }}" class="flex items-center gap-3 rounded-xl px-3 py-2 transition"
+                            :class="step === {{ $at }} ? 'bg-white/10 font-bold' : (step > {{ $at }} ? 'text-white/75' : 'text-white/50')">
+                            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                                  :style="step >= {{ $at }} ? 'background: rgb(var(--glow)); color: white' : ''"
+                                  :class="step >= {{ $at }} ? '' : 'ring-1 ring-white/25'">
+                                <svg x-show="step > {{ $at }}" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                <span x-show="step <= {{ $at }}" x-text="{{ $n === 0 ? 'last' : $n }}"></span>
+                            </span>
+                            {{ $label }}
+                        </li>
+                    @endforeach
+                </ol>
+            </div>
+        </aside>
+
+        <div class="mx-auto w-full max-w-2xl lg:mx-0 lg:pt-2">
+        {{-- Who you are about to call (phones; the laptop shows the big card) --}}
+        <div class="flex items-center gap-4 lg:hidden">
             <div class="relative isolate flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#121521]">
                 <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(circle,rgb(var(--glow)/0.6),transparent_70%)]"></div>
                 <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-12 w-12 rounded-full object-cover">
@@ -48,7 +92,7 @@
         </div>
 
         {{-- Progress --}}
-        <div class="mt-6 flex items-center gap-1.5" aria-hidden="true">
+        <div class="mt-6 flex items-center gap-1.5 lg:mt-0" aria-hidden="true">
             <template x-for="i in last" :key="i">
                 <span class="h-1.5 flex-1 rounded-full transition-colors duration-300" :style="i <= step ? 'background: rgb(var(--glow))' : ''" :class="i <= step ? '' : 'bg-black/10 dark:bg-white/10'"></span>
             </template>
@@ -69,7 +113,7 @@
             <section x-show="step === 1" x-transition.opacity>
                 <h1 class="text-3xl font-extrabold tracking-tight">{{ $isEn ? "Let's get to know you" : 'Kenalan dulu, yuk' }}</h1>
                 <p class="mt-2 text-slate-600 dark:text-slate-400">{{ $isEn ? "{$examinerName} will greet you by name." : "{$examinerName} bakal manggil kamu pakai nama ini." }}</p>
-                <div class="mt-6 space-y-4 rounded-3xl border border-black/5 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
+                <div class="mt-6 space-y-4 rounded-3xl border border-black/5 bg-white p-6 shadow-sm shadow-slate-900/5 dark:border-white/10 dark:bg-white/[0.03]">
                     <div>
                         <label for="guest_name" class="block text-sm font-semibold">{{ $isEn ? 'Your name' : 'Nama panggilan' }}</label>
                         <input id="guest_name" @guest name="guest_name" @endguest x-ref="name" x-model="name" type="text" maxlength="100" required autocomplete="given-name"
@@ -227,5 +271,7 @@
                 {{ $isEn ? 'Back' : 'Kembali' }}
             </button>
         </form>
+        </div>
+        </div>
     </div>
 </x-exam-layout>

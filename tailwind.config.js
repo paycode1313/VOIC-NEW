@@ -11,7 +11,8 @@ export default {
         './config/exam.php',
     ],
 
-    darkMode: 'class',
+    // Light only: dark: variants are inert (no dark mode at all).
+    darkMode: ['class', '.voic-dark-mode-disabled'],
     theme: {
         extend: {
             aspectRatio: {
