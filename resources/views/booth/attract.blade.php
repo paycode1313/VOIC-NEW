@@ -4,8 +4,8 @@
     // What each examiner "says" when calling in: a short greeting and a real first question.
     $lines = [
         'wawancara' => 'Halo! Aku HRD yang bakal ngobrol sama kamu hari ini. Coba ceritain dong, kenapa kami harus milih kamu?',
-        'sidang' => 'Selamat datang. Saya dosen penguji Anda hari ini. Kenapa Anda memilih metode itu, dan apa batasannya?',
-        'pitching' => 'Halo, saya investor yang bakal dengerin pitch Anda. Masalah apa yang Anda selesaikan, dan siapa yang mau bayar?',
+        'sidang' => 'Halo, selamat datang. Saya dosen penguji kamu hari ini. Coba jelasin, kenapa kamu milih metode itu, terus batasannya apa?',
+        'pitching' => 'Halo, saya investor yang bakal dengerin pitch kamu. Masalah apa yang mau kamu selesaikan, dan siapa yang mau bayar?',
     ];
     $callers = collect($modes)->map(fn ($mode, $key) => [
         'mode' => $key,
