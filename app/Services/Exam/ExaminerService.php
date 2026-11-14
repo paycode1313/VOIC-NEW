@@ -1478,23 +1478,28 @@ class ExaminerService
      */
     protected function callCloudModel(array $messages, int $timeout = 12): ?string
     {
+        $groq = ['key' => (string) Config::get('services.groq.key', ''), 'url' => 'https://api.groq.com/openai/v1/chat/completions'];
         $providers = [
-            ['key' => (string) Config::get('services.groq.key', ''), 'url' => 'https://api.groq.com/openai/v1/chat/completions', 'model' => (string) Config::get('services.groq.model', 'qwen/qwen3.8-27b')],
+            $groq + ['model' => (string) Config::get('services.groq.model', 'openai/gpt-oss-120b')],
+            // Each Groq model has its own free quota: a second model answers when the first is busy.
+            $groq + ['model' => (string) Config::get('services.groq.fallback_model', '')],
             ['key' => (string) Config::get('services.openai.key', ''), 'url' => 'https://api.openai.com/v1/chat/completions', 'model' => (string) Config::get('services.openai.model', 'gpt-4o-mini')],
         ];
 
         foreach ($providers as $provider) {
-            if ($provider['key'] === '') {
+            if ($provider['key'] === '' || $provider['model'] === '') {
                 continue;
             }
 
+            $body = ['model' => $provider['model'], 'messages' => $messages, 'temperature' => 0.75, 'max_tokens' => 140];
+            if (str_starts_with($provider['model'], 'openai/gpt-oss')) {
+                // A reasoning model thinks before it answers; the thinking shares max_tokens with the reply,
+                // so with 140 the reply comes back empty. Low effort keeps it under a second on Groq.
+                $body = ['reasoning_effort' => 'low', 'max_tokens' => 700] + $body;
+            }
+
             try {
-                $send = fn () => Http::connectTimeout(3)->timeout($timeout)->withToken($provider['key'])->post($provider['url'], [
-                    'model' => $provider['model'],
-                    'messages' => $messages,
-                    'temperature' => 0.75,
-                    'max_tokens' => 140,
-                ]);
+                $send = fn () => Http::connectTimeout(3)->timeout($timeout)->withToken($provider['key'])->post($provider['url'], $body);
                 $response = $send();
                 // Free tiers limit tokens per minute (Groq: 8000, about three turns). When the quota frees up
                 // within a few seconds, waiting is far quicker than the local model on a laptop CPU.

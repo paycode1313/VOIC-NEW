@@ -46,7 +46,10 @@ return [
 
     'groq' => [
         'key' => env('GROQ_API_KEY'),
-        'model' => env('GROQ_MODEL', 'qwen/qwen3.8-27b'),
+        // gpt-oss-120b: the strongest model on Groq's free tier (89.7% of the eval turns pass the quality gate,
+        // qwen3.8-27b 86.2%); the fallback answers when the first model's per-minute quota is used up.
+        'model' => env('GROQ_MODEL', 'openai/gpt-oss-120b'),
+        'fallback_model' => env('GROQ_FALLBACK_MODEL', 'qwen/qwen3.8-27b'),
     ],
 
     'openrouter' => [

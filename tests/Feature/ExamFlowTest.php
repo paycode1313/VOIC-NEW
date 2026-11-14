@@ -767,6 +767,32 @@ class ExamFlowTest extends TestCase
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'api.elevenlabs.io'));
     }
 
+    public function test_the_reasoning_model_gets_room_to_think_and_a_second_model_covers_its_quota(): void
+    {
+        config(['exam.speed_mode' => 'online', 'services.groq.key' => 'test-key',
+            'services.groq.model' => 'openai/gpt-oss-120b', 'services.groq.fallback_model' => 'qwen/qwen3.8-27b']);
+        Http::fake(function ($request) {
+            if (! str_contains($request->url(), 'api.groq.com')) {
+                return Http::response([], 503);
+            }
+
+            return $request['model'] === 'openai/gpt-oss-120b'
+                ? Http::response(['error' => ['message' => 'Rate limit reached for tokens per minute']], 429, ['retry-after' => '40'])
+                : Http::response(['choices' => [['message' => ['content' => 'Empat puluh toko itu lumayan. Datanya kamu jaga konsisten gimana?']]]]);
+        });
+
+        $session = $this->startExam('wawancara', [1]);
+        $this->postJson(route('exam.answer', $session), ['answer' => 'Saya membangun dashboard penjualan React untuk 40 toko retail di Malang.', 'duration_seconds' => 15, 'timestamp_seconds' => 15])
+            ->assertOk()
+            ->assertJsonPath('examiner_message.engine', 'cloud_llm')
+            ->assertJsonPath('examiner_message.text', 'Empat puluh toko itu lumayan. Datanya kamu jaga konsisten gimana?');
+
+        Http::assertSent(fn ($request) => ($request['model'] ?? null) === 'openai/gpt-oss-120b'
+            && $request['reasoning_effort'] === 'low' && $request['max_tokens'] === 700);
+        Http::assertSent(fn ($request) => ($request['model'] ?? null) === 'qwen/qwen3.8-27b'
+            && ! isset($request['reasoning_effort']) && $request['max_tokens'] === 140);
+    }
+
     public function test_cloud_model_waits_briefly_for_a_free_quota_instead_of_falling_back(): void
     {
         Sleep::fake();
