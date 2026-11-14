@@ -36,9 +36,9 @@
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </a>
                     @endif
-                    <a href="{{ url('/') }}" class="flex items-center gap-2 font-extrabold tracking-tight">
-                        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-[11px] font-black text-white dark:bg-white dark:text-slate-900">V</span>
-                        <span class="text-[15px]">VOIC</span>
+                    <a href="{{ url('/') }}" class="flex shrink-0 items-center" aria-label="VOIC">
+                        <img src="/images/logo/voic-logo-horizontal.svg" alt="VOIC" class="h-7 w-auto dark:hidden" width="99" height="28">
+                        <img src="/images/logo/voic-logo-horizontal-dark.svg" alt="VOIC" class="hidden h-7 w-auto dark:block" width="99" height="28">
                     </a>
                     <nav class="ml-4 hidden items-center gap-1 text-sm font-semibold md:flex" aria-label="Navigasi utama">
                         @php

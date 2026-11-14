@@ -140,6 +140,8 @@
     </section>
 
     <footer class="border-t border-black/5 py-8 text-center text-sm text-slate-500 dark:border-white/5">
-        VOIC · Voice & Optics Intelligent Coach · Innofest 2026
+        <img src="/images/logo/voic-logo-stacked.svg" alt="VOIC" class="mx-auto mb-3 h-16 w-auto dark:hidden" width="84" height="64">
+        <img src="/images/logo/voic-logo-stacked-dark.svg" alt="VOIC" class="mx-auto mb-3 hidden h-16 w-auto dark:block" width="84" height="64">
+        Voice & Optics Intelligent Coach · Innofest 2026
     </footer>
 </x-exam-layout>

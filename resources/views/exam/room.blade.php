@@ -29,9 +29,8 @@
         {{-- ===================== Lobby (before joining) ===================== --}}
         <div x-show="!started" class="flex min-h-0 flex-1 flex-col">
             <div class="flex shrink-0 items-center justify-between px-4 py-3 sm:px-6">
-                <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="flex items-center gap-2 font-extrabold tracking-tight">
-                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white text-xs font-black text-slate-900">V</span>
-                    <span class="text-[15px]">VOIC</span>
+                <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="flex shrink-0 items-center" aria-label="VOIC">
+                    <img src="/images/logo/voic-logo-horizontal-dark.svg" alt="VOIC" class="h-7 w-auto" width="99" height="28">
                 </a>
                 <span class="text-xs text-white/65">{{ $blueprint->text($mode['title'], $language) }}</span>
             </div>
@@ -96,6 +95,7 @@
             {{-- Top bar: who, which part, how long --}}
             <div class="flex shrink-0 items-center justify-between gap-3 px-3 py-2.5 sm:px-5">
                 <div class="flex min-w-0 items-center gap-3">
+                    <img src="/images/logo/voic-logo-mark.svg" alt="VOIC" class="h-6 w-6 shrink-0" width="24" height="24">
                     <span class="inline-flex items-center gap-1.5 rounded-md bg-rose-500/15 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-rose-300">
                         <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400"></span>Live
                     </span>
