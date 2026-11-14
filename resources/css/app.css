@@ -354,3 +354,7 @@
 @media (prefers-reduced-motion: reduce) {
     .voic-drift, .voic-drift-slow, .voic-shake, .voic-bounce, .voic-ring, .voic-eq { animation: none; }
 }
+
+/* Booth kiosk: no account, theme or site navigation; a "Selesai" button back to the welcome screen. */
+.voic-kiosk [data-kiosk-hide] { display: none !important; }
+.voic-kiosk [data-kiosk-show] { display: inline-flex !important; }

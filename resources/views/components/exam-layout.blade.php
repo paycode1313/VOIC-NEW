@@ -19,6 +19,8 @@
                         document.documentElement.classList.add('dark');
                     }
                 } catch (e) {}
+                // Booth kiosk (set by the welcome screen): hide account and navigation links.
+                try { if (sessionStorage.getItem('voic_kiosk') === '1') document.documentElement.classList.add('voic-kiosk'); } catch (e) {}
             })();
         </script>
         <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
@@ -36,11 +38,11 @@
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </a>
                     @endif
-                    <a href="{{ url('/') }}" class="flex shrink-0 items-center" aria-label="VOIC">
+                    <a href="{{ url('/') }}" data-kiosk-href="{{ route('attract') }}" class="flex shrink-0 items-center" aria-label="VOIC">
                         <img src="/images/logo/voic-logo-horizontal.svg" alt="VOIC" class="h-7 w-auto dark:hidden" width="99" height="28">
                         <img src="/images/logo/voic-logo-horizontal-dark.svg" alt="VOIC" class="hidden h-7 w-auto dark:block" width="99" height="28">
                     </a>
-                    <nav class="ml-4 hidden items-center gap-1 text-sm font-semibold md:flex" aria-label="Navigasi utama">
+                    <nav data-kiosk-hide class="ml-4 hidden items-center gap-1 text-sm font-semibold md:flex" aria-label="Navigasi utama">
                         @php
                             $links = [['exam.index', 'Latihan', 'exam.*']];
                             if (auth()->check()) {
@@ -60,6 +62,10 @@
                 </div>
                 <div class="flex items-center gap-1.5">
                     {{ $headerRight ?? '' }}
+                    <a href="{{ route('attract') }}" data-kiosk-show class="hidden h-9 items-center gap-1.5 rounded-full bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>
+                        Selesai
+                    </a>
                     @auth
                         <button type="button" @click="$dispatch('open-onboarding')" title="Panduan & Tutorial"
                                 class="hidden h-9 items-center rounded-full px-3 text-sm font-semibold text-slate-500 hover:bg-black/5 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex">
@@ -67,7 +73,7 @@
                         </button>
                     @endauth
                     <button type="button"
-                            onclick="const d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('voic_theme',d?'dark':'light')}catch(e){}"
+                            data-kiosk-hide onclick="const d=document.documentElement.classList.toggle('dark');try{localStorage.setItem('voic_theme',d?'dark':'light')}catch(e){}"
                             class="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-black/5 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white"
                             aria-label="Ganti tema">
                         <svg class="h-[18px] w-[18px] dark:hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
@@ -89,17 +95,17 @@
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="hidden h-9 items-center rounded-full px-3 text-sm font-semibold text-slate-600 hover:bg-black/5 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex">Masuk</a>
+                        <a data-kiosk-hide href="{{ route('login') }}" class="hidden h-9 items-center rounded-full px-3 text-sm font-semibold text-slate-600 hover:bg-black/5 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex">Masuk</a>
                         @if (Route::has('register'))
-                            <a href="{{ route('register') }}" class="hidden h-9 items-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 sm:inline-flex">Daftar</a>
+                            <a data-kiosk-hide href="{{ route('register') }}" class="hidden h-9 items-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 sm:inline-flex">Daftar</a>
                         @endif
                     @endauth
-                    <button type="button" @click="menu = !menu" class="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-black/5 dark:hover:bg-white/10 md:hidden" :aria-expanded="menu" aria-label="Menu">
+                    <button type="button" data-kiosk-hide @click="menu = !menu" class="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-black/5 dark:hover:bg-white/10 md:hidden" :aria-expanded="menu" aria-label="Menu">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
                     </button>
                 </div>
             </div>
-            <div x-show="menu" x-cloak class="border-t border-black/5 px-4 py-2 text-sm font-semibold dark:border-white/10 md:hidden">
+            <div x-show="menu" x-cloak data-kiosk-hide class="border-t border-black/5 px-4 py-2 text-sm font-semibold dark:border-white/10 md:hidden">
                 <a href="{{ route('exam.index') }}" class="block rounded-xl px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10">Latihan</a>
                 @auth
                     <a href="{{ route('dashboard') }}" class="block rounded-xl px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10">Dashboard</a>
@@ -135,6 +141,7 @@
             <script>
                 (function () {
                     try { if (sessionStorage.getItem('voic_kiosk') !== '1') return; } catch (e) { return; }
+                    document.querySelectorAll('[data-kiosk-href]').forEach(function (a) { a.href = a.dataset.kioskHref; });
                     var IDLE = 120, WARN = 15, idle = 0, box = null;
                     function reset() { idle = 0; if (box) { box.remove(); box = null; } }
                     ['pointerdown', 'keydown', 'wheel', 'touchstart', 'mousemove'].forEach(function (e) { addEventListener(e, reset, { passive: true }); });

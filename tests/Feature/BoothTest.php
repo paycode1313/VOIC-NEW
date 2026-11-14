@@ -105,7 +105,11 @@ class BoothTest extends TestCase
 
     public function test_pages_send_an_idle_kiosk_back_to_the_welcome_screen_but_not_the_call(): void
     {
-        $this->get(route('exam.index'))->assertSee("sessionStorage.getItem('voic_kiosk')", false);
+        $this->get(route('exam.index'))->assertSee("sessionStorage.getItem('voic_kiosk')", false)
+            // Kiosk hides sign-in and site links, and offers a way back to the welcome screen.
+            ->assertSee("classList.add('voic-kiosk')", false)
+            ->assertSee('data-kiosk-hide href="'.route('register').'"', false)
+            ->assertSee('data-kiosk-href="'.route('attract').'"', false);
         $this->get(route('attract'))->assertDontSee('Masih di sini?');
     }
 
