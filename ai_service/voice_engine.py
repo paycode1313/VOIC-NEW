@@ -237,9 +237,12 @@ def synthesize_piper(text: str, role_type: str, language: str, output_dir: str) 
 
 # Suara online (edge-tts, suara neural Microsoft). Jauh lebih alami daripada Piper: dipakai lebih dulu
 # jika aplikasi meminta engine="edge" (mode cepat online), selain itu hanya cadangan jika Piper tidak ada.
+# Suara "multilingual" yang fasih berbahasa Indonesia (dicek ulang dengan Whisper: transkrip cocok).
+# HRD = Ava (ekspresif, ramah), dosen = Brian (tenang, sedikit lebih rendah dan pelan),
+# investor = Andrew (hangat, percaya diri, lebih cepat). Persona yang sama di bahasa Inggris.
 EDGE_VOICES = {
-    "id": {"dosen_penguji": ("id-ID-ArdiNeural", "-4Hz", "-4%"), "hrd": ("id-ID-GadisNeural", "+0Hz", "+0%"), "investor": ("id-ID-ArdiNeural", "-1Hz", "+10%")},
-    "en": {"dosen_penguji": ("en-US-GuyNeural", "-5Hz", "-5%"), "hrd": ("en-US-JennyNeural", "+0Hz", "-4%"), "investor": ("en-US-BrianNeural", "+0Hz", "+10%")},
+    "id": {"dosen_penguji": ("en-US-BrianMultilingualNeural", "-3Hz", "-4%"), "hrd": ("en-US-AvaMultilingualNeural", "+0Hz", "+0%"), "investor": ("en-US-AndrewMultilingualNeural", "+0Hz", "+6%")},
+    "en": {"dosen_penguji": ("en-US-BrianMultilingualNeural", "-3Hz", "-4%"), "hrd": ("en-US-AvaMultilingualNeural", "+0Hz", "+0%"), "investor": ("en-US-AndrewMultilingualNeural", "+0Hz", "+6%")},
 }
 
 

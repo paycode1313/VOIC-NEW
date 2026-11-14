@@ -57,7 +57,7 @@ return [
     'speed_mode' => env('VOIC_SPEED_MODE', 'offline'),
 
     /*
-    | Examiner voice. "edge": Microsoft's natural neural voices over the internet (VOIC-INTERVIEW = Gadis),
+    | Examiner voice. "edge": Microsoft's natural neural voices over the internet (Ava, Brian, Andrew),
     | Piper as the fallback. "piper": the local, offline voice (more robotic). Empty: "edge" in the
     | online speed mode, "piper" otherwise.
     */
