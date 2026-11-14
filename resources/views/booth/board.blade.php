@@ -6,19 +6,19 @@
         <div class="pointer-events-none absolute -z-10 h-[50vmax] w-[50vmax] rounded-full opacity-40 blur-3xl voic-drift-slow [background:radial-gradient(circle,rgb(245_158_11/0.35),transparent_65%)]" style="left: -15%; bottom: -30%"></div>
 
         <div class="flex shrink-0 items-center justify-between px-8 py-5 lg:px-12">
-            <img src="/images/logo/voic-logo-horizontal-dark.svg" alt="VOIC" class="h-10 w-auto" width="142" height="40">
-            <span class="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold">Innofest 2026 · {{ now()->translatedFormat('d F') }}</span>
+            <img src="/images/logo/voic-logo-horizontal.svg" alt="VOIC" class="h-10 w-auto" width="142" height="40">
+            <span class="rounded-full bg-slate-900/[0.06] px-4 py-1.5 text-sm font-semibold">Innofest 2026 · {{ now()->translatedFormat('d F') }}</span>
         </div>
 
         <div class="mx-auto grid min-h-0 w-full max-w-7xl flex-1 gap-8 overflow-y-auto px-8 pb-8 lg:grid-cols-[1.6fr_1fr] lg:px-12">
             <div class="flex min-h-0 flex-col">
-                <p class="text-sm font-bold uppercase tracking-[0.25em] text-white/75">Peringkat hari ini</p>
+                <p class="text-sm font-bold uppercase tracking-[0.25em] text-slate-600">Peringkat hari ini</p>
                 <h1 class="mt-1 text-5xl font-extrabold tracking-tight xl:text-6xl">Siapa paling siap?</h1>
 
                 @if (empty($leaders))
-                    <div class="mt-8 flex flex-1 flex-col items-center justify-center rounded-3xl bg-white/[0.06] p-10 text-center ring-1 ring-white/10">
+                    <div class="mt-8 flex flex-1 flex-col items-center justify-center rounded-3xl bg-slate-900/[0.06] p-10 text-center ring-1 ring-slate-900/10">
                         <p class="text-2xl font-extrabold">Belum ada juara hari ini</p>
-                        <p class="mt-2 text-lg text-white/75">Jadi yang pertama di papan ini.</p>
+                        <p class="mt-2 text-lg text-slate-600">Jadi yang pertama di papan ini.</p>
                     </div>
                 @else
                     <ol class="mt-6 space-y-2.5">
@@ -34,11 +34,11 @@
                                 @if ($medal)
                                     <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xl font-black {{ $medal }}">{{ $rank + 1 }}</span>
                                 @else
-                                    <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center text-lg font-extrabold text-white/75">{{ $rank + 1 }}</span>
+                                    <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center text-lg font-extrabold text-slate-600">{{ $rank + 1 }}</span>
                                 @endif
                                 <div class="min-w-0 flex-1">
                                     <p @class(['truncate font-extrabold', 'text-2xl' => $rank < 3, 'text-lg' => $rank >= 3])>{{ $leader['name'] }}</p>
-                                    <p class="text-sm text-white/75">{{ $leader['mode'] }} · {{ $leader['time'] }}</p>
+                                    <p class="text-sm text-slate-600">{{ $leader['mode'] }} · {{ $leader['time'] }}</p>
                                 </div>
                                 <span @class(['font-black tabular-nums', 'text-4xl' => $rank < 3, 'text-2xl' => $rank >= 3])>{{ number_format($leader['band'], 1) }}</span>
                             </li>
@@ -47,9 +47,9 @@
                 @endif
             </div>
 
-            <div class="flex flex-col items-center justify-center rounded-[2rem] bg-white/[0.07] p-8 text-center ring-1 ring-white/10 backdrop-blur-xl">
+            <div class="flex flex-col items-center justify-center rounded-[2rem] bg-slate-900/[0.06] p-8 text-center ring-1 ring-slate-900/10 backdrop-blur-xl">
                 <p class="text-3xl font-extrabold leading-tight">Coba sekarang,<br>gratis</p>
-                <p class="mt-3 text-lg text-white/75">Wawancara kerja · Sidang skripsi · Pitching bisnis</p>
+                <p class="mt-3 text-lg text-slate-600">Wawancara kerja · Sidang skripsi · Pitching bisnis</p>
                 <div id="board-qr" data-url="{{ $startUrl }}" class="mt-6 h-60 w-60 rounded-3xl bg-white p-3 [&_svg]:h-full [&_svg]:w-full"></div>
                 <p class="mt-5 text-base font-semibold">Pindai, lalu ditelepon penguji AI</p>
             </div>

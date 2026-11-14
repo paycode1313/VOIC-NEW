@@ -24,7 +24,7 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700,800&display=swap" rel="stylesheet" />
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="relative isolate font-sans antialiased {{ $call ? 'bg-[#0b0d12] text-white' : 'bg-[#f6f6f3] text-slate-900 dark:bg-[#0c0d10] dark:text-slate-100' }} {{ $fullHeight ? 'h-dvh overflow-hidden flex flex-col' : 'min-h-screen' }}">
+    <body class="relative isolate font-sans antialiased {{ $call ? 'bg-[#eef1f8] text-slate-900' : 'bg-[#f6f6f3] text-slate-900 dark:bg-[#0c0d10] dark:text-slate-100' }} {{ $fullHeight ? 'h-dvh overflow-hidden flex flex-col' : 'min-h-screen' }}">
         {{-- A call (the exam room) is full screen, like a video call: no site header. --}}
         @unless ($call)
         {{-- Soft brand backdrop (indigo, sky, amber) so light pages have depth instead of flat beige. --}}

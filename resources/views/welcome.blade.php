@@ -31,15 +31,15 @@
             </div>
 
             {{-- Preview of a call, built from the real room's pieces --}}
-            <div class="overflow-hidden rounded-3xl bg-[#0b0d12] p-3 shadow-2xl shadow-black/20 ring-1 ring-black/10 dark:ring-white/10" aria-hidden="true" style="--glow: 99 102 241">
-                <div class="flex items-center justify-between px-2 pb-3 pt-1 text-xs font-semibold text-white">
+            <div class="overflow-hidden rounded-3xl bg-[#eef1f8] p-3 shadow-2xl shadow-black/20 ring-1 ring-black/10 dark:ring-white/10" aria-hidden="true" style="--glow: 99 102 241">
+                <div class="flex items-center justify-between px-2 pb-3 pt-1 text-xs font-semibold text-slate-900">
                     <span class="inline-flex items-center gap-2">
-                        <span class="inline-flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 font-bold uppercase tracking-wider text-rose-300"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400"></span>Live</span>
-                        VOIC-SIDANG <span class="font-mono text-white/65">06:42</span>
+                        <span class="inline-flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 font-bold uppercase tracking-wider text-rose-600"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400"></span>Live</span>
+                        VOIC-SIDANG <span class="font-mono text-slate-600">06:42</span>
                     </span>
                     <span class="rounded-full bg-white px-2 py-0.5 text-slate-900">Bagian 3 · Tanya Jawab</span>
                 </div>
-                <div class="relative isolate aspect-video overflow-hidden rounded-2xl bg-[#121521]">
+                <div class="relative isolate aspect-video overflow-hidden rounded-2xl bg-white">
                     <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(55%_70%_at_50%_40%,rgb(var(--glow)/0.55),transparent_72%)]"></div>
                     <div class="flex h-full items-start justify-center pt-[9%]">
                         <div class="relative">
@@ -47,23 +47,23 @@
                             <img src="{{ asset('images/avatars/dosen-portrait.webp') }}" alt="" class="relative h-24 w-24 rounded-full object-cover ring-[3px] ring-white/90 sm:h-32 sm:w-32">
                         </div>
                     </div>
-                    <span class="absolute left-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-md bg-black/50 px-2 py-0.5 text-xs font-semibold text-white">
-                        <span class="flex h-2.5 items-end gap-[2px]"><span class="voic-eq w-[2px] rounded-full bg-white"></span><span class="voic-eq w-[2px] rounded-full bg-white [animation-delay:150ms]"></span><span class="voic-eq w-[2px] rounded-full bg-white [animation-delay:300ms]"></span></span>
+                    <span class="absolute left-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-md bg-white/90 px-2 py-0.5 text-xs font-semibold text-slate-900">
+                        <span class="flex h-2.5 items-end gap-[2px]"><span class="voic-eq w-[2px] rounded-full bg-slate-900"></span><span class="voic-eq w-[2px] rounded-full bg-slate-900 [animation-delay:150ms]"></span><span class="voic-eq w-[2px] rounded-full bg-slate-900 [animation-delay:300ms]"></span></span>
                         Sedang bicara
                     </span>
-                    <div class="absolute right-2.5 top-2.5 flex aspect-video w-24 items-center justify-center rounded-lg bg-[#1b1f2e] ring-2 ring-sky-400/70 sm:w-32">
-                        <span class="rounded-full bg-white/10 px-2 py-1 text-xs font-bold text-white">Kamu</span>
+                    <div class="absolute right-2.5 top-2.5 flex aspect-video w-24 items-center justify-center rounded-lg bg-slate-100 ring-2 ring-sky-400/70 sm:w-32">
+                        <span class="rounded-full bg-slate-900/[0.06] px-2 py-1 text-xs font-bold text-slate-900">Kamu</span>
                     </div>
-                    <p class="absolute inset-x-4 bottom-3 mx-auto max-w-md rounded-lg bg-black/65 px-3 py-1.5 text-center text-xs leading-relaxed text-white sm:text-sm">
+                    <p class="absolute inset-x-4 bottom-3 mx-auto max-w-md rounded-lg bg-white/90 px-3 py-1.5 text-center text-xs leading-relaxed text-slate-900 sm:text-sm">
                         Delapan puluh tujuh persen di data pabrik itu lumayan kuat. Dari lima jenis cacat, mana yang paling susah dideteksi?
                     </p>
                 </div>
                 <div class="flex items-center justify-center gap-2 pb-1 pt-3">
                     <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500"><svg class="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 006 6.92V20H8a1 1 0 100 2h8a1 1 0 100-2h-3v-2.08A7 7 0 0019 11z"/></svg></span>
-                    <span class="h-8 w-8 rounded-full bg-white/10"></span>
-                    <span class="h-8 w-8 rounded-full bg-white/10"></span>
+                    <span class="h-8 w-8 rounded-full bg-slate-900/[0.06]"></span>
+                    <span class="h-8 w-8 rounded-full bg-slate-900/[0.06]"></span>
                     <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-black text-slate-900">CC</span>
-                    <span class="h-8 w-8 rounded-full bg-white/10"></span>
+                    <span class="h-8 w-8 rounded-full bg-slate-900/[0.06]"></span>
                     <span class="ml-2 inline-flex h-8 items-center rounded-full bg-rose-600 px-3 text-xs font-bold text-white">Akhiri</span>
                 </div>
             </div>
@@ -77,10 +77,10 @@
             @foreach ($modes as $key => $mode)
                 <a href="{{ route('exam.setup', $key) }}" style="--glow: {{ $glows[$mode['accent']] ?? '99 102 241' }}"
                    class="group flex items-center gap-4 rounded-3xl border border-black/5 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg dark:border-white/10 dark:bg-white/[0.03]">
-                    <div class="relative isolate flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#121521]">
+                    <div class="relative isolate flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
                         <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(circle,rgb(var(--glow)/0.6),transparent_70%)]"></div>
                         <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-14 w-14 rounded-full object-cover" loading="lazy">
-                        <span class="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#121521]"></span>
+                        <span class="absolute bottom-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white"></span>
                     </div>
                     <div class="min-w-0 flex-1">
                         <h3 class="font-extrabold tracking-tight">{{ $mode['examiner']['name'] }}</h3>
@@ -127,7 +127,7 @@
                 <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Bawa pulang lewat QR code, tanpa perlu akun</span></li>
             </ul>
         </div>
-        <div class="rounded-3xl bg-slate-900 p-6 text-white dark:bg-white dark:text-slate-900">
+        <div class="rounded-3xl bg-indigo-50 p-6 text-slate-900 ring-1 ring-indigo-100">
             @if ($online)
                 <h2 class="text-xl font-extrabold tracking-tight">Privasi: yang perlu kamu tahu</h2>
                 <p class="mt-3 text-sm opacity-80">Supaya penguji bisa menjawab dalam sekejap, teks jawabanmu diproses AI cloud (Groq), suara penguji dibuat layanan suara Microsoft, dan browser mengenali ucapanmu. Rekaman dan rapor disimpan di laptop ini. Data tamu dihapus otomatis setelah {{ config('exam.retention_days') }} hari, dan kamu bisa menghapusnya kapan saja dari rapor.</p>
@@ -135,7 +135,7 @@
                 <h2 class="text-xl font-extrabold tracking-tight">Privasi: semua di laptop ini</h2>
                 <p class="mt-3 text-sm opacity-80">Pengenal suara (Whisper), otak AI (Ollama), dan suara penguji (Piper) berjalan di laptop. Suaramu tidak dikirim ke internet. Data tamu dihapus otomatis setelah {{ config('exam.retention_days') }} hari, dan kamu bisa menghapusnya kapan saja dari rapor.</p>
             @endif
-            <a href="{{ route('exam.index') }}" class="mt-5 inline-block rounded-full bg-white px-5 py-2.5 text-sm font-bold text-slate-900 hover:bg-slate-100 dark:bg-slate-900 dark:text-white">Coba sekarang</a>
+            <a href="{{ route('exam.index') }}" class="mt-5 inline-block rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-500 dark:bg-slate-900 dark:text-white">Coba sekarang</a>
         </div>
     </section>
 

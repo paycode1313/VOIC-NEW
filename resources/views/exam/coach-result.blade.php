@@ -47,7 +47,7 @@
                     @endforeach
                 </ul>
             </div>
-            <div class="rounded-3xl bg-slate-900 p-6 text-white dark:bg-white dark:text-slate-900">
+            <div class="rounded-3xl bg-indigo-50 p-6 text-slate-900 ring-1 ring-indigo-100">
                 <h2 class="font-bold">🎯 {{ $isEn ? 'Practise next' : 'Latih berikutnya' }}</h2>
                 <ul class="mt-3 space-y-2 text-sm opacity-90">
                     @foreach ($report['practice'] as $item)

@@ -34,18 +34,18 @@
                 <a href="{{ route('exam.setup', ['mode' => $key] + ($isEn ? ['lang' => 'en'] : [])) }}" style="--glow: {{ $glow }}"
                    class="group flex flex-col overflow-hidden rounded-3xl border border-black/5 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/[0.03]">
                     {{-- Video tile --}}
-                    <div class="relative isolate flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#121521]">
+                    <div class="relative isolate flex aspect-[4/3] items-center justify-center overflow-hidden bg-white">
                         <div class="pointer-events-none absolute inset-0 -z-10 opacity-70 transition duration-500 group-hover:opacity-100 [background:radial-gradient(60%_75%_at_50%_45%,rgb(var(--glow)/0.55),transparent_72%)]"></div>
                         <div class="relative">
                             <span class="voic-ring absolute inset-0 rounded-full border-2 opacity-0 transition group-hover:opacity-100" style="border-color: rgb(var(--glow) / 0.6)"></span>
                             <img src="{{ asset($mode['examiner']['avatar']) }}" alt="{{ $mode['examiner']['name'] }}" loading="lazy"
-                                 class="relative h-28 w-28 rounded-full object-cover shadow-2xl ring-4 ring-white/15 transition duration-500 group-hover:scale-105 sm:h-32 sm:w-32">
+                                 class="relative h-28 w-28 rounded-full object-cover shadow-2xl ring-4 ring-slate-900/10 transition duration-500 group-hover:scale-105 sm:h-32 sm:w-32">
                         </div>
-                        <span class="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
+                        <span class="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-900 backdrop-blur">
                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>{{ $isEn ? 'Online' : 'Online' }}
                         </span>
-                        <span class="absolute right-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-xs font-semibold text-white/80 backdrop-blur">~12 {{ $isEn ? 'min' : 'menit' }}</span>
-                        <span class="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-lg bg-black/50 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
+                        <span class="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-600 backdrop-blur">~12 {{ $isEn ? 'min' : 'menit' }}</span>
+                        <span class="absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-lg bg-white/90 px-2.5 py-1 text-xs font-semibold text-slate-900 backdrop-blur">
                             @include('exam.partials.icon', ['name' => $mode['icon']])
                             {{ $blueprint->text($mode['title'], $language) }}
                         </span>

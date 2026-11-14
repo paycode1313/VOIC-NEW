@@ -16,10 +16,10 @@
 
         <div class="mt-6 grid gap-4 md:grid-cols-[1.4fr_1fr]">
             {{-- Next visitor: the one button operators press most --}}
-            <form method="POST" action="{{ route('booth.next') }}" class="rounded-3xl bg-slate-900 p-6 text-white dark:bg-white dark:text-slate-900">
+            <form method="POST" action="{{ route('booth.next') }}" class="rounded-3xl bg-indigo-50 p-6 text-slate-900 ring-1 ring-indigo-100">
                 @csrf
                 <p class="text-sm font-semibold opacity-70">Setelah pengunjung selesai</p>
-                <button type="submit" class="mt-3 w-full rounded-2xl bg-white px-6 py-5 text-xl font-extrabold text-slate-900 hover:bg-slate-100 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800">
+                <button type="submit" class="mt-3 w-full rounded-2xl bg-indigo-600 px-6 py-5 text-xl font-extrabold text-white hover:bg-indigo-500 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800">
                     Pengunjung berikutnya →
                 </button>
                 <p class="mt-3 text-xs opacity-70">Menghapus sesi tamu di browser ini lalu membuka halaman pilih mode.</p>

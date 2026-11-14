@@ -38,20 +38,20 @@
 
         {{-- Laptop: the examiner who is about to call, with the steps as a checklist --}}
         <aside class="hidden lg:block lg:sticky lg:top-24">
-            <div class="relative isolate overflow-hidden rounded-[2rem] bg-[#121521] p-8 text-white shadow-2xl shadow-slate-900/20">
+            <div class="relative isolate overflow-hidden rounded-[2rem] bg-white p-8 text-slate-900 shadow-2xl shadow-slate-900/20">
                 <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(70%_60%_at_50%_25%,rgb(var(--glow)/0.55),transparent_70%)]"></div>
                 <div class="pointer-events-none absolute inset-0 -z-10 opacity-30 [background-image:linear-gradient(rgb(255_255_255/0.06)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.06)_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(circle_at_50%_30%,black,transparent_75%)]"></div>
                 <div class="flex items-center justify-between text-xs font-semibold">
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1"><span class="h-2 w-2 rounded-full bg-emerald-400"></span>{{ $isEn ? 'Online' : 'Online' }}</span>
-                    <span class="rounded-full bg-white/10 px-3 py-1 text-white/75">{{ $isEn ? 'Video call' : 'Video call' }}</span>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-900/[0.06] px-3 py-1"><span class="h-2 w-2 rounded-full bg-emerald-400"></span>{{ $isEn ? 'Online' : 'Online' }}</span>
+                    <span class="rounded-full bg-slate-900/[0.06] px-3 py-1 text-slate-600">{{ $isEn ? 'Video call' : 'Video call' }}</span>
                 </div>
                 <div class="relative mx-auto mt-6 flex h-40 w-40 items-center justify-center">
                     <span class="voic-ring absolute inset-0 rounded-full" style="box-shadow: 0 0 0 2px rgb(var(--glow) / 0.6)"></span>
-                    <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-40 w-40 rounded-full object-cover ring-4 ring-white/10">
+                    <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-40 w-40 rounded-full object-cover ring-4 ring-slate-900/10">
                 </div>
                 <p class="mt-6 text-center text-2xl font-extrabold tracking-tight">{{ $examinerName }}</p>
                 <p class="mt-1 text-center text-sm font-semibold" style="color: rgb(var(--glow))">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
-                <p class="mt-3 text-center text-sm text-white/75" x-show="name" x-cloak x-text="'{{ $isEn ? 'Ready to call' : 'Siap menelepon' }} ' + name + (campus ? ' {{ $isEn ? 'from' : 'dari' }} ' + campus : '')"></p>
+                <p class="mt-3 text-center text-sm text-slate-600" x-show="name" x-cloak x-text="'{{ $isEn ? 'Ready to call' : 'Siap menelepon' }} ' + name + (campus ? ' {{ $isEn ? 'from' : 'dari' }} ' + campus : '')"></p>
 
                 <ol class="mt-7 space-y-1.5 text-sm">
                     @foreach ([
@@ -63,10 +63,10 @@
                     ] as [$n, $label, $visible])
                         @php $at = $n === 0 ? 'last' : $n; @endphp
                         <li x-show="{{ $visible }}" class="flex items-center gap-3 rounded-xl px-3 py-2 transition"
-                            :class="step === {{ $at }} ? 'bg-white/10 font-bold' : (step > {{ $at }} ? 'text-white/75' : 'text-white/50')">
+                            :class="step === {{ $at }} ? 'bg-slate-900/[0.06] font-bold' : (step > {{ $at }} ? 'text-slate-600' : 'text-slate-400')">
                             <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
                                   :style="step >= {{ $at }} ? 'background: rgb(var(--glow)); color: white' : ''"
-                                  :class="step >= {{ $at }} ? '' : 'ring-1 ring-white/25'">
+                                  :class="step >= {{ $at }} ? '' : 'ring-1 ring-slate-900/15'">
                                 <svg x-show="step > {{ $at }}" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                                 <span x-show="step <= {{ $at }}" x-text="{{ $n === 0 ? 'last' : $n }}"></span>
                             </span>
@@ -80,10 +80,10 @@
         <div class="mx-auto w-full max-w-2xl lg:mx-0 lg:pt-2">
         {{-- Who you are about to call (phones; the laptop shows the big card) --}}
         <div class="flex items-center gap-4 lg:hidden">
-            <div class="relative isolate flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#121521]">
+            <div class="relative isolate flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
                 <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(circle,rgb(var(--glow)/0.6),transparent_70%)]"></div>
                 <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-12 w-12 rounded-full object-cover">
-                <span class="absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[#121521]"></span>
+                <span class="absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white"></span>
             </div>
             <div class="min-w-0">
                 <p class="text-lg font-extrabold tracking-tight">{{ $examinerName }}</p>
@@ -194,7 +194,7 @@
                     @endforeach
                 </div>
                 @if ($focus)
-                    <p class="mt-4 rounded-2xl bg-slate-900 px-4 py-3 text-sm text-white dark:bg-white dark:text-slate-900">{{ $isEn ? 'Targeted practice: the parts that train your focus are pre-selected.' : 'Latihan terarah: bagian yang melatih fokusmu sudah dipilihkan.' }}</p>
+                    <p class="mt-4 rounded-2xl bg-indigo-50 px-4 py-3 text-sm text-indigo-900 ring-1 ring-indigo-100">{{ $isEn ? 'Targeted practice: the parts that train your focus are pre-selected.' : 'Latihan terarah: bagian yang melatih fokusmu sudah dipilihkan.' }}</p>
                 @endif
             </section>
 

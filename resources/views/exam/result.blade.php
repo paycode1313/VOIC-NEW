@@ -24,35 +24,35 @@
     <div class="mx-auto max-w-5xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
 
         {{-- Hero: the end screen of the call --}}
-        <section class="relative isolate overflow-hidden rounded-3xl bg-[#121521] p-6 text-white sm:p-8" style="--glow: {{ $glow }}">
+        <section class="relative isolate overflow-hidden rounded-3xl bg-white p-6 text-slate-900 sm:p-8" style="--glow: {{ $glow }}">
             <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(50%_90%_at_15%_50%,rgb(var(--glow)/0.45),transparent_70%)]"></div>
             <div @class(["grid gap-8 md:grid-cols-[auto_1fr] md:items-center", "lg:grid-cols-[auto_1fr_auto]" => ! $shared])>
                 <div class="flex items-center justify-center gap-4">
                     <div class="relative flex h-36 w-36 items-center justify-center">
                         <svg class="absolute inset-0 -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
-                            <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="9" class="text-white/10"/>
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="9" class="text-slate-200"/>
                             <circle cx="60" cy="60" r="52" fill="none" stroke-width="9" stroke-linecap="round" style="stroke: rgb(var(--glow))"
                                     stroke-dasharray="{{ round(2 * M_PI * 52, 2) }}" stroke-dashoffset="{{ round(2 * M_PI * 52 * (1 - $band / 9), 2) }}"/>
                         </svg>
                         <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="absolute h-[6.5rem] w-[6.5rem] rounded-full object-cover opacity-25">
                         <div class="relative text-center">
                             <p class="text-4xl font-extrabold tracking-tight">{{ number_format($band, 1) }}</p>
-                            <p class="text-xs font-semibold uppercase tracking-wider text-white/60">Band</p>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Band</p>
                         </div>
                     </div>
                 </div>
                 <div>
                     <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1">
-                            <svg class="h-3.5 w-3.5 text-rose-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.72c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 00-2.67-1.85.996.996 0 01-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-900/[0.06] px-3 py-1">
+                            <svg class="h-3.5 w-3.5 text-rose-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.72c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 00-2.67-1.85.996.996 0 01-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
                             {{ $isEn ? 'Call ended' : 'Panggilan selesai' }} · {{ $minutes }}:{{ str_pad((string) $seconds, 2, '0', STR_PAD_LEFT) }}
                         </span>
-                        <span class="rounded-full bg-white/10 px-3 py-1">{{ $mode['examiner']['name'] }}</span>
-                        <span class="rounded-full bg-white/10 px-3 py-1 text-white/70">{{ $session->scenario_type }}</span>
+                        <span class="rounded-full bg-slate-900/[0.06] px-3 py-1">{{ $mode['examiner']['name'] }}</span>
+                        <span class="rounded-full bg-slate-900/[0.06] px-3 py-1 text-slate-600">{{ $session->scenario_type }}</span>
                     </div>
                     <h1 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $report['level'] }}</h1>
-                    <p class="mt-2 max-w-2xl text-white/70">{{ $session->ai_conclusion }}</p>
-                    <p class="mt-3 text-sm text-white/65">{{ $session->created_at->translatedFormat('d M Y, H:i') }} · {{ $stats['answers'] }} {{ $isEn ? 'answers' : 'jawaban' }}</p>
+                    <p class="mt-2 max-w-2xl text-slate-600">{{ $session->ai_conclusion }}</p>
+                    <p class="mt-3 text-sm text-slate-600">{{ $session->created_at->translatedFormat('d M Y, H:i') }} · {{ $stats['answers'] }} {{ $isEn ? 'answers' : 'jawaban' }}</p>
                     <div class="mt-5 flex flex-wrap gap-2">
                         <a href="{{ route('exam.setup', ['mode' => $modeKey] + ($isEn ? ['lang' => 'en'] : [])) }}" class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white hover:brightness-110" style="background: rgb(var(--glow))">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
@@ -63,14 +63,14 @@
                 </div>
                 @unless ($shared)
                     {{-- Take it home: QR to a signed, read-only copy of this report --}}
-                    <div class="flex flex-col items-center gap-3 rounded-2xl bg-white/[0.07] p-4 text-center ring-1 ring-white/10 md:col-span-2 md:flex-row md:text-left lg:col-span-1 lg:flex-col lg:text-center">
+                    <div class="flex flex-col items-center gap-3 rounded-2xl bg-slate-900/[0.06] p-4 text-center ring-1 ring-slate-900/10 md:col-span-2 md:flex-row md:text-left lg:col-span-1 lg:flex-col lg:text-center">
                         <div id="report-qr" data-url="{{ $shareUrl }}" class="h-40 w-40 shrink-0 rounded-2xl bg-white p-2 [&_svg]:h-full [&_svg]:w-full" aria-label="{{ $isEn ? 'QR code to this report' : 'QR code rapor ini' }}"></div>
                         <div>
                             <p class="flex items-center justify-center gap-1.5 font-extrabold md:justify-start lg:justify-center">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"/></svg>
                                 {{ $isEn ? 'Take your report home' : 'Bawa pulang rapormu' }}
                             </p>
-                            <p class="mt-1 max-w-[12rem] text-xs text-white/70 md:max-w-none lg:max-w-[12rem]">{{ $isEn ? 'Scan with your phone camera. Works for 7 days, no account.' : 'Pindai pakai kamera HP. Berlaku 7 hari, tanpa akun.' }}</p>
+                            <p class="mt-1 max-w-[12rem] text-xs text-slate-600 md:max-w-none lg:max-w-[12rem]">{{ $isEn ? 'Scan with your phone camera. Works for 7 days, no account.' : 'Pindai pakai kamera HP. Berlaku 7 hari, tanpa akun.' }}</p>
                         </div>
                     </div>
                 @endunless
@@ -146,12 +146,12 @@
                     </div>
                 @endforeach
             </div>
-            <div class="rounded-3xl bg-slate-900 p-6 text-white dark:bg-white dark:text-slate-900">
+            <div class="rounded-3xl bg-indigo-50 p-6 text-slate-900 ring-1 ring-indigo-100">
                 <p class="text-xs font-bold uppercase tracking-wider opacity-60">{{ $isEn ? 'Focus for next practice' : 'Fokus latihan berikutnya' }}</p>
                 <div class="mt-4 space-y-5">
                     @foreach ($report['focus'] as $index => $focus)
                         <div class="flex gap-4">
-                            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 text-sm font-bold dark:bg-black/10">{{ $index + 1 }}</span>
+                            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">{{ $index + 1 }}</span>
                             <div>
                                 <p class="font-bold">{{ $focus['title'] }}</p>
                                 <p class="mt-1 text-sm opacity-80">{{ $focus['drill'] }}</p>
