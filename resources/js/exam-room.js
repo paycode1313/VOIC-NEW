@@ -18,6 +18,8 @@
  * two-minute talk) records hands-free, ended by the timer or a tap.
  */
 
+import { speechText } from './pronunciation';
+
 import TalkingAvatar from './avatar';
 
 const MEDIAPIPE_VERSION = '0.10.14';
@@ -372,7 +374,7 @@ export default function examRoom(config) {
         speakBrowser(text) {
             return new Promise((resolve) => {
                 if (!window.speechSynthesis) return resolve();
-                const utterance = new SpeechSynthesisUtterance(text);
+                const utterance = new SpeechSynthesisUtterance(speechText(text, this.isEn ? 'en' : 'id'));
                 const lang = this.isEn ? 'en-US' : 'id-ID';
                 utterance.lang = lang;
                 utterance.rate = this.isEn ? 1.0 : 1.04;
