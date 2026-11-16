@@ -1,0 +1,119 @@
+---
+title: ERD VOIC (Voice & Optics Intelligent Coach)
+---
+erDiagram
+    users |o--o{ practice_sessions : "melakukan"
+    ai_roles |o--o{ practice_sessions : "memerankan penguji"
+    practice_sessions ||--o{ session_messages : "berisi"
+    practice_sessions |o--o| study_attempts : "dicatat sebagai"
+    practice_sessions |o--o{ study_surveys : "diikuti"
+    study_attempts }o..o| study_surveys : "kode peserta sama"
+    users ||--o{ personal_access_tokens : "memiliki token API"
+    users ||..o| password_reset_tokens : "meminta reset (email)"
+
+    users {
+        bigint id PK
+        varchar name
+        varchar email UK
+        timestamp email_verified_at "nullable"
+        varchar password "hash"
+        boolean has_completed_onboarding
+        varchar onboarding_goal "nullable"
+        varchar onboarding_experience "nullable"
+        json ai_learning_profile "kekuatan dan fokus latihan"
+        varchar remember_token "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ai_roles {
+        bigint id PK
+        varchar name "VOIC-INTERVIEW, VOIC-SIDANG, VOIC-BISNIS"
+        varchar role_type "hrd, dosen_penguji, investor"
+        varchar avatar "nullable"
+        text description
+        text system_prompt
+        json personality_traits "nullable"
+        varchar voice_id "nullable"
+        varchar difficulty_level "default Sedang"
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    practice_sessions {
+        bigint id PK
+        bigint user_id FK "nullable, tamu booth"
+        bigint ai_role_id FK "nullable"
+        varchar scenario_type "topik latihan"
+        varchar exam_mode "wawancara, sidang, pitching"
+        int duration_seconds
+        decimal face_score
+        decimal voice_score
+        decimal overall_score
+        text ai_conclusion "nullable"
+        json feedback_notes "rapor, kode peserta"
+        json exam_state "bagian, fase, pertanyaan"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    session_messages {
+        bigint id PK
+        bigint practice_session_id FK
+        varchar sender "user, ai, system"
+        tinyint exam_part "1-3, nullable"
+        text message
+        varchar audio_url "nullable"
+        json facial_status "kontak mata, ekspresi"
+        json meta "jenis giliran, rekaman, latensi"
+        int timestamp_seconds
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    study_attempts {
+        bigint id PK
+        varchar code "kode peserta, P01"
+        bigint practice_session_id FK "unique, nullable"
+        varchar mode
+        char language "id, en"
+        decimal overall_band
+        json criteria "4 kriteria"
+        smallint answers
+        int speaking_seconds
+        decimal fillers_per_minute "nullable"
+        smallint average_wpm "nullable"
+        decimal eye_contact "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    study_surveys {
+        bigint id PK
+        varchar code UK "kode peserta"
+        bigint practice_session_id FK "nullable"
+        json answers "6 pertanyaan skala 1-5"
+        text comment "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    personal_access_tokens {
+        bigint id PK
+        varchar tokenable_type "App Models User"
+        bigint tokenable_id "id pengguna"
+        text name
+        varchar token UK
+        text abilities "nullable"
+        timestamp last_used_at "nullable"
+        timestamp expires_at "nullable"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    password_reset_tokens {
+        varchar email PK
+        varchar token
+        timestamp created_at "nullable"
+    }

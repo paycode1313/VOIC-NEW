@@ -5,7 +5,22 @@ Peserta menjawab dengan suara, AI penguji menanggapi seperti orang sungguhan, la
 mendapat rapor skor (kelancaran, kosakata, struktur, penyampaian, kontak mata, dan ketenangan wajah).
 
 Semuanya bisa berjalan **100% lokal tanpa internet** (cocok untuk booth pameran):
-Laravel untuk web, layanan Python (`ai_service/`) untuk telinga (Whisper), suara (Piper), dan otak AI (Ollama).
+Laravel untuk web, layanan Python (`backend/ai_service/`) untuk telinga (Whisper), suara (Piper), dan otak AI (Ollama).
+
+---
+
+## Struktur folder
+
+```
+VOIC-NEW/
+├── frontend/   tampilan web: halaman Blade (views/), JavaScript (js/), CSS (css/), Vite & Tailwind
+├── backend/    Laravel (app/, routes/, database/, config/, public/, tests/) + layanan AI Python (ai_service/)
+├── mobile/     aplikasi Flutter dan React Native (memakai API /api/v1)
+└── docs/       dokumen desain, ERD, DFD, dan panduan
+```
+
+Laravel membaca halaman dari `frontend/views` (lihat `backend/config/view.php`), dan `npm run build` di `frontend/`
+menaruh hasil build di `backend/public/build`. Perintah PHP dan Python dijalankan dari `backend/`, perintah npm dari `frontend/`.
 
 ---
 
@@ -30,7 +45,7 @@ Laravel untuk web, layanan Python (`ai_service/`) untuk telinga (Whisper), suara
 | PHP | 8.3+ | Web Laravel |
 | Composer | 2.x | Paket PHP |
 | Node.js | 22 LTS (minimal 20.19) | Build tampilan (Vite 8) |
-| Python | 3.10+ | Layanan AI (`ai_service/`) |
+| Python | 3.10+ | Layanan AI (`backend/ai_service/`) |
 | Ollama | 0.9+ (terbaru) | Otak AI lokal: Qwen3 ([ollama.com/download](https://ollama.com/download)) |
 
 Di Windows, cara termudah adalah memakai [Laragon](https://laragon.org) (sudah berisi PHP, Composer, dan Node.js).
@@ -39,7 +54,7 @@ Di Windows, cara termudah adalah memakai [Laragon](https://laragon.org) (sudah b
 
 ## Cara cepat (Windows)
 
-Klik dua kali **`jalankan_voic.bat`** di folder proyek. Launcher ini otomatis:
+Klik dua kali **`jalankan_voic.bat`** di folder utama proyek (sejajar dengan `frontend/` dan `backend/`). Launcher ini otomatis:
 
 1. memasang paket PHP dan membangun tampilan,
 2. memasang paket Python untuk AI,
@@ -55,9 +70,11 @@ Pilih mode **Online** (atau jalankan `jalankan_voic.bat online`) untuk mendapat 
 ### 1. Web Laravel
 
 ```bash
-composer install
+cd frontend
 npm install
-npm run build
+npm run build                # hasilnya masuk ke backend/public/build
+cd ../backend
+composer install
 cp .env.example .env        # Windows: copy .env.example .env
 php artisan key:generate
 php artisan migrate --seed
@@ -66,7 +83,7 @@ php artisan migrate --seed
 ### 2. Layanan AI (Python)
 
 ```bash
-cd ai_service
+cd backend/ai_service
 pip install -r requirements.txt
 python setup_models.py          # unduh model suara & AI (sekali saja, butuh internet)
 python setup_models.py --check  # cek kesiapan
@@ -74,9 +91,9 @@ python setup_models.py --check  # cek kesiapan
 
 Laptop dengan GPU NVIDIA: `python setup_models.py --gpu`.
 File `requirements-train.txt` hanya untuk melatih ulang AI (butuh GPU), **tidak perlu** untuk menjalankan aplikasi.
-Penjelasan lengkap ada di [`ai_service/README.md`](ai_service/README.md).
+Penjelasan lengkap ada di [`backend/ai_service/README.md`](backend/ai_service/README.md).
 
-### 3. Jalankan (3 terminal)
+### 3. Jalankan (3 terminal, semuanya dari folder `backend/`)
 
 ```bash
 python ai_service/ai_service.py   # layanan AI di http://127.0.0.1:8001
@@ -84,7 +101,8 @@ php artisan serve                 # web di http://localhost:8000
 php artisan schedule:work         # penjadwal: hapus data tamu lama setiap jam
 ```
 
-Cek status AI kapan saja: `php artisan voic:doctor`.
+Saat mengubah tampilan, jalankan juga `npm run dev` di folder `frontend/` agar halaman langsung diperbarui.
+Cek status AI kapan saja (dari `backend/`): `php artisan voic:doctor`.
 
 ---
 
@@ -92,19 +110,20 @@ Cek status AI kapan saja: `php artisan voic:doctor`.
 
 ```bash
 git pull origin main
-composer install
-npm install
-npm run build
-php artisan migrate
+cd frontend && npm install && npm run build
+cd ../backend && composer install && php artisan migrate
 ```
 
-Lalu bandingkan `.env.example` dengan `.env` milikmu dan tambahkan setting baru yang belum ada.
-Jika ada perubahan di `ai_service/requirements.txt`, jalankan lagi `pip install -r ai_service/requirements.txt`.
-Jika model AI diperbarui (mis. pindah ke Qwen3), jalankan lagi `python ai_service/setup_models.py` lalu nyalakan ulang layanan AI.
+Lalu bandingkan `backend/.env.example` dengan `backend/.env` milikmu dan tambahkan setting baru yang belum ada.
+Jika ada perubahan di `backend/ai_service/requirements.txt`, jalankan lagi `pip install -r ai_service/requirements.txt` dari `backend/`.
+Jika model AI diperbarui (mis. pindah ke Qwen3), jalankan lagi `python ai_service/setup_models.py` (dari `backend/`) lalu nyalakan ulang layanan AI.
+
+> **Pindah dari struktur lama?** File `.env`, folder `vendor/`, dan model AI sekarang ada di dalam `backend/`, dan `node_modules/`
+> di dalam `frontend/`. Jika memakai Laragon, arahkan *document root* ke `backend/public`.
 
 ---
 
-## Pengaturan penting di `.env`
+## Pengaturan penting di `backend/.env`
 
 | Nama | Keterangan |
 | --- | --- |
@@ -122,8 +141,8 @@ Jika model AI diperbarui (mis. pindah ke Qwen3), jalankan lagi `python ai_servic
 Akun baru wajib memverifikasi email sebelum membuka dashboard dan riwayat latihan
 (mode tamu di `/latihan` tetap bisa dipakai tanpa akun).
 
-- `MAIL_MAILER=log` (default): email **tidak terkirim**. Link verifikasi ditulis ke `storage/logs/laravel.log`, cocok untuk uji lokal.
-- Agar email benar-benar terkirim, isi pengaturan SMTP. Contoh untuk Gmail ada di `.env.example`
+- `MAIL_MAILER=log` (default): email **tidak terkirim**. Link verifikasi ditulis ke `backend/storage/logs/laravel.log`, cocok untuk uji lokal.
+- Agar email benar-benar terkirim, isi pengaturan SMTP. Contoh untuk Gmail ada di `backend/.env.example`
   (gunakan *App Password* Google, bukan kata sandi biasa).
 
 ---
@@ -140,20 +159,20 @@ balasannya di Google Colab dan hasilnya dijalankan **100% lokal di laptop, CPU o
    ollama pull kimi-k3:cloud
    ollama pull qwen3:4b
    ```
-2. **Laptop:** nyalakan layanan AI (`python ai_service/ai_service.py`), lalu buat sesi simulasi dan ekspor datanya:
+2. **Laptop (dari folder `backend/`):** nyalakan layanan AI (`python ai_service/ai_service.py`), lalu buat sesi simulasi dan ekspor datanya:
    ```bash
    php artisan voic:teacher-generate --sessions=30
    php artisan voic:export-training-data
    ```
    Kimi K3 berpikir dulu sebelum menjawab, jadi satu sesi bisa beberapa menit. Sesi simulasi dimiliki akun
    `teacher@voic.local` dan tidak dihitung sebagai pengunjung booth.
-3. **Google Colab (T4 gratis):** buka `ai_service/colab/latih_voic_coach.ipynb`, unggah
-   `ai_service/datasets/sft/voic_exam_sft.jsonl`, `voic_exam_eval.jsonl`, dan `ai_service/finetune_lora.py`,
+3. **Google Colab (T4 gratis):** buka `backend/ai_service/colab/latih_voic_coach.ipynb`, unggah
+   `backend/ai_service/datasets/sft/voic_exam_sft.jsonl`, `voic_exam_eval.jsonl`, dan `backend/ai_service/finetune_lora.py`,
    lalu jalankan semua sel. Hasilnya (file `.gguf` + `Modelfile`) tersimpan di Google Drive.
 4. **Laptop:** di folder hasil unduhan, pasang modelnya dan ukur hasilnya:
    ```bash
    ollama create voic-coach -f Modelfile
-   python ai_service/eval_dialogue.py --models voic-coach qwen3:4b
+   python backend/ai_service/eval_dialogue.py --models voic-coach qwen3:4b   # dari folder utama proyek
    ```
    Biarkan `VOIC_AI_MODEL=` kosong di `.env` agar ujian memakai `voic-coach` lokal.
 
@@ -163,6 +182,7 @@ balasannya di Google Colab dan hasilnya dijalankan **100% lokal di laptop, CPU o
 ## Pengembangan
 
 ```bash
+cd backend
 php artisan test                               # test Laravel
 vendor/bin/pint                                # rapikan kode PHP
 cd ai_service && python -m unittest discover -s tests   # test layanan AI

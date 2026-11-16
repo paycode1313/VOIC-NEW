@@ -1,6 +1,8 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-cd /d "%~dp0"
+rem Struktur repo: frontend\ (tampilan web), backend\ (Laravel + ai_service), mobile\.
+rem Semua perintah PHP dan Python dijalankan dari backend\.
+cd /d "%~dp0backend"
 chcp 65001 >nul
 title VOIC Prep - Launcher
 color 0F
@@ -100,8 +102,11 @@ if errorlevel 1 (
     echo   [X] Node.js/npm belum ada. Pasang Node.js LTS dari nodejs.org.
     goto FAIL
 )
+rem Tampilan web dibangun di frontend\ dan hasilnya masuk ke backend\public\build.
+pushd "%~dp0frontend"
 call npm install
 call npm run build
+popd
 if not exist public\build\manifest.json goto FAIL
 :ASSETS_OK
 echo   [OK] Aset web siap

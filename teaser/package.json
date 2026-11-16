@@ -1,0 +1,21 @@
+{
+  "name": "voic-teaser",
+  "private": true,
+  "description": "Video teaser VOIC untuk Innofest 2026 (Remotion): versi web 16:9 dan mobile 9:16",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "render:web": "remotion render Teaser-Web out/voic-teaser-web.mp4",
+    "render:mobile": "remotion render Teaser-Mobile out/voic-teaser-mobile.mp4",
+    "render": "npm run render:web && npm run render:mobile",
+    "audio": "python -I scripts/make_audio.py"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.543",
+    "@remotion/fonts": "4.0.543",
+    "@remotion/media-utils": "4.0.543",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.543"
+  }
+}

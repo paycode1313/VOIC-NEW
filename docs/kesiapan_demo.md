@@ -1,5 +1,7 @@
 # Checklist Kesiapan Demo Innofest
 
+> Struktur repo: `frontend/` (tampilan web), `backend/` (Laravel + `ai_service/`), `mobile/`. Jalankan perintah `php artisan` dan `python ai_service/...` dari folder `backend/`, dan perintah `npm` dari folder `frontend/`.
+
 Tujuannya: demo 3 menit yang **selalu berhasil**, apa pun yang terjadi di lokasi.
 Skenario demonya ada di [pitch_deck_innofest.md](pitch_deck_innofest.md#skenario-demo-booth-3-menit).
 
@@ -39,7 +41,7 @@ Pastikan juga ketiga komponen lokal siap:
 ```bash
 php artisan voic:doctor
 ```
-- **Whisper (suara → teks)** dan **Piper (suara penguji)** harus ✓. Jika belum: `cd ai_service && python setup_models.py`
+- **Whisper (suara → teks)** dan **Piper (suara penguji)** harus ✓. Jika belum: `cd backend/ai_service && python setup_models.py`
   (butuh internet sekali untuk mengunduh model).
 - Suara online (edge-tts) **berfungsi kembali** (dicek 16 Nov 2026). Waktunya per kalimat biasanya ±0,5 detik, tetapi
   servernya sesekali tertahan 5-6 detik; karena itu permintaan yang lambat otomatis dikirim ulang secara paralel

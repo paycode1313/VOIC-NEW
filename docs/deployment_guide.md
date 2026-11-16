@@ -1,5 +1,7 @@
 # 🚀 Panduan Deployment & Demo Booth - VOIC (Innofest 2026)
 
+> Struktur repo: `frontend/` (tampilan web), `backend/` (Laravel + `ai_service/`), `mobile/`. Jalankan perintah `php artisan` dan `python ai_service/...` dari folder `backend/`, dan perintah `npm` dari folder `frontend/`.
+
 Panduan ini berisi instruksi teknis untuk menjalankan aplikasi **VOIC** secara optimal saat sesi demonstrasi di hadapan juri dan pengunjung pameran Innofest.
 
 ---

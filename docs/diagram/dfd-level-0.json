@@ -1,0 +1,180 @@
+{
+  "title": "DFD Level 0 (Diagram Konteks) · Sistem VOIC",
+  "subtitle": "Seluruh sistem sebagai satu proses, beserta entitas luar yang bertukar data dengannya",
+  "width": 1560,
+  "height": 980,
+  "note": "Catatan: pada mode offline, pengenal suara (Whisper), AI (Ollama) dan suara penguji (Piper) berjalan di dalam sistem, sehingga aliran ke layanan online tidak terjadi.",
+  "nodes": [
+    {
+      "type": "proc",
+      "id": "0",
+      "label": "Sistem VOIC\n(latihan ujian\nlisan dengan AI)",
+      "x": 780,
+      "y": 500,
+      "r": 120
+    },
+    {
+      "type": "ext",
+      "key": "peserta",
+      "label": "Peserta\n(tamu / pengguna)",
+      "x": 170,
+      "y": 500,
+      "w": 200,
+      "h": 230
+    },
+    {
+      "type": "ext",
+      "key": "operator",
+      "label": "Operator Booth",
+      "x": 780,
+      "y": 150,
+      "w": 200,
+      "h": 70
+    },
+    {
+      "type": "ext",
+      "key": "peneliti",
+      "label": "Tim Peneliti",
+      "x": 780,
+      "y": 860,
+      "w": 200,
+      "h": 70
+    },
+    {
+      "type": "ext",
+      "key": "ai",
+      "label": "Layanan AI Cloud\n(Groq)",
+      "x": 1360,
+      "y": 360,
+      "w": 220,
+      "h": 80
+    },
+    {
+      "type": "ext",
+      "key": "suara",
+      "label": "Layanan Suara Online\n(Microsoft edge-tts)",
+      "x": 1360,
+      "y": 660,
+      "w": 240,
+      "h": 80
+    }
+  ],
+  "edges": [
+    [
+      "peserta",
+      "0",
+      "kode peserta,\njawaban kuesioner",
+      {
+        "off": -66,
+        "t": 0.27
+      }
+    ],
+    [
+      "0",
+      "peserta",
+      "status akun, pertanyaan & suara\npenguji, rapor, band score & QR",
+      {
+        "off": 22,
+        "t": 0.27
+      }
+    ],
+    [
+      "peserta",
+      "0",
+      "jawaban suara / teks,\ndata kamera (ekspresi)",
+      {
+        "off": 22,
+        "t": 0.27
+      }
+    ],
+    [
+      "peserta",
+      "0",
+      "data akun, data diri,\nmode & topik latihan",
+      {
+        "off": 66,
+        "t": 0.73
+      }
+    ],
+    [
+      "operator",
+      "0",
+      "PIN booth,\npengunjung berikutnya",
+      {
+        "off": 26,
+        "lo": 76,
+        "t": 0.5
+      }
+    ],
+    [
+      "0",
+      "operator",
+      "papan skor,\nstatus AI",
+      {
+        "off": 26,
+        "lo": 56,
+        "t": 0.5
+      }
+    ],
+    [
+      "peneliti",
+      "0",
+      "perintah rekap\nuji coba",
+      {
+        "off": -26,
+        "lo": -66,
+        "t": 0.5
+      }
+    ],
+    [
+      "0",
+      "peneliti",
+      "tautan undangan,\nrekap uji coba (CSV, grafik)",
+      {
+        "off": -26,
+        "lo": -96,
+        "t": 0.5
+      }
+    ],
+    [
+      "0",
+      "ai",
+      "prompt & riwayat percakapan,\njawaban terlemah",
+      {
+        "off": 18,
+        "lo": 40,
+        "t": 0.5
+      }
+    ],
+    [
+      "ai",
+      "0",
+      "balasan penguji,\nversi jawaban lebih kuat",
+      {
+        "off": 18,
+        "lo": 40,
+        "t": 0.5
+      }
+    ],
+    [
+      "0",
+      "suara",
+      "kalimat penguji",
+      {
+        "off": -16,
+        "lo": -24,
+        "t": 0.5
+      }
+    ],
+    [
+      "suara",
+      "0",
+      "audio suara penguji",
+      {
+        "off": -16,
+        "lo": -24,
+        "t": 0.5
+      }
+    ]
+  ]
+}

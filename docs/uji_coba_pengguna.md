@@ -1,5 +1,7 @@
 # Panduan Uji Coba Pengguna & Bukti untuk Juri
 
+> Struktur repo: `frontend/` (tampilan web), `backend/` (Laravel + `ai_service/`), `mobile/`. Jalankan perintah `php artisan` dan `python ai_service/...` dari folder `backend/`, dan perintah `npm` dari folder `frontend/`.
+
 Tiga bukti yang dicari juri, dan perintah yang menghasilkannya:
 
 | Bukti | Perintah | Masuk ke slide |

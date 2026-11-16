@@ -1,0 +1,284 @@
+{
+  "title": "DFD Level 2 · Proses 3.0 Simulasi Panggilan",
+  "subtitle": "Satu giliran tanya jawab: dari suara peserta sampai penguji menjawab",
+  "width": 1820,
+  "height": 1180,
+  "note": "Proses 2.0 Persiapan Latihan berasal dari DFD level 1 (salam pembuka penguji ikut disuarakan oleh 3.5). Pada mode offline, 3.1 memakai Whisper lokal, 3.4 memakai Ollama, dan 3.5 memakai Piper.",
+  "nodes": [
+    {
+      "type": "ext",
+      "key": "peserta",
+      "label": "Peserta",
+      "x": 140,
+      "y": 620,
+      "w": 170,
+      "h": 560
+    },
+    {
+      "type": "ext",
+      "key": "ai",
+      "label": "Layanan AI Cloud\n(Groq)",
+      "x": 1660,
+      "y": 520,
+      "w": 220,
+      "h": 80
+    },
+    {
+      "type": "ext",
+      "key": "suara",
+      "label": "Layanan Suara Online\n(Microsoft edge-tts)",
+      "x": 1660,
+      "y": 920,
+      "w": 240,
+      "h": 80
+    },
+    {
+      "type": "proc",
+      "id": "3.1",
+      "label": "Rekam &\nKenali Ucapan",
+      "x": 520,
+      "y": 340
+    },
+    {
+      "type": "proc",
+      "id": "3.2",
+      "label": "Analisis\nJawaban",
+      "x": 520,
+      "y": 720
+    },
+    {
+      "type": "proc",
+      "id": "3.3",
+      "label": "Tentukan\nLangkah Ujian",
+      "x": 920,
+      "y": 520
+    },
+    {
+      "type": "proc",
+      "id": "3.4",
+      "label": "Susun Balasan\nPenguji",
+      "x": 1290,
+      "y": 520
+    },
+    {
+      "type": "proc",
+      "id": "3.5",
+      "label": "Suarakan\nBalasan",
+      "x": 1290,
+      "y": 920
+    },
+    {
+      "type": "proc",
+      "id": "2.0",
+      "label": "Persiapan\nLatihan",
+      "x": 1000,
+      "y": 1075,
+      "r": 62
+    },
+    {
+      "type": "store",
+      "key": "d7",
+      "sid": "D7",
+      "label": "Rekaman Jawaban",
+      "x": 520,
+      "y": 150,
+      "w": 260,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d2",
+      "sid": "D2",
+      "label": "Sesi Latihan",
+      "x": 920,
+      "y": 230,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d3",
+      "sid": "D3",
+      "label": "Peran Penguji",
+      "x": 1290,
+      "y": 230,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d4",
+      "sid": "D4",
+      "label": "Percakapan",
+      "x": 920,
+      "y": 790,
+      "w": 240,
+      "h": 46
+    }
+  ],
+  "edges": [
+    [
+      "peserta",
+      "3.1",
+      "jawaban suara\n/ teks",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "3.1",
+      "d7",
+      "rekaman\njawaban",
+      {
+        "lo": 44
+      }
+    ],
+    [
+      "3.1",
+      "3.2",
+      "teks jawaban",
+      {
+        "lo": 52
+      }
+    ],
+    [
+      "peserta",
+      "3.2",
+      "data kamera\n(kontak mata,\nekspresi)",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "3.2",
+      "d4",
+      "pesan peserta,\ntempo & kata pengisi",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "3.2",
+      "3.3",
+      "metrik &\nsinyal jawaban",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "d2",
+      "3.3",
+      "status ujian",
+      {
+        "off": -14,
+        "lo": -44
+      }
+    ],
+    [
+      "3.3",
+      "d2",
+      "status ujian baru",
+      {
+        "off": -14,
+        "lo": -58
+      }
+    ],
+    [
+      "3.3",
+      "3.4",
+      "instruksi giliran\n(gali, lanjut, jelaskan)",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "d3",
+      "3.4",
+      "persona &\ngaya bicara",
+      {
+        "lo": 52
+      }
+    ],
+    [
+      "d4",
+      "3.4",
+      "riwayat\npercakapan",
+      {
+        "off": -14,
+        "t": 0.45,
+        "lo": -30
+      }
+    ],
+    [
+      "3.4",
+      "d4",
+      "pesan penguji",
+      {
+        "off": -14,
+        "t": 0.55,
+        "lo": -24
+      }
+    ],
+    [
+      "3.4",
+      "ai",
+      "prompt & riwayat",
+      {
+        "off": 14,
+        "lo": 18
+      }
+    ],
+    [
+      "ai",
+      "3.4",
+      "balasan penguji",
+      {
+        "off": 14,
+        "lo": 18
+      }
+    ],
+    [
+      "3.4",
+      "3.5",
+      "kalimat balasan",
+      {
+        "lo": 56
+      }
+    ],
+    [
+      "3.5",
+      "suara",
+      "kalimat penguji",
+      {
+        "off": 14,
+        "lo": 18
+      }
+    ],
+    [
+      "suara",
+      "3.5",
+      "audio penguji",
+      {
+        "off": 14,
+        "lo": 18
+      }
+    ],
+    [
+      "2.0",
+      "3.5",
+      "salam pembuka",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "3.5",
+      "peserta",
+      "teks & suara penguji,\nreaksi instan \"Hmm…\"",
+      {
+        "bend": -125,
+        "t": 0.5
+      }
+    ]
+  ]
+}
