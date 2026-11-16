@@ -60,6 +60,10 @@ PERSONA_EXPRESSION = {"hrd": (0.8, 0.9), "dosen_penguji": (0.6, 0.75), "investor
 # supaya tiap kalimat tidak menunggu timeout dulu sebelum jatuh ke Piper.
 EDGE_TIMEOUT_SECONDS = 6.0
 EDGE_COOLDOWN_SECONDS = 30.0
+# Server suara online kadang menjawab dalam 0,9 detik, kadang 5-6 detik untuk kalimat yang sama. Jika belum
+# selesai setelah jeda ini, permintaan kedua dikirim paralel dan yang lebih dulu selesai dipakai (suara tetap sama).
+# Percobaan tambahan dimulai pada detik-detik ini (kadang dua koneksi sekaligus tersangkut, jadi ada percobaan ketiga).
+EDGE_HEDGE_AFTER_SECONDS = (1.0, 2.5)
 _edge_down_until = 0.0
 
 _stt_model = None
@@ -161,6 +165,7 @@ def transcribe(audio_bytes: bytes, language: str = "id", prompt: Optional[str] =
             vad_filter=True,
             vad_parameters={"min_silence_duration_ms": 400},
             condition_on_previous_text=False,
+            without_timestamps=True,  # hanya teksnya yang dipakai; sedikit lebih cepat di CPU
             initial_prompt=prompt[:200] if prompt else None,
         )
         text = " ".join(segment.text.strip() for segment in segments).strip()
@@ -305,20 +310,77 @@ async def synthesize_edge(text: str, role_type: str, language: str, output_dir: 
     if time.monotonic() < _edge_down_until:
         return None  # internet baru saja gagal: langsung pakai suara offline
     voice, pitch, rate = EDGE_VOICES["en" if language == "en" else "id"].get(role_type, EDGE_VOICES["id"]["hrd"])
-    filename = f"tts_{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}.mp3"
-    path = os.path.join(output_dir, filename)
+
+    async def attempt() -> str:
+        filename = f"tts_{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}.mp3"
+        path = os.path.join(output_dir, filename)
+        try:
+            await edge_tts.Communicate(text, voice, rate=rate, pitch=pitch).save(path)
+            return filename
+        except BaseException:  # termasuk dibatalkan karena percobaan lain menang
+            _unlink(path)
+            raise
+
     try:
-        await asyncio.wait_for(edge_tts.Communicate(text, voice, rate=rate, pitch=pitch).save(path), EDGE_TIMEOUT_SECONDS)
+        filename = await asyncio.wait_for(
+            _hedged(attempt, EDGE_HEDGE_AFTER_SECONDS, discard=lambda name: _unlink(os.path.join(output_dir, name))),
+            EDGE_TIMEOUT_SECONDS,
+        )
         _edge_down_until = 0.0
         return filename
     except Exception as exc:
         print(f"edge-tts notice: {type(exc).__name__} {exc} (suara offline dipakai {int(EDGE_COOLDOWN_SECONDS)} detik)")
         _edge_down_until = time.monotonic() + EDGE_COOLDOWN_SECONDS
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
         return None
+
+
+def _unlink(path: str) -> None:
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
+async def _hedged(make_attempt, hedge_after, discard=None):
+    """
+    Jalankan make_attempt(). Pada tiap waktu di hedge_after (detik sejak mulai, satu angka atau beberapa),
+    jika belum ada yang berhasil, jalankan satu percobaan lagi secara paralel; percobaan yang gagal juga langsung
+    diganti. Hasil pertama yang berhasil dipakai dan sisanya dibatalkan; hasil lain yang kebetulan juga sudah jadi
+    diserahkan ke discard(). Gagal hanya jika semua percobaan gagal.
+    """
+    schedule = sorted(hedge_after) if isinstance(hedge_after, (list, tuple)) else [hedge_after]
+    started_at = time.monotonic()
+    tasks = [asyncio.ensure_future(make_attempt())]
+    chosen = None
+    error: Optional[BaseException] = None
+    try:
+        while True:
+            pending = {task for task in tasks if not task.done()}
+            next_at = schedule[0] - (time.monotonic() - started_at) if schedule else None
+            if pending:
+                done, _ = await asyncio.wait(pending, timeout=max(0.0, next_at) if next_at is not None else None, return_when=asyncio.FIRST_COMPLETED)
+            else:
+                done = set()
+            for task in done:
+                if task.exception() is None:
+                    chosen = task
+                    return task.result()
+                error = task.exception()
+            if done and pending - done:
+                continue  # sebagian gagal, masih ada percobaan lain yang berjalan
+            if not schedule:
+                if not {task for task in tasks if not task.done()}:
+                    raise error or RuntimeError("semua percobaan gagal")
+                continue
+            # Waktunya tiba, atau semua percobaan yang berjalan gagal: mulai percobaan berikutnya.
+            schedule.pop(0)
+            tasks.append(asyncio.ensure_future(make_attempt()))
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+            elif task is not chosen and discard and not task.cancelled() and task.exception() is None:
+                discard(task.result())
 
 
 def edge_online() -> bool:

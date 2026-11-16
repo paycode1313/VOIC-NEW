@@ -500,12 +500,17 @@ export default function examRoom(config) {
             if (this.status !== 'listening') return;
             const heldMs = Date.now() - (this.answerStartedAt || Date.now());
             if (this.voiceMode === 'browser') {
-                // Stop listening, then give the recogniser a moment to deliver its last words.
+                // Stop listening, then give the recogniser a moment to deliver its last words: continue as
+                // soon as it reports it is done ("end"), at most 0.7 s.
                 const recognition = this.recognition;
                 this.recognition = null;
-                if (recognition) { try { recognition.stop(); } catch (e) { /* ignore */ } }
                 this.releasing = true;
-                await new Promise((resolve) => setTimeout(resolve, 700));
+                await new Promise((resolve) => {
+                    const timer = setTimeout(resolve, 700);
+                    if (!recognition) return;
+                    recognition.addEventListener('end', () => { clearTimeout(timer); resolve(); }, { once: true });
+                    try { recognition.stop(); } catch (e) { clearTimeout(timer); resolve(); }
+                });
                 this.releasing = false;
             }
             if (heldMs < 500) {
