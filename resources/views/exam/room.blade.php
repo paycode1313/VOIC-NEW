@@ -41,11 +41,14 @@
                 {{-- Preview tile: the examiner is already in the room --}}
                 <div class="relative isolate aspect-video w-full overflow-hidden rounded-3xl bg-white ring-1 ring-slate-900/10">
                     <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(60%_80%_at_50%_45%,rgb(var(--glow)/0.45),transparent_70%)]"></div>
-                    <div class="flex h-full items-center justify-center">
+                    <div class="flex h-full flex-col items-center justify-center">
                         <div class="relative">
                             <span class="voic-ring absolute inset-0 rounded-full border-2" style="border-color: rgb(var(--glow) / 0.5)"></span>
-                            <img src="{{ asset($mode['examiner']['avatar']) }}" alt="{{ $examinerName }}" class="relative h-32 w-32 rounded-full object-cover shadow-2xl ring-4 ring-slate-900/10 sm:h-44 sm:w-44">
+                            <img src="{{ asset($mode['examiner']['avatar']) }}" alt="{{ $examinerName }}" class="relative h-32 w-32 rounded-full object-cover shadow-2xl ring-4 ring-white sm:h-44 sm:w-44">
                         </div>
+                        @if (! empty($mode['examiner']['catchphrase']))
+                            <p class="voic-bubble voic-rise mt-4 hidden px-4 py-2 text-sm font-semibold text-slate-800 sm:block" style="--d: 400ms">“{{ $blueprint->text($mode['examiner']['catchphrase'], $language) }}”</p>
+                        @endif
                     </div>
                     <div class="absolute bottom-3 left-4 rounded-lg bg-white/90 px-2.5 py-1 text-sm font-semibold backdrop-blur">{{ $examinerName }}</div>
                     <div class="absolute right-4 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold backdrop-blur">

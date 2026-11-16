@@ -24,19 +24,20 @@
     <div class="mx-auto max-w-5xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12">
 
         {{-- Hero: the end screen of the call --}}
-        <section class="relative isolate overflow-hidden rounded-3xl bg-white p-6 text-slate-900 sm:p-8" style="--glow: {{ $glow }}">
+        <section class="voic-rise relative isolate overflow-hidden rounded-[2rem] bg-white p-6 text-slate-900 shadow-sm sm:p-8" style="--glow: {{ $glow }}">
+            <div class="pointer-events-none absolute inset-0 -z-10 opacity-50 [background-image:repeating-linear-gradient(-45deg,rgb(var(--glow)/0.07)_0_2px,transparent_2px_16px)] [mask-image:linear-gradient(to_left,black,transparent_60%)]"></div>
             <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(50%_90%_at_15%_50%,rgb(var(--glow)/0.45),transparent_70%)]"></div>
             <div @class(["grid gap-8 md:grid-cols-[auto_1fr] md:items-center", "lg:grid-cols-[auto_1fr_auto]" => ! $shared])>
                 <div class="flex items-center justify-center gap-4">
                     <div class="relative flex h-36 w-36 items-center justify-center">
                         <svg class="absolute inset-0 -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
                             <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="9" class="text-slate-200"/>
-                            <circle cx="60" cy="60" r="52" fill="none" stroke-width="9" stroke-linecap="round" style="stroke: rgb(var(--glow))"
+                            <circle cx="60" cy="60" r="52" fill="none" stroke-width="9" stroke-linecap="round" class="voic-ring-draw" style="stroke: rgb(var(--glow)); --full: {{ round(2 * M_PI * 52, 2) }}"
                                     stroke-dasharray="{{ round(2 * M_PI * 52, 2) }}" stroke-dashoffset="{{ round(2 * M_PI * 52 * (1 - $band / 9), 2) }}"/>
                         </svg>
                         <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="absolute h-[6.5rem] w-[6.5rem] rounded-full object-cover opacity-25">
                         <div class="relative text-center">
-                            <p class="text-4xl font-extrabold tracking-tight">{{ number_format($band, 1) }}</p>
+                            <p class="font-display text-5xl font-extrabold">{{ number_format($band, 1) }}</p>
                             <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Band</p>
                         </div>
                     </div>
@@ -50,7 +51,7 @@
                         <span class="rounded-full bg-slate-900/[0.06] px-3 py-1">{{ $mode['examiner']['name'] }}</span>
                         <span class="rounded-full bg-slate-900/[0.06] px-3 py-1 text-slate-600">{{ $session->scenario_type }}</span>
                     </div>
-                    <h1 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{{ $report['level'] }}</h1>
+                    <h1 class="mt-4 text-3xl font-extrabold sm:text-5xl">{{ $report['level'] }}</h1>
                     <p class="mt-2 max-w-2xl text-slate-600">{{ $session->ai_conclusion }}</p>
                     <p class="mt-3 text-sm text-slate-600">{{ $session->created_at->translatedFormat('d M Y, H:i') }} · {{ $stats['answers'] }} {{ $isEn ? 'answers' : 'jawaban' }}</p>
                     <div class="mt-5 flex flex-wrap gap-2">
@@ -58,7 +59,7 @@
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
                             {{ $isEn ? 'Call again' : 'Telepon lagi' }}
                         </a>
-                        <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="rounded-full bg-white/10 px-5 py-2.5 text-sm font-bold hover:bg-white/15">{{ $isEn ? 'Other examiners' : 'Penguji lain' }}</a>
+                        <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="rounded-full border border-slate-900/10 bg-white px-5 py-2.5 text-sm font-bold transition hover:bg-slate-50">{{ $isEn ? 'Other examiners' : 'Penguji lain' }}</a>
                     </div>
                 </div>
                 @unless ($shared)
@@ -117,13 +118,13 @@
         {{-- Criteria --}}
         <section class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($report['criteria'] as $criterion)
-                <div class="rounded-3xl border border-black/5 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03]">
+                <div class="voic-rise rounded-3xl border border-black/5 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03]" style="--d: {{ 120 + $loop->index * 80 }}ms">
                     <div class="flex items-baseline justify-between">
                         <p class="text-sm font-bold">{{ $criterion['label'] }}</p>
-                        <p class="text-2xl font-extrabold">{{ number_format($criterion['band'], 1) }}</p>
+                        <p class="font-display text-3xl font-extrabold">{{ number_format($criterion['band'], 1) }}</p>
                     </div>
                     <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
-                        <div class="h-full rounded-full {{ $bandColor($criterion['band']) }}" style="width: {{ round($criterion['band'] / 9 * 100) }}%"></div>
+                        <div class="voic-grow h-full rounded-full {{ $bandColor($criterion['band']) }}" style="--d: {{ 400 + $loop->index * 80 }}ms; width: {{ round($criterion['band'] / 9 * 100) }}%"></div>
                     </div>
                     <p class="mt-3 text-xs text-slate-500">{{ $criterion['description'] }}</p>
                 </div>
@@ -131,7 +132,7 @@
         </section>
 
         {{-- Stats + focus --}}
-        <section class="mt-6 grid gap-4 lg:grid-cols-[1fr_1.2fr]">
+        <section class="voic-rise mt-6 grid gap-4 lg:grid-cols-[1fr_1.2fr]" style="--d: 450ms">
             <div class="grid grid-cols-2 gap-4">
                 @foreach ([
                     [$isEn ? 'Average pace' : 'Rata-rata tempo', $stats['average_wpm'] ? $stats['average_wpm'].' '.($isEn ? 'wpm' : 'kata/mnt') : '–', $isEn ? 'Ideal 105–165' : 'Ideal 105–165'],
@@ -141,7 +142,7 @@
                 ] as [$label, $value, $hint])
                     <div class="rounded-3xl border border-black/5 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03]">
                         <p class="text-xs font-semibold text-slate-500">{{ $label }}</p>
-                        <p class="mt-1 text-2xl font-extrabold">{{ $value }}</p>
+                        <p class="font-display mt-1 text-2xl font-extrabold sm:text-[1.7rem]">{{ $value }}</p>
                         @if ($hint)<p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>@endif
                     </div>
                 @endforeach
@@ -151,7 +152,7 @@
                 <div class="mt-4 space-y-5">
                     @foreach ($report['focus'] as $index => $focus)
                         <div class="flex gap-4">
-                            <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">{{ $index + 1 }}</span>
+                            <span class="voic-sticker font-display h-8 w-8 shrink-0 justify-center bg-indigo-600 text-sm font-extrabold text-white" style="transform: rotate({{ $index % 2 ? 4 : -5 }}deg)">{{ $index + 1 }}</span>
                             <div>
                                 <p class="font-bold">{{ $focus['title'] }}</p>
                                 <p class="mt-1 text-sm opacity-80">{{ $focus['drill'] }}</p>
@@ -170,14 +171,14 @@
                             <button type="submit" class="rounded-full bg-emerald-400 px-5 py-2.5 text-sm font-bold text-slate-900 hover:bg-emerald-300">{{ $isEn ? 'Next visitor' : 'Pengunjung berikutnya' }}</button>
                         </form>
                     @endif
-                    <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="rounded-full border border-white/20 px-5 py-2.5 text-sm font-bold hover:bg-white/10 dark:border-black/15 dark:hover:bg-black/5">{{ $isEn ? 'Other modes' : 'Mode lain' }}</a>
+                    <a href="{{ route('exam.index', $isEn ? ['lang' => 'en'] : []) }}" class="rounded-full border border-indigo-900/15 px-5 py-2.5 text-sm font-bold transition hover:bg-white/60">{{ $isEn ? 'Other modes' : 'Mode lain' }}</a>
                 </div>
             </div>
         </section>
 
         {{-- Per answer --}}
         <section class="mt-10">
-            <h2 class="text-xl font-extrabold tracking-tight">{{ $isEn ? 'Answer by answer' : 'Masukan per jawaban' }}</h2>
+            <h2 class="text-3xl font-extrabold">{{ $isEn ? 'Answer by answer' : 'Masukan per jawaban' }}</h2>
             <div class="mt-4 space-y-3">
                 @forelse ($report['answers'] as $item)
                     <details class="group rounded-3xl border border-black/5 bg-white open:shadow-sm dark:border-white/10 dark:bg-white/[0.03]" @if ($loop->first) open @endif>

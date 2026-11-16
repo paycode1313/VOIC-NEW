@@ -47,10 +47,19 @@
                 </div>
                 <div class="relative mx-auto mt-6 flex h-40 w-40 items-center justify-center">
                     <span class="voic-ring absolute inset-0 rounded-full" style="box-shadow: 0 0 0 2px rgb(var(--glow) / 0.6)"></span>
-                    <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-40 w-40 rounded-full object-cover ring-4 ring-slate-900/10">
+                    <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-40 w-40 rounded-full object-cover ring-4 ring-white">
+                    <span class="absolute bottom-1 right-1 inline-flex h-10 w-10 items-center justify-center rounded-full text-white ring-4 ring-white" style="background: rgb(var(--glow))" aria-hidden="true">
+                        <span class="voic-wave text-base"><i></i><i></i><i></i><i></i></span>
+                    </span>
                 </div>
-                <p class="mt-6 text-center text-2xl font-extrabold tracking-tight">{{ $examinerName }}</p>
+                <p class="voic-bubble mx-auto mt-5 w-fit max-w-full px-4 py-2 text-center text-sm font-semibold text-slate-800">“{{ $blueprint->text($mode['examiner']['catchphrase'] ?? '', $language) }}”</p>
+                <p class="font-display mt-5 text-center text-3xl font-extrabold">{{ $examinerName }}</p>
                 <p class="mt-1 text-center text-sm font-semibold" style="color: rgb(var(--glow))">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
+                <div class="mt-3 flex flex-wrap justify-center gap-1.5">
+                    @foreach ($mode['examiner']['traits'][$language] ?? $mode['examiner']['traits']['id'] ?? [] as $trait)
+                        <span class="rounded-full px-2.5 py-0.5 text-xs font-bold" style="background: rgb(var(--glow) / 0.12); color: rgb(var(--glow))">{{ $trait }}</span>
+                    @endforeach
+                </div>
                 <p class="mt-3 text-center text-sm text-slate-600" x-show="name" x-cloak x-text="'{{ $isEn ? 'Ready to call' : 'Siap menelepon' }} ' + name + (campus ? ' {{ $isEn ? 'from' : 'dari' }} ' + campus : '')"></p>
 
                 <ol class="mt-7 space-y-1.5 text-sm">
@@ -86,8 +95,9 @@
                 <span class="absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white"></span>
             </div>
             <div class="min-w-0">
-                <p class="text-lg font-extrabold tracking-tight">{{ $examinerName }}</p>
+                <p class="font-display text-xl font-extrabold">{{ $examinerName }}</p>
                 <p class="text-sm font-semibold" style="color: rgb(var(--glow))">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
+                <p class="mt-0.5 truncate text-xs italic text-slate-500">“{{ $blueprint->text($mode['examiner']['catchphrase'] ?? '', $language) }}”</p>
             </div>
         </div>
 
@@ -111,7 +121,7 @@
 
             {{-- 1. Name and campus: the only typing --}}
             <section x-show="step === 1" x-transition.opacity>
-                <h1 class="text-3xl font-extrabold tracking-tight">{{ $isEn ? "Let's get to know you" : 'Kenalan dulu, yuk' }}</h1>
+                <h1 class="text-3xl font-extrabold sm:text-4xl">{{ $isEn ? "Let's get to know you" : 'Kenalan dulu, yuk' }}</h1>
                 <p class="mt-2 text-slate-600 dark:text-slate-400">{{ $isEn ? "{$examinerName} will greet you by name." : "{$examinerName} bakal manggil kamu pakai nama ini." }}</p>
                 <div class="mt-6 space-y-4 rounded-3xl border border-black/5 bg-white p-6 shadow-sm shadow-slate-900/5 dark:border-white/10 dark:bg-white/[0.03]">
                     <div>
@@ -139,7 +149,7 @@
 
             {{-- 2. Coach or mock exam --}}
             <section x-show="step === 2" x-cloak x-transition.opacity>
-                <h2 class="text-3xl font-extrabold tracking-tight" x-text="'{{ $isEn ? 'Hi' : 'Hai' }} ' + name + ', {{ $isEn ? 'what kind of call?' : 'mau latihan yang mana?' }}'"></h2>
+                <h2 class="text-3xl font-extrabold sm:text-4xl" x-text="'{{ $isEn ? 'Hi' : 'Hai' }} ' + name + ', {{ $isEn ? 'what kind of call?' : 'mau latihan yang mana?' }}'"></h2>
                 <div class="mt-6 grid gap-3">
                     @foreach ([
                         'coach' => [$isEn ? 'Chat with a coach' : 'Ngobrol dengan coach', $isEn ? config('exam.coach_minutes').' min · relaxed, no score' : config('exam.coach_minutes').' menit · santai, tanpa nilai', $isEn ? 'You get tips on how to answer and which words to use.' : 'Kamu diajari cara menjawab dan milih kata, sambil ngobrol.', 'chat'],
@@ -161,7 +171,7 @@
 
             {{-- 3. Topic --}}
             <section x-show="step === 3" x-cloak x-transition.opacity>
-                <h2 class="text-3xl font-extrabold tracking-tight">{{ $blueprint->text($mode['topic_label'], $language) }}?</h2>
+                <h2 class="text-3xl font-extrabold sm:text-4xl">{{ $blueprint->text($mode['topic_label'], $language) }}?</h2>
                 <p class="mt-2 text-slate-600 dark:text-slate-400">{{ $isEn ? 'Pick the closest one, the questions will fit it.' : 'Pilih yang paling dekat, pertanyaannya bakal menyesuaikan.' }}</p>
                 <div class="mt-6 flex flex-wrap gap-2">
                     @foreach ($topics as $topic)
@@ -179,7 +189,7 @@
 
             {{-- 4. Length (mock exam only) --}}
             <section x-show="type === 'exam' && step === 4" x-cloak x-transition.opacity>
-                <h2 class="text-3xl font-extrabold tracking-tight">{{ $isEn ? 'How long?' : 'Mau berapa lama?' }}</h2>
+                <h2 class="text-3xl font-extrabold sm:text-4xl">{{ $isEn ? 'How long?' : 'Mau berapa lama?' }}</h2>
                 <div class="mt-6 grid gap-3">
                     @foreach ($durations as $option)
                         <button type="button" @click="pick('parts', @js($option['parts']))"
@@ -200,7 +210,7 @@
 
             {{-- Last step: summary, consent, call --}}
             <section x-show="step === last" x-cloak x-transition.opacity>
-                <h2 class="text-3xl font-extrabold tracking-tight">{{ $isEn ? 'Ready to call?' : 'Siap ditelepon?' }}</h2>
+                <h2 class="text-3xl font-extrabold sm:text-4xl">{{ $isEn ? 'Ready to call?' : 'Siap ditelepon?' }}</h2>
                 <div class="mt-6 divide-y divide-black/5 rounded-3xl border border-black/5 bg-white text-sm dark:divide-white/10 dark:border-white/10 dark:bg-white/[0.03]">
                     @foreach ([
                         [1, $isEn ? 'Name' : 'Nama', "name + ' · ' + campus"],
