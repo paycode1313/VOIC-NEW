@@ -22,6 +22,8 @@ import uuid
 import wave
 from typing import Dict, Optional
 
+from pronunciation import speech_text
+
 BASE_DIR = os.path.dirname(__file__)
 AUDIO_OUTPUT_DIR = os.path.join(BASE_DIR, "audio_outputs")
 os.makedirs(AUDIO_OUTPUT_DIR, exist_ok=True)
@@ -308,6 +310,7 @@ def edge_online() -> bool:
 async def synthesize(text: str, role_type: str = "hrd", language: str = "id", output_dir: str = AUDIO_OUTPUT_DIR,
                      prefer: Optional[str] = None) -> Optional[str]:
     """TTS: Piper (offline) lalu edge-tts (online); prefer="edge" membalik urutannya. None = biarkan browser bicara."""
+    text = speech_text(text, language)  # "coding" -> "koding", "Rp 5.000.000" -> "5000000 rupiah", dst.
     if prefer == "edge":
         filename = await synthesize_edge(text, role_type, language, output_dir)
         if filename:

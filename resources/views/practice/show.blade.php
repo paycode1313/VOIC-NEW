@@ -1013,7 +1013,7 @@
                                 return;
                             }
                             window.speechSynthesis.cancel();
-                            const utterance = new SpeechSynthesisUtterance(text);
+                            const utterance = new SpeechSynthesisUtterance(window.voicSpeechText ? window.voicSpeechText(text, lang) : text);
                             utterance.lang = lang === 'en' ? 'en-US' : 'id-ID';
 
                             if (roleType === 'dosen_penguji') {
