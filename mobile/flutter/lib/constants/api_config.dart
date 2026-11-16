@@ -1,7 +1,6 @@
 class ApiConfig {
-  // Gunakan 10.0.2.2 untuk Android Emulator yang mengakses localhost mesin host.
-  // Ganti dengan IP LAN (misal: 192.168.1.X:8000) jika menggunakan HP fisik melalui WiFi.
-  static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
+  // IP LAN mesin host saat ini: 10.161.13.82:8000
+  static const String baseUrl = 'http://10.161.13.82:8000/api/v1';
 
   // Auth
   static const String login = '$baseUrl/auth/login';

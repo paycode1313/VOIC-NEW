@@ -1,11 +1,16 @@
 import { Platform } from 'react-native';
 
 // Base URL API Laravel
-// Use Laragon on the laptop for web, and the laptop's Wi-Fi IP on physical devices.
-const webApiBaseUrl = 'http://localhost/VOIC-NEW/public/api/v1';
-const mobileApiBaseUrl = 'http://10.245.84.82/VOIC-NEW/public/api/v1';
+// Gunakan hostname aktif saat di browser (bisa localhost di laptop atau 10.161.13.82 di HP),
+// dan gunakan IP laptop saat di aplikasi native (Expo Go).
+const getBaseUrl = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.hostname) {
+    return `http://${window.location.hostname}:8000/api/v1`;
+  }
+  return 'http://10.161.13.82:8000/api/v1';
+};
 
-export const API_BASE_URL = Platform.OS === 'web' ? webApiBaseUrl : mobileApiBaseUrl;
+export const API_BASE_URL = getBaseUrl();
 
 export const endpoints = {
   login: `${API_BASE_URL}/auth/login`,

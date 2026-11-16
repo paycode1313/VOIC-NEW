@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -15,6 +16,38 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../constants/theme';
 import { apiService } from '../services/apiService';
 import VoicLogo from '../components/VoicLogo';
+
+// Avatar color per role_type
+const ROLE_AVATAR_COLORS = {
+  dosen_penguji: { grad: ['#2563EB', '#38BDF8'], emoji: '🎓' },
+  hrd:           { grad: ['#059669', '#10B981'], emoji: '💼' },
+  investor:      { grad: ['#D97706', '#F59E0B'], emoji: '🚀' },
+};
+
+// Scenario gradient per badge type
+const SCENARIO_GRADIENTS = {
+  default: ['#0F1C2F', '#1B2D47'],
+  Sidang:  ['#1D3B6A', '#0F1C2F'],
+  Kerja:   ['#0F2D2A', '#0F1C2F'],
+  Bisnis:  ['#2D1A0F', '#0F1C2F'],
+};
+
+function getScenarioGradient(badge) {
+  if (!badge) return SCENARIO_GRADIENTS.default;
+  if (badge.includes('Sidang') || badge.includes('Dosen')) return SCENARIO_GRADIENTS.Sidang;
+  if (badge.includes('Kerja') || badge.includes('HRD')) return SCENARIO_GRADIENTS.Kerja;
+  if (badge.includes('Bisnis') || badge.includes('Investor')) return SCENARIO_GRADIENTS.Bisnis;
+  return SCENARIO_GRADIENTS.default;
+}
+
+function getUserInitials(name) {
+  if (!name) return 'P';
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('');
+}
 
 export default function HomeScreen({ user, onStartPractice }) {
   const insets = useSafeAreaInsets();
@@ -26,9 +59,32 @@ export default function HomeScreen({ user, onStartPractice }) {
   const [language, setLanguage] = useState('id'); // 'id' | 'en'
   const [contextMaterial, setContextMaterial] = useState('');
   const [isStarting, setIsStarting] = useState(false);
+  const [contextFocused, setContextFocused] = useState(false);
+
+  // Animated waveform rotation
+  const waveAnim = useRef(new Animated.Value(0)).current;
+  // Animated mic pulse
+  const micPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     loadRolesAndScenarios();
+
+    // Waveform spin loop
+    Animated.loop(
+      Animated.timing(waveAnim, {
+        toValue: 1,
+        duration: 6000,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Mic pulse loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(micPulse, { toValue: 1.18, duration: 700, useNativeDriver: true }),
+        Animated.timing(micPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    ).start();
   }, []);
 
   const loadRolesAndScenarios = async () => {
@@ -74,6 +130,11 @@ export default function HomeScreen({ user, onStartPractice }) {
     }
   };
 
+  const waveRotate = waveAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
@@ -85,24 +146,39 @@ export default function HomeScreen({ user, onStartPractice }) {
 
   return (
     <View style={styles.container}>
-      {/* Top Navigation Bar (Identik dengan Web Nav) */}
+      {/* ── Top Navigation Bar ── */}
       <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 12) }]}>
         <View style={styles.brandRow}>
           <VoicLogo width={76} height={22} />
         </View>
 
         <View style={styles.rightNavRow}>
+          {/* User avatar circle with initials */}
+          <View style={styles.userAvatarCircle}>
+            <Text style={styles.userAvatarInitials}>{getUserInitials(user?.name)}</Text>
+          </View>
           <View style={styles.userProfilePill}>
-            <Feather name="user" size={13} color={colors.accentCyan} style={{ marginRight: 5 }} />
             <Text style={styles.userGreeting} numberOfLines={1}>
               {user?.name || 'Praktikan'}
             </Text>
           </View>
+          {/* Logout icon */}
+          <TouchableOpacity style={styles.logoutButton} activeOpacity={0.7}>
+            <Feather name="log-out" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Banner Hero (Web Executive Glassmorphism) */}
+      {/* Subtle gradient bar under topbar */}
+      <LinearGradient
+        colors={['rgba(37,99,235,0.18)', 'transparent']}
+        style={styles.topBarGradientBar}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      />
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* ── Hero Banner ── */}
         <LinearGradient
           colors={colors.heroCardGradient}
           style={styles.heroBanner}
@@ -110,46 +186,84 @@ export default function HomeScreen({ user, onStartPractice }) {
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.heroGlowAccent} />
+          <View style={styles.heroGlowAccent2} />
+
+          {/* Animated waveform emoji */}
+          <Animated.View style={[styles.heroWaveform, { transform: [{ rotate: waveRotate }] }]}>
+            <Text style={styles.heroWaveEmoji}>〰️</Text>
+          </Animated.View>
+
           <View style={styles.heroTagRow}>
             <View style={styles.heroTag}>
               <View style={styles.heroTagDot} />
               <Text style={styles.heroTagText}>Simulasi Bicara & Gestur AI</Text>
             </View>
           </View>
+
           <Text style={styles.heroTitle}>Siap Latihan Bicara Hari Ini?</Text>
           <Text style={styles.heroSubtitle}>
             Pilih karakter AI penguji dan skenario latihan untuk melatih artikulasi vokal, kontak mata, dan ketenangan gestur Anda.
           </Text>
+
+          {/* Stats row */}
+          <View style={styles.heroStatsRow}>
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatValue}>3</Text>
+              <Text style={styles.heroStatLabel}>Moda Ujian</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatValue}>AI</Text>
+              <Text style={styles.heroStatLabel}>Realtime</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatValue}>⚡</Text>
+              <Text style={styles.heroStatLabel}>Skor Instan</Text>
+            </View>
+          </View>
         </LinearGradient>
 
-        {/* Pilihan Bahasa Simulasi (Mirip Web) */}
-        <View style={styles.langSelectorRow}>
-          <Text style={styles.langLabel}>Bahasa Simulasi:</Text>
-          <View style={styles.langPillContainer}>
+        {/* ── Language Selector (tab-style) ── */}
+        <View style={styles.langSelectorContainer}>
+          <Text style={styles.langLabel}>Bahasa Simulasi</Text>
+          <View style={styles.langTabRow}>
             <TouchableOpacity
-              style={[styles.langChip, language === 'id' && styles.langChipActive]}
+              style={[styles.langTab, language === 'id' && styles.langTabActive]}
               onPress={() => setLanguage('id')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.langText, language === 'id' && styles.langTextActive]}>
-                🇮🇩 Indonesia
+              <Text style={styles.langTabFlag}>🇮🇩</Text>
+              <Text style={[styles.langTabText, language === 'id' && styles.langTabTextActive]}>
+                Indonesia
               </Text>
+              {language === 'id' && <View style={styles.langActiveIndicator} />}
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.langChip, language === 'en' && styles.langChipActive]}
+              style={[styles.langTab, language === 'en' && styles.langTabActive]}
               onPress={() => setLanguage('en')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.langText, language === 'en' && styles.langTextActive]}>
-                🇬🇧 English
+              <Text style={styles.langTabFlag}>🇬🇧</Text>
+              <Text style={[styles.langTabText, language === 'en' && styles.langTabTextActive]}>
+                English
               </Text>
+              {language === 'en' && <View style={styles.langActiveIndicator} />}
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Skenario Horizontal Scroll */}
+        {/* ── Scenario Section ── */}
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Pilih Skenario Latihan</Text>
+          <View style={styles.sectionTitleGroup}>
+            <LinearGradient
+              colors={['#2563EB', '#38BDF8']}
+              style={styles.sectionTitleBar}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            />
+            <Text style={styles.sectionTitle}>Pilih Skenario Latihan</Text>
+          </View>
           <Text style={styles.sectionCountBadge}>{scenarios.length} Skenario</Text>
         </View>
 
@@ -160,84 +274,133 @@ export default function HomeScreen({ user, onStartPractice }) {
               <TouchableOpacity
                 key={s.id}
                 onPress={() => setSelectedScenario(s)}
-                style={[
-                  styles.scenarioCard,
-                  isSelected && styles.scenarioCardActive,
-                ]}
                 activeOpacity={0.8}
+                style={[styles.scenarioCard, isSelected && styles.scenarioCardActive]}
               >
-                <Text style={styles.scenarioIcon}>{s.icon}</Text>
-                <Text style={[styles.scenarioName, isSelected && { color: colors.accentCyan }]} numberOfLines={1}>
-                  {s.name}
-                </Text>
-                <Text style={styles.scenarioBadge}>{s.badge}</Text>
+                <LinearGradient
+                  colors={isSelected ? ['rgba(37,99,235,0.35)', 'rgba(37,99,235,0.1)'] : getScenarioGradient(s.badge)}
+                  style={styles.scenarioGradientFill}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.scenarioIcon}>{s.icon}</Text>
+                  <Text
+                    style={[styles.scenarioName, isSelected && { color: colors.accentCyan }]}
+                    numberOfLines={1}
+                  >
+                    {s.name}
+                  </Text>
+                  <Text style={styles.scenarioBadge}>{s.badge}</Text>
+                  {isSelected && (
+                    <View style={styles.scenarioCheckBadge}>
+                      <Feather name="check-circle" size={14} color={colors.accentCyan} />
+                    </View>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
 
-        {/* Materi Konteks Opsional (Abstrak / Lowongan) */}
+        {/* ── Context Input ── */}
         <View style={styles.contextContainer}>
-          <Text style={styles.contextLabel}>Materi Konteks Latihan (Opsional):</Text>
+          <View style={styles.contextLabelRow}>
+            <Feather name="book-open" size={13} color={colors.accentCyan} style={{ marginRight: 6 }} />
+            <Text style={styles.contextLabel}>Materi Konteks Latihan (Opsional)</Text>
+          </View>
           <TextInput
-            style={styles.contextInput}
+            style={[styles.contextInput, contextFocused && styles.contextInputFocused]}
             placeholder="Contoh: Judul Skripsi Sistem Rekomendasi AI / Posisi Backend Engineer..."
             placeholderTextColor={colors.textMuted}
             value={contextMaterial}
             onChangeText={setContextMaterial}
+            onFocus={() => setContextFocused(true)}
+            onBlur={() => setContextFocused(false)}
+            multiline={false}
+            maxLength={200}
           />
+          <Text style={styles.contextCharCounter}>{contextMaterial.length}/200</Text>
         </View>
 
-        {/* Karakter AI List */}
-        <View style={[styles.sectionHeaderRow, { marginTop: 20 }]}>
-          <Text style={styles.sectionTitle}>Pilih Karakter AI Penguji</Text>
+        {/* ── Role Section ── */}
+        <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
+          <View style={styles.sectionTitleGroup}>
+            <LinearGradient
+              colors={['#2563EB', '#38BDF8']}
+              style={styles.sectionTitleBar}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            />
+            <Text style={styles.sectionTitle}>Pilih Karakter AI Penguji</Text>
+          </View>
           <Text style={styles.sectionCountBadge}>{roles.length} Karakter</Text>
         </View>
 
         {roles.map((role) => {
           const isSelected = selectedRole?.id === role.id;
+          const avatarConfig = ROLE_AVATAR_COLORS[role.role_type] || {
+            grad: ['#2563EB', '#1D4ED8'],
+            emoji: '🤖',
+          };
           return (
             <TouchableOpacity
               key={role.id}
               onPress={() => setSelectedRole(role)}
-              style={[
-                styles.roleCard,
-                isSelected && styles.roleCardActive,
-              ]}
+              style={[styles.roleCard, isSelected && styles.roleCardActive]}
               activeOpacity={0.8}
             >
-              <View style={[styles.roleAvatar, isSelected && styles.roleAvatarActive]}>
-                <Text style={{ fontSize: 24 }}>
-                  {role.role_type === 'dosen_penguji' ? '🎓' : role.role_type === 'hrd' ? '💼' : '🚀'}
-                </Text>
-              </View>
+              {/* Gradient avatar circle */}
+              <LinearGradient
+                colors={avatarConfig.grad}
+                style={styles.roleAvatar}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={{ fontSize: 24 }}>{avatarConfig.emoji}</Text>
+              </LinearGradient>
+
               <View style={styles.roleInfo}>
                 <View style={styles.roleHeader}>
-                  <Text style={[styles.roleName, isSelected && { color: '#FFFFFF' }]}>{role.name}</Text>
+                  <Text style={[styles.roleName, isSelected && { color: '#FFFFFF' }]}>
+                    {role.name}
+                  </Text>
                   <View style={styles.difficultyBadge}>
                     <Text style={styles.difficultyText}>{role.difficulty_level || 'Menengah'}</Text>
                   </View>
                 </View>
-                <Text style={styles.roleDesc} numberOfLines={2}>
+                <Text style={styles.roleDesc} numberOfLines={3}>
                   {role.description}
                 </Text>
               </View>
+
+              {/* Selected badge */}
+              {isSelected && (
+                <View style={styles.roleSelectedBadge}>
+                  <Feather name="check" size={11} color="#fff" />
+                  <Text style={styles.roleSelectedBadgeText}>Selected</Text>
+                </View>
+              )}
             </TouchableOpacity>
           );
         })}
 
-        <View style={{ height: 190 }} />
+        <View style={{ height: 220 }} />
       </ScrollView>
 
-      {/* Fixed Bottom CTA Bar */}
-<<<<<<< HEAD
+      {/* ── Fixed Bottom CTA Bar ── */}
       <View style={[styles.bottomBar, { bottom: 66 + Math.max(insets.bottom, 8) }]}>
-=======
-      <View style={styles.bottomBar}>
         <Text style={styles.consentText}>
           Dengan memulai, kamu setuju jawabanmu diproses oleh AI di laptop penyelenggara untuk membuat rapor.
         </Text>
->>>>>>> 92db3c8749066e5006acb8ebe90461069399d8f9
+
+        {/* "AI Siap Menguji" label row */}
+        <View style={styles.ctaLabelRow}>
+          <Animated.View style={{ transform: [{ scale: micPulse }] }}>
+            <Feather name="mic" size={14} color={colors.accentCyan} />
+          </Animated.View>
+          <Text style={styles.ctaReadyLabel}>AI Siap Menguji</Text>
+        </View>
+
         <TouchableOpacity
           style={styles.startButton}
           onPress={handleStart}
@@ -245,7 +408,7 @@ export default function HomeScreen({ user, onStartPractice }) {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={colors.buttonGradient}
+            colors={['#3B82F6', '#1D4ED8', '#1E40AF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.buttonGradient}
@@ -281,6 +444,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 12,
   },
+
+  // ── TopBar ──
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -289,8 +454,11 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 14,
     backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorderSubtle,
+    zIndex: 10,
+  },
+  topBarGradientBar: {
+    height: 6,
+    marginTop: -1,
   },
   brandRow: {
     flexDirection: 'row',
@@ -299,6 +467,23 @@ const styles = StyleSheet.create({
   rightNavRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+  },
+  userAvatarCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.accentCyan,
+  },
+  userAvatarInitials: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   userProfilePill: {
     flexDirection: 'row',
@@ -309,7 +494,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.cardBorderSubtle,
-    maxWidth: 125,
+    maxWidth: 110,
   },
   userGreeting: {
     fontSize: 12,
@@ -317,40 +502,61 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   logoutButton: {
-    marginLeft: 8,
-    padding: 6,
-    borderRadius: 8,
+    padding: 7,
+    borderRadius: 10,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.cardBorderSubtle,
   },
+
+  // ── Scroll ──
   scrollContent: {
     padding: 20,
   },
+
+  // ── Hero Banner ──
   heroBanner: {
-    padding: 20,
+    padding: 22,
     borderRadius: 18,
     borderWidth: 1.5,
     borderColor: colors.cardBorder,
-    marginBottom: 16,
+    marginBottom: 18,
     overflow: 'hidden',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 10,
   },
   heroGlowAccent: {
     position: 'absolute',
-    top: -30,
-    right: -30,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(37, 99, 235, 0.18)',
+    top: -40,
+    right: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(37, 99, 235, 0.22)',
+  },
+  heroGlowAccent2: {
+    position: 'absolute',
+    bottom: -30,
+    left: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(56, 189, 248, 0.10)',
+  },
+  heroWaveform: {
+    position: 'absolute',
+    top: 14,
+    right: 16,
+    opacity: 0.35,
+  },
+  heroWaveEmoji: {
+    fontSize: 42,
   },
   heroTagRow: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   heroTag: {
     flexDirection: 'row',
@@ -376,160 +582,282 @@ const styles = StyleSheet.create({
     color: colors.accentCyan,
   },
   heroTitle: {
-    fontSize: 17,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 6,
+    marginBottom: 8,
+    letterSpacing: 0.2,
   },
   heroSubtitle: {
     fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 18,
+    marginBottom: 16,
   },
-  langSelectorRow: {
+  heroStatsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-    padding: 12,
-    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.15)',
+  },
+  heroStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  heroStatValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.accentCyan,
+  },
+  heroStatLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  heroStatDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(59,130,246,0.25)',
+  },
+
+  // ── Language Selector ──
+  langSelectorContainer: {
+    marginBottom: 20,
     backgroundColor: colors.card,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.cardBorderSubtle,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
   },
   langLabel: {
     fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
-  langPillContainer: {
+  langTabRow: {
     flexDirection: 'row',
+    gap: 10,
   },
-  langChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+  langTab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
     backgroundColor: colors.surface,
-    marginLeft: 6,
     borderWidth: 1,
     borderColor: colors.cardBorderSubtle,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  langChipActive: {
+  langTabActive: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(37, 99, 235, 0.25)',
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
   },
-  langText: {
-    fontSize: 11,
-    color: colors.textSecondary,
+  langTabFlag: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  langTabText: {
+    fontSize: 12,
     fontWeight: '600',
+    color: colors.textSecondary,
   },
-  langTextActive: {
+  langTabTextActive: {
     color: colors.accentCyan,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
+  langActiveIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: '20%',
+    right: '20%',
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: colors.accentCyan,
+  },
+
+  // ── Section Headers ──
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
+  },
+  sectionTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionTitleBar: {
+    width: 4,
+    height: 18,
+    borderRadius: 2,
+    marginRight: 8,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    letterSpacing: 0.1,
   },
   sectionCountBadge: {
     fontSize: 11,
     color: colors.textAccent,
     fontWeight: '600',
+    backgroundColor: 'rgba(37,99,235,0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.2)',
   },
+
+  // ── Scenario Cards ──
   scenarioList: {
     flexDirection: 'row',
+    marginBottom: 4,
   },
   scenarioCard: {
-    width: 130,
-    padding: 14,
-    borderRadius: 14,
-    backgroundColor: colors.card,
+    width: 140,
+    height: 160,
+    borderRadius: 18,
     borderWidth: 1.5,
     borderColor: colors.cardBorderSubtle,
-    marginRight: 10,
-  },
-  scenarioCardActive: {
-    borderColor: colors.primaryLight,
-    backgroundColor: 'rgba(37, 99, 235, 0.16)',
-    shadowColor: colors.primary,
+    marginRight: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 4,
   },
+  scenarioCardActive: {
+    borderColor: colors.primaryLight,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  scenarioGradientFill: {
+    flex: 1,
+    padding: 14,
+    justifyContent: 'flex-end',
+    position: 'relative',
+  },
   scenarioIcon: {
-    fontSize: 22,
-    marginBottom: 8,
+    fontSize: 28,
+    marginBottom: 10,
   },
   scenarioName: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 4,
   },
   scenarioBadge: {
     fontSize: 10,
     color: colors.textSecondary,
-    marginTop: 3,
   },
+  scenarioCheckBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+
+  // ── Context Input ──
   contextContainer: {
-    marginTop: 18,
+    marginTop: 20,
+    marginBottom: 4,
+  },
+  contextLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   contextLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 6,
   },
   contextInput: {
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
-    paddingHorizontal: 12,
-    color: '#FFFFFF',
-    fontSize: 12,
-  },
-  roleCard: {
-    flexDirection: 'row',
-    padding: 14,
-    borderRadius: 14,
+    height: 50,
+    borderRadius: 18,
     backgroundColor: colors.card,
     borderWidth: 1.5,
     borderColor: colors.cardBorderSubtle,
-    marginBottom: 12,
+    paddingHorizontal: 14,
+    color: '#FFFFFF',
+    fontSize: 13,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  contextInputFocused: {
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  contextCharCounter: {
+    textAlign: 'right',
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 4,
+    marginRight: 4,
+  },
+
+  // ── Role Cards ──
+  roleCard: {
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: colors.card,
+    borderWidth: 1.5,
+    borderColor: colors.cardBorderSubtle,
+    marginBottom: 14,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
   },
   roleCardActive: {
     borderColor: colors.primaryLight,
-    backgroundColor: 'rgba(37, 99, 235, 0.16)',
+    backgroundColor: 'rgba(37, 99, 235, 0.14)',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 7,
   },
   roleAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.surface,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
-  },
-  roleAvatarActive: {
-    borderColor: colors.accentCyan,
-    backgroundColor: 'rgba(37, 99, 235, 0.25)',
+    marginRight: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   roleInfo: {
     flex: 1,
@@ -538,12 +866,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   roleName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    flex: 1,
+    marginRight: 6,
   },
   difficultyBadge: {
     paddingHorizontal: 7,
@@ -559,33 +889,64 @@ const styles = StyleSheet.create({
     color: colors.accentCyan,
   },
   roleDesc: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textSecondary,
-    lineHeight: 16,
+    lineHeight: 17,
   },
+  roleSelectedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 10,
+    right: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+    gap: 3,
+  },
+  roleSelectedBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // ── Bottom CTA Bar ──
   bottomBar: {
     position: 'absolute',
-    bottom: 74,
     left: 0,
     right: 0,
     paddingHorizontal: 20,
-    paddingTop: 14,
+    paddingTop: 12,
     paddingBottom: 12,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.cardBorderSubtle,
   },
+  ctaLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    gap: 6,
+  },
+  ctaReadyLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.accentCyan,
+    letterSpacing: 0.4,
+  },
   startButton: {
-    borderRadius: 14,
+    borderRadius: 18,
     overflow: 'hidden',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10,
   },
   buttonGradient: {
-    height: 52,
+    height: 60,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -595,14 +956,15 @@ const styles = StyleSheet.create({
   },
   startButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 0.5,
   },
   consentText: {
     color: colors.textSecondary || '#64748B',
-    fontSize: 11,
+    fontSize: 10,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
+    lineHeight: 14,
   },
 });

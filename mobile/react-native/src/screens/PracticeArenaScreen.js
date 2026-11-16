@@ -10,6 +10,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
@@ -41,7 +42,67 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [speechInput, setSpeechInput] = useState('');
 
-  // Get AI Examiner Portrait Avatar
+  // ── Animations ──────────────────────────────────────────────
+  // Pulsing status dot
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Mic ring glow
+  const micRingScale = useRef(new Animated.Value(1)).current;
+  const micRingOpacity = useRef(new Animated.Value(0.6)).current;
+  // Speaking border glow
+  const speakingBorderAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Pulsing dot loop
+    const pulsing = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.6, duration: 700, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
+      ])
+    );
+    pulsing.start();
+
+    // Mic ring glow loop
+    const micGlow = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(micRingScale, { toValue: 1.35, duration: 900, useNativeDriver: true }),
+          Animated.timing(micRingOpacity, { toValue: 0, duration: 900, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(micRingScale, { toValue: 1, duration: 0, useNativeDriver: true }),
+          Animated.timing(micRingOpacity, { toValue: 0.5, duration: 0, useNativeDriver: true }),
+        ]),
+      ])
+    );
+    micGlow.start();
+
+    return () => {
+      pulsing.stop();
+      micGlow.stop();
+    };
+  }, []);
+
+  // Speaking border flash
+  useEffect(() => {
+    if (isAiSpeaking) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(speakingBorderAnim, { toValue: 1, duration: 600, useNativeDriver: false }),
+          Animated.timing(speakingBorderAnim, { toValue: 0, duration: 600, useNativeDriver: false }),
+        ])
+      ).start();
+    } else {
+      speakingBorderAnim.stopAnimation();
+      speakingBorderAnim.setValue(0);
+    }
+  }, [isAiSpeaking]);
+
+  const speakingBorderColor = speakingBorderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(59,130,246,0.3)', 'rgba(56,189,248,0.95)'],
+  });
+
+  // ── Business logic (unchanged) ───────────────────────────────
   const getAvatarSource = () => {
     const roleType = role?.role_type || 'dosen_penguji';
     if (roleType === 'hrd') {
@@ -53,14 +114,12 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
     return require('../../assets/avatars/dosen.jpg');
   };
 
-  // Sample quick argument templates for rapid practice
   const promptSuggestions = [
     'Penelitian saya berfokus pada integrasi AI untuk melatih komunikasi mahasiswa.',
     'Metodologi yang saya gunakan divalidasi dengan pengujian empiris dan metrik terukur.',
     'Kekuatan utama saya adalah kepemimpinan adaptif dan ketenangan menghadapi tekanan.',
   ];
 
-  // Voice speech synthesis helper
   const speakDialogue = (text) => {
     if (!text || isMuted) return;
     Speech.stop();
@@ -80,7 +139,6 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
     });
   };
 
-  // Timer & initial greeting speech on mount
   useEffect(() => {
     const timer = setInterval(() => {
       setSecondsElapsed((prev) => prev + 1);
@@ -125,7 +183,6 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
       speakDialogue(reply);
 
       if (res.completed) {
-        // The examiner just said the closing line: build the report.
         finishSession();
       }
     } catch (err) {
@@ -164,7 +221,6 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
     onBack();
   };
 
-  // Status color & label matching web video call
   const getAiStatusInfo = () => {
     if (isAiSpeaking) {
       return {
@@ -200,65 +256,67 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
 
   const statusInfo = getAiStatusInfo();
 
+  // Camera PiP border color based on eye contact
+  const pipBorderColor = eyeContactRatio >= 0.8 ? colors.success : colors.danger;
+
   return (
     <View style={styles.container}>
-      {/* 1. TOP HEADER (Role AI + Audio Control + Timer) */}
-      <View style={styles.header}>
+
+      {/* ── 1. HEADER ─────────────────────────────────────────── */}
+      <LinearGradient
+        colors={['#030712', '#070B14']}
+        style={styles.header}
+      >
         <TouchableOpacity onPress={handleExit} style={styles.backButton}>
-          <Feather name="chevron-left" size={24} color="#FFFFFF" />
+          <Feather name="chevron-left" size={22} color="#FFFFFF" />
         </TouchableOpacity>
+
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerRoleName} numberOfLines={1}>{role?.name || 'VOIC - Penguji'}</Text>
-          <Text style={styles.headerScenario} numberOfLines={1}>{partTitle || scenario?.name || 'Simulasi Ujian'}</Text>
+          <Text style={styles.headerRoleName} numberOfLines={1}>
+            {role?.name || 'VOIC - Penguji'}
+          </Text>
+          <Text style={styles.headerScenario} numberOfLines={1}>
+            {partTitle || scenario?.name || 'Simulasi Ujian'}
+          </Text>
         </View>
 
-        {/* Audio Mute/Unmute Toggle Button */}
-        <TouchableOpacity
-          onPress={() => {
-            if (!isMuted) Speech.stop();
-            setIsMuted(!isMuted);
-          }}
-          style={styles.muteButton}
-          activeOpacity={0.8}
-        >
-          <Feather
-            name={isMuted ? 'volume-x' : 'volume-2'}
-            size={16}
-            color={isMuted ? colors.danger : colors.accentCyan}
-          />
-        </TouchableOpacity>
-
+        {/* Timer badge — larger and prominent */}
         <View style={styles.timerBadge}>
           <View style={styles.timerDot} />
           <Text style={styles.timerText}>{formatTimer(secondsElapsed)}</Text>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scrollStage}>
-        {/* 2. PANGGUNG UTAMA VIDEO CALL AI EXAMINER (Dengan Foto Karakter Nyata) */}
-        <View
+
+        {/* ── 2. EXAMINER VIDEO CARD ───────────────────────────── */}
+        <Animated.View
           style={[
             styles.examinerVideoCard,
-            isAiSpeaking && styles.examinerVideoCardSpeaking,
+            isAiSpeaking && { borderColor: speakingBorderColor },
           ]}
         >
-          {/* Real Avatar Photo of the AI Character */}
           <Image
             source={getAvatarSource()}
             style={styles.examinerImage}
             resizeMode="cover"
           />
 
-          {/* Dark Glass Vignette Overlay */}
+          {/* Dark glass vignette */}
           <LinearGradient
-            colors={['rgba(7, 11, 20, 0.2)', 'rgba(7, 11, 20, 0.85)']}
+            colors={['rgba(7,11,20,0.15)', 'rgba(7,11,20,0.90)']}
             style={styles.vignetteOverlay}
           />
 
-          {/* Top Live Call Badge */}
+          {/* Top status badge row */}
           <View style={styles.callBadgeRow}>
             <View style={[styles.callStatusBadge, { borderColor: statusInfo.dotColor }]}>
-              <View style={[styles.statusDot, { backgroundColor: statusInfo.dotColor }]} />
+              <Animated.View
+                style={[
+                  styles.statusDot,
+                  { backgroundColor: statusInfo.dotColor, transform: [{ scale: pulseAnim }] },
+                ]}
+              />
               <Text style={[styles.callBadgeText, { color: statusInfo.color }]}>
                 {statusInfo.badgeText}
               </Text>
@@ -269,17 +327,17 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
             </View>
           </View>
 
-          {/* Center Mini 3D Audio Orb (Pulsing over character) */}
+          {/* Audio Orb — bottom 20% of card, centred */}
           <View style={styles.orbCenterWrapper}>
             <AudioOrb
               isSpeaking={isAiSpeaking}
               isListening={isUserSpeaking}
               isThinking={isProcessing}
-              size={96}
+              size={88}
             />
           </View>
 
-          {/* Bottom Examiner Info Card */}
+          {/* Examiner name / title */}
           <View style={styles.examinerBottomInfo}>
             <Text style={styles.examinerNameText}>{role?.name || 'AI Penguji'}</Text>
             <Text style={styles.examinerRoleDesc} numberOfLines={1}>
@@ -290,18 +348,32 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
                 : 'Venture Capitalist & Angel Investor'}
             </Text>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* 3. SUBTITLE / AI SPEECH DIALOGUE BUBBLE */}
+        {/* ── 3. SPEECH BUBBLE ─────────────────────────────────── */}
         <View style={styles.speechBubble}>
-          <View style={styles.bubbleQuoteRow}>
-            <MaterialCommunityIcons name="format-quote-open" size={16} color={colors.accentCyan} />
+          {/* Premium header strip */}
+          <View style={styles.bubbleHeader}>
+            <MaterialCommunityIcons name="format-quote-open" size={18} color={colors.accentCyan} />
             <Text style={styles.bubbleRoleLabel}>{role?.name || 'AI Penguji'} Berkata:</Text>
+            {isAiSpeaking && (
+              <View style={styles.speakingPill}>
+                <Animated.View style={[styles.speakingPillDot, { transform: [{ scale: pulseAnim }] }]} />
+                <Text style={styles.speakingPillText}>Live</Text>
+              </View>
+            )}
           </View>
-          <Text style={styles.dialogueText}>{currentAiDialogue}</Text>
+
+          {/* Dialogue text */}
+          <LinearGradient
+            colors={['#0F1C2F', '#080F1B']}
+            style={styles.bubbleBody}
+          >
+            <Text style={styles.dialogueText}>{currentAiDialogue}</Text>
+          </LinearGradient>
         </View>
 
-        {/* Live Facial Critique Toast */}
+        {/* Facial critique toast */}
         {lastFacialCritique && (
           <View style={styles.critiqueToast}>
             <Ionicons name="eye" size={15} color={colors.warning} />
@@ -309,11 +381,11 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
           </View>
         )}
 
-        <View style={{ height: 160 }} />
+        <View style={{ height: 185 }} />
       </ScrollView>
 
-      {/* 4. FLOATING CAMERA PiP (Live Front Camera Selfie Feed) */}
-      <View style={styles.pipWrapper}>
+      {/* ── 4. CAMERA PiP ────────────────────────────────────── */}
+      <View style={[styles.pipWrapper, { borderColor: pipBorderColor }]}>
         <CameraPip
           eyeContactRatio={eyeContactRatio}
           isSmiling={isSmiling}
@@ -325,28 +397,84 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
         />
       </View>
 
-      {/* 5. BOTTOM THUMB CONTROLS (Mic Button + Finish) */}
+      {/* ── 5. BOTTOM THUMB ZONE ─────────────────────────────── */}
       <View style={styles.thumbZone}>
-        <TouchableOpacity
-          style={styles.micCircleButton}
-          onPress={() => {
-            Speech.stop();
-            setSpeechInput('');
-            setIsModalOpen(true);
-          }}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={colors.buttonGradient}
-            style={styles.micGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-          >
-            <MaterialCommunityIcons name="microphone" size={34} color="#FFFFFF" />
-          </LinearGradient>
-        </TouchableOpacity>
-        <Text style={styles.micLabel}>Tap untuk Berbicara 🎙️</Text>
 
+        {/* Three-button row: mute | mic | camera */}
+        <View style={styles.controlRow}>
+
+          {/* Mute toggle */}
+          <TouchableOpacity
+            style={styles.sideControlButton}
+            onPress={() => {
+              if (!isMuted) Speech.stop();
+              setIsMuted(!isMuted);
+            }}
+            activeOpacity={0.8}
+          >
+            <Feather
+              name={isMuted ? 'volume-x' : 'volume-2'}
+              size={20}
+              color={isMuted ? colors.danger : colors.accentCyan}
+            />
+            <Text style={[styles.sideControlLabel, isMuted && { color: colors.danger }]}>
+              {isMuted ? 'Muted' : 'Audio'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Mic button with ring glow */}
+          <View style={styles.micWrapper}>
+            {/* Animated ring */}
+            <Animated.View
+              style={[
+                styles.micRing,
+                { transform: [{ scale: micRingScale }], opacity: micRingOpacity },
+              ]}
+            />
+            <TouchableOpacity
+              style={styles.micCircleButton}
+              onPress={() => {
+                Speech.stop();
+                setSpeechInput('');
+                setIsModalOpen(true);
+              }}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={colors.buttonGradient}
+                style={styles.micGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <MaterialCommunityIcons name="microphone" size={36} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          {/* Camera toggle (cosmetic) */}
+          <TouchableOpacity
+            style={styles.sideControlButton}
+            onPress={() => setFaceDetected(!faceDetected)}
+            activeOpacity={0.8}
+          >
+            <Feather
+              name={faceDetected ? 'camera' : 'camera-off'}
+              size={20}
+              color={faceDetected ? colors.accentCyan : colors.textMuted}
+            />
+            <Text style={[styles.sideControlLabel, !faceDetected && { color: colors.textMuted }]}>
+              {faceDetected ? 'Kamera' : 'Off'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Mic label */}
+        <View style={styles.micLabelRow}>
+          <Feather name="mic" size={12} color={colors.accentCyan} style={{ marginRight: 4 }} />
+          <Text style={styles.micLabel}>Tap untuk Berbicara</Text>
+        </View>
+
+        {/* Finish — outline only */}
         <TouchableOpacity
           style={styles.finishButton}
           onPress={handleFinishPrompt}
@@ -356,33 +484,23 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
         </TouchableOpacity>
       </View>
 
-      {/* MODAL INPUT JAWABAN BICARA */}
+      {/* ── 6. MODAL INPUT ───────────────────────────────────── */}
       <Modal visible={isModalOpen} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Sampaikan Argumen Anda 🎙️</Text>
-            <Text style={styles.modalSubtitle}>
-              Ketik jawaban Anda atau pilih template argumen cepat di bawah:
-            </Text>
 
-            {/* Quick Suggestion Chips */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-              {promptSuggestions.map((template, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.chipButton}
-                  onPress={() => setSpeechInput(template)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.chipText} numberOfLines={1}>{template}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <View style={styles.modalHeaderRow}>
+              <MaterialCommunityIcons name="microphone-outline" size={22} color={colors.accentCyan} />
+              <Text style={styles.modalTitle}>Sampaikan Argumen Anda</Text>
+            </View>
+            <Text style={styles.modalSubtitle}>
+              Ketik jawaban lengkap Anda untuk penguji di bawah ini.
+            </Text>
 
             <TextInput
               style={styles.modalInput}
               multiline
-              numberOfLines={4}
+              numberOfLines={6}
               placeholder="Ketik jawaban Anda kepada penguji di sini..."
               placeholderTextColor={colors.textMuted}
               value={speechInput}
@@ -397,14 +515,18 @@ export default function PracticeArenaScreen({ sessionData, onFinishSession, onBa
               >
                 <Text style={styles.modalCancelText}>Batal</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.modalSendButton}
                 onPress={() => handleSendSpeech(speechInput)}
               >
                 <LinearGradient
-                  colors={colors.buttonGradient}
+                  colors={['#2563EB', '#1D4ED8']}
                   style={styles.modalSendGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
                 >
+                  <Feather name="send" size={16} color="#FFFFFF" style={{ marginRight: 8 }} />
                   <Text style={styles.modalSendText}>Kirim Jawaban</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -421,93 +543,88 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+
+  // ── Header ────────────────────────────────────────────────
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 46,
-    paddingBottom: 14,
-    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+    paddingTop: 50,
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.cardBorderSubtle,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   backButton: {
-    padding: 6,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   headerTitleContainer: {
     flex: 1,
-    marginHorizontal: 8,
+    marginHorizontal: 10,
   },
   headerRoleName: {
     fontSize: 15,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   headerScenario: {
     fontSize: 11,
     color: colors.textSecondary,
-    marginTop: 1,
-  },
-  muteButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
+    marginTop: 2,
   },
   timerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.4)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 22,
+    backgroundColor: 'rgba(239,68,68,0.12)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(239,68,68,0.45)',
   },
   timerDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: colors.danger,
-    marginRight: 6,
+    marginRight: 7,
   },
   timerText: {
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    letterSpacing: 1,
   },
+
+  // ── Scroll ────────────────────────────────────────────────
   scrollStage: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: 14,
+    paddingTop: 14,
   },
+
+  // ── Examiner Video Card ───────────────────────────────────
   examinerVideoCard: {
     width: '100%',
-    height: 280,
-    borderRadius: 22,
+    height: 320,
+    borderRadius: 24,
     overflow: 'hidden',
     backgroundColor: '#0F1C2F',
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: colors.cardBorder,
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 8,
-    position: 'relative',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 10,
     marginBottom: 14,
-  },
-  examinerVideoCardSpeaking: {
-    borderColor: colors.primaryLight,
-    borderWidth: 2,
-    shadowColor: colors.primaryLight,
-    shadowOpacity: 0.6,
-    shadowRadius: 28,
   },
   examinerImage: {
     ...StyleSheet.absoluteFillObject,
@@ -517,11 +634,13 @@ const styles = StyleSheet.create({
   vignetteOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
+
+  // Status badge row
   callBadgeRow: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
+    top: 14,
+    left: 14,
+    right: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -530,94 +649,137 @@ const styles = StyleSheet.create({
   callStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 16,
-    backgroundColor: 'rgba(7, 11, 20, 0.75)',
-    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(7,11,20,0.82)',
+    borderWidth: 1.5,
   },
   statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 7,
   },
   callBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
+    letterSpacing: 0.3,
   },
   hdBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: 'rgba(37, 99, 235, 0.35)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 7,
+    backgroundColor: 'rgba(37,99,235,0.3)',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.5)',
+    borderColor: 'rgba(56,189,248,0.5)',
   },
   hdText: {
     fontSize: 9,
     fontWeight: 'bold',
     color: colors.accentCyan,
+    letterSpacing: 1,
   },
+
+  // Audio Orb — bottom 20% of card
   orbCenterWrapper: {
     position: 'absolute',
+    bottom: '20%',
     alignSelf: 'center',
-    top: '34%',
     zIndex: 5,
   },
+
+  // Examiner name / title
   examinerBottomInfo: {
     position: 'absolute',
-    bottom: 12,
-    left: 14,
-    right: 14,
+    bottom: 16,
+    left: 16,
+    right: 16,
     zIndex: 10,
   },
   examinerNameText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   examinerRoleDesc: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
+    fontSize: 12,
+    color: 'rgba(148,163,184,0.9)',
+    marginTop: 3,
+    letterSpacing: 0.1,
   },
+
+  // ── Speech Bubble ─────────────────────────────────────────
   speechBubble: {
     width: '100%',
-    padding: 16,
     borderRadius: 18,
-    backgroundColor: colors.card,
+    overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: colors.cardBorder,
+    borderColor: 'rgba(56,189,248,0.25)',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
+    elevation: 5,
     marginBottom: 10,
   },
-  bubbleQuoteRow: {
+  bubbleHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(56,189,248,0.07)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(56,189,248,0.2)',
+    gap: 6,
   },
   bubbleRoleLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: 'bold',
     color: colors.accentCyan,
-    marginLeft: 6,
+    flex: 1,
+  },
+  speakingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    backgroundColor: 'rgba(56,189,248,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(56,189,248,0.4)',
+    gap: 4,
+  },
+  speakingPillDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.accentCyan,
+  },
+  speakingPillText: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: colors.accentCyan,
+    letterSpacing: 0.5,
+  },
+  bubbleBody: {
+    padding: 16,
   },
   dialogueText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    lineHeight: 22,
+    fontSize: 15,
+    color: '#F0F6FF',
+    lineHeight: 24,
+    letterSpacing: 0.1,
   },
+
+  // Critique toast
   critiqueToast: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+    backgroundColor: 'rgba(245,158,11,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderColor: 'rgba(245,158,11,0.3)',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -627,152 +789,205 @@ const styles = StyleSheet.create({
   critiqueText: {
     fontSize: 11,
     color: '#FDE68A',
-    marginLeft: 6,
+    marginLeft: 7,
     flex: 1,
   },
+
+  // ── Camera PiP ────────────────────────────────────────────
   pipWrapper: {
     position: 'absolute',
-    right: 16,
-    bottom: 185,
+    right: 14,
+    bottom: 198,
     zIndex: 25,
+    borderRadius: 14,
+    borderWidth: 2.5,
+    overflow: 'hidden',
   },
+
+  // ── Thumb Zone ────────────────────────────────────────────
   thumbZone: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     paddingHorizontal: 24,
-    paddingTop: 14,
-    paddingBottom: 22,
+    paddingTop: 16,
+    paddingBottom: 26,
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     borderTopWidth: 1,
-    borderTopColor: colors.cardBorderSubtle,
+    borderTopColor: 'rgba(255,255,255,0.07)',
     alignItems: 'center',
     zIndex: 20,
   },
+
+  // Three-button control row
+  controlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginBottom: 10,
+    gap: 24,
+  },
+  sideControlButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 2,
+  },
+  sideControlLabel: {
+    fontSize: 9,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+
+  // Mic with animated ring
+  micWrapper: {
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  micRing: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: 'rgba(37,99,235,0.6)',
+  },
   micCircleButton: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     overflow: 'hidden',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.55,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowOpacity: 0.6,
+    shadowRadius: 22,
+    elevation: 14,
   },
   micGradient: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+
+  // Mic label
+  micLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   micLabel: {
     fontSize: 12,
     fontWeight: '600',
     color: colors.textSecondary,
-    marginTop: 8,
-    marginBottom: 10,
   },
+
+  // Finish button — outline only
   finishButton: {
     width: '100%',
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.35)',
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderColor: 'rgba(239,68,68,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   finishButtonText: {
-    color: '#FCA5A5',
+    color: 'rgba(252,165,165,0.8)',
     fontSize: 13,
     fontWeight: 'bold',
+    letterSpacing: 0.2,
   },
+
+  // ── Modal ─────────────────────────────────────────────────
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: 'rgba(0,0,0,0.80)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    borderTopWidth: 1,
-    borderTopColor: colors.cardBorder,
+    backgroundColor: '#0B121E',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 26,
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(56,189,248,0.2)',
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 6,
   },
   modalTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 12,
     color: colors.textSecondary,
-    marginBottom: 10,
-  },
-  chipScroll: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  chipButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
-    marginRight: 8,
-    maxWidth: 240,
-  },
-  chipText: {
-    fontSize: 11,
-    color: colors.accentCyan,
+    marginBottom: 16,
+    lineHeight: 18,
   },
   modalInput: {
-    height: 90,
+    height: 140,
     backgroundColor: colors.card,
-    borderRadius: 14,
-    padding: 12,
+    borderRadius: 16,
+    padding: 14,
     color: '#FFFFFF',
     textAlignVertical: 'top',
     fontSize: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
+    lineHeight: 22,
+    marginBottom: 18,
+    borderWidth: 1.5,
+    borderColor: 'rgba(56,189,248,0.2)',
   },
   modalButtonRow: {
     flexDirection: 'row',
+    gap: 10,
   },
   modalCancelButton: {
     flex: 1,
-    height: 48,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   modalCancelText: {
     color: colors.textSecondary,
     fontWeight: 'bold',
+    fontSize: 14,
   },
   modalSendButton: {
     flex: 2,
-    borderRadius: 12,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   modalSendGradient: {
-    height: 48,
+    height: 52,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalSendText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
+    fontSize: 15,
   },
 });

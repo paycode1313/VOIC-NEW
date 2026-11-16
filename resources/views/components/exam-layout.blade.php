@@ -5,7 +5,7 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ $title ? $title.' · ' : '' }}VOIC</title>
         <meta name="theme-color" content="#f6f6f3">
@@ -36,7 +36,7 @@
             <div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
                 <div class="flex min-w-0 items-center gap-3">
                     @if ($back)
-                        <a href="{{ $back }}" class="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-black/5 hover:text-slate-900 dark:hover:bg-white/10 dark:hover:text-white" aria-label="{{ $backLabel ?? 'Kembali' }}">
+                        <a href="{{ $back }}" class="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-black/5 hover:text-slate-900 active:bg-black/10 dark:hover:bg-white/10 dark:hover:text-white" aria-label="{{ $backLabel ?? 'Kembali' }}">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                         </a>
                     @endif
@@ -75,6 +75,7 @@
                         </button>
                     @endauth
                     @auth
+                        {{-- Desktop: avatar dropdown --}}
                         <div class="relative hidden md:block">
                             <button type="button" @click="account = !account" @click.outside="account = false" :aria-expanded="account"
                                     class="inline-flex h-9 items-center gap-2 rounded-full pl-1 pr-3 text-sm font-semibold hover:bg-black/5 dark:hover:bg-white/10">
@@ -89,34 +90,114 @@
                                 </form>
                             </div>
                         </div>
+                        {{-- Mobile: account icon (taps open the dropdown) --}}
+                        <button type="button" data-kiosk-hide @click="menu = !menu" :aria-expanded="menu" aria-label="Akun"
+                                class="inline-flex h-9 w-9 items-center justify-center rounded-full transition active:scale-95 md:hidden">
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white dark:bg-white dark:text-slate-900">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(auth()->user()->name, 0, 1)) }}</span>
+                        </button>
                     @else
                         <a data-kiosk-hide href="{{ route('login') }}" class="hidden h-9 items-center rounded-full px-3 text-sm font-semibold text-slate-600 hover:bg-black/5 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white sm:inline-flex">Masuk</a>
                         @if (Route::has('register'))
                             <a data-kiosk-hide href="{{ route('register') }}" class="hidden h-9 items-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 sm:inline-flex">Daftar</a>
                         @endif
+                        {{-- Mobile guest: compact CTA --}}
+                        <a data-kiosk-hide href="{{ route('register') }}" class="inline-flex h-9 items-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white active:bg-slate-700 md:hidden">Daftar</a>
                     @endauth
-                    <button type="button" data-kiosk-hide @click="menu = !menu" class="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-black/5 dark:hover:bg-white/10 md:hidden" :aria-expanded="menu" aria-label="Menu">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
-                    </button>
                 </div>
             </div>
-            <div x-show="menu" x-cloak data-kiosk-hide class="border-t border-black/5 px-4 py-2 text-sm font-semibold dark:border-white/10 md:hidden">
-                <a href="{{ route('exam.index') }}" class="block rounded-xl px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10">Latihan</a>
-                @auth
-                    <a href="{{ route('dashboard') }}" class="block rounded-xl px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10">Dashboard</a>
-                    <a href="{{ route('practice.history') }}" class="block rounded-xl px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10">Riwayat</a>
-                    <a href="{{ route('profile.edit') }}" class="block rounded-xl px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10">Profil</a>
-                    <button type="button" @click="menu = false; $dispatch('open-onboarding')" class="block w-full rounded-xl px-3 py-2 text-left hover:bg-black/5 dark:hover:bg-white/10">Panduan</button>
+            {{-- Mobile account dropdown (guide + logout) --}}
+            @auth
+            <div x-show="menu" x-cloak data-kiosk-hide
+                 x-transition:enter="transition ease-out duration-150"
+                 x-transition:enter-start="opacity-0 -translate-y-1"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-100"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-1"
+                 class="border-t border-black/5 dark:border-white/10 md:hidden bg-white/95 dark:bg-[#0c0d10]/98">
+                <div class="px-4 py-3 flex items-center gap-3 border-b border-black/5 dark:border-white/10">
+                    <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white dark:bg-white dark:text-slate-900">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(auth()->user()->name, 0, 1)) }}</span>
+                    <div class="min-w-0">
+                        <p class="font-bold text-sm truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-xs text-slate-500 truncate">{{ auth()->user()->email }}</p>
+                    </div>
+                </div>
+                <div class="px-3 py-2 space-y-0.5 text-sm font-semibold">
+                    <button type="button" @click="menu = false; $dispatch('open-onboarding')" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10">
+                        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/></svg>
+                        Panduan
+                    </button>
+                    <div class="border-t border-black/5 dark:border-white/10 my-1"></div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="block w-full rounded-xl px-3 py-2 text-left hover:bg-black/5 dark:hover:bg-white/10">Keluar</button>
+                        <button type="submit" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 active:bg-rose-100">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"/></svg>
+                            Keluar
+                        </button>
                     </form>
-                @else
-                    <a href="{{ route('login') }}" class="block rounded-xl px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10">Masuk</a>
-                    <a href="{{ route('register') }}" class="block rounded-xl px-3 py-2 hover:bg-black/5 dark:hover:bg-white/10">Daftar</a>
-                @endauth
+                </div>
             </div>
+            @endauth
         </header>
+
+        {{-- ========== BOTTOM NAVIGATION BAR (mobile-only, hidden on desktop md+) ========== --}}
+        @auth
+        <nav data-kiosk-hide aria-label="Navigasi bawah"
+             class="voic-bottom-nav fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-black/[0.07] dark:border-white/[0.08] bg-white/92 dark:bg-[#0c0d10]/95 backdrop-blur-xl">
+            @php
+                $navItems = [
+                    [
+                        'route'   => 'exam.index',
+                        'pattern' => 'exam.*',
+                        'label'   => 'Latihan',
+                        'icon'    => '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/>',
+                    ],
+                    [
+                        'route'   => 'dashboard',
+                        'pattern' => 'dashboard',
+                        'label'   => 'Dashboard',
+                        'icon'    => '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+                    ],
+                    [
+                        'route'   => 'practice.history',
+                        'pattern' => 'practice.history',
+                        'label'   => 'Riwayat',
+                        'icon'    => '<path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+                    ],
+                    [
+                        'route'   => 'profile.edit',
+                        'pattern' => 'profile.*',
+                        'label'   => 'Profil',
+                        'icon'    => '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>',
+                    ],
+                ];
+            @endphp
+            <div class="flex items-stretch voic-bottom-nav-inner">
+                @foreach ($navItems as $item)
+                    @php $isActive = request()->routeIs($item['pattern']); @endphp
+                    <a href="{{ route($item['route']) }}"
+                       aria-current="{{ $isActive ? 'page' : 'false' }}"
+                       class="relative flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[10px] font-semibold tracking-tight transition-all duration-150 select-none active:scale-90 {{ $isActive ? 'text-slate-900 dark:text-white' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300' }}">
+                        {{-- Active indicator dot --}}
+                        @if ($isActive)
+                            <span class="absolute top-0 inset-x-1/4 h-[2.5px] rounded-b-full bg-slate-900 dark:bg-white" aria-hidden="true"></span>
+                        @endif
+                        <svg class="h-6 w-6 transition-transform duration-100 {{ $isActive ? '' : '' }}" fill="none" stroke="currentColor" stroke-width="{{ $isActive ? '2' : '1.75' }}" viewBox="0 0 24 24" aria-hidden="true">{!! $item['icon'] !!}</svg>
+                        <span class="{{ $isActive ? '' : 'opacity-70' }}">{{ $item['label'] }}</span>
+                    </a>
+                @endforeach
+            </div>
+        </nav>
+        @else
+        {{-- Guest: bottom bar with Masuk / Daftar --}}
+        <nav data-kiosk-hide aria-label="Navigasi bawah"
+             class="voic-bottom-nav fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-black/[0.07] dark:border-white/[0.08] bg-white/92 dark:bg-[#0c0d10]/95 backdrop-blur-xl">
+            <div class="flex items-center gap-3 px-4 voic-bottom-nav-inner">
+                <a href="{{ route('login') }}" class="flex flex-1 items-center justify-center rounded-full border border-black/10 dark:border-white/15 text-sm font-bold text-slate-700 dark:text-slate-300 active:bg-black/10 h-11">Masuk</a>
+                <a href="{{ route('register') }}" class="flex flex-1 items-center justify-center rounded-full bg-slate-900 dark:bg-white dark:text-slate-900 text-sm font-bold text-white active:bg-slate-700 h-11">Daftar gratis</a>
+            </div>
+        </nav>
+        @endauth
         @endunless
 
         @if (session('status') && ! request()->routeIs('login', 'password.*', 'verification.*') && ! in_array(session('status'), ['verification-link-sent', 'profile-updated', 'password-updated'], true))

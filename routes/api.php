@@ -16,7 +16,24 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/', fn () => response()->json([
+    'status' => 'online',
+    'app' => 'VOIC API',
+    'version' => 'v1',
+]));
+
 Route::prefix('v1')->group(function () {
+
+    Route::get('/', fn () => response()->json([
+        'status' => 'online',
+        'message' => 'VOIC API v1 is active',
+        'endpoints' => [
+            'login' => '/api/v1/auth/login',
+            'register' => '/api/v1/auth/register',
+            'roles' => '/api/v1/roles',
+            'modes' => '/api/v1/exam/modes',
+        ],
+    ]));
 
     // Public Authentication & Reference Endpoints
     Route::post('/auth/login', [AuthController::class, 'login'])->name('api.v1.auth.login');
