@@ -13,8 +13,9 @@
  *   browser : Web Speech API (needs internet in Chrome/Edge)
  *   typing  : keyboard fallback
  *
- * Push to talk: hold the mic button (or Space) while you speak, release to
- * send. Holding it while the examiner talks cuts them off. Only Part 2 (the
+ * Mic: on a phone, hold the mic button while you speak and release to send.
+ * On desktop, click the mic (or press Space) to turn it on and again to send.
+ * Turning it on while the examiner talks cuts them off. Only Part 2 (the
  * two-minute talk) records hands-free, ended by the timer or a tap.
  */
 
@@ -75,7 +76,12 @@ export default function examRoom(config) {
         vad: { speaking: false, speechMs: 0, silenceMs: 0, aboveMs: 0, lastTick: 0 },
         recordSeconds: 0,
         bargeIn: false,
+        // Mic on (recording). On a phone that means the finger is on the button.
         holding: false,
+        // Phones: hold the mic while talking, it turns off on release. Desktop (mouse/keyboard): click the
+        // mic on, click it off to send. Set from the device, then from the pointer that actually presses.
+        releasing: false,
+        holdToTalk: window.matchMedia?.('(hover: none) and (pointer: coarse)').matches ?? false,
         cameraOn: false,
         cameraStream: null,
         faceLandmarker: null,
@@ -85,6 +91,10 @@ export default function examRoom(config) {
         expression: null,
         currentAudio: null,
         playToken: 0,
+        // Instant "Hmm…" reactions played while the reply is being prepared (see playBackchannel).
+        backchannels: [],
+        lastBackchannel: -1,
+        backchannelPlaying: null,
         engine: null,
         aiStatus: null,
         firstSentenceMs: null,
@@ -144,15 +154,11 @@ export default function examRoom(config) {
             this.$nextTick(() => this.startAvatar());
             window.addEventListener('beforeunload', () => this.teardown());
             const typingTarget = (e) => !('ptt' in (e.target?.dataset || {})) && (/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target?.tagName || '') || e.target?.isContentEditable);
+            // Space works like a click on the mic: once to turn it on, once more to send.
             window.addEventListener('keydown', (e) => {
                 if (e.code !== 'Space' || e.repeat || !this.started || typingTarget(e)) return;
                 e.preventDefault();
-                this.pressMic();
-            });
-            window.addEventListener('keyup', (e) => {
-                if (e.code !== 'Space' || typingTarget(e)) return;
-                e.preventDefault();
-                this.releaseMic();
+                this.toggleMic();
             });
         },
 
@@ -327,6 +333,7 @@ export default function examRoom(config) {
             // Unlock audio + speech synthesis on the user gesture (required by Safari/Chrome).
             if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
             this.startVoiceAnalyser();
+            this.loadBackchannels();
             if (this.voiceMode !== 'typing') await this.ensureMic();
             if (this.isCoach) this.startCoachTimer();
             const opening = this.state.examiner_message;
@@ -377,7 +384,11 @@ export default function examRoom(config) {
                 const utterance = new SpeechSynthesisUtterance(speechText(text, this.isEn ? 'en' : 'id'));
                 const lang = this.isEn ? 'en-US' : 'id-ID';
                 utterance.lang = lang;
-                utterance.rate = this.isEn ? 1.0 : 1.04;
+                // Same character as the server voices: the thesis examiner slow and low, the interviewer
+                // bright, the investor fast.
+                const persona = { dosen_penguji: [0.92, 0.85], hrd: [1.04, 1.15], investor: [1.15, 1.0] }[this.config.roleType] || [1.0, 1.0];
+                utterance.rate = persona[0] * (this.isEn ? 1.0 : 1.04);
+                utterance.pitch = persona[1];
                 const voices = window.speechSynthesis.getVoices();
                 const voice = voices.find((v) => v.lang === lang && /natural|google|online/i.test(v.name)) || voices.find((v) => v.lang.startsWith(lang.slice(0, 2)));
                 if (voice) utterance.voice = voice;
@@ -390,6 +401,25 @@ export default function examRoom(config) {
                 utterance.onerror = done;
                 window.speechSynthesis.speak(utterance);
             });
+        },
+
+        async loadBackchannels() {
+            if (!this.config.backchannelUrl) return;
+            try {
+                const response = await fetch(this.config.backchannelUrl, { headers: { Accept: 'application/json' } });
+                if (response.ok) this.backchannels = (await response.json()).clips || [];
+            } catch (e) { /* no reactions: the room just waits quietly */ }
+        },
+
+        // React out loud the moment the candidate stops talking ("Hmm…", "Oke, oke."), like a person
+        // on a call, so the wait for transcription and the model never feels like dead air.
+        playBackchannel() {
+            this.backchannelPlaying = null;
+            if (!this.backchannels.length) return;
+            let index = Math.floor(Math.random() * this.backchannels.length);
+            if (this.backchannels.length > 1 && index === this.lastBackchannel) index = (index + 1) % this.backchannels.length;
+            this.lastBackchannel = index;
+            this.backchannelPlaying = this.playAudio(this.backchannels[index]).catch(() => {});
         },
 
         stopVoice() {
@@ -410,14 +440,39 @@ export default function examRoom(config) {
             if (await this.playSentences(this.lastTurn.length ? this.lastTurn : [{ text: this.subtitle, audio_url: null }])) this.afterExaminerTurn();
         },
 
-        // ----- Push to talk ---------------------------------------------------
+        // ----- Mic: hold to talk (phone) or click on / off (desktop) -----------
+
+        micDown(event) {
+            this.holdToTalk = event.pointerType === 'touch';
+            if (this.holdToTalk) {
+                event.currentTarget.setPointerCapture?.(event.pointerId);
+                return this.pressMic();
+            }
+            this.toggleMic();
+        },
+
+        micUp() {
+            if (this.holdToTalk) this.releaseMic();
+        },
+
+        noVoiceHint() {
+            return this.holdToTalk
+                ? this.t('Suaramu belum kedengaran. Tahan mic sambil ngomong ya.', 'I could not hear you. Hold the mic while you talk.')
+                : this.t('Suaramu belum kedengaran. Klik mic, ngomong, lalu klik lagi ya.', 'I could not hear you. Click the mic, talk, then click it again.');
+        },
+
+        toggleMic() {
+            if (this.holding) return this.releaseMic();
+            this.pressMic();
+        },
 
         get canPress() {
             return !this.typingMode && ['speaking', 'listening', 'long_turn'].includes(this.status);
         },
 
         async pressMic() {
-            if (this.typingMode || this.holding) return;
+            // releasing: the last answer is still being wrapped up (a quick double click must not reopen the mic).
+            if (this.typingMode || this.holding || this.releasing) return;
             // Part 2 records hands-free: a tap ends the talk.
             if (this.status === 'long_turn') return this.submitAnswer();
             if (this.status === 'speaking') {
@@ -449,11 +504,15 @@ export default function examRoom(config) {
                 const recognition = this.recognition;
                 this.recognition = null;
                 if (recognition) { try { recognition.stop(); } catch (e) { /* ignore */ } }
+                this.releasing = true;
                 await new Promise((resolve) => setTimeout(resolve, 700));
+                this.releasing = false;
             }
             if (heldMs < 500) {
                 this.stopListening(true);
-                this.hint = this.t('Tahan tombol mic selama kamu bicara, lepas kalau sudah.', 'Keep holding the mic while you talk, let go when done.');
+                this.hint = this.holdToTalk
+                    ? this.t('Tahan tombol mic selama kamu bicara, lepas kalau sudah.', 'Keep holding the mic while you talk, let go when done.')
+                    : this.t('Mic nyala setelah diklik. Ngomong dulu, baru klik lagi buat kirim.', 'The mic stays on after a click. Talk first, then click again to send.');
                 return;
             }
             this.submitAnswer();
@@ -633,7 +692,7 @@ export default function examRoom(config) {
                 const blob = await this.stopRecording();
                 if (!blob || blob.size < 2000 || !this.vad.speaking) {
                     // Nothing was said: keep listening instead of sending silence.
-                    this.hint = this.t('Suaramu belum kedengaran. Tahan mic sambil ngomong ya.', 'I could not hear you. Hold the mic while you talk.');
+                    this.hint = this.noVoiceHint();
                     return wasLongTurn ? this.startLongTurn() : this.startListening();
                 }
                 form.append('audio', blob, 'answer.webm');
@@ -641,7 +700,7 @@ export default function examRoom(config) {
                 pendingText = (this.typingMode ? this.typed : this.liveAnswer).trim();
                 this.stopListening();
                 if (!pendingText) {
-                    if (!this.typingMode) this.hint = this.t('Suaramu belum kedengaran. Tahan mic sambil ngomong ya.', 'I could not hear you. Hold the mic while you talk.');
+                    if (!this.typingMode) this.hint = this.noVoiceHint();
                     return;
                 }
                 form.append('answer', pendingText);
@@ -650,6 +709,7 @@ export default function examRoom(config) {
             }
 
             this.hint = '';
+            this.playBackchannel();
             await this.streamTurn(form, pendingText);
         },
 
@@ -671,6 +731,8 @@ export default function examRoom(config) {
             // Play sentences as they arrive, while the rest of the reply is still streaming.
             const player = (async () => {
                 const token = ++this.playToken;
+                // Let the instant reaction finish first, so it never talks over the real reply.
+                if (this.backchannelPlaying) await this.backchannelPlaying;
                 const spoken = [];
                 let index = 0;
                 while (token === this.playToken) {

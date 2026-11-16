@@ -932,6 +932,34 @@ class ExamFlowTest extends TestCase
         $this->assertStringStartsWith('Halo, aku VOIC Interview', PracticeSession::latest('id')->firstOrFail()->messages()->first()->message);
     }
 
+    public function test_room_gets_instant_reactions_in_the_examiners_voice_and_caches_them(): void
+    {
+        Http::fake(['*/tts' => Http::response(['audio_data' => 'data:audio/wav;base64,UklGRg=='])]);
+
+        $session = $this->startExam('pitching', [1]);
+        $this->get(route('exam.room', $session))->assertOk()->assertSee('reaksi', false);
+
+        $clips = $this->getJson(route('exam.backchannels', $session))->assertOk()->json('clips');
+        $this->assertCount(count(ExaminerService::BACKCHANNELS['investor']['id']), $clips);
+        $this->assertSame('data:audio/wav;base64,UklGRg==', $clips[0]);
+        Http::assertSent(fn ($request) => str_ends_with($request->url(), '/tts') && $request['text'] === 'Oke, oke.' && $request['role_type'] === 'investor');
+
+        // Second visit: served from the cache, no new synthesis.
+        $sent = count(Http::recorded());
+        $this->getJson(route('exam.backchannels', $session))->assertOk()->assertJsonCount(3, 'clips');
+        $this->assertCount($sent, Http::recorded());
+    }
+
+    public function test_reactions_stay_empty_and_uncached_when_the_voice_service_is_down(): void
+    {
+        $this->offline();
+
+        $session = $this->startExam('sidang', [1]);
+
+        $this->getJson(route('exam.backchannels', $session))->assertOk()->assertExactJson(['clips' => []]);
+        $this->assertNull(cache('voic.backchannel.dosen_penguji.id.piper'));
+    }
+
     private function startExam(string $mode, array $parts): PracticeSession
     {
         $this->post(route('exam.start', $mode), [

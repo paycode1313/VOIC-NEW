@@ -26,6 +26,18 @@ class IndonesianTest(unittest.TestCase):
         self.assertEqual(speech_text("pantai it", "id"), "pantai it")
         self.assertEqual(speech_text("Desain UI/UX", "id"), "Desain yu ai yu eks")
 
+    def test_nonstandard_spellings_are_spoken_the_kbbi_way(self):
+        self.assertEqual(speech_text("Resiko dari praktek ini, silahkan analisa", "id"), "Risiko dari praktik ini, silakan analisis")
+        self.assertEqual(speech_text("Ijin di jaman sekarang", "id"), "Izin di zaman sekarang")
+
+    def test_indonesian_acronyms_and_ampersand(self):
+        self.assertEqual(speech_text("Target KPI untuk UMKM", "id"), "Target ka pe i untuk u em ka em")
+        self.assertEqual(speech_text("Admin & Keuangan, sesi Q&A", "id"), "Admin dan Keuangan, sesi kiu en ei")
+
+    def test_casual_sounds_are_spoken_naturally(self):
+        # Piper reads "oke" with a schwa and spells "Hmm" letter by letter.
+        self.assertEqual(speech_text("Hmm, oke, relate banget", "id"), "Hemm, okei, rileit banget")
+
     def test_rupiah_and_abbreviations(self):
         self.assertEqual(speech_text("Modal Rp 5.000.000 dll.", "id"), "Modal 5000000 rupiah dan lain-lain.")
         self.assertEqual(speech_text("Omzet Rp2,5 juta per bulan", "id"), "Omzet 2,5 juta rupiah per bulan")

@@ -315,6 +315,21 @@ class ExamController extends Controller
     }
 
     /**
+     * Short voiced reactions ("Hmm…", "Oke, oke.") the room plays the moment the candidate stops
+     * talking, so the examiner reacts instantly while the real reply is still being prepared.
+     */
+    public function backchannels(PracticeSession $practiceSession, ExaminerService $examiner): JsonResponse
+    {
+        abort_unless($practiceSession->isExam(), 404);
+        Gate::authorize('update', $practiceSession);
+
+        $roleType = (string) ($this->blueprint->mode($practiceSession->exam_mode)['role_type'] ?? 'dosen_penguji');
+        $language = (string) ($practiceSession->exam_state['language'] ?? 'id');
+
+        return response()->json(['clips' => $examiner->backchannels($roleType, $language)]);
+    }
+
+    /**
      * Proxy a generated voice file from the local AI service, so remote devices can play it.
      */
     public function audio(string $file): StreamedResponse

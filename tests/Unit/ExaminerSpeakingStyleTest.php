@@ -55,6 +55,12 @@ class ExaminerSpeakingStyleTest extends TestCase
         $this->assertStringContainsString('dengan "kamu"', $examiner->speakingStyle('dosen_penguji', false));
         $this->assertStringContainsString('Hindari kata kaku seperti "Anda"', $examiner->speakingStyle('dosen_penguji', false));
         $this->assertStringNotContainsString('bahasa formal', $examiner->systemPrompt($this->turn('dosen_penguji', 'Prof. Hendra')));
+        // Every examiner is cool but kind, and writes Indonesian loanwords the KBBI way.
+        foreach (['hrd', 'investor', 'dosen_penguji'] as $role) {
+            $this->assertStringContainsString('Jangan pernah kasar', $examiner->speakingStyle($role, false));
+            $this->assertStringContainsString('Never be rude', $examiner->speakingStyle($role, true));
+            $this->assertStringContainsString('"praktik" (bukan praktek)', $examiner->speakingStyle($role, false));
+        }
         // An unknown role talks like the thesis examiner instead of failing.
         $this->assertSame($examiner->speakingStyle('dosen_penguji', false), $examiner->speakingStyle('lainnya', false));
     }

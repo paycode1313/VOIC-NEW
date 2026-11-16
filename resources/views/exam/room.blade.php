@@ -6,12 +6,14 @@
     $glow = ['amber' => '245 158 11', 'indigo' => '99 102 241', 'violet' => '139 92 246'][$mode['accent']] ?? '99 102 241';
     $roomConfig = [
         'language' => $language,
+        'roleType' => $mode['role_type'],
         'initialState' => $initialState,
         'transcript' => $transcript->map(fn ($m) => ['id' => $m->id, 'sender' => $m->sender, 'message' => $m->message, 'exam_part' => $m->exam_part])->values(),
         'answerUrl' => route('exam.answer', $session),
         'finishUrl' => route('exam.finish', $session),
         'statusUrl' => route('exam.status'),
         'streamUrl' => route('exam.answer.stream', $session),
+        'backchannelUrl' => route('exam.backchannels', $session),
         'avatar' => [
             'image' => asset($mode['examiner']['avatar']),
             'rig' => $mode['examiner']['rig'] ?? null,
@@ -58,10 +60,15 @@
                     <h1 class="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl"
                         x-text="isCoach ? t('Yuk ngobrol {{ config('exam.coach_minutes') }} menit', 'Let\'s chat for {{ config('exam.coach_minutes') }} minutes') : t('Siap bergabung?', 'Ready to join?')"></h1>
                     <p x-show="isCoach" x-cloak class="mt-3 text-sm leading-relaxed text-slate-500">{{ $isEn ? 'This is not a test. Talk naturally, ask anything, and your coach will show you how to say it better.' : 'Ini bukan tes. Ngobrol aja senatural mungkin, boleh nanya apa pun, nanti coach kasih tahu cara ngomong yang lebih pas.' }}</p>
-                    <p x-show="!isCoach" class="mt-3 text-sm leading-relaxed text-slate-500">
+                    <p x-show="!isCoach && holdToTalk" class="mt-3 text-sm leading-relaxed text-slate-500">
                         {{ $isEn
-                            ? "{$examinerName} speaks first. To answer, hold the mic button (or Space) while you talk and let go to send. Hold it while they talk to cut in."
-                            : "{$examinerName} bakal ngomong duluan. Mau jawab? Tahan tombol mic (atau Spasi) sambil ngomong, lepas buat kirim. Mau motong? Tahan aja." }}
+                            ? "{$examinerName} speaks first. To answer, hold the mic button while you talk and let go to send. Hold it while they talk to cut in."
+                            : "{$examinerName} bakal ngomong duluan. Mau jawab? Tahan tombol mic sambil ngomong, lepas buat kirim. Mau motong? Tahan aja." }}
+                    </p>
+                    <p x-show="!isCoach && !holdToTalk" class="mt-3 text-sm leading-relaxed text-slate-500">
+                        {{ $isEn
+                            ? "{$examinerName} speaks first. To answer, click the mic (or press Space) to turn it on, talk, then click it again to send. Click it while they talk to cut in."
+                            : "{$examinerName} bakal ngomong duluan. Mau jawab? Klik mic (atau Spasi) buat nyalain, ngomong, lalu klik lagi buat kirim. Mau motong? Klik aja micnya." }}
                     </p>
 
                     <div class="mx-auto mt-6 max-w-sm space-y-3 lg:mx-0">
@@ -260,8 +267,10 @@
                 <p x-show="errorMessage" x-cloak class="mb-2 rounded-xl bg-rose-500/15 px-3 py-2 text-center text-sm text-rose-700" x-text="errorMessage"></p>
                 <p x-show="!errorMessage && !typingMode && !liveAnswer" class="text-center text-xs text-slate-600"
                    x-text="hint || (status === 'long_turn' ? t('Ngomong sampai selesai, lalu ketuk mic', 'Talk until you are done, then tap the mic')
-                        : status === 'listening' ? (holding ? t('Lepas kalau sudah selesai', 'Let go when you are done') : t('Tahan mic (atau Spasi) sambil ngomong', 'Hold the mic (or Space) while you talk'))
-                        : status === 'speaking' ? t('Mau motong? Tahan mic', 'Want to cut in? Hold the mic')
+                        : status === 'listening' ? (holdToTalk
+                            ? (holding ? t('Lepas kalau sudah selesai', 'Let go when you are done') : t('Tahan mic sambil ngomong', 'Hold the mic while you talk'))
+                            : (holding ? t('Mic nyala. Klik mic lagi kalau sudah selesai', 'Mic is on. Click it again when you are done') : t('Klik mic (atau Spasi) buat mulai ngomong', 'Click the mic (or Space) to start talking')))
+                        : status === 'speaking' ? (holdToTalk ? t('Mau motong? Tahan mic', 'Want to cut in? Hold the mic') : t('Mau motong? Klik mic', 'Want to cut in? Click the mic'))
                         : '\u00a0')"></p>
                 <template x-if="typingMode">
                     <form @submit.prevent="status === 'error' ? retry() : submitAnswer()" class="flex items-end gap-2">
@@ -288,17 +297,20 @@
                     <svg x-show="!cameraOn" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M12 18.75H4.5a2.25 2.25 0 01-2.25-2.25V9m12.841 9.091L16.5 19.5m-1.409-1.409c.407-.407.659-.97.659-1.591v-9a2.25 2.25 0 00-2.25-2.25h-9c-.621 0-1.184.252-1.591.659m12.182 12.182L2.909 5.909M1.5 4.5l1.409 1.409"/></svg>
                 </button>
 
-                {{-- The mic: hold to talk, hold while the examiner talks to cut in. Part 2: tap to finish. --}}
+                {{-- The mic: phone = hold to talk, release to send; desktop = click on, click off to send.
+                     Turning it on while the examiner talks cuts in. Part 2: tap to finish. --}}
                 <button type="button" data-ptt x-show="!typingMode" :disabled="!canPress"
-                        @pointerdown.prevent="$el.setPointerCapture?.($event.pointerId); pressMic()"
-                        @pointerup="releaseMic()" @pointercancel="releaseMic()" @contextmenu.prevent
-                        @keydown.enter.prevent="pressMic()" @keyup.enter.prevent="releaseMic()"
+                        @pointerdown.prevent="micDown($event)"
+                        @pointerup="micUp()" @pointercancel="micUp()" @contextmenu.prevent
+                        @keydown.enter.prevent="if (!$event.repeat) toggleMic()"
                         class="relative inline-flex h-[4.5rem] w-[4.5rem] touch-none select-none items-center justify-center rounded-full transition disabled:cursor-not-allowed"
                         :class="holding || status === 'long_turn' ? 'scale-110 bg-sky-500 text-white shadow-lg shadow-sky-500/40'
                             : (canPress ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-900/[0.06] text-slate-400')"
                         :aria-pressed="holding"
-                        :aria-label="status === 'long_turn' ? t('Selesai bicara', 'Done talking') : t('Tahan untuk bicara', 'Hold to talk')"
-                        :title="status === 'long_turn' ? t('Ketuk kalau sudah selesai', 'Tap when you are done') : t('Tahan untuk bicara (atau tahan Spasi)', 'Hold to talk (or hold Space)')">
+                        :aria-label="status === 'long_turn' ? t('Selesai bicara', 'Done talking')
+                            : (holdToTalk ? t('Tahan untuk bicara', 'Hold to talk') : (holding ? t('Matikan mic dan kirim', 'Turn mic off and send') : t('Nyalakan mic', 'Turn mic on')))"
+                        :title="status === 'long_turn' ? t('Ketuk kalau sudah selesai', 'Tap when you are done')
+                            : (holdToTalk ? t('Tahan untuk bicara', 'Hold to talk') : (holding ? t('Klik untuk mematikan mic dan kirim (atau Spasi)', 'Click to turn the mic off and send (or Space)') : t('Klik untuk menyalakan mic (atau Spasi)', 'Click to turn the mic on (or Space)')))">
                     <span x-show="holding || status === 'long_turn'" class="absolute inset-0 rounded-full bg-sky-400/40" :style="`transform: scale(${1 + Math.min(micLevel, 100) / 220})`"></span>
                     <svg class="pointer-events-none relative h-8 w-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 15a3 3 0 003-3V6a3 3 0 10-6 0v6a3 3 0 003 3z"/><path d="M19 11a1 1 0 10-2 0 5 5 0 01-10 0 1 1 0 10-2 0 7 7 0 006 6.92V20H8a1 1 0 100 2h8a1 1 0 100-2h-3v-2.08A7 7 0 0019 11z"/></svg>
                 </button>
