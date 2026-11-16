@@ -18,7 +18,13 @@ php artisan voic:latency --live
 | 3–8 dtk | Masih bisa, terasa menunggu | Isi jeda dengan avatar "berpikir"; latih narasi selama menunggu |
 | > 8 dtk | Demo terasa macet | Pilih salah satu solusi di bawah |
 
-Hasil di laptop pengembangan saat ini (i5-8250U, RAM 8 GB, tanpa GPU): **median ±25 detik**, masuk kategori macet.
+Hasil di laptop pengembangan saat ini (i5-8250U, RAM 8 GB, tanpa GPU):
+- **AI lokal: median ±25 detik**, masuk kategori macet.
+- **Mode online** (`VOIC_SPEED_MODE=online`, Groq + edge-tts): median 5,4 detik sampai suara pertama (17 giliran, 15 Nov 2026,
+  sebelum perbaikan). Dari pengukuran, Groq hanya butuh ±1 detik; sisanya suara online yang sesekali tertahan. Setelah
+  perbaikan 16 Nov (permintaan suara paralel, reaksi instan "Hmm…"), **ukur ulang** dengan `voic:latency --live`.
+- Whisper lokal ("small") butuh ±3,3 detik untuk 5,7 detik rekaman di CPU ini; pengaturan lain tidak mempercepat berarti.
+  Untuk demo, pengenal suara browser (online) jauh lebih cepat.
 
 Pilihan solusi, urut dari yang paling disarankan:
 1. **Laptop dengan GPU NVIDIA** (pinjam dari anggota tim/kampus). Jalankan `python ai_service/setup_models.py --gpu`.
@@ -35,8 +41,11 @@ php artisan voic:doctor
 ```
 - **Whisper (suara → teks)** dan **Piper (suara penguji)** harus ✓. Jika belum: `cd ai_service && python setup_models.py`
   (butuh internet sekali untuk mengunduh model).
-- Tanpa Piper, suara penguji jatuh ke cadangan online (edge-tts), yang saat ini **ditolak server (HTTP 403)**, lalu ke suara
-  bawaan browser. Tanpa Whisper, pengenalan suara memakai layanan online browser. Keduanya butuh internet.
+- Suara online (edge-tts) **berfungsi kembali** (dicek 16 Nov 2026). Waktunya per kalimat biasanya ±0,5 detik, tetapi
+  servernya sesekali tertahan 5-6 detik; karena itu permintaan yang lambat otomatis dikirim ulang secara paralel
+  (setelah 1 dan 2,5 detik). Jika tetap gagal, Piper mengambil alih selama 30 detik.
+- Tanpa Piper dan tanpa internet, suara penguji jatuh ke suara bawaan browser. Tanpa Whisper, pengenalan suara memakai
+  layanan online browser (butuh internet).
 - Ubah `AI_SERVICE_TIMEOUT=90` di `.env` untuk laptop tanpa GPU (saran dari `voic:doctor`).
 
 ---

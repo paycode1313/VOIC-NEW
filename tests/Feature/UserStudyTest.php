@@ -63,6 +63,30 @@ class UserStudyTest extends TestCase
         $this->assertNull(StudyAttempt::sole()->practice_session_id);
     }
 
+    public function test_invitation_link_remembers_the_code_and_opens_the_scored_exam(): void
+    {
+        $this->get(route('exam.setup', 'sidang'))->assertViewHas('sessionType', ExamFlowService::TYPE_COACH);
+
+        $this->get(route('exam.index', ['kode' => 'p07']))->assertOk();
+        $this->assertSame('P07', session('study_code'));
+
+        $this->get(route('exam.setup', 'sidang'))->assertViewHas('sessionType', ExamFlowService::TYPE_EXAM)->assertSee('value="P07"', false);
+        // Coaching stays reachable on purpose.
+        $this->get(route('exam.setup', ['sidang', 'type' => 'coach']))->assertViewHas('sessionType', ExamFlowService::TYPE_COACH);
+    }
+
+    public function test_study_links_list_one_invitation_per_code_with_progress(): void
+    {
+        config(['exam.public_url' => 'http://192.168.1.50:8000']);
+        $this->practise('P02', 'Saya analis data, pakai Excel dan SQL untuk laporan penjualan bulanan.');
+
+        $this->artisan('voic:study-links', ['--count' => 3])
+            ->expectsOutputToContain('http://192.168.1.50:8000/latihan?kode=P01')
+            ->expectsOutputToContain('http://192.168.1.50:8000/latihan?kode=P03')
+            ->expectsOutputToContain('1 / 3')
+            ->assertSuccessful();
+    }
+
     public function test_sessions_without_a_code_are_not_part_of_the_trial(): void
     {
         $session = $this->practise(null, 'Saya analis data yang terbiasa memakai SQL dan Python untuk laporan mingguan.');
