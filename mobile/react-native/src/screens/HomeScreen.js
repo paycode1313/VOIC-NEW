@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
   Alert,
-  Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -17,31 +17,38 @@ import { colors } from '../constants/theme';
 import { apiService } from '../services/apiService';
 import VoicLogo from '../components/VoicLogo';
 
-// Avatar color per role_type
-const ROLE_AVATAR_COLORS = {
-  dosen_penguji: { grad: ['#2563EB', '#38BDF8'], emoji: '🎓' },
-  hrd:           { grad: ['#059669', '#10B981'], emoji: '💼' },
-  investor:      { grad: ['#D97706', '#F59E0B'], emoji: '🚀' },
+const MODE_VISUALS = {
+  wawancara: {
+    grad: ['#D97706', '#B45309'],
+    accentColor: '#FBBF24',
+    accentBg: 'rgba(245, 158, 11, 0.14)',
+    accentBorder: 'rgba(245, 158, 11, 0.35)',
+    icon: 'briefcase',
+    avatar: require('../../assets/avatars/hrd.jpg'),
+    badge: 'KARIR · HRD RECRUITER',
+  },
+  sidang: {
+    grad: ['#2563EB', '#1D4ED8'],
+    accentColor: '#38BDF8',
+    accentBg: 'rgba(37, 99, 235, 0.16)',
+    accentBorder: 'rgba(56, 189, 248, 0.35)',
+    icon: 'book-open',
+    avatar: require('../../assets/avatars/dosen.jpg'),
+    badge: 'AKADEMIK · DOSEN PENGUJI',
+  },
+  pitching: {
+    grad: ['#7C3AED', '#5B21B6'],
+    accentColor: '#C4B5FD',
+    accentBg: 'rgba(139, 92, 246, 0.16)',
+    accentBorder: 'rgba(167, 139, 250, 0.35)',
+    icon: 'trending-up',
+    avatar: require('../../assets/avatars/investor.jpg'),
+    badge: 'VENTURE · INVESTOR VC',
+  },
 };
-
-// Scenario gradient per badge type
-const SCENARIO_GRADIENTS = {
-  default: ['#0F1C2F', '#1B2D47'],
-  Sidang:  ['#1D3B6A', '#0F1C2F'],
-  Kerja:   ['#0F2D2A', '#0F1C2F'],
-  Bisnis:  ['#2D1A0F', '#0F1C2F'],
-};
-
-function getScenarioGradient(badge) {
-  if (!badge) return SCENARIO_GRADIENTS.default;
-  if (badge.includes('Sidang') || badge.includes('Dosen')) return SCENARIO_GRADIENTS.Sidang;
-  if (badge.includes('Kerja') || badge.includes('HRD')) return SCENARIO_GRADIENTS.Kerja;
-  if (badge.includes('Bisnis') || badge.includes('Investor')) return SCENARIO_GRADIENTS.Bisnis;
-  return SCENARIO_GRADIENTS.default;
-}
 
 function getUserInitials(name) {
-  if (!name) return 'P';
+  if (!name) return 'V';
   return name
     .split(' ')
     .slice(0, 2)
@@ -52,378 +59,474 @@ function getUserInitials(name) {
 export default function HomeScreen({ user, onStartPractice }) {
   const insets = useSafeAreaInsets();
   const [isLoading, setIsLoading] = useState(true);
-  const [roles, setRoles] = useState([]);
-  const [scenarios, setScenarios] = useState([]);
-  const [selectedRole, setSelectedRole] = useState(null);
-  const [selectedScenario, setSelectedScenario] = useState(null);
+  const [modes, setModes] = useState([]);
+  const [selectedModeKey, setSelectedModeKey] = useState('wawancara');
+  const [sessionType, setSessionType] = useState('exam'); // 'exam' | 'coach'
   const [language, setLanguage] = useState('id'); // 'id' | 'en'
+  const [selectedTopic, setSelectedTopic] = useState('');
+  const [customTopic, setCustomTopic] = useState('');
   const [contextMaterial, setContextMaterial] = useState('');
-  const [isStarting, setIsStarting] = useState(false);
+  const [topicFocused, setTopicFocused] = useState(false);
   const [contextFocused, setContextFocused] = useState(false);
-
-  // Animated waveform rotation
-  const waveAnim = useRef(new Animated.Value(0)).current;
-  // Animated mic pulse
-  const micPulse = useRef(new Animated.Value(1)).current;
+  const [isStarting, setIsStarting] = useState(false);
 
   useEffect(() => {
-    loadRolesAndScenarios();
-
-    // Waveform spin loop
-    Animated.loop(
-      Animated.timing(waveAnim, {
-        toValue: 1,
-        duration: 6000,
-        useNativeDriver: true,
-      })
-    ).start();
-
-    // Mic pulse loop
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(micPulse, { toValue: 1.18, duration: 700, useNativeDriver: true }),
-        Animated.timing(micPulse, { toValue: 1, duration: 700, useNativeDriver: true }),
-      ])
-    ).start();
+    loadModes();
   }, []);
 
-  const loadRolesAndScenarios = async () => {
+  const loadModes = async () => {
     try {
-      const res = await apiService.getRoles();
-      if (res.success) {
-        setRoles(res.roles || []);
-        setScenarios(res.scenarios || []);
-        if (res.roles && res.roles.length > 0) setSelectedRole(res.roles[0]);
-        if (res.scenarios && res.scenarios.length > 0) setSelectedScenario(res.scenarios[0]);
+      const res = await apiService.getExamModes('id');
+      if (res.success && Array.isArray(res.modes) && res.modes.length > 0) {
+        setModes(res.modes);
+        setSelectedModeKey(res.modes[0].key);
+        const firstTopics = res.modes[0].topics_i18n?.id || res.modes[0].topics || [];
+        if (firstTopics.length > 0) {
+          setSelectedTopic(firstTopics[0]);
+        }
       }
     } catch (err) {
-      console.log('Error fetching roles:', err);
+      console.log('Error fetching exam modes:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const selectedMode = modes.find((m) => m.key === selectedModeKey) || modes[0] || null;
+  const isEn = language === 'en';
+
+  const handleSelectMode = (mode) => {
+    setSelectedModeKey(mode.key);
+    const nextTopics = mode.topics_i18n?.[language] || mode.topics || [];
+    setSelectedTopic(nextTopics[0] || '');
+    setCustomTopic('');
+  };
+
+  const handleChangeLanguage = (nextLang) => {
+    setLanguage(nextLang);
+    if (selectedMode) {
+      const currentList = selectedMode.topics_i18n?.[language] || selectedMode.topics || [];
+      const nextList = selectedMode.topics_i18n?.[nextLang] || selectedMode.topics || [];
+      const currentIdx = currentList.indexOf(selectedTopic);
+      if (currentIdx >= 0 && nextList[currentIdx]) {
+        setSelectedTopic(nextList[currentIdx]);
+      } else if (nextList.length > 0 && selectedTopic !== '') {
+        setSelectedTopic(nextList[0]);
+      }
+    }
+  };
+
+  const resolvedTopic = customTopic.trim() || selectedTopic || null;
+
   const handleStart = async () => {
-    if (!selectedRole) return;
+    if (!selectedMode) return;
     setIsStarting(true);
     try {
-      const res = await apiService.startExam(apiService.modeForRole(selectedRole.role_type), {
-        topic: selectedScenario ? selectedScenario.name : null,
+      const res = await apiService.startExam(selectedMode.key, {
+        topic: resolvedTopic,
         language,
         contextMaterial: contextMaterial.trim() || null,
+        sessionType,
       });
+
       if (res.success) {
         onStartPractice({
           sessionId: res.session_id,
-          role: selectedRole,
-          scenario: selectedScenario,
-          language: language,
+          modeKey: selectedMode.key,
+          role: {
+            name: selectedMode.examiner?.name || 'VOIC AI',
+            title: selectedMode.examiner?.title_i18n?.[language] || selectedMode.examiner?.title || '',
+            role_type: selectedMode.role_type,
+          },
+          scenario: {
+            name: resolvedTopic || (selectedMode.title_i18n?.[language] || selectedMode.title),
+          },
+          language,
+          sessionType,
           initialGreeting: res.examiner_message?.text || '',
           initialAudioUrl: res.examiner_message?.audio_url,
           partTitle: res.part_title,
+          initialPayload: res,
         });
+      } else if (res.message && !String(res.message).toLowerCase().includes('unauthenticated')) {
+        Alert.alert('Gagal Memulai Sesi', res.message || 'Coba periksa kembali pilihanmu.');
       }
     } catch (err) {
-      Alert.alert('Gagal Memulai Sesi', 'Pastikan koneksi jaringan Laravel aktif.');
+      Alert.alert('Gagal Memulai Sesi', 'Pastikan server Laravel aktif dan koneksi Wi-Fi stabil.');
     } finally {
       setIsStarting(false);
     }
   };
 
-  const waveRotate = waveAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
   if (isLoading) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Menyiapkan Karakter AI VOIC...</Text>
+        <Text style={styles.loadingText}>Menyiapkan Penguji AI VOIC...</Text>
       </View>
     );
   }
 
+  const modeTitle = selectedMode?.title_i18n?.[language] || selectedMode?.title || 'Simulasi';
+  const modeTopicLabel = selectedMode?.topic_label_i18n?.[language] || selectedMode?.topic_label || 'Topik Latihan';
+  const modeTopicPlaceholder = selectedMode?.topic_placeholder_i18n?.[language] || selectedMode?.topic_placeholder || 'Tulis topik spesifik...';
+  const modeContextLabel = selectedMode?.context_label_i18n?.[language] || selectedMode?.context_label || 'Catatan konteks tambahan (opsional)';
+  const modeTopics = selectedMode?.topics_i18n?.[language] || selectedMode?.topics || [];
+
   return (
     <View style={styles.container}>
-      {/* ── Top Navigation Bar ── */}
-      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 12) }]}>
+      {/* Top App Bar */}
+      <View style={[styles.topBar, { paddingTop: Math.max(insets.top, 14) }]}>
         <View style={styles.brandRow}>
-          <VoicLogo width={76} height={22} />
+          <VoicLogo width={84} height={24} />
+          <View style={styles.liveChip}>
+            <View style={styles.liveChipDot} />
+            <Text style={styles.liveChipText}>ONLINE</Text>
+          </View>
         </View>
 
-        <View style={styles.rightNavRow}>
-          {/* User avatar circle with initials */}
+        <View style={styles.userProfilePill}>
           <View style={styles.userAvatarCircle}>
             <Text style={styles.userAvatarInitials}>{getUserInitials(user?.name)}</Text>
           </View>
-          <View style={styles.userProfilePill}>
-            <Text style={styles.userGreeting} numberOfLines={1}>
-              {user?.name || 'Praktikan'}
-            </Text>
-          </View>
-          {/* Logout icon */}
-          <TouchableOpacity style={styles.logoutButton} activeOpacity={0.7}>
-            <Feather name="log-out" size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
+          <Text style={styles.userGreeting} numberOfLines={1}>
+            {user?.name?.split(' ')[0] || 'Peserta'}
+          </Text>
         </View>
       </View>
 
-      {/* Subtle gradient bar under topbar */}
-      <LinearGradient
-        colors={['rgba(37,99,235,0.18)', 'transparent']}
-        style={styles.topBarGradientBar}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-      />
-
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* ── Hero Banner ── */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Executive Hero Card */}
         <LinearGradient
-          colors={colors.heroCardGradient}
+          colors={['#0F1C2F', '#080F1B']}
           style={styles.heroBanner}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
           <View style={styles.heroGlowAccent} />
-          <View style={styles.heroGlowAccent2} />
 
-          {/* Animated waveform emoji */}
-          <Animated.View style={[styles.heroWaveform, { transform: [{ rotate: waveRotate }] }]}>
-            <Text style={styles.heroWaveEmoji}>〰️</Text>
-          </Animated.View>
-
-          <View style={styles.heroTagRow}>
-            <View style={styles.heroTag}>
-              <View style={styles.heroTagDot} />
-              <Text style={styles.heroTagText}>Simulasi Bicara & Gestur AI</Text>
-            </View>
+          <View style={styles.heroTag}>
+            <Feather name="cpu" size={11} color={colors.accentCyan} />
+            <Text style={styles.heroTagText}>AI VOICE & OPTICS COACH</Text>
           </View>
 
-          <Text style={styles.heroTitle}>Siap Latihan Bicara Hari Ini?</Text>
+          <Text style={styles.heroTitle}>
+            {isEn ? 'Who will examine you today?' : 'Mau latihan dengan penguji AI mana?'}
+          </Text>
           <Text style={styles.heroSubtitle}>
-            Pilih karakter AI penguji dan skenario latihan untuk melatih artikulasi vokal, kontak mata, dan ketenangan gestur Anda.
+            {isEn
+              ? 'Each AI examiner simulates a real oral session, responds to your actual answers, and scores your delivery.'
+              : 'Setiap penguji AI berperan sesuai situasi nyata (HRD, Dosen, atau Investor), menanggapi isi jawabanmu, dan menilai penyampaianmu.'}
           </Text>
 
-          {/* Stats row */}
-          <View style={styles.heroStatsRow}>
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatValue}>3</Text>
-              <Text style={styles.heroStatLabel}>Moda Ujian</Text>
+          <View style={styles.heroStatsGrid}>
+            <View style={styles.heroStatCard}>
+              <Feather name="layers" size={14} color={colors.accentCyan} />
+              <Text style={styles.heroStatValue}>{isEn ? '3 Parts' : '3 Bagian'}</Text>
+              <Text style={styles.heroStatLabel}>{isEn ? 'Structured flow' : 'Alur terarah'}</Text>
             </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatValue}>AI</Text>
-              <Text style={styles.heroStatLabel}>Realtime</Text>
+            <View style={styles.heroStatCard}>
+              <Feather name="mic" size={14} color={colors.success} />
+              <Text style={styles.heroStatValue}>Real-Time</Text>
+              <Text style={styles.heroStatLabel}>{isEn ? 'Voice & Gaze' : 'Suara & Tatapan'}</Text>
             </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatValue}>⚡</Text>
-              <Text style={styles.heroStatLabel}>Skor Instan</Text>
+            <View style={styles.heroStatCard}>
+              <Feather name="award" size={14} color="#FBBF24" />
+              <Text style={styles.heroStatValue}>Band 0–9</Text>
+              <Text style={styles.heroStatLabel}>{isEn ? 'Instant report' : 'Rapor instan'}</Text>
             </View>
           </View>
         </LinearGradient>
 
-        {/* ── Language Selector (tab-style) ── */}
-        <View style={styles.langSelectorContainer}>
-          <Text style={styles.langLabel}>Bahasa Simulasi</Text>
-          <View style={styles.langTabRow}>
+        {/* STEP 1: Mode & Penguji AI (Unified — no mismatched combinations!) */}
+        <View style={styles.sectionHeaderRow}>
+          <View>
+            <Text style={styles.stepEyebrow}>LANGKAH 1 · MODE & PENGUJI AI</Text>
+            <Text style={styles.sectionTitle}>
+              {isEn ? 'Choose Simulation & Examiner' : 'Pilih Simulasi & Penguji AI'}
+            </Text>
+          </View>
+          <View style={styles.sectionCountPill}>
+            <Text style={styles.sectionCountText}>{modes.length} Mode</Text>
+          </View>
+        </View>
+
+        {modes.map((mode) => {
+          const isSelected = selectedMode?.key === mode.key;
+          const visual = MODE_VISUALS[mode.key] || MODE_VISUALS.sidang;
+          const localizedTitle = mode.title_i18n?.[language] || mode.title;
+          const localizedTagline = mode.tagline_i18n?.[language] || mode.tagline;
+          const localizedExaminerTitle = mode.examiner?.title_i18n?.[language] || mode.examiner?.title;
+          const partsLabel = (mode.parts || [])
+            .map((p) => p.title_i18n?.[language] || p.title)
+            .join(' · ');
+
+          return (
             <TouchableOpacity
-              style={[styles.langTab, language === 'id' && styles.langTabActive]}
-              onPress={() => setLanguage('id')}
-              activeOpacity={0.8}
+              key={mode.key}
+              onPress={() => handleSelectMode(mode)}
+              style={[
+                styles.modeCard,
+                isSelected && {
+                  borderColor: visual.accentColor,
+                  backgroundColor: 'rgba(15, 28, 47, 0.98)',
+                },
+              ]}
+              activeOpacity={0.85}
             >
-              <Text style={styles.langTabFlag}>🇮🇩</Text>
-              <Text style={[styles.langTabText, language === 'id' && styles.langTabTextActive]}>
-                Indonesia
-              </Text>
-              {language === 'id' && <View style={styles.langActiveIndicator} />}
+              <View style={styles.modeCardTop}>
+                <View style={styles.modeAvatarWrap}>
+                  <Image source={visual.avatar} style={styles.modeAvatarImg} />
+                  <View style={styles.modeOnlineDot} />
+                </View>
+
+                <View style={styles.modeMetaCol}>
+                  <View style={[styles.modeBadge, { backgroundColor: visual.accentBg, borderColor: visual.accentBorder }]}>
+                    <Feather name={visual.icon} size={10} color={visual.accentColor} />
+                    <Text style={[styles.modeBadgeText, { color: visual.accentColor }]}>{visual.badge}</Text>
+                  </View>
+                  <Text style={styles.modeTitle}>{localizedTitle}</Text>
+                  <Text style={styles.modeExaminer}>
+                    {mode.examiner?.name} · {localizedExaminerTitle}
+                  </Text>
+                </View>
+
+                <View style={[styles.radioCircle, isSelected && { backgroundColor: visual.accentColor, borderColor: visual.accentColor }]}>
+                  {isSelected && <Feather name="check" size={13} color="#080F1B" />}
+                </View>
+              </View>
+
+              <Text style={styles.modeTagline}>{localizedTagline}</Text>
+
+              {partsLabel ? (
+                <View style={styles.modePartsStrip}>
+                  <Feather name="list" size={12} color={colors.textMuted} />
+                  <Text style={styles.modePartsText} numberOfLines={1}>
+                    {partsLabel}
+                  </Text>
+                </View>
+              ) : null}
             </TouchableOpacity>
+          );
+        })}
+
+        {/* STEP 2: Gaya Sesi & Bahasa */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.stepEyebrow}>LANGKAH 2 · GAYA LATIHAN & BAHASA</Text>
+          <Text style={styles.cardTitle}>
+            {isEn ? 'How do you want to practise?' : 'Mau mode latihan yang seperti apa?'}
+          </Text>
+
+          <View style={styles.sessionTypeGrid}>
             <TouchableOpacity
-              style={[styles.langTab, language === 'en' && styles.langTabActive]}
-              onPress={() => setLanguage('en')}
-              activeOpacity={0.8}
+              style={[styles.typeCard, sessionType === 'exam' && styles.typeCardActive]}
+              onPress={() => setSessionType('exam')}
+              activeOpacity={0.85}
             >
-              <Text style={styles.langTabFlag}>🇬🇧</Text>
-              <Text style={[styles.langTabText, language === 'en' && styles.langTabTextActive]}>
+              <View style={styles.typeCardTop}>
+                <Feather
+                  name="target"
+                  size={16}
+                  color={sessionType === 'exam' ? colors.accentCyan : colors.textSecondary}
+                />
+                {sessionType === 'exam' && <Feather name="check-circle" size={14} color={colors.accentCyan} />}
+              </View>
+              <Text style={[styles.typeCardTitle, sessionType === 'exam' && { color: '#FFFFFF' }]}>
+                {isEn ? 'Mock Exam' : 'Simulasi Ujian'}
+              </Text>
+              <Text style={styles.typeCardDesc}>
+                {isEn ? '3 parts · Band score 0–9 & full report' : '3 bagian · Ada nilai Band 0–9 & rapor'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.typeCard, sessionType === 'coach' && styles.typeCardActive]}
+              onPress={() => setSessionType('coach')}
+              activeOpacity={0.85}
+            >
+              <View style={styles.typeCardTop}>
+                <Feather
+                  name="message-circle"
+                  size={16}
+                  color={sessionType === 'coach' ? colors.accentCyan : colors.textSecondary}
+                />
+                {sessionType === 'coach' && <Feather name="check-circle" size={14} color={colors.accentCyan} />}
+              </View>
+              <Text style={[styles.typeCardTitle, sessionType === 'coach' && { color: '#FFFFFF' }]}>
+                {isEn ? 'Coach Chat' : 'Ngobrol Coach'}
+              </Text>
+              <Text style={styles.typeCardDesc}>
+                {isEn ? '10 min · Relaxed, guided tips, no score' : '10 mnt · Santai, diajari cara jawab'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.segmentedRow, { marginTop: 12 }]}>
+            <TouchableOpacity
+              style={[styles.segmentBtn, language === 'id' && styles.segmentBtnActive]}
+              onPress={() => handleChangeLanguage('id')}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.segmentCode, language === 'id' && styles.segmentCodeActive]}>ID</Text>
+              <Text style={[styles.segmentText, language === 'id' && styles.segmentTextActive]}>
+                Bahasa Indonesia
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.segmentBtn, language === 'en' && styles.segmentBtnActive]}
+              onPress={() => handleChangeLanguage('en')}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.segmentCode, language === 'en' && styles.segmentCodeActive]}>EN</Text>
+              <Text style={[styles.segmentText, language === 'en' && styles.segmentTextActive]}>
                 English
               </Text>
-              {language === 'en' && <View style={styles.langActiveIndicator} />}
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* ── Scenario Section ── */}
-        <View style={styles.sectionHeaderRow}>
-          <View style={styles.sectionTitleGroup}>
-            <LinearGradient
-              colors={['#2563EB', '#38BDF8']}
-              style={styles.sectionTitleBar}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            />
-            <Text style={styles.sectionTitle}>Pilih Skenario Latihan</Text>
+        {/* STEP 3: Topik Spesifik (Dynamically matches the selected mode!) */}
+        <View style={styles.sectionCard}>
+          <View style={styles.cardHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.stepEyebrow}>
+                LANGKAH 3 · TOPIK KHUSUS {modeTitle.toUpperCase()}
+              </Text>
+              <Text style={styles.cardTitle}>{modeTopicLabel}</Text>
+              <Text style={styles.cardSub}>
+                {isEn
+                  ? 'Pick a preset below or type your own so examiner questions stay relevant.'
+                  : 'Pilih salah satu di bawah atau tulis sendiri agar pertanyaan penguji langsung nyambung.'}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.sectionCountBadge}>{scenarios.length} Skenario</Text>
-        </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scenarioList}>
-          {scenarios.map((s) => {
-            const isSelected = selectedScenario?.id === s.id;
-            return (
-              <TouchableOpacity
-                key={s.id}
-                onPress={() => setSelectedScenario(s)}
-                activeOpacity={0.8}
-                style={[styles.scenarioCard, isSelected && styles.scenarioCardActive]}
-              >
-                <LinearGradient
-                  colors={isSelected ? ['rgba(37,99,235,0.35)', 'rgba(37,99,235,0.1)'] : getScenarioGradient(s.badge)}
-                  style={styles.scenarioGradientFill}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+          <View style={styles.topicChipWrap}>
+            {modeTopics.map((topic) => {
+              const isPicked = !customTopic.trim() && selectedTopic === topic;
+              return (
+                <TouchableOpacity
+                  key={topic}
+                  onPress={() => {
+                    setCustomTopic('');
+                    setSelectedTopic(topic);
+                  }}
+                  style={[styles.topicChip, isPicked && styles.topicChipActive]}
+                  activeOpacity={0.85}
                 >
-                  <Text style={styles.scenarioIcon}>{s.icon}</Text>
-                  <Text
-                    style={[styles.scenarioName, isSelected && { color: colors.accentCyan }]}
-                    numberOfLines={1}
-                  >
-                    {s.name}
+                  <Text style={[styles.topicChipText, isPicked && styles.topicChipTextActive]}>
+                    {topic}
                   </Text>
-                  <Text style={styles.scenarioBadge}>{s.badge}</Text>
-                  {isSelected && (
-                    <View style={styles.scenarioCheckBadge}>
-                      <Feather name="check-circle" size={14} color={colors.accentCyan} />
-                    </View>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity
+              onPress={() => {
+                setCustomTopic('');
+                setSelectedTopic('');
+              }}
+              style={[
+                styles.topicChip,
+                !customTopic.trim() && selectedTopic === '' && styles.topicChipActive,
+              ]}
+              activeOpacity={0.85}
+            >
+              <Text
+                style={[
+                  styles.topicChipText,
+                  !customTopic.trim() && selectedTopic === '' && styles.topicChipTextActive,
+                ]}
+              >
+                {isEn ? 'General / Any' : 'Bebas / Umum'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* ── Context Input ── */}
-        <View style={styles.contextContainer}>
+          <Text style={[styles.inputLabel, { marginTop: 14 }]}>
+            {isEn ? 'OR TYPE YOUR EXACT TOPIC' : 'ATAU TULIS TOPIK SPESIFIKMU'}
+          </Text>
+          <TextInput
+            style={[styles.textInput, topicFocused && styles.textInputFocused]}
+            placeholder={modeTopicPlaceholder}
+            placeholderTextColor={colors.textMuted}
+            value={customTopic}
+            onChangeText={setCustomTopic}
+            onFocus={() => setTopicFocused(true)}
+            onBlur={() => setTopicFocused(false)}
+            maxLength={150}
+          />
+
           <View style={styles.contextLabelRow}>
-            <Feather name="book-open" size={13} color={colors.accentCyan} style={{ marginRight: 6 }} />
-            <Text style={styles.contextLabel}>Materi Konteks Latihan (Opsional)</Text>
+            <Text style={styles.inputLabel}>{modeContextLabel.toUpperCase()}</Text>
+            <Text style={styles.charCounter}>{contextMaterial.length}/300</Text>
           </View>
           <TextInput
-            style={[styles.contextInput, contextFocused && styles.contextInputFocused]}
-            placeholder="Contoh: Judul Skripsi Sistem Rekomendasi AI / Posisi Backend Engineer..."
+            style={[styles.textInput, styles.textArea, contextFocused && styles.textInputFocused]}
+            placeholder={
+              isEn
+                ? 'Optional: key points, abstract, or background to guide follow-up questions...'
+                : 'Opsional: ringkasan singkat agar penguji bisa bertanya lebih tajam...'
+            }
             placeholderTextColor={colors.textMuted}
             value={contextMaterial}
             onChangeText={setContextMaterial}
             onFocus={() => setContextFocused(true)}
             onBlur={() => setContextFocused(false)}
-            multiline={false}
-            maxLength={200}
+            multiline
+            maxLength={300}
           />
-          <Text style={styles.contextCharCounter}>{contextMaterial.length}/200</Text>
         </View>
 
-        {/* ── Role Section ── */}
-        <View style={[styles.sectionHeaderRow, { marginTop: 24 }]}>
-          <View style={styles.sectionTitleGroup}>
+        {/* STEP 4 / Final Action Card: sits naturally at the bottom after Steps 1, 2, and 3 */}
+        <View style={styles.ctaSectionCard}>
+          <View style={styles.summaryStrip}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.summaryEyebrow}>RINGKASAN SIAP MULAI</Text>
+              <Text style={styles.summaryStripText} numberOfLines={2}>
+                {modeTitle} ({selectedMode?.examiner?.name}) · {resolvedTopic || (isEn ? 'General topic' : 'Topik umum')}
+              </Text>
+            </View>
+            <Text style={styles.summaryStripBadge}>
+              {sessionType === 'coach' ? 'COACH 10M' : 'SIMULASI'}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.startButton}
+            onPress={handleStart}
+            disabled={isStarting || !selectedMode}
+            activeOpacity={0.88}
+          >
             <LinearGradient
-              colors={['#2563EB', '#38BDF8']}
-              style={styles.sectionTitleBar}
+              colors={['#2563EB', '#1D4ED8', '#1E40AF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-            />
-            <Text style={styles.sectionTitle}>Pilih Karakter AI Penguji</Text>
-          </View>
-          <Text style={styles.sectionCountBadge}>{roles.length} Karakter</Text>
-        </View>
-
-        {roles.map((role) => {
-          const isSelected = selectedRole?.id === role.id;
-          const avatarConfig = ROLE_AVATAR_COLORS[role.role_type] || {
-            grad: ['#2563EB', '#1D4ED8'],
-            emoji: '🤖',
-          };
-          return (
-            <TouchableOpacity
-              key={role.id}
-              onPress={() => setSelectedRole(role)}
-              style={[styles.roleCard, isSelected && styles.roleCardActive]}
-              activeOpacity={0.8}
+              style={styles.buttonGradient}
             >
-              {/* Gradient avatar circle */}
-              <LinearGradient
-                colors={avatarConfig.grad}
-                style={styles.roleAvatar}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={{ fontSize: 24 }}>{avatarConfig.emoji}</Text>
-              </LinearGradient>
-
-              <View style={styles.roleInfo}>
-                <View style={styles.roleHeader}>
-                  <Text style={[styles.roleName, isSelected && { color: '#FFFFFF' }]}>
-                    {role.name}
+              {isStarting ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <View style={styles.ctaContent}>
+                  <Feather name="video" size={18} color="#FFFFFF" />
+                  <Text style={styles.startButtonText}>
+                    {sessionType === 'coach'
+                      ? (isEn ? `Chat with ${modeTitle} Coach` : `Ngobrol Coach ${modeTitle}`)
+                      : (isEn ? `Start ${modeTitle}` : `Mulai ${modeTitle}`)}
                   </Text>
-                  <View style={styles.difficultyBadge}>
-                    <Text style={styles.difficultyText}>{role.difficulty_level || 'Menengah'}</Text>
-                  </View>
-                </View>
-                <Text style={styles.roleDesc} numberOfLines={3}>
-                  {role.description}
-                </Text>
-              </View>
-
-              {/* Selected badge */}
-              {isSelected && (
-                <View style={styles.roleSelectedBadge}>
-                  <Feather name="check" size={11} color="#fff" />
-                  <Text style={styles.roleSelectedBadgeText}>Selected</Text>
+                  <Feather name="arrow-right" size={17} color="#93C5FD" />
                 </View>
               )}
-            </TouchableOpacity>
-          );
-        })}
-
-        <View style={{ height: 220 }} />
-      </ScrollView>
-
-      {/* ── Fixed Bottom CTA Bar ── */}
-      <View style={[styles.bottomBar, { bottom: 66 + Math.max(insets.bottom, 8) }]}>
-        <Text style={styles.consentText}>
-          Dengan memulai, kamu setuju jawabanmu diproses oleh AI di laptop penyelenggara untuk membuat rapor.
-        </Text>
-
-        {/* "AI Siap Menguji" label row */}
-        <View style={styles.ctaLabelRow}>
-          <Animated.View style={{ transform: [{ scale: micPulse }] }}>
-            <Feather name="mic" size={14} color={colors.accentCyan} />
-          </Animated.View>
-          <Text style={styles.ctaReadyLabel}>AI Siap Menguji</Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.startButton}
-          onPress={handleStart}
-          disabled={isStarting}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={['#3B82F6', '#1D4ED8', '#1E40AF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.buttonGradient}
-          >
-            {isStarting ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <View style={styles.ctaContent}>
-                <Feather name="mic" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-                <Text style={styles.startButtonText}>Mulai Sesi Latihan</Text>
-              </View>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+        <View style={{ height: 96 + Math.max(insets.bottom, 8) }} />
+      </ScrollView>
     </View>
   );
 }
@@ -443,528 +546,519 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 13,
     marginTop: 12,
+    fontWeight: '500',
   },
 
-  // ── TopBar ──
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 12,
     paddingBottom: 14,
     backgroundColor: colors.surface,
-    zIndex: 10,
-  },
-  topBarGradientBar: {
-    height: 6,
-    marginTop: -1,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
-  rightNavRow: {
+  liveChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
   },
-  userAvatarCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.accentCyan,
+  liveChipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.success,
+    marginRight: 5,
   },
-  userAvatarInitials: {
-    fontSize: 11,
+  liveChipText: {
+    fontSize: 9.5,
     fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
+    color: '#6EE7B7',
+    letterSpacing: 0.6,
   },
   userProfilePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
+    paddingLeft: 4,
+    paddingRight: 11,
+    paddingVertical: 4,
+    borderRadius: 999,
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
-    maxWidth: 110,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  userAvatarCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 7,
+  },
+  userAvatarInitials: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
   userGreeting: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.textPrimary,
-  },
-  logoutButton: {
-    padding: 7,
-    borderRadius: 10,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
+    maxWidth: 100,
   },
 
-  // ── Scroll ──
   scrollContent: {
-    padding: 20,
+    padding: 18,
   },
 
-  // ── Hero Banner ──
   heroBanner: {
-    padding: 22,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorder,
-    marginBottom: 18,
+    padding: 20,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.22)',
+    marginBottom: 20,
     overflow: 'hidden',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 24,
-    elevation: 10,
   },
   heroGlowAccent: {
     position: 'absolute',
-    top: -40,
+    top: -50,
     right: -40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: 'rgba(37, 99, 235, 0.22)',
-  },
-  heroGlowAccent2: {
-    position: 'absolute',
-    bottom: -30,
-    left: -20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(56, 189, 248, 0.10)',
-  },
-  heroWaveform: {
-    position: 'absolute',
-    top: 14,
-    right: 16,
-    opacity: 0.35,
-  },
-  heroWaveEmoji: {
-    fontSize: 42,
-  },
-  heroTagRow: {
-    marginBottom: 10,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(37, 99, 235, 0.18)',
   },
   heroTag: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-    borderRadius: 12,
-    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(37, 99, 235, 0.16)',
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.35)',
-  },
-  heroTagDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: colors.accentCyan,
-    marginRight: 6,
+    borderColor: 'rgba(56, 189, 248, 0.28)',
+    marginBottom: 10,
   },
   heroTagText: {
     fontSize: 10,
-    fontWeight: '700',
-    color: colors.accentCyan,
-  },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    letterSpacing: 0.2,
-  },
-  heroSubtitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  heroStatsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(59,130,246,0.15)',
-  },
-  heroStatItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  heroStatValue: {
-    fontSize: 15,
     fontWeight: '800',
     color: colors.accentCyan,
+    letterSpacing: 0.7,
+  },
+  heroTitle: {
+    fontSize: 21,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    fontSize: 12.5,
+    color: colors.textSecondary,
+    lineHeight: 18.5,
+    marginBottom: 16,
+  },
+  heroStatsGrid: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  heroStatCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.07)',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
+  heroStatValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#F8FAFC',
+    marginTop: 6,
   },
   heroStatLabel: {
     fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  heroStatDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: 'rgba(59,130,246,0.25)',
-  },
-
-  // ── Language Selector ──
-  langSelectorContainer: {
-    marginBottom: 20,
-    backgroundColor: colors.card,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
-    padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  langLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    marginBottom: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  langTabRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  langTab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.cardBorderSubtle,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  langTabActive: {
-    borderColor: colors.primary,
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
-  },
-  langTabFlag: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  langTabText: {
-    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 1,
     fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  langTabTextActive: {
-    color: colors.accentCyan,
-    fontWeight: '700',
-  },
-  langActiveIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    left: '20%',
-    right: '20%',
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: colors.accentCyan,
   },
 
-  // ── Section Headers ──
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
+    alignItems: 'flex-end',
+    marginBottom: 12,
   },
-  sectionTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionTitleBar: {
-    width: 4,
-    height: 18,
-    borderRadius: 2,
-    marginRight: 8,
+  stepEyebrow: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.accentCyan,
+    letterSpacing: 0.9,
+    marginBottom: 3,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: 0.1,
+    letterSpacing: -0.2,
   },
-  sectionCountBadge: {
+  sectionCountPill: {
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.25)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  sectionCountText: {
     fontSize: 11,
+    fontWeight: '700',
     color: colors.textAccent,
-    fontWeight: '600',
-    backgroundColor: 'rgba(37,99,235,0.15)',
+  },
+
+  modeCard: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 16,
+    marginBottom: 12,
+  },
+  modeCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modeAvatarWrap: {
+    position: 'relative',
+    marginRight: 13,
+  },
+  modeAvatarImg: {
+    width: 54,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+  },
+  modeOnlineDot: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: colors.success,
+    borderWidth: 2,
+    borderColor: colors.card,
+  },
+  modeMetaCol: {
+    flex: 1,
+    marginRight: 8,
+  },
+  modeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 5,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(59,130,246,0.2)',
+    marginBottom: 5,
   },
-
-  // ── Scenario Cards ──
-  scenarioList: {
-    flexDirection: 'row',
-    marginBottom: 4,
+  modeBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
-  scenarioCard: {
-    width: 140,
-    height: 160,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorderSubtle,
-    marginRight: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  scenarioCardActive: {
-    borderColor: colors.primaryLight,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    elevation: 6,
-  },
-  scenarioGradientFill: {
-    flex: 1,
-    padding: 14,
-    justifyContent: 'flex-end',
-    position: 'relative',
-  },
-  scenarioIcon: {
-    fontSize: 28,
-    marginBottom: 10,
-  },
-  scenarioName: {
-    fontSize: 13,
-    fontWeight: 'bold',
+  modeTitle: {
+    fontSize: 16,
+    fontWeight: '800',
     color: '#FFFFFF',
-    marginBottom: 4,
   },
-  scenarioBadge: {
-    fontSize: 10,
+  modeExaminer: {
+    fontSize: 11.5,
     color: colors.textSecondary,
+    fontWeight: '600',
+    marginTop: 2,
   },
-  scenarioCheckBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
+  radioCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
-  // ── Context Input ──
-  contextContainer: {
-    marginTop: 20,
-    marginBottom: 4,
+  modeTagline: {
+    fontSize: 12.5,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginTop: 11,
   },
-  contextLabelRow: {
+  modePartsStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    gap: 6,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.06)',
   },
-  contextLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  contextInput: {
-    height: 50,
-    borderRadius: 18,
-    backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorderSubtle,
-    paddingHorizontal: 14,
-    color: '#FFFFFF',
-    fontSize: 13,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  contextInputFocused: {
-    borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  contextCharCounter: {
-    textAlign: 'right',
-    fontSize: 10,
+  modePartsText: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '600',
     color: colors.textMuted,
-    marginTop: 4,
-    marginRight: 4,
   },
 
-  // ── Role Cards ──
-  roleCard: {
-    flexDirection: 'row',
-    padding: 16,
-    borderRadius: 18,
+  sectionCard: {
     backgroundColor: colors.card,
-    borderWidth: 1.5,
-    borderColor: colors.cardBorderSubtle,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 16,
+    marginTop: 8,
     marginBottom: 14,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
   },
-  roleCardActive: {
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  cardTitle: {
+    fontSize: 15.5,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  cardSub: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 3,
+    lineHeight: 17,
+  },
+
+  sessionTypeGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  typeCard: {
+    flex: 1,
+    backgroundColor: '#080F1B',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    padding: 12,
+  },
+  typeCardActive: {
     borderColor: colors.primaryLight,
     backgroundColor: 'rgba(37, 99, 235, 0.14)',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 7,
   },
-  roleAvatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  roleInfo: {
-    flex: 1,
-  },
-  roleHeader: {
+  typeCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  roleName: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    flex: 1,
-    marginRight: 6,
+  typeCardTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#CBD5E1',
   },
-  difficultyBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)',
-  },
-  difficultyText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: colors.accentCyan,
-  },
-  roleDesc: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    lineHeight: 17,
-  },
-  roleSelectedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: 10,
-    right: 12,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 10,
-    gap: 3,
-  },
-  roleSelectedBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  typeCardDesc: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 3,
+    lineHeight: 15,
   },
 
-  // ── Bottom CTA Bar ──
-  bottomBar: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 12,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.cardBorderSubtle,
+  segmentedRow: {
+    flexDirection: 'row',
+    backgroundColor: '#080F1B',
+    borderRadius: 14,
+    padding: 4,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
-  ctaLabelRow: {
+  segmentBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    gap: 6,
+    paddingVertical: 9,
+    borderRadius: 10,
+    gap: 7,
   },
-  ctaReadyLabel: {
-    fontSize: 12,
+  segmentBtnActive: {
+    backgroundColor: '#1B2D47',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+  },
+  segmentCode: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.textMuted,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  segmentCodeActive: {
+    color: '#FFFFFF',
+    backgroundColor: colors.primary,
+  },
+  segmentText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  segmentTextActive: {
+    color: '#FFFFFF',
     fontWeight: '700',
+  },
+
+  topicChipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  topicChip: {
+    backgroundColor: '#080F1B',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  topicChipActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.22)',
+    borderColor: colors.accentCyan,
+  },
+  topicChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  topicChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+
+  inputLabel: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.7,
+    marginBottom: 6,
+  },
+  contextLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  charCounter: {
+    fontSize: 10.5,
+    color: colors.textMuted,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  textInput: {
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: '#080F1B',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.09)',
+    paddingHorizontal: 13,
+    color: '#FFFFFF',
+    fontSize: 13,
+  },
+  textArea: {
+    height: 76,
+    paddingTop: 11,
+    textAlignVertical: 'top',
+  },
+  textInputFocused: {
+    borderColor: colors.primaryLight,
+  },
+
+  ctaSectionCard: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+    padding: 16,
+    marginTop: 4,
+  },
+  summaryEyebrow: {
+    fontSize: 10,
+    fontWeight: '800',
     color: colors.accentCyan,
-    letterSpacing: 0.4,
+    letterSpacing: 0.8,
+    marginBottom: 3,
+  },
+  summaryStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    gap: 10,
+  },
+  summaryStripText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#F8FAFC',
+    lineHeight: 17,
+  },
+  summaryStripBadge: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.accentCyan,
+    backgroundColor: 'rgba(37, 99, 235, 0.16)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   startButton: {
-    borderRadius: 18,
+    borderRadius: 16,
     overflow: 'hidden',
     shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.6,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 8,
   },
   buttonGradient: {
-    height: 60,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
   },
   ctaContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
   startButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 0.5,
-  },
-  consentText: {
-    color: colors.textSecondary || '#64748B',
-    fontSize: 10,
-    textAlign: 'center',
-    marginBottom: 6,
-    lineHeight: 14,
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 });

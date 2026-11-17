@@ -9,7 +9,7 @@ Panduan ini berisi instruksi teknis untuk menjalankan aplikasi **VOIC** secara o
 Cara paling stabil dan direkomendasikan saat pameran adalah menjalankan aplikasi langsung di localhost:
 
 1. **Buka Laragon** dan pastikan service **Apache** dan **MySQL** aktif.
-2. Buka terminal di folder project `c:\laragon\www\VOIC-NEW`:
+2. Buka terminal di folder `backend` (`c:\laragon\www\VOIC-NEW\backend`):
    ```bash
    php artisan serve --port=8000
    ```
@@ -58,13 +58,13 @@ Jika ingin membiarkan juri atau pengunjung mencoba dari smartphone/laptop mereka
 Jika sewaktu-waktu database ingin di-reset ke kondisi awal yang bersih dengan 6 riwayat sesi demo yang rapi:
 
 ```bash
-# Reset database dan seed data demo bawaan
+# Reset database dan seed data demo bawaan (jalankan dari folder backend)
 php artisan migrate:fresh --seed
 
-# Kompilasi aset frontend terbaru
+# Kompilasi aset frontend terbaru (jalankan dari folder frontend)
 npm run build
 
-# Bersihkan cache Laravel
+# Bersihkan cache Laravel (jalankan dari folder backend)
 php artisan optimize:clear
 ```
 

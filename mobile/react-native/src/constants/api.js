@@ -1,13 +1,28 @@
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 
 // Base URL API Laravel
-// Gunakan hostname aktif saat di browser (bisa localhost di laptop atau 10.161.13.82 di HP),
-// dan gunakan IP laptop saat di aplikasi native (Expo Go).
+// Otomatis mendeteksi IP host dari browser (web) atau Metro bundler (Expo Go),
+// sehingga tetap terhubung meski IP Wi-Fi/hotspot laptop berubah.
+const FALLBACK_HOST = '10.184.85.82';
+
+const getHostFromScriptUrl = () => {
+  const scriptURL = NativeModules?.SourceCode?.scriptURL;
+  if (!scriptURL || typeof scriptURL !== 'string') {
+    return null;
+  }
+  const match = scriptURL.match(/^https?:\/\/([^/:]+)/i);
+  return match?.[1] || null;
+};
+
 const getBaseUrl = () => {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.hostname) {
     return `http://${window.location.hostname}:8000/api/v1`;
   }
-  return 'http://10.161.13.82:8000/api/v1';
+  const metroHost = getHostFromScriptUrl();
+  const host = metroHost && metroHost !== 'localhost' && metroHost !== '127.0.0.1'
+    ? metroHost
+    : FALLBACK_HOST;
+  return `http://${host}:8000/api/v1`;
 };
 
 export const API_BASE_URL = getBaseUrl();

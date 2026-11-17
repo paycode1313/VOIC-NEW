@@ -11,6 +11,8 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "expo": "^57.0.0",
+    "expo-asset": "~57.0.20",
+    "expo-audio": "~57.0.5",
     "expo-camera": "~57.0.6",
     "expo-linear-gradient": "~57.0.2",
     "expo-speech": "~57.0.3",
@@ -25,6 +27,9 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
+  },
+  "overrides": {
+    "expo-asset": "~57.0.20"
   },
   "private": true
 }

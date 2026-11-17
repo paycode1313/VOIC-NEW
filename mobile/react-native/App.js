@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, StyleSheet } from 'react-native';
+import { Alert, View, StyleSheet } from 'react-native';
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import PracticeArenaScreen from './src/screens/PracticeArenaScreen';
@@ -10,7 +10,7 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import MobileTabBar from './src/components/MobileTabBar';
 import { colors } from './src/constants/theme';
-import { clearAuthToken } from './src/services/apiService';
+import { apiService, clearAuthToken, getAuthToken, setUnauthorizedHandler } from './src/services/apiService';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('login'); // 'login' | 'home' | 'practice' | 'report'
@@ -35,6 +35,21 @@ export default function App() {
     setCurrentScreen('report');
   };
 
+  const handleOpenHistorySession = (session) => {
+    const examReport = session.feedback_notes?.exam_report || session.report || null;
+    const coachReport = session.feedback_notes?.coach_report || session.coach_report || null;
+    setActiveSession({
+      sessionId: session.id,
+      role: session.ai_role || session.aiRole || null,
+    });
+    setFinalReport({
+      ...session,
+      report: examReport,
+      coach_report: coachReport,
+    });
+    setCurrentScreen('report');
+  };
+
   const handleBackToHome = () => {
     setActiveSession(null);
     setFinalReport(null);
@@ -50,6 +65,28 @@ export default function App() {
     setCurrentScreen('login');
   };
 
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      setCurrentUser(null);
+      setActiveSession(null);
+      setFinalReport(null);
+      setActiveTab('practice');
+      setCurrentScreen('login');
+      Alert.alert('Sesi Berakhir', 'Silakan masuk kembali ke akun VOIC Anda.');
+    });
+
+    if (getAuthToken() && !currentUser) {
+      apiService.getCurrentUser()
+        .then((res) => {
+          if (res?.success && res?.user) {
+            setCurrentUser(res.user);
+            setCurrentScreen('home');
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
@@ -63,7 +100,12 @@ export default function App() {
             onStartPractice={handleStartPractice}
           />
         )}
-        {currentScreen === 'home' && activeTab === 'history' && <HistoryScreen />}
+        {currentScreen === 'home' && activeTab === 'history' && (
+          <HistoryScreen
+            onSelectSession={handleOpenHistorySession}
+            onStartPracticeTab={() => setActiveTab('practice')}
+          />
+        )}
         {currentScreen === 'home' && activeTab === 'profile' && (
           <ProfileScreen user={currentUser} onLogout={handleLogout} />
         )}

@@ -2,12 +2,18 @@
 # Exit on error
 set -e
 
-echo "=== 1. INSTALLING COMPOSER DEPENDENCIES ==="
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+
+echo "=== 1. INSTALLING COMPOSER DEPENDENCIES (backend) ==="
+cd "$ROOT/backend"
 composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
-echo "=== 2. BUILDING FRONTEND ASSETS WITH VITE ==="
+echo "=== 2. BUILDING FRONTEND ASSETS WITH VITE (frontend -> backend/public/build) ==="
+cd "$ROOT/frontend"
 npm install --no-audit --no-fund
 npm run build
+
+cd "$ROOT/backend"
 
 echo "=== 3. PREPARING DATABASE ==="
 if [ "${DB_CONNECTION}" = "sqlite" ] || [ -z "${DB_CONNECTION}" ]; then

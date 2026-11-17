@@ -8,21 +8,49 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import { colors } from '../constants/theme';
 
 export default function EvaluationReportScreen({ report, role, onBackToHome }) {
-  // Everything below comes from the server-side report; nothing is invented on the device.
-  const band = report?.report || null;
+  const insets = useSafeAreaInsets();
+  const band = report?.report || report?.feedback_notes?.exam_report || null;
+  const coach = report?.coach_report || report?.feedback_notes?.coach_report || null;
+  const isCoach = (report?.session_type === 'coach' || Boolean(coach)) && !band;
+
   const overallScore = Number(report?.overall_score || 0);
   const faceScore = Number(report?.face_score || 0);
   const voiceScore = Number(report?.voice_score || 0);
   const durationSeconds = Number(report?.duration_seconds || 0);
   const aiConclusion = report?.ai_conclusion || 'Belum ada jawaban yang dinilai.';
-  const criteria = band ? Object.values(band.criteria || {}) : [];
 
-  const strengths = band?.strengths || [];
-  const improvements = (band?.focus || []).map((item) => `${item.title}: ${item.drill}`);
+  const criteriaMap = band?.criteria || {};
+  const criteriaList = [
+    { key: 'fluency', fallbackLabel: 'Kelancaran & Alur', icon: 'waveform', iconType: 'mci', color: colors.primaryLight },
+    { key: 'vocabulary', fallbackLabel: 'Kosakata & Istilah', icon: 'text', iconType: 'ion', color: '#A78BFA' },
+    { key: 'structure', fallbackLabel: 'Isi & Struktur', icon: 'git-branch-outline', iconType: 'ion', color: '#34D399' },
+    { key: 'delivery', fallbackLabel: 'Delivery & Kepercayaan Diri', icon: 'eye', iconType: 'ion', color: colors.accentCyan },
+  ].map((item) => {
+    const serverItem = criteriaMap[item.key];
+    return {
+      ...item,
+      label: serverItem?.label || item.fallbackLabel,
+      band: serverItem ? Number(serverItem.band || 0) : null,
+      description: serverItem?.description || '',
+    };
+  });
+
+  const stats = band?.stats || coach?.stats || null;
+  const answers = Array.isArray(band?.answers) ? band.answers : [];
+  const fillerEntries = stats?.fillers ? Object.entries(stats.fillers) : [];
+
+  const strengths = isCoach
+    ? coach?.strengths || []
+    : band?.strengths || report?.feedback_notes?.strengths || [];
+  const improvements = isCoach
+    ? coach?.practice || []
+    : (band?.focus || []).map((item) => `${item.title}: ${item.drill}`);
+  const taughtPhrases = isCoach ? coach?.phrases || [] : [];
 
   const verificationUrl = report?.share_url || report?.report_url || '';
 
@@ -32,131 +60,249 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
     return `${m > 0 ? `${m} menit ` : ''}${s} detik`;
   };
 
+  const getBandColor = (val) => {
+    const n = Number(val || 0);
+    if (n >= 6.5) return colors.success;
+    if (n >= 5.0) return colors.warning;
+    return colors.danger;
+  };
+
   const getScoreColor = (score) => {
     if (score >= 80) return colors.success;
     if (score >= 65) return colors.warning;
     return colors.danger;
   };
 
-  // Derive band number for circle display
-  const bandNumber = band ? Number(band.overall_band).toFixed(1) : overallScore.toFixed(1);
-  const bandLevel = band?.level || (overallScore >= 80 ? 'Sangat Siap' : 'Terus Berlatih');
-  const scoreColor = band
-    ? (Number(band.overall_band) >= 7 ? colors.success : Number(band.overall_band) >= 5 ? colors.warning : colors.danger)
-    : getScoreColor(overallScore);
+  const bandNumber = band ? Number(band.overall_band || 0).toFixed(1) : overallScore.toFixed(1);
+  const bandLevel = band?.level || (overallScore >= 80 ? 'Sangat Siap' : overallScore >= 55 ? 'Berkembang' : 'Perlu Latihan');
+  const scoreColor = band ? getBandColor(band.overall_band) : getScoreColor(overallScore);
+
+  const renderCriterionIcon = (item) => {
+    if (item.iconType === 'mci') {
+      return <MaterialCommunityIcons name={item.icon} size={15} color={item.color} />;
+    }
+    return <Ionicons name={item.icon} size={15} color={item.color} />;
+  };
+
+  const noteBadgeColor = (type) => {
+    if (type === 'good') return '#10B981';
+    if (type === 'warn') return '#F59E0B';
+    return '#38BDF8';
+  };
 
   return (
     <View style={styles.container}>
-      {/* Full-width gradient header */}
+      {/* Gradient Header */}
       <LinearGradient
         colors={['#0F172A', '#1E3A8A', '#1E40AF']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.header}
+        style={[styles.header, { paddingTop: Math.max(insets.top + 12, 46) }]}
       >
         <View style={styles.headerAwardIconWrapper}>
-          <Feather name="award" size={36} color="#FBBF24" />
+          <Feather name={isCoach ? 'message-circle' : 'award'} size={34} color="#FBBF24" />
         </View>
-        <Text style={styles.headerTitle}>Rapor Anda</Text>
-        <Text style={styles.headerSubtitle}>Sesi selesai • Evaluasi AI Lengkap</Text>
-        <TouchableOpacity onPress={onBackToHome} style={styles.closeButton}>
+        <Text style={styles.headerTitle}>{isCoach ? 'Ringkasan Coaching' : 'Rapor Anda'}</Text>
+        <Text style={styles.headerSubtitle}>
+          {isCoach ? (coach?.coach_title || 'Latihan Santai 10 Menit') : 'Sesi selesai • Evaluasi AI Lengkap'}
+        </Text>
+        <TouchableOpacity
+          onPress={onBackToHome}
+          style={[styles.closeButton, { top: Math.max(insets.top + 12, 46) }]}
+        >
           <Feather name="x" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-
-        {/* Score Hero Card — large circle */}
-        <LinearGradient
-          colors={colors.heroCardGradient}
-          style={styles.scoreHeroCard}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <View style={styles.heroGlowOrb} />
-
-          {/* Score circle */}
-          <View style={[styles.scoreCircle, { borderColor: scoreColor }]}>
-            <View style={styles.scoreCircleInner}>
-              <Text style={[styles.scoreCircleNumber, { color: scoreColor }]}>{bandNumber}</Text>
-              <Text style={styles.scoreCircleUnit}>{band ? '/ 9.0' : '/ 100'}</Text>
+        {/* Hero Score Card */}
+        {isCoach ? (
+          <LinearGradient
+            colors={colors.heroCardGradient}
+            style={styles.scoreHeroCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.heroGlowOrb} />
+            <View style={styles.coachHeroBadge}>
+              <MaterialCommunityIcons name="school-outline" size={16} color={colors.accentCyan} />
+              <Text style={styles.coachHeroBadgeText}>MODE COACHING (NON-UJIAN)</Text>
             </View>
-            <Text style={styles.scoreCircleLevel}>{bandLevel}</Text>
-          </View>
-
-          {/* 3 mini chips row */}
-          <View style={styles.chipsRow}>
-            <View style={styles.chip}>
-              <Ionicons name="eye" size={13} color={colors.accentCyan} />
-              <View style={styles.chipTextGroup}>
-                <Text style={styles.chipLabel}>Delivery</Text>
-                <Text style={[styles.chipValue, { color: scoreColor }]}>
-                  {band ? Number(band.criteria?.delivery?.band || 0).toFixed(1) : Math.round(faceScore)}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.chipDivider} />
-            <View style={styles.chip}>
-              <MaterialCommunityIcons name="waveform" size={13} color={colors.primaryLight} />
-              <View style={styles.chipTextGroup}>
-                <Text style={styles.chipLabel}>Kelancaran</Text>
-                <Text style={[styles.chipValue, { color: colors.primaryLight }]}>
-                  {band ? Number(band.criteria?.fluency?.band || 0).toFixed(1) : Math.round(voiceScore)}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.chipDivider} />
-            <View style={styles.chip}>
-              <Ionicons name="text" size={13} color="#A78BFA" />
-              <View style={styles.chipTextGroup}>
-                <Text style={styles.chipLabel}>Kosakata</Text>
-                <Text style={[styles.chipValue, { color: '#A78BFA' }]}>
-                  {band ? Number(band.criteria?.lexical_resource?.band || 0).toFixed(1) : '—'}
-                </Text>
-              </View>
-            </View>
-          </View>
-        </LinearGradient>
-
-        {/* Metadata — 2 full cards, stacked */}
-        <View style={styles.metaCard}>
-          <View style={styles.metaCardIcon}>
-            <Feather name="clock" size={22} color={colors.accentCyan} />
-          </View>
-          <View style={styles.metaCardText}>
-            <Text style={styles.metaLabel}>Durasi Latihan</Text>
-            <Text style={styles.metaValue}>{formatDuration(durationSeconds)}</Text>
-          </View>
-        </View>
-
-        <View style={styles.metaCard}>
-          <View style={styles.metaCardIcon}>
-            <Feather name="user-check" size={22} color={colors.primaryLight} />
-          </View>
-          <View style={styles.metaCardText}>
-            <Text style={styles.metaLabel}>Karakter Penguji</Text>
-            <Text style={styles.metaValue} numberOfLines={1}>{role?.name || 'AI Coach'}</Text>
-          </View>
-        </View>
-
-        {/* AI Conclusion — left blue border */}
-        <View style={styles.conclusionCard}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialCommunityIcons name="star-shooting" size={18} color={colors.accentCyan} />
-            <Text style={styles.sectionTitle}>Kesimpulan AI Coach</Text>
-          </View>
-          <Text style={styles.conclusionText}>{aiConclusion}</Text>
-          {criteria.map((item) => (
-            <Text key={item.label} style={styles.conclusionCriterionText}>
-              {`• ${item.label}: ${Number(item.band).toFixed(1)} / 9`}
+            <Text style={styles.coachHeroTitle}>{coach?.coach_title || 'Sesi Latihan Coaching'}</Text>
+            <Text style={styles.coachHeroSubtitle}>
+              Fokus sesi ini adalah melatih cara menjawab yang natural tanpa tekanan skor band.
             </Text>
-          ))}
+
+            <View style={styles.chipsGrid}>
+              <View style={styles.chipBox}>
+                <Text style={styles.chipLabel}>Giliran Jawab</Text>
+                <Text style={[styles.chipValue, { color: colors.accentCyan }]}>
+                  {`${stats?.turns ?? 0}x`}
+                </Text>
+              </View>
+              <View style={styles.chipBox}>
+                <Text style={styles.chipLabel}>Total Kata</Text>
+                <Text style={[styles.chipValue, { color: colors.primaryLight }]}>
+                  {`${stats?.total_words ?? 0}`}
+                </Text>
+              </View>
+              <View style={styles.chipBox}>
+                <Text style={styles.chipLabel}>Tempo Rata-rata</Text>
+                <Text style={[styles.chipValue, { color: '#34D399' }]}>
+                  {stats?.average_wpm ? `${stats.average_wpm} WPM` : '—'}
+                </Text>
+              </View>
+              <View style={styles.chipBox}>
+                <Text style={styles.chipLabel}>Kata Pengisi</Text>
+                <Text style={[styles.chipValue, { color: '#FBBF24' }]}>
+                  {`${stats?.filler_count ?? 0}`}
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
+        ) : (
+          <LinearGradient
+            colors={colors.heroCardGradient}
+            style={styles.scoreHeroCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <View style={styles.heroGlowOrb} />
+
+            <View style={[styles.scoreCircle, { borderColor: scoreColor }]}>
+              <View style={styles.scoreCircleInner}>
+                <Text style={[styles.scoreCircleNumber, { color: scoreColor }]}>{bandNumber}</Text>
+                <Text style={styles.scoreCircleUnit}>{band ? '/ 9.0' : '/ 100'}</Text>
+              </View>
+              <Text style={styles.scoreCircleLevel}>{bandLevel}</Text>
+            </View>
+
+            {/* 4 Criteria Grid (2x2) matching backend fluency, vocabulary, structure, delivery */}
+            <View style={styles.chipsGrid}>
+              {criteriaList.map((item) => {
+                const valueText = item.band !== null
+                  ? item.band.toFixed(1)
+                  : item.key === 'delivery'
+                    ? `${Math.round(faceScore)}`
+                    : item.key === 'fluency'
+                      ? `${Math.round(voiceScore)}`
+                      : '—';
+                const valColor = item.band !== null ? getBandColor(item.band) : item.color;
+                return (
+                  <View key={item.key} style={styles.chipBox}>
+                    <View style={styles.chipHeaderRow}>
+                      {renderCriterionIcon(item)}
+                      <Text style={styles.chipLabel} numberOfLines={1}>{item.label}</Text>
+                    </View>
+                    <Text style={[styles.chipValue, { color: valColor }]}>
+                      {valueText}
+                      {item.band !== null ? <Text style={styles.chipUnit}> / 9</Text> : null}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </LinearGradient>
+        )}
+
+        {/* Metadata Cards */}
+        <View style={styles.metaRow}>
+          <View style={[styles.metaCard, { flex: 1, marginRight: 6 }]}>
+            <View style={styles.metaCardIcon}>
+              <Feather name="clock" size={20} color={colors.accentCyan} />
+            </View>
+            <View style={styles.metaCardText}>
+              <Text style={styles.metaLabel}>Durasi Latihan</Text>
+              <Text style={styles.metaValue} numberOfLines={1}>{formatDuration(durationSeconds)}</Text>
+            </View>
+          </View>
+
+          <View style={[styles.metaCard, { flex: 1, marginLeft: 6 }]}>
+            <View style={styles.metaCardIcon}>
+              <Feather name="user-check" size={20} color={colors.primaryLight} />
+            </View>
+            <View style={styles.metaCardText}>
+              <Text style={styles.metaLabel}>Penguji</Text>
+              <Text style={styles.metaValue} numberOfLines={1}>
+                {role?.name || role?.title || report?.scenario_type || 'AI Coach'}
+              </Text>
+            </View>
+          </View>
         </View>
+
+        {/* Real Speaking Stats */}
+        {stats && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionTitleRow}>
+              <Ionicons name="analytics-outline" size={18} color={colors.accentCyan} />
+              <Text style={styles.sectionTitle}>Statistik Bicara Anda</Text>
+            </View>
+            <View style={styles.statsRow}>
+              <View style={styles.statPill}>
+                <Text style={styles.statValue}>{isCoach ? (stats.turns ?? 0) : (stats.answers ?? 0)}</Text>
+                <Text style={styles.statLabel}>Jawaban</Text>
+              </View>
+              <View style={styles.statPill}>
+                <Text style={styles.statValue}>{stats.total_words ?? 0}</Text>
+                <Text style={styles.statLabel}>Total Kata</Text>
+              </View>
+              <View style={styles.statPill}>
+                <Text style={styles.statValue}>{stats.average_wpm ? `${stats.average_wpm}` : '—'}</Text>
+                <Text style={styles.statLabel}>Kata/Menit</Text>
+              </View>
+              <View style={styles.statPill}>
+                <Text style={styles.statValue}>{stats.filler_count ?? 0}</Text>
+                <Text style={styles.statLabel}>Filler</Text>
+              </View>
+            </View>
+            {fillerEntries.length > 0 && (
+              <Text style={styles.fillerDetailText}>
+                Kata pengisi terdeteksi:{' '}
+                {fillerEntries.slice(0, 5).map(([word, count]) => `"${word}" ×${count}`).join(', ')}
+              </Text>
+            )}
+          </View>
+        )}
+
+        {/* Detailed 4 Criteria Breakdown */}
+        {band && (
+          <View style={styles.conclusionCard}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialCommunityIcons name="star-shooting" size={18} color={colors.accentCyan} />
+              <Text style={styles.sectionTitle}>Kesimpulan & Rincian Kriteria</Text>
+            </View>
+            <Text style={styles.conclusionText}>{aiConclusion}</Text>
+
+            <View style={styles.criteriaBarsWrapper}>
+              {criteriaList.map((item) => {
+                if (item.band === null) return null;
+                const pct = Math.min(100, Math.max(8, (item.band / 9) * 100));
+                const barColor = getBandColor(item.band);
+                return (
+                  <View key={item.key} style={styles.criterionBlock}>
+                    <View style={styles.criterionHeader}>
+                      <Text style={styles.criterionLabel}>{item.label}</Text>
+                      <Text style={[styles.criterionScore, { color: barColor }]}>
+                        {item.band.toFixed(1)} / 9
+                      </Text>
+                    </View>
+                    <View style={styles.progressTrack}>
+                      <View style={[styles.progressFill, { width: `${pct}%`, backgroundColor: barColor }]} />
+                    </View>
+                    {!!item.description && (
+                      <Text style={styles.criterionDesc}>{item.description}</Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
         {/* Strengths */}
         {strengths.length > 0 && (
           <View style={styles.strengthsCard}>
-            <Text style={styles.feedbackSectionTitle}>💪 Kekuatan Komunikasi Anda</Text>
+            <Text style={styles.feedbackSectionTitle}>Kekuatan Komunikasi Anda</Text>
             {strengths.map((str, idx) => (
               <View key={idx} style={styles.bulletRow}>
                 <Ionicons name="checkmark-circle" size={18} color={colors.success} style={{ marginTop: 1 }} />
@@ -166,10 +312,10 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
           </View>
         )}
 
-        {/* Improvements */}
+        {/* Improvements / Next Drills */}
         {improvements.length > 0 && (
           <View style={styles.improvementsCard}>
-            <Text style={styles.feedbackSectionTitle}>🎯 Saran Perbaikan Berikutnya</Text>
+            <Text style={styles.feedbackSectionTitle}>Fokus Latihan Berikutnya</Text>
             {improvements.map((imp, idx) => (
               <View key={idx} style={styles.bulletRow}>
                 <Ionicons name="bulb-outline" size={18} color={colors.warning} style={{ marginTop: 1 }} />
@@ -179,42 +325,113 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
           </View>
         )}
 
-        {/* Certificate Card — luxury navy gradient */}
-        <LinearGradient
-          colors={['#0F172A', '#1E3A8A', '#0F172A']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.certificateCard}
-        >
-          <View style={styles.certBadge}>
-            <Feather name="shield" size={13} color={colors.accentCyan} style={{ marginRight: 5 }} />
-            <Text style={styles.certBadgeText}>VERIFIED CREDENTIAL</Text>
+        {/* Coach Taught Phrases */}
+        {taughtPhrases.length > 0 && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionTitleRow}>
+              <Feather name="bookmark" size={16} color={colors.accentCyan} />
+              <Text style={styles.sectionTitle}>Contoh Kalimat dari Coach</Text>
+            </View>
+            {taughtPhrases.map((phrase, idx) => (
+              <View key={idx} style={styles.phraseBox}>
+                <Text style={styles.phraseText}>{`"${phrase}"`}</Text>
+              </View>
+            ))}
           </View>
-          <Text style={styles.certTitle}>Sertifikat Digital Terverifikasi</Text>
-          <Text style={styles.certSubtitle}>
-            Pindai QR code ini untuk verifikasi bukti kelayakan &amp; kompetensi digital latihan Anda di web browser.
-          </Text>
+        )}
 
-          {/* QR in white frame with shadow */}
-          <View style={styles.qrFrame}>
-            {verificationUrl ? (
+        {/* Per-Answer Analysis */}
+        {answers.length > 0 && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionTitleRow}>
+              <Feather name="list" size={17} color={colors.accentCyan} />
+              <Text style={styles.sectionTitle}>{`Evaluasi Per Jawaban (${answers.length})`}</Text>
+            </View>
+
+            {answers.map((ans) => {
+              const ansBandColor = getBandColor(ans.band);
+              return (
+                <View key={ans.message_id || ans.index} style={styles.answerItemCard}>
+                  <View style={styles.answerItemHeader}>
+                    <View style={styles.partPill}>
+                      <Text style={styles.partPillText}>{`Part ${ans.part} • #${ans.index}`}</Text>
+                    </View>
+                    <View style={[styles.bandPill, { borderColor: ansBandColor }]}>
+                      <Text style={[styles.bandPillText, { color: ansBandColor }]}>
+                        {`Band ${Number(ans.band || 0).toFixed(1)}`}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {!!ans.question && (
+                    <Text style={styles.answerQuestion}>{ans.question}</Text>
+                  )}
+
+                  <View style={styles.answerTranscriptBox}>
+                    <Text style={styles.answerTranscriptLabel}>Jawaban Anda:</Text>
+                    <Text style={styles.answerTranscript}>{ans.answer}</Text>
+                    <Text style={styles.answerMetricsText}>
+                      {`${ans.metrics?.word_count ?? 0} kata`}
+                      {ans.metrics?.wpm ? ` • ${ans.metrics.wpm} WPM` : ''}
+                      {ans.metrics?.filler_count ? ` • ${ans.metrics.filler_count} filler` : ''}
+                    </Text>
+                  </View>
+
+                  {Array.isArray(ans.notes) && ans.notes.map((note, nIdx) => (
+                    <View key={nIdx} style={styles.noteRow}>
+                      <View style={[styles.noteDot, { backgroundColor: noteBadgeColor(note.type) }]} />
+                      <Text style={styles.noteText}>{note.text}</Text>
+                    </View>
+                  ))}
+
+                  {!!ans.improved && (
+                    <View style={styles.improvedBox}>
+                      <Text style={styles.improvedLabel}>
+                        {ans.improved_source === 'ai' ? 'Contoh Jawaban Lebih Kuat:' : 'Pola Jawaban Disarankan:'}
+                      </Text>
+                      <Text style={styles.improvedText}>{ans.improved}</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* Certificate Card */}
+        {!!verificationUrl && (
+          <LinearGradient
+            colors={['#0F172A', '#1E3A8A', '#0F172A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.certificateCard}
+          >
+            <View style={styles.certBadge}>
+              <Feather name="shield" size={13} color={colors.accentCyan} style={{ marginRight: 5 }} />
+              <Text style={styles.certBadgeText}>VERIFIED CREDENTIAL</Text>
+            </View>
+            <Text style={styles.certTitle}>Sertifikat Digital Terverifikasi</Text>
+            <Text style={styles.certSubtitle}>
+              Pindai QR code ini untuk melihat rapor lengkap &amp; verifikasi kompetensi di browser.
+            </Text>
+
+            <View style={styles.qrFrame}>
               <QRCode
                 value={verificationUrl}
                 size={130}
                 color="#070B14"
                 backgroundColor="#FFFFFF"
               />
-            ) : null}
-          </View>
+            </View>
 
-          {/* Watermark text */}
-          <View style={styles.certWatermarkRow}>
-            <Feather name="award" size={12} color="#FBBF24" style={{ marginRight: 5 }} />
-            <Text style={styles.certWatermark}>VOIC CERTIFIED</Text>
-          </View>
-        </LinearGradient>
+            <View style={styles.certWatermarkRow}>
+              <Feather name="award" size={12} color="#FBBF24" style={{ marginRight: 5 }} />
+              <Text style={styles.certWatermark}>VOIC CERTIFIED</Text>
+            </View>
+          </LinearGradient>
+        )}
 
-        {/* CTA Button — gradient full-width with home icon */}
+        {/* CTA Button */}
         <TouchableOpacity
           style={styles.homeButton}
           onPress={onBackToHome}
@@ -231,7 +448,7 @@ export default function EvaluationReportScreen({ report, role, onBackToHome }) {
           </LinearGradient>
         </TouchableOpacity>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: Math.max(insets.bottom + 24, 40) }} />
       </ScrollView>
     </View>
   );
@@ -242,41 +459,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-
-  /* ── Header ── */
   header: {
     alignItems: 'center',
-    paddingTop: 52,
-    paddingBottom: 24,
+    paddingBottom: 22,
     paddingHorizontal: 20,
     position: 'relative',
   },
   headerAwardIconWrapper: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     backgroundColor: 'rgba(251, 191, 36, 0.12)',
     borderWidth: 2,
     borderColor: 'rgba(251, 191, 36, 0.35)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: 'rgba(203, 213, 225, 0.8)',
+    color: 'rgba(203, 213, 225, 0.85)',
     marginTop: 4,
     letterSpacing: 0.3,
   },
   closeButton: {
     position: 'absolute',
-    top: 52,
     right: 20,
     width: 36,
     height: 36,
@@ -287,21 +500,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  /* ── Scroll ── */
   scrollContent: {
-    padding: 20,
-    paddingTop: 24,
+    padding: 16,
+    paddingTop: 18,
   },
-
-  /* ── Score Hero Card ── */
   scoreHeroCard: {
-    padding: 28,
+    padding: 22,
     borderRadius: 24,
     borderWidth: 1.5,
     borderColor: colors.cardBorder,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
     overflow: 'hidden',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 10 },
@@ -317,123 +526,186 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     backgroundColor: 'rgba(37, 99, 235, 0.18)',
   },
-
-  /* Score circle */
+  coachHeroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(56, 189, 248, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+    marginBottom: 12,
+  },
+  coachHeroBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.accentCyan,
+    letterSpacing: 0.6,
+  },
+  coachHeroTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  coachHeroSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 19,
+    marginTop: 6,
+    marginBottom: 16,
+  },
   scoreCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 152,
+    height: 152,
+    borderRadius: 76,
     borderWidth: 5,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    backgroundColor: 'rgba(0,0,0,0.28)',
+    marginBottom: 18,
   },
   scoreCircleInner: {
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
   scoreCircleNumber: {
-    fontSize: 48,
+    fontSize: 46,
     fontWeight: '900',
     letterSpacing: -1,
-    lineHeight: 56,
+    lineHeight: 54,
   },
   scoreCircleUnit: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.5)',
+    color: 'rgba(255,255,255,0.55)',
     fontWeight: '600',
     marginBottom: 10,
     marginLeft: 3,
   },
   scoreCircleLevel: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '600',
-    marginTop: 4,
-    letterSpacing: 0.5,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '700',
+    marginTop: 2,
+    letterSpacing: 0.4,
   },
-
-  /* Mini chips row */
-  chipsRow: {
+  chipsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     width: '100%',
-    paddingTop: 18,
+    gap: 8,
+    paddingTop: 14,
     borderTopWidth: 1,
     borderTopColor: colors.cardBorderSubtle,
-    justifyContent: 'space-around',
-    alignItems: 'center',
   },
-  chip: {
+  chipBox: {
+    width: '48.5%',
+    backgroundColor: 'rgba(15, 23, 42, 0.55)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.16)',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  chipHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  chipTextGroup: {
-    marginLeft: 6,
-  },
   chipLabel: {
-    fontSize: 10,
+    fontSize: 11,
     color: colors.textSecondary,
+    flex: 1,
   },
   chipValue: {
-    fontSize: 14,
+    fontSize: 17,
     fontWeight: '800',
-    marginTop: 1,
+    marginTop: 4,
   },
-  chipDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: colors.cardBorderSubtle,
+  chipUnit: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
-
-  /* ── Metadata Cards ── */
+  metaRow: {
+    flexDirection: 'row',
+    marginBottom: 14,
+  },
   metaCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    padding: 16,
+    padding: 13,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.cardBorderSubtle,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
   },
   metaCardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(37, 99, 235, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(59, 130, 246, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 10,
   },
   metaCardText: {
     flex: 1,
   },
   metaLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.textSecondary,
   },
   metaValue: {
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginTop: 3,
+    marginTop: 2,
   },
-
-  /* ── AI Conclusion Card ── */
+  sectionCard: {
+    backgroundColor: colors.card,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.cardBorderSubtle,
+    marginBottom: 14,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  statPill: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.15)',
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  statLabel: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  fillerDetailText: {
+    marginTop: 10,
+    fontSize: 12,
+    color: '#FCD34D',
+    lineHeight: 18,
+  },
   conclusionCard: {
     backgroundColor: colors.card,
     padding: 18,
@@ -442,7 +714,7 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorderSubtle,
     borderLeftWidth: 4,
     borderLeftColor: '#3B82F6',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   sectionTitleRow: {
     flexDirection: 'row',
@@ -456,76 +728,210 @@ const styles = StyleSheet.create({
     marginLeft: 7,
   },
   conclusionText: {
-    fontSize: 14,
+    fontSize: 13.5,
     color: colors.textSecondary,
-    lineHeight: 22,
+    lineHeight: 21,
   },
-  conclusionCriterionText: {
+  criteriaBarsWrapper: {
+    marginTop: 14,
+    gap: 12,
+  },
+  criterionBlock: {
+    gap: 4,
+  },
+  criterionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  criterionLabel: {
     fontSize: 13,
+    fontWeight: '700',
+    color: '#F1F5F9',
+  },
+  criterionScore: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  progressTrack: {
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(148, 163, 184, 0.16)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 999,
+  },
+  criterionDesc: {
+    fontSize: 11.5,
     color: colors.textSecondary,
-    lineHeight: 20,
-    marginTop: 4,
+    lineHeight: 16,
   },
-
-  /* ── Strengths ── */
   strengthsCard: {
-    backgroundColor: 'rgba(16, 185, 129, 0.06)',
-    padding: 18,
+    backgroundColor: 'rgba(16, 185, 129, 0.07)',
+    padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
-    marginBottom: 16,
+    borderColor: 'rgba(16, 185, 129, 0.22)',
+    marginBottom: 14,
   },
-
-  /* ── Improvements ── */
   improvementsCard: {
-    backgroundColor: 'rgba(245, 158, 11, 0.06)',
-    padding: 18,
+    backgroundColor: 'rgba(245, 158, 11, 0.07)',
+    padding: 16,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.2)',
-    marginBottom: 16,
+    borderColor: 'rgba(245, 158, 11, 0.22)',
+    marginBottom: 14,
   },
-
   feedbackSectionTitle: {
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   bulletRow: {
     flexDirection: 'row',
-    marginBottom: 10,
+    marginBottom: 8,
     alignItems: 'flex-start',
   },
   bulletTextStrength: {
-    fontSize: 14,
+    fontSize: 13.5,
     color: '#D1FAE5',
     lineHeight: 20,
     marginLeft: 10,
     flex: 1,
   },
   bulletTextImprovement: {
-    fontSize: 14,
+    fontSize: 13.5,
     color: '#FEF3C7',
     lineHeight: 20,
     marginLeft: 10,
     flex: 1,
   },
-
-  /* ── Certificate Card ── */
+  phraseBox: {
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accentCyan,
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  phraseText: {
+    fontSize: 13,
+    color: '#E0F2FE',
+    lineHeight: 19,
+  },
+  answerItemCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.16)',
+    marginBottom: 12,
+  },
+  answerItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  partPill: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(59, 130, 246, 0.16)',
+  },
+  partPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.primaryLight,
+  },
+  bandPill: {
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+  },
+  bandPillText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  answerQuestion: {
+    fontSize: 12.5,
+    color: '#CBD5E1',
+    fontWeight: '600',
+    marginBottom: 8,
+    lineHeight: 18,
+  },
+  answerTranscriptBox: {
+    backgroundColor: 'rgba(30, 41, 59, 0.65)',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 8,
+  },
+  answerTranscriptLabel: {
+    fontSize: 10.5,
+    color: colors.textSecondary,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  answerTranscript: {
+    fontSize: 13,
+    color: '#F8FAFC',
+    lineHeight: 19,
+  },
+  answerMetricsText: {
+    fontSize: 11,
+    color: colors.accentCyan,
+    marginTop: 6,
+    fontWeight: '600',
+  },
+  noteRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 5,
+    gap: 8,
+  },
+  noteDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    marginTop: 6,
+  },
+  noteText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#CBD5E1',
+    lineHeight: 17,
+  },
+  improvedBox: {
+    marginTop: 10,
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.2)',
+  },
+  improvedLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.accentCyan,
+    marginBottom: 4,
+  },
+  improvedText: {
+    fontSize: 12.5,
+    color: '#E0F2FE',
+    lineHeight: 18,
+  },
   certificateCard: {
-    padding: 24,
+    padding: 22,
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: 'rgba(59, 130, 246, 0.35)',
     alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#1E3A8A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    marginBottom: 18,
   },
   certBadge: {
     flexDirection: 'row',
@@ -554,19 +960,14 @@ const styles = StyleSheet.create({
     color: 'rgba(203, 213, 225, 0.75)',
     textAlign: 'center',
     marginTop: 6,
-    marginBottom: 20,
+    marginBottom: 18,
     lineHeight: 18,
   },
   qrFrame: {
     padding: 14,
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    elevation: 10,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   certWatermarkRow: {
     flexDirection: 'row',
@@ -578,27 +979,20 @@ const styles = StyleSheet.create({
     color: '#FBBF24',
     letterSpacing: 2,
   },
-
-  /* ── CTA Button ── */
   homeButton: {
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
-    elevation: 10,
   },
   homeGradient: {
-    height: 58,
+    height: 56,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
   },
   homeButtonText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
 });

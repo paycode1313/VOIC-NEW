@@ -1,6 +1,6 @@
 class ApiConfig {
-  // IP LAN mesin host saat ini: 10.161.13.82:8000
-  static const String baseUrl = 'http://10.161.13.82:8000/api/v1';
+  // IP LAN mesin host saat ini: 10.184.85.82:8000
+  static const String baseUrl = 'http://10.184.85.82:8000/api/v1';
 
   // Auth
   static const String login = '$baseUrl/auth/login';

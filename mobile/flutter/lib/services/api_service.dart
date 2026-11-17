@@ -75,6 +75,20 @@ class ApiService {
     throw Exception('Gagal memuat peran AI');
   }
 
+  /// Fetch unified exam modes (each mode pairs an AI examiner with matching topics & parts).
+  static Future<List<Map<String, dynamic>>> fetchExamModes({String language = 'id'}) async {
+    final response = await http.get(
+      Uri.parse('${ApiConfig.examModes}?lang=$language'),
+      headers: await _getHeaders(),
+    );
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(json['modes'] ?? []);
+    }
+    throw Exception('Gagal memuat mode latihan');
+  }
+
   /// Map a legacy role type to an exam mode slug.
   static String modeForRole(String roleType) {
     switch (roleType) {

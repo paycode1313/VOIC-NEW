@@ -13,7 +13,8 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "VOIC memerlukan akses kamera untuk menganalisis kontak mata dan ekspresi wajah saat simulasi latihan."
+        "NSCameraUsageDescription": "VOIC memerlukan akses kamera untuk menganalisis kontak mata dan ekspresi wajah saat simulasi latihan.",
+        "NSMicrophoneUsageDescription": "VOIC memerlukan akses mikrofon agar Anda dapat menjawab penguji AI dengan suara langsung."
       }
     },
     "android": {
@@ -21,7 +22,8 @@
         "backgroundColor": "#070B14"
       },
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -33,6 +35,12 @@
         "expo-camera",
         {
           "cameraPermission": "Izinkan VOIC mengakses kamera untuk memantau kontak mata dan ketenangan gestur Anda."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Izinkan VOIC mengakses mikrofon untuk merekam jawaban suara Anda."
         }
       ]
     ]

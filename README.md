@@ -23,6 +23,30 @@ Laravel untuk web, layanan Python (`ai_service/`) untuk telinga (Whisper), suara
 
 ---
 
+## Struktur folder
+
+```text
+VOIC-NEW/
+├── backend/             Aplikasi Laravel (PHP) + layanan AI
+│   ├── app/ config/ database/ routes/ tests/ lang/ storage/
+│   ├── resources/views/   Template Blade (dirender server)
+│   ├── public/            Dokumen root web (+ public/build hasil Vite)
+│   ├── ai_service/        Layanan AI Python (Whisper, Piper, Ollama)
+│   ├── artisan, composer.json, phpunit.xml, .env
+│   └── vendor/            Paket PHP (otomatis, tidak masuk git)
+├── frontend/            Aset tampilan web (Vite + Tailwind)
+│   ├── src/js, src/css    Sumber JavaScript dan CSS
+│   ├── package.json, vite.config.js, tailwind.config.js
+│   └── node_modules/      Paket JS (otomatis, tidak masuk git)
+├── mobile/              Aplikasi HP (flutter/ dan react-native/)
+├── docs/                Dokumen desain, panduan deploy, bahan pitch
+├── .github/             CI (GitHub Actions)
+├── jalankan_voic.bat    Launcher satu klik (Windows)
+└── render-build.sh      Skrip build untuk deploy
+```
+
+---
+
 ## Yang perlu dipasang
 
 | Program | Versi | Untuk |
@@ -52,21 +76,27 @@ Pilih mode **Online** (atau jalankan `jalankan_voic.bat online`) untuk mendapat 
 
 ## Cara manual (semua sistem operasi)
 
-### 1. Web Laravel
+> Semua perintah `php`, `composer`, dan `python ai_service/...` dijalankan dari folder **`backend/`**.
+> Perintah `npm` dijalankan dari folder **`frontend/`**.
+
+### 1. Web Laravel (backend) dan tampilan (frontend)
 
 ```bash
+cd backend
 composer install
-npm install
-npm run build
 cp .env.example .env        # Windows: copy .env.example .env
 php artisan key:generate
 php artisan migrate --seed
+
+cd ../frontend
+npm install
+npm run build               # hasil build masuk ke backend/public/build
 ```
 
 ### 2. Layanan AI (Python)
 
 ```bash
-cd ai_service
+cd backend/ai_service
 pip install -r requirements.txt
 python setup_models.py          # unduh model suara & AI (sekali saja, butuh internet)
 python setup_models.py --check  # cek kesiapan
@@ -74,9 +104,9 @@ python setup_models.py --check  # cek kesiapan
 
 Laptop dengan GPU NVIDIA: `python setup_models.py --gpu`.
 File `requirements-train.txt` hanya untuk melatih ulang AI (butuh GPU), **tidak perlu** untuk menjalankan aplikasi.
-Penjelasan lengkap ada di [`ai_service/README.md`](ai_service/README.md).
+Penjelasan lengkap ada di [`backend/ai_service/README.md`](backend/ai_service/README.md).
 
-### 3. Jalankan (3 terminal)
+### 3. Jalankan (3 terminal, semuanya dari `backend/`)
 
 ```bash
 python ai_service/ai_service.py   # layanan AI di http://127.0.0.1:8001
@@ -86,21 +116,25 @@ php artisan schedule:work         # penjadwal: hapus data tamu lama setiap jam
 
 Cek status AI kapan saja: `php artisan voic:doctor`.
 
+Saat mengubah tampilan, jalankan `npm run dev` di `frontend/` (hot reload) atau `npm run build` untuk build akhir.
+
 ---
 
 ## Setelah `git pull` (untuk anggota tim)
 
 ```bash
 git pull origin main
+cd backend
 composer install
+php artisan migrate
+cd ../frontend
 npm install
 npm run build
-php artisan migrate
 ```
 
-Lalu bandingkan `.env.example` dengan `.env` milikmu dan tambahkan setting baru yang belum ada.
-Jika ada perubahan di `ai_service/requirements.txt`, jalankan lagi `pip install -r ai_service/requirements.txt`.
-Jika model AI diperbarui (mis. pindah ke Qwen3), jalankan lagi `python ai_service/setup_models.py` lalu nyalakan ulang layanan AI.
+Lalu bandingkan `backend/.env.example` dengan `backend/.env` milikmu dan tambahkan setting baru yang belum ada.
+Jika ada perubahan di `backend/ai_service/requirements.txt`, jalankan lagi `pip install -r ai_service/requirements.txt` (dari `backend/`).
+Jika model AI diperbarui (mis. pindah ke Qwen3), jalankan lagi `python ai_service/setup_models.py` (dari `backend/`) lalu nyalakan ulang layanan AI.
 
 ---
 
@@ -163,6 +197,7 @@ balasannya di Google Colab dan hasilnya dijalankan **100% lokal di laptop, CPU o
 ## Pengembangan
 
 ```bash
+cd backend
 php artisan test                               # test Laravel
 vendor/bin/pint                                # rapikan kode PHP
 cd ai_service && python -m unittest discover -s tests   # test layanan AI

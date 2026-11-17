@@ -50,7 +50,7 @@ Data uji coba tidak ikut terhapus oleh penghapusan otomatis data tamu (`voic:pru
 
 ## 2. Model lama vs model hasil pelatihan (`voic-coach`)
 
-1. Kumpulkan data latih (dialog Kimi di `ai_service/datasets/kimi/`, lihat README di sana), lalu:
+1. Kumpulkan data latih (dialog Kimi di `backend/ai_service/datasets/kimi/`, lihat README di sana), lalu:
    ```bash
    php artisan voic:export-training-data
    ```

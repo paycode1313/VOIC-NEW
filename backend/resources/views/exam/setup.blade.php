@@ -1,0 +1,305 @@
+@php
+    $isEn = $language === 'en';
+    $prep = (int) config('exam.prep_seconds');
+    $talk = (int) config('exam.long_turn_seconds');
+    $glow = ['amber' => '245 158 11', 'indigo' => '99 102 241', 'violet' => '139 92 246'][$mode['accent']] ?? '99 102 241';
+    $examinerName = $mode['examiner']['name'];
+    $topics = array_map(fn ($topic) => $blueprint->text($topic, $language), $mode['topics'] ?? []);
+    $user = auth()->user();
+    $durations = [
+        ['parts' => [1, 2, 3], 'label' => $isEn ? 'Full mock' : 'Simulasi penuh', 'meta' => $isEn ? '3 parts · ~12 min' : '3 bagian · ~12 menit'],
+        ['parts' => [1], 'label' => $isEn ? 'Quick warm-up' : 'Pemanasan cepat', 'meta' => $isEn ? 'Part 1 only · ~4 min' : 'Bagian 1 saja · ~4 menit'],
+        ['parts' => [3], 'label' => $isEn ? 'Deep questions' : 'Pertanyaan mendalam', 'meta' => $isEn ? 'Part 3 only · ~4 min' : 'Bagian 3 saja · ~4 menit'],
+    ];
+    $wizard = [
+        'step' => $errors->any() ? 5 : 1,
+        'name' => old('guest_name', $user ? \Illuminate\Support\Str::of($user->name)->explode(' ')->first() : ''),
+        'campus' => old('campus', ''),
+        'type' => old('session_type', $sessionType),
+        'topic' => old('topic', ''),
+        'parts' => array_map('intval', (array) old('parts', $selectedParts)),
+        'submitting' => false,
+    ];
+@endphp
+
+{{-- Setup as a short wizard: type your name and campus once, everything else is one tap per step. --}}
+<x-exam-layout :title="$blueprint->text($mode['title'], $language)" :back="route('exam.index', $isEn ? ['lang' => 'en'] : [])">
+    <div class="mx-auto max-w-6xl px-4 pb-20 pt-8 sm:px-6 sm:pt-12" style="--glow: {{ $glow }}" data-default-type="{{ $wizard['type'] }}"
+         x-data="{
+            ...@js($wizard),
+            get last() { return this.type === 'exam' ? 5 : 4 },
+            next() { if (this.step === 1 && !this.$refs.name.reportValidity()) return; if (this.step === 1 && !this.$refs.campus.reportValidity()) return; this.step = Math.min(this.step + 1, this.last); window.scrollTo({ top: 0, behavior: 'smooth' }) },
+            back() { this.step = Math.max(1, this.step - 1) },
+            pick(field, value) { this[field] = value; this.next() },
+            same(a, b) { return JSON.stringify(a) === JSON.stringify(b) },
+         }">
+
+        <div class="lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-12 xl:gap-16">
+
+        {{-- Laptop: the examiner who is about to call, with the steps as a checklist --}}
+        <aside class="hidden lg:block lg:sticky lg:top-24">
+            <div class="relative isolate overflow-hidden rounded-[2rem] bg-white p-8 text-slate-900 shadow-2xl shadow-slate-900/20">
+                <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(70%_60%_at_50%_25%,rgb(var(--glow)/0.55),transparent_70%)]"></div>
+                <div class="pointer-events-none absolute inset-0 -z-10 opacity-30 [background-image:linear-gradient(rgb(255_255_255/0.06)_1px,transparent_1px),linear-gradient(90deg,rgb(255_255_255/0.06)_1px,transparent_1px)] [background-size:32px_32px] [mask-image:radial-gradient(circle_at_50%_30%,black,transparent_75%)]"></div>
+                <div class="flex items-center justify-between text-xs font-semibold">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-900/[0.06] px-3 py-1"><span class="h-2 w-2 rounded-full bg-emerald-400"></span>{{ $isEn ? 'Online' : 'Online' }}</span>
+                    <span class="rounded-full bg-slate-900/[0.06] px-3 py-1 text-slate-600">{{ $isEn ? 'Video call' : 'Video call' }}</span>
+                </div>
+                <div class="relative mx-auto mt-6 flex h-40 w-40 items-center justify-center">
+                    <span class="voic-ring absolute inset-0 rounded-full" style="box-shadow: 0 0 0 2px rgb(var(--glow) / 0.6)"></span>
+                    <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-40 w-40 rounded-full object-cover ring-4 ring-slate-900/10">
+                </div>
+                <p class="mt-6 text-center text-2xl font-extrabold tracking-tight">{{ $examinerName }}</p>
+                <p class="mt-1 text-center text-sm font-semibold" style="color: rgb(var(--glow))">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
+                <p class="mt-3 text-center text-sm text-slate-600" x-show="name" x-cloak x-text="'{{ $isEn ? 'Ready to call' : 'Siap menelepon' }} ' + name + (campus ? ' {{ $isEn ? 'from' : 'dari' }} ' + campus : '')"></p>
+
+                <ol class="mt-7 space-y-1.5 text-sm">
+                    @foreach ([
+                        [1, $isEn ? 'Get to know you' : 'Kenalan', 'true'],
+                        [2, $isEn ? 'Coach or mock exam' : 'Ngobrol atau simulasi', 'true'],
+                        [3, $isEn ? 'Topic' : 'Topik', 'true'],
+                        [4, $isEn ? 'Length' : 'Durasi', "type === 'exam'"],
+                        [0, $isEn ? 'Get the call' : 'Ditelepon', 'true'],
+                    ] as [$n, $label, $visible])
+                        @php $at = $n === 0 ? 'last' : $n; @endphp
+                        <li x-show="{{ $visible }}" class="flex items-center gap-3 rounded-xl px-3 py-2 transition"
+                            :class="step === {{ $at }} ? 'bg-slate-900/[0.06] font-bold' : (step > {{ $at }} ? 'text-slate-600' : 'text-slate-400')">
+                            <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                                  :style="step >= {{ $at }} ? 'background: rgb(var(--glow)); color: white' : ''"
+                                  :class="step >= {{ $at }} ? '' : 'ring-1 ring-slate-900/15'">
+                                <svg x-show="step > {{ $at }}" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                <span x-show="step <= {{ $at }}" x-text="{{ $n === 0 ? 'last' : $n }}"></span>
+                            </span>
+                            {{ $label }}
+                        </li>
+                    @endforeach
+                </ol>
+            </div>
+        </aside>
+
+        <div class="mx-auto w-full max-w-2xl lg:mx-0 lg:pt-2">
+        {{-- Who you are about to call (phones; the laptop shows the big card) --}}
+        <div class="flex items-center gap-4 lg:hidden">
+            <div class="relative isolate flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
+                <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(circle,rgb(var(--glow)/0.6),transparent_70%)]"></div>
+                <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-12 w-12 rounded-full object-cover">
+                <span class="absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-white"></span>
+            </div>
+            <div class="min-w-0">
+                <p class="text-lg font-extrabold tracking-tight">{{ $examinerName }}</p>
+                <p class="text-sm font-semibold" style="color: rgb(var(--glow))">{{ $blueprint->text($mode['examiner']['title'], $language) }}</p>
+            </div>
+        </div>
+
+        {{-- Progress --}}
+        <div class="mt-6 flex items-center gap-1.5 lg:mt-0" aria-hidden="true">
+            <template x-for="i in last" :key="i">
+                <span class="h-1.5 flex-1 rounded-full transition-colors duration-300" :style="i <= step ? 'background: rgb(var(--glow))' : ''" :class="i <= step ? '' : 'bg-black/10 dark:bg-white/10'"></span>
+            </template>
+        </div>
+        <p class="mt-2 text-xs font-semibold text-slate-500" x-text="'{{ $isEn ? 'Step' : 'Langkah' }} ' + step + ' / ' + last"></p>
+
+        <form method="POST" action="{{ route('exam.start', $modeKey) }}" class="mt-4" @submit="submitting = true">
+            @csrf
+            <input type="hidden" name="language" value="{{ $language }}">
+            <input type="hidden" name="session_type" :value="type">
+            <input type="hidden" name="topic" :value="topic">
+            <template x-for="p in (type === 'exam' ? parts : [1, 2, 3])" :key="p"><input type="hidden" name="parts[]" :value="p"></template>
+            @if ($focus)
+                <input type="hidden" name="focus" value="{{ $focus }}">
+            @endif
+
+            {{-- 1. Name and campus: the only typing --}}
+            <section x-show="step === 1" x-transition.opacity>
+                <h1 class="text-3xl font-extrabold tracking-tight">{{ $isEn ? "Let's get to know you" : 'Kenalan dulu, yuk' }}</h1>
+                <p class="mt-2 text-slate-600 dark:text-slate-400">{{ $isEn ? "{$examinerName} will greet you by name." : "{$examinerName} bakal manggil kamu pakai nama ini." }}</p>
+                <div class="mt-6 space-y-4 rounded-3xl border border-black/5 bg-white p-6 shadow-sm shadow-slate-900/5 dark:border-white/10 dark:bg-white/[0.03]">
+                    <div>
+                        <label for="guest_name" class="block text-sm font-semibold">{{ $isEn ? 'Your name' : 'Nama panggilan' }}</label>
+                        <input id="guest_name" @guest name="guest_name" @endguest x-ref="name" x-model="name" type="text" maxlength="100" required autocomplete="given-name"
+                               @keydown.enter.prevent="$refs.campus.focus()" @if ($user) readonly @endif
+                               placeholder="{{ $isEn ? 'e.g. Rifai' : 'mis. Rifai' }}"
+                               class="mt-2 w-full rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] focus:border-slate-900 focus:ring-slate-900 read-only:opacity-70 dark:border-white/10 dark:bg-white/5">
+                        <x-input-error :messages="$errors->get('guest_name')" class="mt-2" />
+                    </div>
+                    <div>
+                        <label for="campus" class="block text-sm font-semibold">{{ $isEn ? 'Campus / school / institution' : 'Kampus / sekolah / instansi' }}</label>
+                        <input id="campus" name="campus" x-ref="campus" x-model="campus" type="text" maxlength="120" required autocomplete="organization"
+                               @keydown.enter.prevent="next()"
+                               placeholder="{{ $isEn ? 'e.g. Universitas Brawijaya' : 'mis. Universitas Brawijaya' }}"
+                               class="mt-2 w-full rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] focus:border-slate-900 focus:ring-slate-900 dark:border-white/10 dark:bg-white/5">
+                        <div class="mt-2.5 flex flex-wrap gap-1.5">
+                            @foreach ($isEn ? ['Universitas Brawijaya', 'University Student', 'Fresh Graduate', 'Professional'] : ['Universitas Brawijaya', 'Mahasiswa', 'Fresh Graduate', 'Profesional / Umum'] as $presetCampus)
+                                <button type="button" @click="campus = @js($presetCampus)"
+                                        class="rounded-full border px-3 py-1 text-xs font-semibold transition"
+                                        :class="campus === @js($presetCampus) ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-slate-300 hover:bg-slate-100'">
+                                    {{ $presetCampus }}
+                                </button>
+                            @endforeach
+                        </div>
+                        <x-input-error :messages="$errors->get('campus')" class="mt-2" />
+                    </div>
+                </div>
+                <button type="button" @click="next()" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-base font-bold text-white transition hover:brightness-110" style="background: rgb(var(--glow))">
+                    {{ $isEn ? 'Next' : 'Lanjut' }}
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5M6 12h12"/></svg>
+                </button>
+            </section>
+
+            {{-- 2. Coach or mock exam --}}
+            <section x-show="step === 2" x-cloak x-transition.opacity>
+                <h2 class="text-3xl font-extrabold tracking-tight" x-text="'{{ $isEn ? 'Hi' : 'Hai' }} ' + name + ', {{ $isEn ? 'what kind of call?' : 'mau latihan yang mana?' }}'"></h2>
+                <div class="mt-6 grid gap-3">
+                    @foreach ([
+                        'coach' => [$isEn ? 'Chat with a coach' : 'Ngobrol dengan coach', $isEn ? config('exam.coach_minutes').' min · relaxed, no score' : config('exam.coach_minutes').' menit · santai, tanpa nilai', $isEn ? 'You get tips on how to answer and which words to use.' : 'Kamu diajari cara menjawab dan milih kata, sambil ngobrol.', 'chat'],
+                        'exam' => [$isEn ? 'Mock exam' : 'Simulasi ujian', $isEn ? 'Feels like the real thing · report with scores' : 'Rasa ujian sungguhan · ada rapor nilai', $isEn ? 'Afterwards you get a band score and feedback per answer.' : 'Setelahnya kamu dapat band score dan masukan per jawaban.', 'target'],
+                    ] as $value => [$label, $meta, $body, $emoji])
+                        <button type="button" @click="pick('type', '{{ $value }}')"
+                                class="flex items-start gap-4 rounded-3xl border bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md dark:bg-white/[0.03]"
+                                :class="type === '{{ $value }}' ? 'border-[rgb(var(--glow))] ring-2 ring-[rgb(var(--glow)/0.3)]' : 'border-black/10 dark:border-white/10'">
+                            <span class="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-white" style="background: rgb(var(--glow))">@if ($emoji === 'chat')<svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155"/></svg>@else<svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>@endif</span>
+                            <span>
+                                <span class="block text-lg font-bold">{{ $label }}</span>
+                                <span class="block text-xs font-semibold text-slate-500">{{ $meta }}</span>
+                                <span class="mt-1 block text-sm text-slate-600 dark:text-slate-400">{{ $body }}</span>
+                            </span>
+                        </button>
+                    @endforeach
+                </div>
+            </section>
+
+            {{-- 3. Topic --}}
+            <section x-show="step === 3" x-cloak x-transition.opacity>
+                <h2 class="text-3xl font-extrabold tracking-tight">{{ $blueprint->text($mode['topic_label'], $language) }}?</h2>
+                <p class="mt-2 text-slate-600 dark:text-slate-400">{{ $isEn ? 'Pick a preset topic or type your own specific topic below.' : 'Pilih topik yang paling dekat, atau tulis topik spesifikmu sendiri di bawah.' }}</p>
+                <div class="mt-6 flex flex-wrap gap-2">
+                    @foreach ($topics as $topic)
+                        <button type="button" @click="pick('topic', @js($topic))"
+                                class="rounded-full border px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5"
+                                :class="topic === @js($topic) ? 'border-transparent text-white' : 'border-black/10 bg-white hover:border-black/30 dark:border-white/10 dark:bg-white/[0.03] dark:hover:border-white/30'"
+                                :style="topic === @js($topic) ? 'background: rgb(var(--glow))' : ''">{{ $topic }}</button>
+                    @endforeach
+                    <button type="button" @click="pick('topic', '')"
+                            class="rounded-full border border-dashed px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5"
+                            :class="topic === '' ? 'border-transparent text-white' : 'border-black/20 text-slate-600 hover:border-black/40 dark:border-white/20 dark:text-slate-300'"
+                            :style="topic === '' ? 'background: rgb(var(--glow))' : ''">{{ $isEn ? 'Anything / general' : 'Bebas / umum' }}</button>
+                </div>
+
+                {{-- Custom topic input --}}
+                <div class="mt-5 rounded-3xl border border-black/5 bg-white p-5 shadow-2xs dark:border-white/10 dark:bg-white/[0.03]">
+                    <label for="custom_topic" class="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                        {{ $isEn ? 'Or type your own specific topic / role' : 'Atau tulis topik / judul spesifikmu sendiri' }}
+                    </label>
+                    <div class="mt-2 flex flex-col gap-2.5 sm:flex-row">
+                        <input id="custom_topic" type="text" maxlength="160" x-model="topic"
+                               @keydown.enter.prevent="next()"
+                               placeholder="{{ $blueprint->text($mode['topic_placeholder'], $language) }}"
+                               class="flex-1 rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] focus:border-slate-900 focus:ring-slate-900 dark:border-white/10 dark:bg-white/5">
+                        <button type="button" @click="next()"
+                                class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl px-5 py-3 text-sm font-bold text-white transition hover:brightness-110"
+                                style="background: rgb(var(--glow))">
+                            <span>{{ $isEn ? 'Use topic' : 'Pakai topik ini' }}</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5M6 12h12"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {{-- 4. Length (mock exam only) --}}
+            <section x-show="type === 'exam' && step === 4" x-cloak x-transition.opacity>
+                <h2 class="text-3xl font-extrabold tracking-tight">{{ $isEn ? 'How long?' : 'Mau berapa lama?' }}</h2>
+                <div class="mt-6 grid gap-3">
+                    @foreach ($durations as $option)
+                        <button type="button" @click="pick('parts', @js($option['parts']))"
+                                class="flex items-center justify-between rounded-3xl border bg-white p-5 text-left transition hover:-translate-y-0.5 hover:shadow-md dark:bg-white/[0.03]"
+                                :class="same(parts, @js($option['parts'])) ? 'border-[rgb(var(--glow))] ring-2 ring-[rgb(var(--glow)/0.3)]' : 'border-black/10 dark:border-white/10'">
+                            <span>
+                                <span class="block text-lg font-bold">{{ $option['label'] }}</span>
+                                <span class="block text-sm text-slate-500">{{ $option['meta'] }}</span>
+                            </span>
+                            <svg class="h-5 w-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    @endforeach
+                </div>
+                @if ($focus)
+                    <p class="mt-4 rounded-2xl bg-indigo-50 px-4 py-3 text-sm text-indigo-900 ring-1 ring-indigo-100">{{ $isEn ? 'Targeted practice: the parts that train your focus are pre-selected.' : 'Latihan terarah: bagian yang melatih fokusmu sudah dipilihkan.' }}</p>
+                @endif
+            </section>
+
+            {{-- Last step: summary, consent, call --}}
+            <section x-show="step === last" x-cloak x-transition.opacity>
+                <h2 class="text-3xl font-extrabold tracking-tight">{{ $isEn ? 'Ready to call?' : 'Siap ditelepon?' }}</h2>
+                <div class="mt-6 divide-y divide-black/5 rounded-3xl border border-black/5 bg-white text-sm dark:divide-white/10 dark:border-white/10 dark:bg-white/[0.03]">
+                    @foreach ([
+                        [1, $isEn ? 'Name' : 'Nama', "name + ' · ' + campus"],
+                        [2, $isEn ? 'Type' : 'Jenis', "type === 'coach' ? '".($isEn ? 'Chat with a coach' : 'Ngobrol dengan coach')."' : '".($isEn ? 'Mock exam' : 'Simulasi ujian')."'"],
+                        [3, $isEn ? 'Topic' : 'Topik', "topic || '".($isEn ? 'Anything / general' : 'Bebas / umum')."'"],
+                    ] as [$goto, $label, $expression])
+                        <button type="button" @click="step = {{ $goto }}" class="flex w-full items-center justify-between gap-4 px-5 py-3.5 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.03]">
+                            <span class="text-slate-500">{{ $label }}</span>
+                            <span class="flex items-center gap-2 font-semibold"><span x-text="{{ $expression }}"></span><span class="text-xs font-normal text-slate-500 dark:text-slate-400">{{ $isEn ? 'change' : 'ubah' }}</span></span>
+                        </button>
+                    @endforeach
+                    <button type="button" x-show="type === 'exam'" @click="step = 4" class="flex w-full items-center justify-between gap-4 px-5 py-3.5 text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.03]">
+                        <span class="text-slate-500">{{ $isEn ? 'Length' : 'Durasi' }}</span>
+                        <span class="flex items-center gap-2 font-semibold"><span x-text="parts.length === 3 ? '{{ $isEn ? 'Full mock' : 'Simulasi penuh' }}' : '{{ $isEn ? 'Part' : 'Bagian' }} ' + parts.join(', ')"></span><span class="text-xs font-normal text-slate-500 dark:text-slate-400">{{ $isEn ? 'change' : 'ubah' }}</span></span>
+                    </button>
+                </div>
+
+                <label class="mt-4 flex items-start gap-3 rounded-2xl border border-black/5 bg-white p-4 text-sm dark:border-white/10 dark:bg-white/[0.03]">
+                    <input type="checkbox" name="consent" value="1" required @checked(old('consent'))
+                           class="mt-0.5 h-4 w-4 rounded border-black/20 text-slate-900 focus:ring-slate-900">
+                    <span class="text-slate-600 dark:text-slate-400">
+                        @if (\App\Services\Exam\ExaminerService::isCloudModel(config('exam.ai_model')))
+                            {{-- A cloud examiner (e.g. kimi-k3:cloud) receives the text of the answers: name it. --}}
+                            @php
+                                $onlineAi = \App\Services\Exam\OpenRouterClient::handles(config('exam.ai_model'))
+                                    ? \Illuminate\Support\Str::after(config('exam.ai_model'), 'openrouter/').($isEn ? ' via OpenRouter' : ' lewat OpenRouter')
+                                    : config('exam.ai_model').($isEn ? ' via Ollama' : ' lewat Ollama');
+                            @endphp
+                            {{ $isEn
+                                ? 'I agree that my voice is turned into text, that the text of my answers is sent to an online AI ('.$onlineAi.') to reply, and that my answers are stored to build the report.'
+                                : 'Saya setuju suara saya diubah menjadi teks, teks jawaban saya dikirim ke AI online ('.$onlineAi.') untuk dibalas, dan jawaban saya disimpan untuk membuat rapor.' }}
+                        @elseif (config('exam.speed_mode') === 'online')
+                            {{ $isEn
+                                ? 'I agree that the text of my answers is sent to an online AI (Groq) to reply, that the examiner voice is made by an online voice service, and that my answers are stored to build the report.'
+                                : 'Saya setuju teks jawaban saya dikirim ke AI online (Groq) untuk dibalas, suara penguji dibuat layanan suara online, dan jawaban saya disimpan untuk membuat rapor.' }}
+                        @else
+                            {{ $isEn
+                                ? 'I agree that my voice is processed by the AI on this laptop (not sent to the internet), and that my answers are stored to build the report.'
+                                : 'Saya setuju suara saya diproses oleh AI di laptop ini (tidak dikirim ke internet) dan jawaban saya disimpan untuk membuat rapor.' }}
+                        @endif
+                        @guest
+                            {{ $isEn ? 'Guest data is deleted automatically after '.config('exam.retention_days').' days.' : 'Data tamu dihapus otomatis setelah '.config('exam.retention_days').' hari.' }}
+                        @endguest
+                    </span>
+                </label>
+                <x-input-error :messages="$errors->get('consent')" class="mt-2" />
+
+                <button type="submit" :disabled="submitting"
+                        class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-base font-bold text-white shadow-lg transition hover:brightness-110 disabled:opacity-60" style="background: rgb(var(--glow))">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z"/></svg>
+                    <span x-show="!submitting">{{ $isEn ? "Call {$examinerName}" : "Telepon {$examinerName}" }}</span>
+                    <span x-show="submitting" x-cloak>{{ $isEn ? 'Connecting…' : 'Menyambungkan…' }}</span>
+                </button>
+                <p class="mt-3 text-center text-xs text-slate-500">{{ $isEn ? "Use Chrome or Edge and allow the microphone. Part 2: {$prep}s to prepare, up to ".($talk / 60).' min to talk.' : "Pakai Chrome atau Edge dan izinkan mikrofon. Bagian 2: {$prep} detik persiapan, bicara sampai ".($talk / 60).' menit.' }}</p>
+
+                @php $studyCode = old('study_code', session('study_code')); @endphp
+                <details class="mt-6 text-sm" @if ($studyCode) open @endif>
+                    <summary class="cursor-pointer text-center font-semibold text-slate-500 dark:text-slate-400">{{ $isEn ? 'Have a trial participant code?' : 'Punya kode peserta uji coba?' }}</summary>
+                    <input name="study_code" type="text" maxlength="20" value="{{ $studyCode }}" autocomplete="off"
+                           placeholder="{{ $isEn ? 'e.g. P01' : 'mis. P01' }}"
+                           class="mt-3 w-full rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] uppercase placeholder:normal-case focus:border-slate-900 focus:ring-slate-900 dark:border-white/10 dark:bg-white/5">
+                </details>
+            </section>
+
+            {{-- Back --}}
+            <button type="button" x-show="step > 1" x-cloak @click="back()" class="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                {{ $isEn ? 'Back' : 'Kembali' }}
+            </button>
+        </form>
+        </div>
+        </div>
+    </div>
+</x-exam-layout>

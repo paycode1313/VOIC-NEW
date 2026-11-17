@@ -21,7 +21,7 @@ php artisan voic:latency --live
 Hasil di laptop pengembangan saat ini (i5-8250U, RAM 8 GB, tanpa GPU): **median ±25 detik**, masuk kategori macet.
 
 Pilihan solusi, urut dari yang paling disarankan:
-1. **Laptop dengan GPU NVIDIA** (pinjam dari anggota tim/kampus). Jalankan `python ai_service/setup_models.py --gpu`.
+1. **Laptop dengan GPU NVIDIA** (pinjam dari anggota tim/kampus). Jalankan `python backend/ai_service/setup_models.py --gpu`.
    Model 3B di GPU biasanya menjawab dalam 1–2 detik.
 2. **Model lebih kecil** (mis. 1,5B) untuk laptop tanpa GPU: kira-kira 2× lebih cepat, kualitas sedikit turun.
    Model hasil distilasi (`voic-coach`) sebaiknya dilatih dari model kecil ini.
@@ -52,7 +52,7 @@ php artisan voic:doctor
 
 ## 3. H-1
 
-- [ ] `git pull`, `composer install`, `npm run build`, `php artisan migrate`
+- [ ] `git pull`, `composer install` + `php artisan migrate` (di `backend/`), `npm run build` (di `frontend/`)
 - [ ] `jalankan_voic.bat` berjalan sampai halaman `/latihan` terbuka
 - [ ] Atur `VOIC_BOOTH_PIN` dan `VOIC_PUBLIC_URL` (IP laptop di jaringan booth) di `.env`
 - [ ] Coba QR rapor dari HP di jaringan yang sama
