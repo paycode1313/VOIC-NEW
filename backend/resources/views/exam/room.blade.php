@@ -115,9 +115,11 @@
                 <ol x-show="!isCoach" class="flex min-w-0 items-center gap-1 overflow-x-auto text-xs font-semibold">
                     <template x-for="p in state.parts" :key="p.number">
                         <li class="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1"
-                            :class="p.status === 'current' ? 'bg-slate-900 text-white' : (p.status === 'done' ? 'text-emerald-600' : 'text-slate-600')">
+                            :class="p.status === 'current' ? 'bg-slate-900 text-white' : ((p.status === 'done' ? 'text-emerald-600' : 'text-slate-600') + ' hidden sm:inline-flex')">
                             <template x-if="p.status === 'done'"><svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></template>
                             <span x-text="'{{ $isEn ? 'Part' : 'Bagian' }} ' + p.number"></span>
+                            {{-- Phones show only the current part: "Bagian 2/3". --}}
+                            <span x-show="p.status === 'current'" class="-ml-1 sm:hidden" x-text="'/' + state.parts.length"></span>
                             <span class="hidden lg:inline" x-text="'· ' + p.title"></span>
                         </li>
                     </template>
@@ -274,7 +276,10 @@
                         <div class="relative aspect-video">
                             <video x-ref="video" x-show="cameraOn" muted playsinline class="h-full w-full -scale-x-100 object-cover"></video>
                             <div x-show="!cameraOn" class="absolute inset-0 flex items-center justify-center">
-                                <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/[0.06] text-sm font-bold sm:h-12 sm:w-12">{{ $isEn ? 'You' : 'Kamu' }}</span>
+                                {{-- The label below already says "Kamu": an icon here, so the two never sit on top of each other on a phone. --}}
+                                <span class="inline-flex h-8 w-8 -translate-y-2 items-center justify-center rounded-full bg-slate-900/[0.06] text-slate-500 sm:h-12 sm:w-12 sm:-translate-y-1" aria-hidden="true">
+                                    <svg class="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                                </span>
                             </div>
                             <span x-show="cameraOn && expression" x-cloak x-text="expressionLabel()"
                                   :class="expression === 'tense' || expression === 'away' ? 'bg-amber-500/90' : 'bg-emerald-600/90'"
