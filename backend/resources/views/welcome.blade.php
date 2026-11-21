@@ -31,7 +31,7 @@
                     <a href="#cara-kerja" class="inline-flex items-center rounded-full border border-black/10 bg-white/60 px-6 py-3.5 text-base font-semibold backdrop-blur transition hover:bg-white dark:border-white/15 dark:hover:bg-white/10">Lihat cara kerja</a>
                 </div>
                 <div class="voic-rise mt-6 flex items-center gap-3" style="--d: 320ms">
-                    <div class="flex -space-x-2.5">
+                    <div class="flex shrink-0 -space-x-2.5">
                         @foreach ($modes as $mode)
                             <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-9 w-9 rounded-full object-cover ring-2 ring-white" loading="lazy">
                         @endforeach
@@ -56,12 +56,12 @@
                 </div>
             @endforeach
             <div class="overflow-hidden rounded-3xl bg-[#eef1f8] p-3 shadow-2xl shadow-indigo-900/20 ring-1 ring-black/10 dark:ring-white/10" aria-hidden="true" style="--glow: 99 102 241">
-                <div class="flex items-center justify-between px-2 pb-3 pt-1 text-xs font-semibold text-slate-900">
+                <div class="flex items-center justify-between gap-2 whitespace-nowrap px-2 pb-3 pt-1 text-xs font-semibold text-slate-900">
                     <span class="inline-flex items-center gap-2">
                         <span class="inline-flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 font-bold uppercase tracking-wider text-rose-600"><span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400"></span>Live</span>
                         VOIC-SIDANG <span class="font-mono text-slate-600">06:42</span>
                     </span>
-                    <span class="rounded-full bg-white px-2 py-0.5 text-slate-900">Bagian 3 · Tanya Jawab</span>
+                    <span class="rounded-full bg-white px-2 py-0.5 text-slate-900">Bagian 3<span class="hidden sm:inline"> · Tanya Jawab</span></span>
                 </div>
                 <div class="relative isolate aspect-video overflow-hidden rounded-2xl bg-white">
                     <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(55%_70%_at_50%_40%,rgb(var(--glow)/0.55),transparent_72%)]"></div>
