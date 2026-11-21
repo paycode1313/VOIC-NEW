@@ -613,7 +613,7 @@ class ExamFlowService
         $options = $state['language'] === 'en'
             ? ['Next question.', 'Let me ask you something else.', 'Moving on.', 'Okay, next one.']
             : (($this->blueprint->mode($state['mode'])['role_type'] ?? '') === 'hrd'
-                ? ['Lanjut ya.', 'Oke, pertanyaan berikutnya.', 'Nah, sekarang saya mau tanya hal lain.', 'Kita lanjut.']
+                ? ['Lanjut ya.', 'Oke, pertanyaan berikutnya.', 'Nah, sekarang aku mau tanya hal lain.', 'Kita lanjut.']
                 : ['Pertanyaan berikutnya.', 'Baik, kita lanjut.', 'Saya ingin bertanya hal lain.', 'Selanjutnya.']);
 
         return $options[(int) $state['turn'] % count($options)];

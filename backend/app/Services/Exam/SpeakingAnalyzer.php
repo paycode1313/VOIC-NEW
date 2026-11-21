@@ -205,6 +205,19 @@ class SpeakingAnalyzer
      */
     public function keyPhrase(string $answer, string $mode): ?string
     {
+        $phrase = $this->findKeyPhrase($answer, $mode);
+        if ($phrase === null) {
+            return null;
+        }
+
+        // The phrase is found in the lowercased answer; quote it the way the candidate wrote it ("API-nya", not "api-nya").
+        $pattern = '/'.implode('[\s,]+', array_map(fn ($word) => preg_quote($word, '/'), explode(' ', $phrase))).'/iu';
+
+        return preg_match($pattern, $answer, $original) ? $original[0] : $phrase;
+    }
+
+    protected function findKeyPhrase(string $answer, string $mode): ?string
+    {
         $normalized = $this->normalize($answer);
 
         if (preg_match('/(?<![\p{L}\p{N}])(\d+[.,]?\d*\s?(?:persen|%|juta|ribu|miliar|orang|pengguna|pelanggan|gambar|data|sampel|responden|bulan|tahun|minggu|hari|percent|users|customers|months|years|weeks)(?:\s+[\p{L}\-]{3,}){0,1})/u', $normalized, $match)) {

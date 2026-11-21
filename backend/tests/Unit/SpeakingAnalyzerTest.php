@@ -53,6 +53,13 @@ class SpeakingAnalyzerTest extends TestCase
         $this->assertSame([], $clean['fillers']);
     }
 
+    public function test_key_phrase_keeps_the_candidates_own_capitals(): void
+    {
+        // Seen live (offline composer): "Oke, aku catat soal masalah api-nya lambat banget ya."
+        $this->assertSame('masalah API-nya lambat banget', $this->analyzer->keyPhrase('Eee jadi waktu magang itu, ada masalah API-nya lambat banget pas jam sibuk.', 'wawancara'));
+        $this->assertSame('2000 gambar', $this->analyzer->keyPhrase('Datanya 2000 gambar dari satu pabrik.', 'sidang'));
+    }
+
     public function test_only_the_cue_card_talk_is_held_to_the_long_turn_length(): void
     {
         // A 40-word answer: short for the two-minute cue card talk, fine for the follow-up question after it.
