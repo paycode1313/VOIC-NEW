@@ -503,8 +503,9 @@ class ExamReportService
 
             if ($response?->successful()) {
                 foreach ((array) $response->json('items', []) as $row) {
-                    $text = trim((string) ($row['improved'] ?? ''));
-                    if (isset($row['key']) && $text !== '') {
+                    // Same clean-up as the cloud rewrite (no "Situasi:" labels, a sensible length).
+                    $text = $this->examiner->tidyImproved((string) ($row['improved'] ?? ''));
+                    if (isset($row['key']) && $text !== null) {
                         $improved[(int) $row['key']] = $text;
                     }
                 }

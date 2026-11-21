@@ -1941,7 +1941,7 @@ class ExaminerService
     /**
      * A rewritten answer ready to show, or null when it is too short or too long to be one.
      */
-    protected function tidyImproved(string $raw): ?string
+    public function tidyImproved(string $raw): ?string
     {
         // Placeholders in [brackets] belong here, so not clean(), which removes them.
         $text = trim(trim(preg_replace('/\s+/u', ' ', preg_replace('/[\*#_`~]+/u', '', $raw) ?? '') ?? ''), '"“”');

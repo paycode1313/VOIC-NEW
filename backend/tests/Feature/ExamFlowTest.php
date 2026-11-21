@@ -929,9 +929,6 @@ class ExamFlowTest extends TestCase
         }
     }
 
-    /**
-     * @param  list<int>  $parts
-     */
     public function test_the_examiner_greets_the_guest_by_name_and_campus_and_keeps_knowing_them(): void
     {
         $this->offline();
@@ -1046,6 +1043,32 @@ class ExamFlowTest extends TestCase
             && str_contains((string) ($request->data()['messages'][1]['content'] ?? ''), 'Jawaban asli: Eee waktu magang'));
     }
 
+    public function test_rewrites_from_the_local_ai_are_cleaned_like_the_cloud_ones(): void
+    {
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), '/exam/improve')) {
+                $items = array_map(fn ($item) => [
+                    'key' => $item['key'],
+                    'improved' => 'Situasi: Waktu magang, API kami lambat sampai lima detik. Tugas: Saya mencari penyebabnya. Aksi: Saya memprofil query dan menambah index. Hasil: Respons turun ke 300 milidetik.',
+                ], $request->data()['items']);
+
+                return Http::response(['items' => $items]);
+            }
+
+            return Http::response([], 503);
+        });
+
+        $session = $this->startExam('wawancara', [1]);
+        for ($i = 0; $i < 8 && $session->refresh()->exam_state['phase'] !== ExamFlowService::PHASE_COMPLETED; $i++) {
+            $this->postJson(route('exam.answer', $session), ['answer' => 'Eee API-nya lambat, saya tambah index.', 'duration_seconds' => 10, 'timestamp_seconds' => $i * 15])->assertOk();
+        }
+        $this->postJson(route('exam.finish', $session), ['duration_seconds' => 200])->assertOk();
+
+        $improved = array_values(array_filter($session->refresh()->feedback_notes['exam_report']['answers'], fn ($item) => $item['improved_source'] === 'ai'));
+        $this->assertNotEmpty($improved);
+        $this->assertSame('Waktu magang, API kami lambat sampai lima detik. Saya mencari penyebabnya. Saya memprofil query dan menambah index. Respons turun ke 300 milidetik.', $improved[0]['improved']);
+    }
+
     public function test_the_cloud_rewrites_all_weak_answers_in_one_request(): void
     {
         config(['services.groq.key' => 'test-key', 'exam.speed_mode' => 'online']);
@@ -1085,6 +1108,9 @@ class ExamFlowTest extends TestCase
         }
     }
 
+    /**
+     * @param  list<int>  $parts
+     */
     private function startExam(string $mode, array $parts): PracticeSession
     {
         $this->post(route('exam.start', $mode), [
