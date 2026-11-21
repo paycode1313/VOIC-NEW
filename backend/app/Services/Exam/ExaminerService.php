@@ -289,6 +289,11 @@ class ExaminerService
     public function respond(array $turn, ?callable $onSentence = null): array
     {
         $messages = $this->buildMessages($turn);
+        // The local model gets the compact prompt (see compactPrompt()); built only when the local model is asked.
+        $localMessages = null;
+        $forLocal = function () use (&$localMessages, $turn): array {
+            return $localMessages ??= $this->buildMessages($this->forLocal($turn));
+        };
         $baseUrl = $this->baseUrl();
 
         // An OpenRouter model (e.g. the free Kimi K2.6) answers first; on failure the local chain takes over.
@@ -327,14 +332,14 @@ class ExaminerService
         // Streaming: sentences are spoken while the model is still writing. A pure reaction
         // is followed by a fixed announcement, so it is not worth streaming.
         if ($onSentence !== null && $turn['directive'] !== self::DIRECTIVE_REACT) {
-            $streamed = $this->streamLocalModel($turn, $messages, $onSentence);
+            $streamed = $this->streamLocalModel($turn, $forLocal(), $onSentence);
             if ($streamed !== null) {
                 return $streamed;
             }
         }
 
         $result = null;
-        $local = $this->callLocalModel($turn, $messages);
+        $local = $this->callLocalModel($turn, $forLocal());
         if ($local !== null && ($resolved = $this->resolveModelReply($local, $turn)) !== null) {
             $result = $resolved + ['audio_url' => $this->synthesize($baseUrl, $resolved['text'], $turn), 'engine' => $this->engineFor($this->lastModel)];
         }
@@ -475,7 +480,7 @@ class ExaminerService
         }
 
         try {
-            $messages = $this->buildMessages($turn + ['answer' => '', 'directive' => self::DIRECTIVE_REACT, 'planned_question' => null, 'transition' => null]);
+            $messages = $this->buildMessages($this->forLocal($turn + ['answer' => '', 'directive' => self::DIRECTIVE_REACT, 'planned_question' => null, 'transition' => null]));
             // Everything except the last message (the answer that does not exist yet) is the shared start.
             $messages[count($messages) - 1]['content'] = '.';
             Http::connectTimeout(1)->timeout(3)->post($this->baseUrl().'/exam/prime', ['messages' => $messages, 'model' => $model]);
@@ -784,12 +789,114 @@ class ExaminerService
     }
 
     /**
+     * The turn marked for the compact prompt when the model runs on this laptop (config exam.local_prompt).
+     * A cloud model behind Ollama ("kimi-k3:cloud") is big enough for the full prompt.
+     *
+     * @param  array<string, mixed>  $turn
+     * @return array<string, mixed>
+     */
+    protected function forLocal(array $turn): array
+    {
+        return Config::get('exam.local_prompt', 'compact') === 'compact' && ! self::isCloudModel($this->ollamaModel())
+            ? ['compact' => true] + $turn
+            : $turn;
+    }
+
+    /**
+     * About 600 tokens instead of 2400, for a small model on a CPU. Measured with qwen2.5 3B (num_ctx 4096): the
+     * full prompt took 16-90 s per turn and the model lost the thread ("Maksimal dua menit selesai..." repeated
+     * its own cue card); a short prompt is read faster, leaves room for the conversation itself, and a small model
+     * follows five clear rules better than twenty. Same turn tags as the full prompt (instructionLegend()).
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function compactPrompt(array $turn): string
+    {
+        $isEn = $turn['language'] === 'en';
+        $coach = ($turn['session_type'] ?? null) === 'coach';
+        $name = self::spokenName((string) $turn['examiner_name']);
+        $role = (string) $turn['role_type'];
+
+        $persona = match ($role) {
+            'hrd' => $isEn
+                ? "You are {$name}, a warm, cheerful HR recruiter on a call."
+                : "Kamu {$name}, HR recruiter yang ceria dan hangat, sedang menelepon kandidat. Panggil dia \"kamu\", dirimu \"aku\".",
+            'investor' => $isEn
+                ? "You are {$name}, a young, direct investor who loves concrete numbers."
+                : "Kamu {$name}, investor muda yang cepat dan blak-blakan, suka angka konkret. Panggil founder \"kamu\", dirimu \"saya\".",
+            default => $isEn
+                ? "You are {$name}, a calm, firm and fair thesis examiner."
+                : "Kamu {$name}, dosen penguji sidang yang tenang, tegas, dan adil. Panggil mahasiswa \"kamu\", dirimu \"saya\".",
+        };
+        if ($coach) {
+            $persona .= $isEn
+                ? ' This is a relaxed coaching chat, NOT a test: never give a score.'
+                : ' Ini sesi coaching santai, BUKAN tes: jangan pernah memberi nilai.';
+            if (! empty($turn['coach_skills'])) {
+                $persona .= ($isEn ? ' What you coach: ' : ' Yang kamu latih: ').Str::limit((string) $turn['coach_skills'], 220).'.';
+            }
+        }
+
+        $lines = [$persona];
+        if (! empty($turn['candidate']['name'])) {
+            $lines[] = $this->candidateLine($turn['candidate'], $isEn);
+        }
+        if (! empty($turn['topic'])) {
+            $lines[] = ($isEn ? 'Topic: ' : 'Topik: ').Str::limit((string) $turn['topic'], 120);
+        }
+        if (! empty($turn['retry']['question'])) {
+            $lines[] = ($isEn ? 'They are practising this question again: ' : 'Peserta sedang melatih ulang pertanyaan ini: ').'"'.Str::limit((string) $turn['retry']['question'], 200).'"'
+                .($isEn ? '. Their first answer: ' : '. Jawaban pertamanya: ').'"'.Str::limit((string) ($turn['retry']['answer'] ?? ''), 300).'"'
+                .($isEn ? '. Say what got better in each new try.' : '. Sebutkan apa yang membaik di tiap percobaan baru.');
+        }
+        $focus = [
+            'fluency' => ['speaking longer without long pauses', 'bicara lebih panjang tanpa jeda lama'],
+            'vocabulary' => ['using precise, field-specific words', 'memakai istilah yang tepat sesuai bidang'],
+            'structure' => ['answering with a clear point, a reason and a concrete example', 'menjawab dengan poin jelas, alasan, dan contoh konkret'],
+            'delivery' => ['staying calm and confident', 'tampil tenang dan percaya diri'],
+        ][$turn['focus'] ?? ''] ?? null;
+        if ($focus !== null) {
+            $lines[] = $isEn ? "The candidate is practising {$focus[0]}." : "Peserta sedang melatih {$focus[1]}.";
+        }
+
+        $rules = $isEn
+            ? [
+                'Speak like a person on a call: short spoken sentences, no lists, no emoji.',
+                'React to ONE thing from the last answer in your own words. Never repeat or summarise the answer.',
+                $coach ? 'Teach one concrete thing per turn, with a better example sentence in quotes if useful.' : 'Ask exactly one question and never one you already asked.',
+                'Do not praise every turn.',
+                'Never read the tags in square brackets aloud.',
+            ]
+            : [
+                'Bicara seperti di telepon: kalimat lisan pendek, tanpa daftar, tanpa emoji.',
+                'Tanggapi SATU hal dari jawaban terakhir dengan kata-katamu sendiri. Jangan mengulang atau merangkum jawabannya.',
+                $coach ? 'Ajarkan satu hal konkret per giliran, boleh dengan contoh kalimat yang lebih baik di dalam tanda kutip.' : 'Ajukan tepat satu pertanyaan, dan jangan ulangi pertanyaan yang sudah ditanyakan.',
+                'Jangan memuji di setiap giliran.',
+                'Jangan pernah membacakan tag dalam kurung siku.',
+            ];
+        $lines[] = implode("\n", array_map(fn ($rule, $i) => ($i + 1).'. '.$rule, $rules, array_keys($rules)));
+
+        $lines[] = $coach
+            ? ($isEn
+                ? 'Tags at the end of each message: [COACH] reply in at most 3 sentences and keep the chat going. [CLOSE] say goodbye warmly in 2 sentences, no question. NO PRAISE = no compliment this turn. TENSE = start with one calming sentence.'
+                : 'Tag di akhir pesan peserta: [LATIH] balas maksimal 3 kalimat dan jaga obrolan tetap jalan. [TUTUP] pamit dengan hangat dalam 2 kalimat, tanpa bertanya. TANPA PUJIAN = jangan memuji giliran ini. TEGANG = awali dengan satu kalimat yang menenangkan.')
+            : ($isEn
+                ? 'Tags at the end of each message: [REACT] one short reaction, no question. [PROBE] a short reaction, then one deeper question about that answer. [NEXT: "topic"] a short reaction, then ask about the topic in quotes in your own words (ANNOUNCE: ... = say we move to that part). [CLARIFY] explain your question more simply, then ask again. FOCUS: ... = what your question should dig into. NO PRAISE = no compliment this turn. TENSE = start with one calming sentence.'
+                : 'Tag di akhir pesan peserta: [TANGGAPI] satu tanggapan pendek, tanpa pertanyaan. [GALI] tanggapan pendek, lalu satu pertanyaan yang menggali jawaban itu. [LANJUT: "topik"] tanggapan pendek, lalu tanyakan topik dalam tanda kutip dengan kata-katamu sendiri (UMUMKAN: ... = sebutkan kita masuk ke bagian itu). [JELASKAN] jelaskan pertanyaanmu dengan lebih sederhana, lalu tanyakan lagi. FOKUS: ... = hal yang harus digali pertanyaanmu. TANPA PUJIAN = jangan memuji giliran ini. TEGANG = awali dengan satu kalimat yang menenangkan.');
+
+        return implode("\n", $lines);
+    }
+
+    /**
      * Persona and speaking rules for the examiner.
      *
      * @param  array<string, mixed>  $turn
      */
     public function systemPrompt(array $turn): string
     {
+        if (! empty($turn['compact'])) {
+            return $this->compactPrompt($turn);
+        }
         if (($turn['session_type'] ?? null) === 'coach') {
             return $this->coachSystemPrompt($turn);
         }

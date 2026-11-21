@@ -3,6 +3,8 @@
 namespace Tests\Unit;
 
 use App\Services\Exam\ExaminerService;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class ExaminerSpeakingStyleTest extends TestCase
@@ -181,6 +183,42 @@ class ExaminerSpeakingStyleTest extends TestCase
             'Timeboxing, masuk akal. Oke, sekarang kita masuk Bagian 2, Cerita Pengalaman.',
             $examiner->resolveModelReply('Timeboxing, masuk akal.', $turn)['text'],
         );
+    }
+
+    public function test_the_local_model_gets_a_compact_prompt_and_the_cloud_the_full_one(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key', 'exam.speed_mode' => 'online', 'exam.local_prompt' => 'compact']);
+        $systems = [];
+        Http::fake(function ($request) use (&$systems) {
+            if (str_contains($request->url(), 'api.groq.com') || str_contains($request->url(), '/exam/respond')) {
+                $systems[str_contains($request->url(), 'api.groq.com') ? 'cloud' : 'local'] = (string) ($request->data()['messages'][0]['content'] ?? '');
+            }
+
+            // The cloud is out of quota, so the local model answers too.
+            return str_contains($request->url(), 'api.groq.com')
+                ? Http::response(['error' => ['message' => 'quota']], 503)
+                : Http::response(['reply' => 'Magang enam bulan, pengalaman langsung. Sekarang lagi belajar skill apa?', 'passed_quality' => true, 'model' => 'voic-coach']);
+        });
+
+        $turn = $this->turn('hrd', 'VOIC-INTERVIEW') + [
+            'answer' => 'Saya magang enam bulan sebagai backend developer.', 'directive' => ExaminerService::DIRECTIVE_FOLLOW_UP,
+            'planned_question' => null, 'transition' => '', 'part' => 1, 'part_title' => 'Perkenalan', 'skip_focus' => true,
+            'history' => [], 'question' => 'Boleh kenalan dulu?', 'scripted' => '', 'candidate' => ['name' => 'Rina', 'campus' => null, 'status' => null],
+            'session_id' => 1, 'turn' => 1, 'visual' => null,
+        ];
+        app(ExaminerService::class)->respond($turn);
+
+        // Full prompt (playbook with style examples) for the cloud, about a sixth of it for the laptop's model.
+        $this->assertStringContainsString('Contoh gaya', $systems['cloud']);
+        $this->assertStringNotContainsString('Contoh gaya', $systems['local']);
+        $this->assertStringContainsString('[GALI]', $systems['local']);
+        $this->assertLessThan(mb_strlen($systems['cloud']) / 3, mb_strlen($systems['local']));
+
+        // "full" gives the local model the cloud's prompt again.
+        config(['exam.local_prompt' => 'full']);
+        app(ExaminerService::class)->respond($turn);
+        $this->assertStringContainsString('Contoh gaya', $systems['local']);
     }
 
     public function test_brand_names_are_spoken_as_words(): void

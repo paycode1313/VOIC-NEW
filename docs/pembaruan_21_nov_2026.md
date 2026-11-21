@@ -49,6 +49,14 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
   - Coach membalas ucapan terima kasih dengan hangat dan tidak mengulang tips yang sama.
   - Kutipan jawaban memakai huruf asli peserta ("API-nya", bukan "api-nya"), dan HRD konsisten memakai "aku".
 
+## AI lokal (Ollama)
+
+- AI lokal kini memakai **prompt ringkas** (sekitar 400 token, sebelumnya 2400). Diukur di laptop ini (Qwen2.5 3B, CPU
+  sekitar 23 token/detik): giliran pertama turun dari 90 detik (gagal) menjadi 43 detik, giliran berikutnya 15-19 detik,
+  dan balasannya **nyambung** dengan jawaban peserta (sebelumnya salah tangkap dan mengulang instruksinya sendiri).
+  AI cloud tetap memakai prompt lengkap. Setel `VOIC_LOCAL_PROMPT=full` untuk laptop dengan GPU.
+- AI lokal tetap jauh lebih lambat dari Groq, jadi untuk booth sebaiknya tetap mode online dengan AI lokal hanya sebagai cadangan.
+
 ## Rapor
 
 - **Versi jawaban yang lebih kuat** kini juga ditulis oleh model cloud, sehingga tetap muncul di mode online
@@ -103,5 +111,5 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 
 ## Tes
 
-`php artisan test` (221 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
+`php artisan test` (222 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.

@@ -49,6 +49,13 @@ return [
     'ai_model' => env('VOIC_AI_MODEL'),
 
     /*
+    | Prompt for a model running on this laptop (Ollama): "compact" (default) is about 600 tokens instead of
+    | 2400, because a 3-4B model on a CPU reads the full prompt for tens of seconds, then forgets the start of
+    | the conversation in its 4096-token context and loses the thread. "full" = the same prompt as the cloud.
+    */
+    'local_prompt' => env('VOIC_LOCAL_PROMPT', 'compact'),
+
+    /*
     | "offline" (default): everything runs on this laptop (private, no internet), speed depends on the hardware.
     | "online": for a laptop without a GPU at a booth with internet. A fast cloud model (GROQ_API_KEY or
     | OPENAI_API_KEY) answers first and the browser recognises speech, so the examiner replies in 1-2 seconds.
