@@ -108,8 +108,8 @@ class ExamFlowService
                 default => "Welcome{$who}, I'm {$examinerName}, your thesis examiner today. This mock defense has {$partCount} ".($partCount === 1 ? 'part' : 'parts')." and takes about {$minutes} minutes. Take your time and answer in your own words.",
             }
         : match ($definition['role_type']) {
-            'hrd' => "Halo{$who}, aku {$examinerName}, HRD yang bakal ngobrol sama kamu hari ini. Kita ngobrol sekitar {$minutes} menit, ada {$partCount} bagian. Santai aja ya, jawab senatural mungkin, anggap lagi ngobrol biasa.",
-            'investor' => "Halo{$who}, saya {$examinerName}, investor yang bakal dengerin pitch kamu hari ini. Kita punya sekitar {$minutes} menit, dibagi {$partCount} bagian. Santai aja, anggap kita lagi ngopi bareng dan kamu cerita soal startup-mu.",
+            'hrd' => "Halo{$who}, aku {$examinerName}, HRD yang bakal ngobrol sama kamu hari ini. Sekitar {$minutes} menit, {$partCount} bagian, santai aja ya, anggap lagi ngobrol biasa.",
+            'investor' => "Halo{$who}, saya {$examinerName}, investor yang bakal dengerin pitch kamu hari ini. Kita punya {$minutes} menit, {$partCount} bagian, anggap aja lagi ngopi bareng.",
             default => "Halo{$who}, selamat datang. Saya {$examinerName}, dosen penguji kamu hari ini. Sidang simulasinya ada {$partCount} bagian, kira-kira {$minutes} menit. Tenang aja, jawab pakai bahasamu sendiri.",
         };
 
