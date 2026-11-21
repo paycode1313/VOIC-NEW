@@ -36,6 +36,23 @@ class SpeakingAnalyzerTest extends TestCase
         $this->assertContains('proyek', $metrics['domain_terms']);
     }
 
+    public function test_drawn_out_hesitations_count_as_fillers(): void
+    {
+        // Speech-to-text writes hesitations the way they sound: "eee", "emmm", "hmmm", "uhhh".
+        $metrics = $this->analyzer->analyzeAnswer(
+            'Eee jadi waktu magang itu, emmm, saya profiling query-nya. Hmmm, terus eeeh hasilnya turun, uhhh, ke 300 milidetik. Ehmmm gitu.',
+            12,
+            'Ceritakan pengalamanmu.',
+            'wawancara'
+        );
+
+        $this->assertSame(['eh' => 2, 'ehm' => 1, 'em' => 1, 'hmm' => 1, 'uh' => 1], $metrics['fillers']);
+
+        // Real words that merely contain these letters are left alone.
+        $clean = $this->analyzer->analyzeAnswer('Saya ahli membuat menu hemat untuk umkm, emas dan hemat energi.', 5, 'Ceritakan dirimu.', 'wawancara');
+        $this->assertSame([], $clean['fillers']);
+    }
+
     public function test_a_rich_answer_scores_higher_than_a_vague_one(): void
     {
         $rich = $this->analyzer->analyzeAnswer(

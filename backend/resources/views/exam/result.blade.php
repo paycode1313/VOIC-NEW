@@ -3,16 +3,11 @@
     $accent = config('exam.accents')[$mode['accent']] ?? config('exam.accents.indigo');
     $band = (float) $report['overall_band'];
     $stats = $report['stats'];
-    $fillerWords = (array) config('exam.fillers', []);
+    // One pass over listed fillers (longest first) and drawn-out hesitations ("eee", "hmmm"), like the analyzer counts them.
+    $fillerWords = collect((array) config('exam.fillers', []))->sortByDesc(fn ($w) => mb_strlen($w))->map(fn ($w) => preg_quote(e($w), '/'));
+    $fillerPattern = '/(?<![\p{L}\p{N}])('.$fillerWords->push(\App\Services\Exam\SpeakingAnalyzer::HESITATION)->implode('|').')(?![\p{L}\p{N}])/iu';
 
-    $highlight = function (string $text) use ($fillerWords): string {
-        $escaped = e($text);
-        foreach ($fillerWords as $filler) {
-            $escaped = preg_replace('/(?<![\p{L}\p{N}])('.preg_quote(e($filler), '/').')(?![\p{L}\p{N}])/iu', '<mark class="rounded bg-amber-200/70 px-0.5 text-inherit dark:bg-amber-400/30">$1</mark>', $escaped) ?? $escaped;
-        }
-
-        return $escaped;
-    };
+    $highlight = fn (string $text): string => preg_replace($fillerPattern, '<mark class="rounded bg-amber-200/70 px-0.5 text-inherit dark:bg-amber-400/30">$1</mark>', e($text)) ?? e($text);
 
     $bandColor = fn (float $value) => $value >= 7 ? 'bg-emerald-500' : ($value >= 5.5 ? 'bg-amber-500' : 'bg-rose-500');
     $minutes = intdiv((int) $session->duration_seconds, 60);

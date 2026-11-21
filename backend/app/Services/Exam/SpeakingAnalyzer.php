@@ -33,7 +33,41 @@ class SpeakingAnalyzer
         'it', 'that', 'this', 'as', 'at', 'by', 'so', 'but', 'if', 'then', 'very', 'really', 'just', 'also', 'have', 'has', 'had', 'do', 'did',
     ];
 
+    /**
+     * A drawn-out hesitation as speech-to-text writes it: "eee", "eeeh", "emmm", "ehmmm", "hmmm", "uhhh", "errr".
+     * Only the letters of a hesitation, with at least one letter held (repeated), so real words never match.
+     */
+    public const HESITATION = '(?=[ehmur]*([ehmur])\g{-1})(?:e+h*m*|e+r+m*|h+m+|u+h*m*)';
+
     public function __construct(protected ExamBlueprint $blueprint) {}
+
+    /**
+     * Filler words from config('exam.fillers') plus drawn-out hesitations, which are folded into the
+     * listed word they stretch ("eeeh" counts as "eh", "hmmm" as "hmm"). Ordered like the config list.
+     *
+     * @param  list<string>  $words
+     * @return array<string, int>
+     */
+    protected function countFillers(string $normalized, array $words): array
+    {
+        $listed = array_map(Str::lower(...), (array) config('exam.fillers', []));
+        $fillers = $this->countPhrases($normalized, $listed);
+
+        foreach ($words as $word) {
+            if (in_array($word, $listed, true) || ! preg_match('/^'.self::HESITATION.'$/u', $word)) {
+                continue;
+            }
+
+            $key = preg_replace('/(.)\1+/u', '$1', $word) ?? $word;   // "ehmmm" -> "ehm"
+            $key = ['e' => 'eh', 'hm' => 'hmm', 'u' => 'uh'][$key] ?? $key;
+            $fillers[$key] = ($fillers[$key] ?? 0) + 1;
+        }
+
+        $order = array_flip($listed);
+        uksort($fillers, fn ($a, $b) => ($order[$a] ?? PHP_INT_MAX) <=> ($order[$b] ?? PHP_INT_MAX) ?: strcmp($a, $b));
+
+        return $fillers;
+    }
 
     /**
      * Analyze one answer.
@@ -62,7 +96,7 @@ class SpeakingAnalyzer
         $words = $this->words($normalized);
         $wordCount = count($words);
 
-        $fillers = $this->countPhrases($normalized, (array) config('exam.fillers', []));
+        $fillers = $this->countFillers($normalized, $words);
         $fillerCount = array_sum($fillers);
 
         $connectors = array_keys($this->countPhrases($normalized, (array) config('exam.connectors', [])));
