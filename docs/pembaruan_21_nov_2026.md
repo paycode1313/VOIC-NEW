@@ -41,6 +41,8 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - Layanan AI lokal (Python) menandai balasan yang membeo agar tidak dipanen sebagai data latih.
 - **Pelafalan:** "Rp 12-15 juta" dibaca "12 sampai 15 juta rupiah" (sebelumnya "12 rupiah-15 juta"). Rentang angka
   dibaca "sampai"/"to". Aturan ini berlaku sama di suara server (Python) dan suara browser (JS).
+- Penguji tidak menanyakan ulang hal yang sudah dijawab: Dosen tidak lagi bertanya "berapa jumlah data?" setelah
+  peserta menyebut "2000 gambar", dan Investor mengenali "buat ekspansi" / "nambah tim" sebagai penggunaan dana.
 - **Tanpa internet dan tanpa AI lokal** (composer offline):
   - Coach mengenali permintaan topik (kelemahan, gaji, kelebihan, perkenalan, kenapa tertarik, konflik) dan
     memberi tips khusus beserta pertanyaan latihannya.
@@ -65,6 +67,11 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - "Kalimat yang bisa kamu pakai" di catatan coaching hanya berisi contoh kalimat utuh, bukan potongan teks.
 - **Perbandingan dengan sesi sebelumnya** (akun yang login): "▲ +0.5 dari sesi Wawancara Kerja sebelumnya".
 - Versi jawaban yang lebih kuat tidak mengarang pengalaman, proyek, atau pencapaian yang tidak disebut peserta.
+- **Catatan coaching** ("Sudah bagus", "Latih berikutnya", "Kalimat yang bisa kamu pakai") kini juga ditulis model cloud
+  di mode online, sehingga isinya tentang percakapan itu sendiri, bukan kalimat umum. Contoh kalimat tidak mengarang
+  angka, dan template berisi "…" tidak dimasukkan ke daftar.
+- **Menyelesaikan sesi tidak pernah menunggu kuota cloud.** Jika kuota gratis Groq habis tepat saat sesi berakhir,
+  rapor langsung jadi dengan kerangka jawaban (sebelumnya bisa tertahan beberapa kali 6 detik).
 - **Jawaban terbaikmu**: kartu yang mengutip jawaban dengan band tertinggi dan kriteria terkuatnya, ditampilkan sebelum
   daftar hal yang perlu diperbaiki.
 
@@ -85,5 +92,5 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 
 ## Tes
 
-`php artisan test` (215 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
+`php artisan test` (220 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.
