@@ -687,7 +687,7 @@ async def improve(req: ImproveRequest):
     system = (
         "You are a speaking coach. Rewrite the candidate's spoken answer into a stronger answer they could say out loud: "
         "3-4 natural sentences, at most about 70 words, in the first person. "
-        "Keep every fact the candidate gave, do not invent numbers or names; where a detail is missing, use a short placeholder in square brackets. "
+        "Keep every fact the candidate gave, do not invent numbers, names, experiences, projects or achievements they did not mention; where a detail is missing, use a short placeholder in square brackets (for example [your project]). "
         f"{guide} Never write labels such as \"Situation:\" or \"(Action)\", the pattern should be felt from the order of the sentences. "
         "If the question is not about a past experience (a plan, a motivation, an opinion), do not force the pattern: answer directly, give a reason and one example. "
         "Reply with the rewritten answer only, in English."
@@ -695,7 +695,7 @@ async def improve(req: ImproveRequest):
         else
         "Kamu adalah pelatih public speaking. Tulis ulang jawaban lisan peserta menjadi jawaban yang lebih kuat dan enak diucapkan: "
         "3-4 kalimat lisan yang natural, paling banyak sekitar 70 kata, sebagai orang pertama (saya). "
-        "Pertahankan semua fakta dari peserta, jangan mengarang angka atau nama; jika ada detail yang kurang, pakai placeholder singkat dalam kurung siku. "
+        "Pertahankan semua fakta dari peserta, jangan mengarang angka, nama, pengalaman, proyek, atau pencapaian yang tidak dia sebut; jika ada detail yang kurang, pakai placeholder singkat dalam kurung siku (misalnya [contoh proyekmu]). "
         f"{guide} Jangan pernah menulis label seperti \"Situasi:\" atau \"(Aksi)\", polanya cukup terasa dari urutan kalimat. "
         "Kalau pertanyaannya bukan soal pengalaman (rencana, motivasi, pendapat), jangan paksakan pola itu: jawab langsung, beri alasan, dan satu contoh. "
         "Hindari kata kaku seperti \"menyadari bahwa\", \"mengenai\", \"tersebut\". Balas hanya dengan jawaban hasil tulis ulang, dalam Bahasa Indonesia."

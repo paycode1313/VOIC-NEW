@@ -1041,7 +1041,7 @@ class ExamFlowTest extends TestCase
         $this->assertSame($rewrite, $improved[0]['improved']);
         // The rewrite keeps the candidate's facts: the prompt forbids inventing numbers or names.
         Http::assertSent(fn ($request) => str_contains($request->url(), 'api.groq.com')
-            && str_contains((string) ($request->data()['messages'][0]['content'] ?? ''), 'jangan mengarang angka atau nama')
+            && str_contains((string) ($request->data()['messages'][0]['content'] ?? ''), 'jangan mengarang angka, nama, pengalaman')
             && str_contains((string) ($request->data()['messages'][1]['content'] ?? ''), 'Jawaban asli: Eee waktu magang'));
     }
 
