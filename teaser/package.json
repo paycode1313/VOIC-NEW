@@ -8,7 +8,7 @@
     "render:web": "remotion render Teaser-Web out/voic-teaser-web.mp4",
     "render:mobile": "remotion render Teaser-Mobile out/voic-teaser-mobile.mp4",
     "render": "npm run render:web && npm run render:mobile",
-    "audio": "python -I scripts/make_audio.py"
+    "audio": "python scripts/make_audio.py"
   },
   "dependencies": {
     "@remotion/cli": "4.0.543",
@@ -17,5 +17,9 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "remotion": "4.0.543"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "7.0.2"
   }
 }

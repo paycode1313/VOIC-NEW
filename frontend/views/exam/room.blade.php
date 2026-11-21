@@ -149,6 +149,30 @@
                         </div>
                     </div>
 
+                    {{-- Skeleton of the report while it is being built --}}
+                    <div x-show="status === 'finishing'" x-cloak x-transition.opacity.duration.300ms
+                         class="absolute inset-0 z-20 flex items-center justify-center bg-white/80 p-6 backdrop-blur-sm" role="status">
+                        <div class="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl ring-1 ring-slate-900/5">
+                            <div class="flex items-center gap-4">
+                                <span class="voic-skeleton voic-skeleton-circle block h-20 w-20 shrink-0"></span>
+                                <div class="flex-1 space-y-2.5">
+                                    <span class="voic-skeleton block h-4 w-2/3"></span>
+                                    <span class="voic-skeleton block h-3 w-full"></span>
+                                    <span class="voic-skeleton block h-3 w-4/5"></span>
+                                </div>
+                            </div>
+                            <div class="mt-6 space-y-3">
+                                @foreach ([92, 74, 84, 66] as $width)
+                                    <div class="flex items-center gap-3">
+                                        <span class="voic-skeleton block h-3 w-20 shrink-0"></span>
+                                        <span class="voic-skeleton block h-2.5" style="width: {{ $width }}%"></span>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <p class="mt-6 text-center text-sm font-semibold text-slate-600">{{ $isEn ? 'Building your report…' : 'Lagi nyusun rapor kamu…' }}</p>
+                        </div>
+                    </div>
+
                     {{-- Name plate + status, top left (captions own the bottom, your camera the top right) --}}
                     <div class="pointer-events-none absolute left-3 top-3 flex flex-wrap items-center gap-2 sm:left-4 sm:top-4">
                         <span class="inline-flex items-center gap-1.5 rounded-lg bg-white/90 px-2.5 py-1 text-xs font-semibold backdrop-blur" aria-live="polite">
@@ -208,6 +232,12 @@
 
                     {{-- Live captions: what the examiner says, and what you are saying --}}
                     <div x-show="captions" class="pointer-events-none absolute inset-x-0 bottom-4 z-0 flex flex-col items-center gap-2 px-4 sm:bottom-5">
+                        {{-- Skeleton caption while the examiner prepares the reply --}}
+                        <div x-show="status === 'thinking'" x-cloak x-transition.opacity aria-hidden="true"
+                             class="flex w-full max-w-md flex-col items-center gap-2 rounded-xl bg-white/90 px-4 py-3 backdrop-blur">
+                            <span class="voic-skeleton block h-3 w-full"></span>
+                            <span class="voic-skeleton block h-3 w-3/5"></span>
+                        </div>
                         <p x-show="subtitle && !(cueCard && (status === 'prep' || status === 'long_turn'))"
                            class="max-w-3xl rounded-xl bg-white/90 px-4 py-2 text-center text-base font-medium leading-relaxed backdrop-blur sm:text-lg"
                            :class="status === 'speaking' ? 'opacity-100' : 'opacity-75'" x-text="subtitle"></p>
