@@ -32,6 +32,8 @@ menaruh hasil build di `backend/public/build`. Perintah PHP dan Python dijalanka
 - **Kamera opsional** (diproses di perangkat peserta): kontak mata dan ekspresi wajah.
   Jika peserta terlihat tegang atau tidak menatap kamera, penguji akan menegur dengan ramah.
 - **Rapor & sertifikat**: QR untuk membawa pulang rapor, link sertifikat bertanda tangan (tidak bisa ditebak).
+- **Belajar dari rapor**: jawaban terbaikmu, versi lebih kuat dari jawaban terlemah (bisa didengarkan), tombol
+  **Latih ulang pertanyaan ini** yang membuka sesi coaching untuk satu pertanyaan, dan perbandingan dengan sesi sebelumnya.
 - **Mode booth**: panel operator ber-PIN (`/booth`) dan papan skor (`/booth/papan`).
 - **Privasi**: persetujuan peserta dan penghapusan otomatis data tamu setelah `VOIC_RETENTION_DAYS` hari.
 - **API mobile** (`/api/v1`) untuk aplikasi Flutter / React Native di folder `mobile/`.
