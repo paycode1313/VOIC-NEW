@@ -166,6 +166,11 @@ class ConversationQualityTest(unittest.TestCase):
         self.assertIn("leaked_tag", exam_engine.quality_issues(reply, ANSWER, "follow_up", "id"))
         self.assertTrue(exam_engine.leaks_tag("Cek konsistensi: tadi 40 toko."))
         self.assertFalse(exam_engine.leaks_tag("Saya ingin fokus pada cara Anda menguji model."))
+        # The per-turn tags added later (no praise, camera cues) count too.
+        self.assertTrue(exam_engine.leaks_tag("TANPA PUJIAN Oke, kebayang. Terus gimana hasilnya?"))
+        self.assertTrue(exam_engine.leaks_tag("NO PRAISE. Got it, what happened next?"))
+        self.assertTrue(exam_engine.leaks_tag("TEGANG: tarik napas dulu ya."))
+        self.assertFalse(exam_engine.leaks_tag("Tanpa pujian berlebihan, jawabanmu sudah jelas."))
 
     def test_without_history_the_gate_behaves_as_before(self):
         reply = "Kecepatan real-time memang krusial di lini produksi. Bagaimana Anda mengukur akurasi YOLOv8 dibanding model lain?"

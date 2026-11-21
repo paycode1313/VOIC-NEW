@@ -341,6 +341,9 @@ def content_words(text: str) -> set:
 LEAKED_TAG = re.compile(
     r"\b(FOKUS|KAITKAN|UMUMKAN|GALI|LANJUT|TANGGAPI|JELASKAN|FOCUS|LINK|ANNOUNCE|PROBE|NEXT|REACT|CLARIFY)\b\s*[:|\]]"
     r"|(?i:\bcek konsistensi\s*:|\bcheck consistency\s*:)"
+    # Tags without a value (ExaminerService: no praise, camera cues): uppercase only, so ordinary words stay.
+    r"|\b(TANPA PUJIAN|NO PRAISE|TIDAK MENATAP|LOOKING AWAY|SISA SATU MENIT|ONE MINUTE LEFT)\b"
+    r"|\b(TEGANG|TENSE)\b\s*[:|\]]"
 )
 
 
