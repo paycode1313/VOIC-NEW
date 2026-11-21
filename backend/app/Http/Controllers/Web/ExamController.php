@@ -471,8 +471,31 @@ class ExamController extends Controller
             'shared' => $shared,
             'shareUrl' => $practiceSession->shareUrl(),
             'drill' => fn (string $criterion) => app(ExamProgressService::class)->drillUrl($practiceSession->exam_mode, $criterion),
+            'previousBand' => $this->previousBand($practiceSession),
             'study' => $this->studyState($practiceSession, $canManage && ! $shared),
         ]);
+    }
+
+    /**
+     * Overall band of the same person's previous report in the same mode, to show the progress ("+0.5").
+     * Only for accounts: a guest has no reliable history.
+     */
+    protected function previousBand(PracticeSession $session): ?float
+    {
+        if ($session->user_id === null) {
+            return null;
+        }
+
+        $previous = PracticeSession::query()
+            ->where('user_id', $session->user_id)
+            ->where('exam_mode', $session->exam_mode)
+            ->where('id', '<', $session->id)
+            ->latest('id')
+            ->take(20)
+            ->get(['id', 'feedback_notes'])
+            ->first(fn (PracticeSession $earlier) => isset($earlier->feedback_notes['exam_report']['overall_band']));
+
+        return $previous ? (float) $previous->feedback_notes['exam_report']['overall_band'] : null;
     }
 
     /**

@@ -45,6 +45,23 @@
                         </span>
                         <span class="rounded-full bg-slate-900/[0.06] px-3 py-1">{{ $mode['examiner']['name'] }}</span>
                         <span class="rounded-full bg-slate-900/[0.06] px-3 py-1 text-slate-600">{{ $session->scenario_type }}</span>
+                        @if (($previousBand ?? null) !== null)
+                            {{-- Progress against the previous report in this mode (accounts only). --}}
+                            @php
+                                $delta = round($band - $previousBand, 1);
+                            @endphp
+                            <span @class(['inline-flex items-center gap-1 rounded-full px-3 py-1 font-bold',
+                                'bg-emerald-100 text-emerald-800' => $delta > 0,
+                                'bg-amber-100 text-amber-800' => $delta < 0,
+                                'bg-slate-900/[0.06] text-slate-700' => $delta == 0])>
+                                @if ($delta == 0)
+                                    {{ $isEn ? 'Same as your previous '.$blueprint->text($mode['title'], 'en').' session' : 'Sama dengan sesi '.$blueprint->text($mode['title'], 'id').' sebelumnya' }}
+                                @else
+                                    {{ $delta > 0 ? '▲' : '▼' }}
+                                    {{ ($delta > 0 ? '+' : '').number_format($delta, 1) }} {{ $isEn ? 'from your previous '.$blueprint->text($mode['title'], 'en').' session' : 'dari sesi '.$blueprint->text($mode['title'], 'id').' sebelumnya' }}
+                                @endif
+                            </span>
+                        @endif
                     </div>
                     <h1 class="mt-4 text-3xl font-extrabold sm:text-5xl">{{ $report['level'] }}</h1>
                     <p class="mt-2 max-w-2xl text-slate-600">{{ $session->ai_conclusion }}</p>

@@ -623,6 +623,38 @@ class ExamFlowTest extends TestCase
         $this->get(route('exam.room', $session))->assertForbidden();
     }
 
+    public function test_the_report_compares_the_band_with_the_previous_session_in_the_same_mode(): void
+    {
+        $this->offline();
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $finish = function (string $mode, string $answer): PracticeSession {
+            // A real session takes minutes; here three run back to back, past the per-minute request limit.
+            $this->travel(61)->seconds();
+            $session = $this->startExam($mode, [1]);
+            for ($i = 0; $i < 8 && $session->refresh()->exam_state['phase'] !== ExamFlowService::PHASE_COMPLETED; $i++) {
+                $this->postJson(route('exam.answer', $session), ['answer' => $answer, 'duration_seconds' => 20, 'timestamp_seconds' => $i * 25])->assertOk();
+            }
+            $this->postJson(route('exam.finish', $session), ['duration_seconds' => 200])->assertOk();
+
+            return $session->refresh();
+        };
+
+        $first = $finish('wawancara', 'Eh iya.');
+        // Nothing to compare with yet.
+        $this->get(route('exam.result', $first))->assertOk()->assertDontSee('dari sesi Wawancara Kerja sebelumnya');
+
+        $finish('sidang', 'Saya memakai YOLOv8 karena butuh deteksi real-time, misalnya di pabrik tekstil akurasinya 87 persen.');
+        $second = $finish('wawancara', 'Waktu magang saya memimpin tim tiga orang untuk membuat API pelacakan paket, karena sistem lama lambat. Hasilnya respons turun dari lima detik menjadi 300 milidetik, sehingga keluhan pelanggan berkurang 40 persen.');
+
+        $delta = round($second->feedback_notes['exam_report']['overall_band'] - $first->feedback_notes['exam_report']['overall_band'], 1);
+        $this->assertGreaterThan(0, $delta);
+        // Compared with the earlier interview, not with the thesis session in between.
+        $this->get(route('exam.result', $second))->assertOk()
+            ->assertSee('+'.number_format($delta, 1).' dari sesi Wawancara Kerja sebelumnya');
+    }
+
     public function test_rated_and_cloud_replies_are_exported_as_training_data(): void
     {
         config(['services.groq.key' => 'test-key']);
