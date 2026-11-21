@@ -1,10 +1,10 @@
 import Alpine from 'alpinejs';
-import Chart from 'chart.js/auto';
 import examRoom from './exam-room';
 import { speechText } from './pronunciation';
 
 window.Alpine = Alpine;
-window.Chart = Chart;
+// Chart.js (~200 KB) is only used by the practice report's radar chart: loaded there, not on every page.
+window.loadChart = () => import('chart.js/auto').then((module) => (window.Chart = module.default));
 window.voicSpeechText = speechText;
 
 // Read a text aloud with the browser voice (report: hear how the stronger answer sounds).

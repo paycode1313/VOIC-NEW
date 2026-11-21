@@ -2365,7 +2365,8 @@
 
             // Initialize 5-Axis Competency Radar Chart
             try {
-                if (window.Chart) {
+                // Chart.js is loaded on demand (only this page uses it).
+                (window.Chart ? Promise.resolve() : window.loadChart()).then(function () {
                     var radarCanvas = document.getElementById('competencyRadarChart');
                     if (radarCanvas) {
                         var radarScores = JSON.parse(radarCanvas.getAttribute('data-scores') || '[75,75,75,75,75]');
@@ -2429,7 +2430,7 @@
                             }
                         });
                     }
-                }
+                }).catch(function (loadErr) { console.warn('Radar Chart load notice:', loadErr); });
             } catch (chartErr) {
                 console.warn('Radar Chart initialization notice:', chartErr);
             }
