@@ -42,11 +42,20 @@ class IndonesianTest(unittest.TestCase):
         self.assertEqual(speech_text("Modal Rp 5.000.000 dll.", "id"), "Modal 5000000 rupiah dan lain-lain.")
         self.assertEqual(speech_text("Omzet Rp2,5 juta per bulan", "id"), "Omzet 2,5 juta rupiah per bulan")
 
+    def test_ranges_are_spoken_as_ranges(self):
+        # Seen live: the coach suggested "Rp 12-15 juta", the voice said "12 rupiah-15 juta".
+        self.assertEqual(speech_text("Gaji Rp 12-15 juta per bulan", "id"), "Gaji 12 sampai 15 juta rupiah per bulan")
+        self.assertEqual(speech_text("kisaran 12‑15 juta, 2025–2026", "id"), "kisaran 12 sampai 15 juta, 2025 sampai 2026")
+        self.assertEqual(speech_text("latensi turun 30 %", "id"), "latensi turun 30%")
+        # Words keep their hyphen (the model sometimes writes a non-breaking one).
+        self.assertEqual(speech_text("pakai time‑boxing dan e-commerce", "id"), "pakai time-boxing dan e-commerce")
+
 
 class EnglishTest(unittest.TestCase):
     def test_indonesian_terms_and_rupiah(self):
         self.assertEqual(speech_text("Pak Budi asks about your skripsi.", "en"), "Pahk Budi asks about your skrip-see.")
         self.assertEqual(speech_text("We raised Rp 1.500.000 so far", "en"), "We raised 1500000 rupiah so far")
+        self.assertEqual(speech_text("Somewhere around Rp 12-15 juta, 3-5 years", "en"), "Somewhere around 12 to 15 juta rupiah, 3 to 5 years")
 
     def test_indonesian_respellings_do_not_leak_into_english(self):
         self.assertEqual(speech_text("Tell me about your coding project online.", "en"), "Tell me about your coding project online.")
