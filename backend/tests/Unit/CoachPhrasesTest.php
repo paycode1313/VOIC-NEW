@@ -45,6 +45,20 @@ class CoachPhrasesTest extends TestCase
         $this->assertSame(['Saya dulu terlalu detail, sekarang saya pakai timeboxing.'], $this->phrases([$line]));
     }
 
+    public function test_placeholders_become_a_pause_and_templates_are_not_reusable_sentences(): void
+    {
+        $examiner = app(ExaminerService::class);
+
+        // Seen live: "Kelemahan saya, jadi saya sudah belajar supaya dampaknya minim." (placeholders removed).
+        $line = $examiner->clean('Coba pola ini: "Kelemahan saya [sebut kelemahan], jadi saya sudah belajar [cara] supaya dampaknya minim." Ulangi ya.', 5);
+        $this->assertSame('Coba pola ini: "Kelemahan saya …, jadi saya sudah belajar … supaya dampaknya minim." Ulangi ya.', $line);
+        // A turn tag in brackets still disappears.
+        $this->assertSame('Oke, lanjut.', $examiner->clean('Oke, [GALI] lanjut.'));
+
+        // A template with gaps is not offered as a sentence to reuse.
+        $this->assertSame([], $this->phrases([$line]));
+    }
+
     public function test_sentences_glued_together_by_the_model_are_split(): void
     {
         $examiner = app(ExaminerService::class);

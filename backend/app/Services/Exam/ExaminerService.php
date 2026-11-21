@@ -1637,7 +1637,9 @@ class ExaminerService
         $text = preg_replace('/^\s*[\-•\d]+[\.\)]\s*/mu', '', $text) ?? $text;
         // A speaker label is a short run of capitalised words ("Prof. Hendra:", "VOIC Interview:"), never a sentence like "Bagus. Coba bilang:".
         $text = preg_replace('/^\s*(?:[\p{Lu}][\p{L}\.]*)(?:\s[\p{Lu}][\p{L}\.]*){0,3}:\s+/u', '', trim($text)) ?? $text;
-        $text = preg_replace('/\[[^\]]*\]/u', '', $text) ?? $text;
+        // A turn tag in brackets ("[GALI]") goes; a placeholder in an example sentence ("Kelemahan saya [sebut
+        // kelemahan], ...") becomes "…", so the sentence still reads as a pattern (and the voice pauses).
+        $text = preg_replace_callback('/\[([^\]]*)\]/u', fn ($m) => preg_match('/\p{Ll}/u', $m[1]) ? '…' : '', $text) ?? $text;
         // Qwen models now and then slip a Chinese/Japanese/Korean word into Indonesian ("sebagai 切入点 awal");
         // the voice cannot read it, and the sentence still makes sense without it.
         $text = preg_replace('/[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}]+/u', '', $text) ?? $text;

@@ -229,7 +229,8 @@ class ExamReportService
                 $phrase = trim($phrase);
                 // An example sentence, not a word to look at ("hindari kata “saya terlalu perfeksionis”").
                 $before = mb_strtolower(substr((string) $line, max(0, $offset - 40), min(40, $offset)));
-                if (count(preg_split('/\s+/u', $phrase) ?: []) < 5 || preg_match('/(hindari|jangan|bukan|avoid|instead of|not)\b[^.!?]*$/u', $before)) {
+                // A template with gaps ("Kelemahan saya …, jadi …") is not a sentence to reuse as it is.
+                if (str_contains($phrase, '…') || str_contains($phrase, '...') || count(preg_split('/\s+/u', $phrase) ?: []) < 5 || preg_match('/(hindari|jangan|bukan|avoid|instead of|not)\b[^.!?]*$/u', $before)) {
                     continue;
                 }
                 $phrases[] = $phrase;
