@@ -422,6 +422,14 @@ class ExamController extends Controller
         abort_unless($practiceSession->isExam() && $practiceSession->hasReport(), 404);
         Gate::authorize('view', $practiceSession);
 
+        // A coaching session: the coach's notes, the same way.
+        if (isset($practiceSession->feedback_notes['coach_report'])) {
+            $report = $reports->completeCoachSummary($practiceSession);
+            $language = $report['language'] ?? 'id';
+
+            return response()->json(['notes' => view('exam.partials.coach-notes', ['report' => $report, 'isEn' => $language === 'en', 'loadable' => false])->render()]);
+        }
+
         $language = $practiceSession->feedback_notes['exam_report']['language'] ?? 'id';
         $html = [];
         foreach ($reports->completeImprovements($practiceSession) as $key => $item) {

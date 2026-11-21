@@ -134,6 +134,47 @@ class ExamReportService
      */
     public function finalizeCoach(PracticeSession $session, int $durationSeconds): array
     {
+        // The AI's notes are written after the report is on screen (completeCoachSummary()), like the exam's
+        // stronger versions: finishing no longer waits for a model.
+        return $this->buildCoachReport($session, $durationSeconds, null);
+    }
+
+    /**
+     * Write the AI's coaching notes the report is still waiting for, save and return the report.
+     *
+     * @return array<string, mixed>
+     */
+    public function completeCoachSummary(PracticeSession $session): array
+    {
+        $lock = Cache::lock('voic:improve:'.$session->id, 90);
+
+        try {
+            $lock->block(60);
+        } catch (LockTimeoutException) {
+            return $session->refresh()->feedback_notes['coach_report'] ?? [];
+        }
+
+        try {
+            $session->refresh();
+            $report = $session->feedback_notes['coach_report'] ?? [];
+            if (($report['summary_source'] ?? null) !== 'pending') {
+                return $report;
+            }
+
+            $summary = $this->coachSummaryFromModel($session, $session->messages()->orderBy('id')->get()->all(), (string) ($report['language'] ?? 'id'));
+
+            return $this->buildCoachReport($session, (int) $session->duration_seconds, $summary);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * @param  array{strengths?: list<string>, practice?: list<string>, phrases?: list<string>}|null  $summary  null = the AI's notes come later
+     * @return array<string, mixed>
+     */
+    protected function buildCoachReport(PracticeSession $session, int $durationSeconds, ?array $summary): array
+    {
         $state = $session->exam_state;
         $mode = $state['mode'];
         $language = $state['language'];
@@ -149,7 +190,8 @@ class ExamReportService
         arsort($fillers);
 
         $phrases = $this->taughtPhrases($coachMessages->pluck('message')->all());
-        $summary = $this->coachSummaryFromModel($session, $messages->all(), $language);
+        $pending = $summary === null;
+        $summary ??= [];
 
         $strengths = $summary['strengths'] ?? [];
         if ($strengths === []) {
@@ -196,7 +238,7 @@ class ExamReportService
                 'fillers' => $fillers,
                 'filler_count' => $metrics['filler_count'],
             ],
-            'summary_source' => $summary === [] ? 'rules' : 'ai',
+            'summary_source' => $pending ? 'pending' : ($summary === [] ? 'rules' : 'ai'),
         ];
 
         $notes = is_array($session->feedback_notes) ? $session->feedback_notes : [];

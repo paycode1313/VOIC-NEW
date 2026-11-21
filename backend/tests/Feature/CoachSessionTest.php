@@ -218,7 +218,18 @@ class CoachSessionTest extends TestCase
         $this->postJson(route('exam.answer', $session), ['answer' => 'Saya mau latihan jawab pertanyaan kelemahan.', 'duration_seconds' => 5, 'timestamp_seconds' => 5])->assertOk();
         $this->postJson(route('exam.finish', $session), ['duration_seconds' => 60])->assertOk();
 
+        // "Selesai" does not wait for the AI: the rule-based notes show with a spinner first.
+        $this->assertSame('pending', $session->refresh()->feedback_notes['coach_report']['summary_source']);
+        Http::assertNotSent(fn ($request) => str_contains((string) json_encode($request->data()), 'Ringkas sesi coaching ini'));
+        $this->get(route('exam.result', $session))->assertOk()->assertSee('Coach lagi nulis catatan');
+
+        // The report page then asks for the AI's notes, which replace the block.
+        $notes = $this->postJson(route('exam.improvements', $session))->assertOk()->json('notes');
+        $this->assertStringContainsString('Kamu sudah menyebut magang enam bulan sebagai bukti.', $notes);
+        $this->assertStringNotContainsString('Coach lagi nulis', $notes);
+
         $report = $session->refresh()->feedback_notes['coach_report'];
+        $this->assertSame('ai', $report['summary_source']);
         $this->assertSame(['Kamu sudah menyebut magang enam bulan sebagai bukti.'], $report['strengths']);
         $this->assertSame(['Tutup jawaban kelemahan dengan langkah perbaikan.'], $report['practice']);
         $this->assertContains('Kelemahan saya terlalu detail, sekarang saya pakai timeboxing.', $report['phrases']);

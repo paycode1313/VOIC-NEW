@@ -75,6 +75,15 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - **Jawaban terbaikmu**: kartu yang mengutip jawaban dengan band tertinggi dan kriteria terkuatnya, ditampilkan sebelum
   daftar hal yang perlu diperbaiki.
 
+## Kecepatan "Selesai"
+
+- Rapor **langsung tampil** setelah "Selesai" (sekitar 0,4 detik, sebelumnya 4 detik atau lebih, dan bisa lebih dari
+  30 detik jika jatuh ke AI lokal). Versi jawaban yang lebih kuat (ujian) dan catatan coach (coaching) ditulis AI
+  **setelah** halaman rapor terbuka dan muncul sendiri beberapa detik kemudian ("Lagi nulis…"). Sementara itu
+  kerangka jawaban dan catatan dasar sudah terlihat.
+- `jalankan_voic.bat` mengaktifkan **OPcache** untuk server web tanpa mengubah `php.ini`. Setiap request turun dari
+  sekitar 0,9 detik menjadi sekitar 0,1 detik, termasuk setiap giliran menjawab di panggilan.
+
 ## Tampilan
 
 - **HP:**
@@ -94,5 +103,5 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 
 ## Tes
 
-`php artisan test` (220 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
+`php artisan test` (221 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.
