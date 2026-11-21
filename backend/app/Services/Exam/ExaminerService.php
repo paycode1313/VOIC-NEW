@@ -1741,11 +1741,54 @@ class ExaminerService
     }
 
     /**
+     * How a stronger answer is built, per examiner. Same as IMPROVE_GUIDE in ai_service/exam_engine.py.
+     *
+     * @var array<string, array{id: string, en: string}>
+     */
+    public const IMPROVE_GUIDE = [
+        'hrd' => ['id' => 'Gunakan pola STAR (situasi, tugas, aksi, hasil terukur) dan nada percaya diri tapi rendah hati.', 'en' => 'Use the STAR pattern (situation, task, action, measurable result) with a confident but humble tone.'],
+        'dosen_penguji' => ['id' => 'Gunakan pola klaim, alasan, bukti/data, lalu batasan. Bahasa ilmiah yang lugas.', 'en' => 'Use claim, reason, evidence/data, then limitation. Clear academic language.'],
+        'investor' => ['id' => 'Buka dengan angka atau insight paling kuat, lalu keunggulan dan langkah berikutnya. Padat dan meyakinkan.', 'en' => 'Lead with the strongest number or insight, then the edge and next step. Tight and convincing.'],
+    ];
+
+    /**
+     * Rewrite a weak answer into a stronger spoken answer with the cloud model (the report uses this when the
+     * local AI service is not running, e.g. a laptop without a GPU in "online" mode). Keeps the candidate's facts;
+     * missing details become [placeholders]. Null when no cloud model answers.
+     */
+    public function improveWithCloud(string $question, string $answer, string $roleType, string $language): ?string
+    {
+        if (! $this->cloudConfigured() || self::cloudPaused() || count(preg_split('/\s+/u', trim($answer)) ?: []) < 3) {
+            return null;
+        }
+
+        $isEn = $language === 'en';
+        $guide = (self::IMPROVE_GUIDE[$roleType] ?? self::IMPROVE_GUIDE['hrd'])[$isEn ? 'en' : 'id'];
+        $system = $isEn
+            ? "You are a speaking coach. Rewrite the candidate's spoken answer into a stronger answer they could say out loud: 3-4 natural sentences, at most about 70 words, in the first person. Keep every fact the candidate gave, do not invent numbers or names; where a detail is missing, use a short placeholder in square brackets. Leave out fillers such as \"um\". {$guide} Never write labels such as \"Situation:\" or \"(Action)\", the pattern should be felt from the order of the sentences. If the question is not about a past experience (a plan, a motivation, an opinion), do not force the pattern: answer directly, give a reason and one example. Reply with the rewritten answer only, in English."
+            : "Kamu adalah pelatih public speaking. Tulis ulang jawaban lisan peserta menjadi jawaban yang lebih kuat dan enak diucapkan: 3-4 kalimat lisan yang natural, paling banyak sekitar 70 kata, sebagai orang pertama (saya). Pertahankan semua fakta dari peserta, jangan mengarang angka atau nama; jika ada detail yang kurang, pakai placeholder singkat dalam kurung siku. Buang kata pengisi seperti \"eh\". {$guide} Jangan pernah menulis label seperti \"Situasi:\" atau \"(Aksi)\", polanya cukup terasa dari urutan kalimat. Kalau pertanyaannya bukan soal pengalaman (rencana, motivasi, pendapat), jangan paksakan pola itu: jawab langsung, beri alasan, dan satu contoh. Hindari kata kaku seperti \"menyadari bahwa\", \"mengenai\", \"tersebut\". Balas hanya dengan jawaban hasil tulis ulang, dalam Bahasa Indonesia.";
+
+        $raw = $this->callCloudModel([
+            ['role' => 'system', 'content' => $system],
+            ['role' => 'user', 'content' => ($isEn ? "Question: {$question}\nOriginal answer: " : "Pertanyaan: {$question}\nJawaban asli: ").$answer],
+        ], timeout: 10, maxTokens: 320, temperature: 0.5);
+
+        // Placeholders in [brackets] belong here, so not clean(), which removes them.
+        $text = trim(trim(preg_replace('/\s+/u', ' ', preg_replace('/[\*#_`~]+/u', '', (string) $raw) ?? '') ?? ''), '"“”');
+        // A spoken answer has no "Situasi:" / "(Aksi)" labels, even when the model writes them anyway.
+        $labels = 'Situasi|Tugas|Aksi|Tindakan|Hasil|Situation|Task|Action|Result';
+        $text = preg_replace(['/\s*\((?:'.$labels.')\)/iu', '/(^|[.!?]\s+)(?:'.$labels.')\s*:\s*/iu'], ['', '$1'], $text) ?? $text;
+        $words = count(preg_split('/\s+/u', $text) ?: []);
+
+        return $text !== '' && $words >= 12 && $words <= 120 ? $text : null;
+    }
+
+    /**
      * Call Groq or OpenAI when keys are configured.
      *
      * @param  list<array{role: string, content: string}>  $messages
      */
-    protected function callCloudModel(array $messages, int $timeout = 12): ?string
+    protected function callCloudModel(array $messages, int $timeout = 12, int $maxTokens = 140, float $temperature = 0.75): ?string
     {
         if (self::cloudPaused()) {
             return null;
@@ -1764,11 +1807,11 @@ class ExaminerService
                 continue;
             }
 
-            $body = ['model' => $provider['model'], 'messages' => $messages, 'temperature' => 0.75, 'max_tokens' => 140];
+            $body = ['model' => $provider['model'], 'messages' => $messages, 'temperature' => $temperature, 'max_tokens' => $maxTokens];
             if (str_starts_with($provider['model'], 'openai/gpt-oss')) {
                 // A reasoning model thinks before it answers; the thinking shares max_tokens with the reply,
                 // so with 140 the reply comes back empty. Low effort keeps it under a second on Groq.
-                $body = ['reasoning_effort' => 'low', 'max_tokens' => 700] + $body;
+                $body = ['reasoning_effort' => 'low', 'max_tokens' => $maxTokens + 560] + $body;
             }
 
             try {

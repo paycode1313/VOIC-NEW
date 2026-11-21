@@ -979,6 +979,40 @@ class ExamFlowTest extends TestCase
         $this->assertNull(cache('voic.backchannel.dosen_penguji.id.piper'));
     }
 
+    public function test_without_the_local_ai_the_cloud_rewrites_the_weakest_answers_for_the_report(): void
+    {
+        config(['services.groq.key' => 'test-key', 'exam.speed_mode' => 'online']);
+        $rewrite = 'Waktu magang di startup logistik, API pelacakan kami lambat sampai lima detik di jam sibuk. Tugas saya mencari penyebabnya. Saya memprofil query, menemukan N+1, lalu menambah eager loading dan index. Hasilnya respons turun ke 300 milidetik.';
+        Http::fake(function ($request) use ($rewrite) {
+            if (! str_contains($request->url(), 'api.groq.com')) {
+                return Http::response([], 503);
+            }
+            // The rewrite request carries the coach instruction; examiner turns get a short reply.
+            $system = (string) ($request->data()['messages'][0]['content'] ?? '');
+
+            return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => str_contains($system, 'Tulis ulang jawaban lisan peserta') ? $rewrite : 'Oke, kebayang. Terus gimana hasilnya?']]]]);
+        });
+
+        $session = $this->startExam('wawancara', [1]);
+        for ($i = 0; $i < 8 && $session->refresh()->exam_state['phase'] !== ExamFlowService::PHASE_COMPLETED; $i++) {
+            $this->postJson(route('exam.answer', $session), [
+                'answer' => 'Eee waktu magang API-nya lambat, saya profiling query terus tambah index, jadi 300 milidetik.',
+                'duration_seconds' => 15,
+                'timestamp_seconds' => $i * 20,
+            ])->assertOk();
+        }
+        $this->postJson(route('exam.finish', $session), ['duration_seconds' => 300])->assertOk();
+
+        $improved = array_values(array_filter($session->refresh()->feedback_notes['exam_report']['answers'], fn ($item) => $item['improved'] !== null));
+        $this->assertNotEmpty($improved);
+        $this->assertSame('ai', $improved[0]['improved_source']);
+        $this->assertSame($rewrite, $improved[0]['improved']);
+        // The rewrite keeps the candidate's facts: the prompt forbids inventing numbers or names.
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.groq.com')
+            && str_contains((string) ($request->data()['messages'][0]['content'] ?? ''), 'jangan mengarang angka atau nama')
+            && str_contains((string) ($request->data()['messages'][1]['content'] ?? ''), 'Jawaban asli: Eee waktu magang'));
+    }
+
     private function startExam(string $mode, array $parts): PracticeSession
     {
         $this->post(route('exam.start', $mode), [

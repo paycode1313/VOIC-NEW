@@ -445,23 +445,44 @@ class ExamReportService
         $targets = array_slice($order, 0, 3);
 
         $improved = [];
+        $roleType = $this->blueprint->mode($mode)['role_type'];
+        // The cloud writes a stronger version when the local AI cannot ("online" mode on a laptop without a GPU):
+        // without it the report only shows a generic framework, not the candidate's own answer made better.
+        $fromCloud = function () use (&$improved, $targets, $items, $roleType, $language): void {
+            foreach ($targets as $key) {
+                if (isset($improved[$key])) {
+                    continue;
+                }
+                $text = $this->examiner->improveWithCloud((string) $items[$key]['question'], (string) $items[$key]['answer'], $roleType, $language);
+                if ($text === null) {
+                    return; // No cloud (or it failed): do not wait for the other answers too.
+                }
+                $improved[$key] = $text;
+            }
+        };
+
+        if ($this->examiner->onlineFirst()) {
+            $fromCloud();
+        }
+
+        $remaining = array_values(array_filter($targets, fn ($key) => ! isset($improved[$key])));
         $baseUrl = (string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001');
 
         try {
-            $response = Http::connectTimeout(1.5)->timeout($this->aiTimeout(30))->post("{$baseUrl}/exam/improve", [
+            $response = $remaining === [] ? null : Http::connectTimeout(1.5)->timeout($this->aiTimeout(30))->post("{$baseUrl}/exam/improve", [
                 'model' => $this->examiner->ollamaModel(),
                 'mode' => $mode,
-                'role_type' => $this->blueprint->mode($mode)['role_type'],
+                'role_type' => $roleType,
                 'language' => $language,
                 'topic' => $topic,
                 'items' => array_map(fn ($key) => [
                     'key' => $key,
                     'question' => $items[$key]['question'],
                     'answer' => $items[$key]['answer'],
-                ], $targets),
+                ], $remaining),
             ]);
 
-            if ($response->successful()) {
+            if ($response?->successful()) {
                 foreach ((array) $response->json('items', []) as $row) {
                     $text = trim((string) ($row['improved'] ?? ''));
                     if (isset($row['key']) && $text !== '') {
@@ -471,6 +492,10 @@ class ExamReportService
             }
         } catch (\Throwable $exception) {
             Log::info('Local improve endpoint unavailable: '.$exception->getMessage());
+        }
+
+        if (! $this->examiner->onlineFirst()) {
+            $fromCloud();
         }
 
         foreach ($targets as $key) {

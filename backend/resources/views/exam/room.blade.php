@@ -169,7 +169,26 @@
                                     </div>
                                 @endforeach
                             </div>
-                            <p class="mt-6 text-center text-sm font-semibold text-slate-600">{{ $isEn ? 'Building your report…' : 'Lagi nyusun rapor kamu…' }}</p>
+                            {{-- What is happening while the report is built (a few seconds with the cloud rewrite): one step ticks after another. --}}
+                            @php
+                                $reportSteps = $isEn
+                                    ? ['Measuring your pace', 'Marking filler words', 'Scoring four criteria', 'Writing stronger versions of your answers']
+                                    : ['Ngukur tempo bicaramu', 'Nandain kata pengisi', 'Menilai empat kriteria', 'Nulis versi jawaban yang lebih kuat'];
+                            @endphp
+                            <ol x-data="{ step: 0, timer: null }"
+                                x-effect="if (status === 'finishing' && ! timer) { step = 0; timer = setInterval(() => step = Math.min(step + 1, {{ count($reportSteps) - 1 }}), 1100) } else if (status !== 'finishing' && timer) { clearInterval(timer); timer = null }"
+                                class="mt-6 space-y-2 text-sm" aria-live="polite">
+                                @foreach ($reportSteps as $i => $label)
+                                    <li class="flex items-center gap-2.5 transition-opacity duration-300" :class="step >= {{ $i }} ? 'opacity-100' : 'opacity-40'">
+                                        <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors duration-300"
+                                              :class="step > {{ $i }} ? 'bg-emerald-500 text-white' : (step === {{ $i }} ? 'bg-slate-900/10' : 'bg-slate-900/5')">
+                                            <svg x-show="step > {{ $i }}" x-cloak class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                            <span x-show="step === {{ $i }}" class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700"></span>
+                                        </span>
+                                        <span class="font-semibold text-slate-700">{{ $label }}<span x-show="step === {{ $i }}">…</span></span>
+                                    </li>
+                                @endforeach
+                            </ol>
                         </div>
                     </div>
 
