@@ -311,7 +311,9 @@ class ExamReportService
         $question = (string) ($meta['question'] ?? '');
         $metrics = $this->analyzer->analyzeAnswer($message->message, (int) ($meta['duration_seconds'] ?? 0), $question, $mode);
         $facial = is_array($message->facial_status) ? $message->facial_status : null;
-        $scores = $this->analyzer->scoreAnswer($metrics, (int) $message->exam_part, $facial);
+        // Only the cue card talk itself is held to the long-turn length, not the follow-up question after it.
+        $longTurn = isset($meta['kind']) ? $meta['kind'] === 'long_turn' : null;
+        $scores = $this->analyzer->scoreAnswer($metrics, (int) $message->exam_part, $facial, $longTurn);
 
         return [
             'index' => $index + 1,
@@ -324,7 +326,7 @@ class ExamReportService
             'metrics' => $metrics,
             'scores' => $scores,
             'band' => $this->analyzer->toBand(array_sum($scores) / count($scores)),
-            'notes' => $this->answerNotes($metrics, (int) $message->exam_part, $mode, $language),
+            'notes' => $this->answerNotes($metrics, (int) $message->exam_part, SpeakingAnalyzer::targetWords((int) $message->exam_part, $longTurn), $mode, $language),
             'improved' => null,
             'improved_source' => null,
         ];
@@ -351,11 +353,10 @@ class ExamReportService
      * @param  array<string, mixed>  $metrics
      * @return list<array{type: string, text: string}>
      */
-    protected function answerNotes(array $metrics, int $part, string $mode, string $language): array
+    protected function answerNotes(array $metrics, int $part, int $target, string $mode, string $language): array
     {
         $isEn = $language === 'en';
         $notes = [];
-        $target = $part === 2 ? 160 : 45;
 
         if ($metrics['word_count'] < $target * 0.5) {
             $notes[] = ['type' => 'warn', 'text' => $isEn

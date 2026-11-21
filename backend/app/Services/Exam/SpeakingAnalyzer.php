@@ -42,6 +42,16 @@ class SpeakingAnalyzer
     public function __construct(protected ExamBlueprint $blueprint) {}
 
     /**
+     * How many words a full answer has: about 160 for the two-minute cue card talk (Part 2), about 45 for any
+     * other question, including the short follow-up after the talk. $longTurn null = sessions recorded before
+     * answers were marked, where all of Part 2 counted as the talk.
+     */
+    public static function targetWords(int $part, ?bool $longTurn = null): int
+    {
+        return ($longTurn ?? $part === 2) ? 160 : 45;
+    }
+
+    /**
      * Filler words from config('exam.fillers') plus drawn-out hesitations, which are folded into the
      * listed word they stretch ("eeeh" counts as "eh", "hmmm" as "hmm"). Ordered like the config list.
      *
@@ -140,10 +150,10 @@ class SpeakingAnalyzer
      * @param  array<string, mixed>|null  $facial
      * @return array{fluency: float, vocabulary: float, structure: float, delivery: float}
      */
-    public function scoreAnswer(array $metrics, int $part, ?array $facial = null): array
+    public function scoreAnswer(array $metrics, int $part, ?array $facial = null, ?bool $longTurn = null): array
     {
         $words = (int) $metrics['word_count'];
-        $targetWords = $part === 2 ? 160 : 45;
+        $targetWords = self::targetWords($part, $longTurn);
         $lengthRatio = min(1.0, $words / $targetWords);
 
         // Fluency & coherence: enough to say, steady pace, few fillers, linked ideas.

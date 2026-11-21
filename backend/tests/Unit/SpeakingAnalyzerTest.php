@@ -53,6 +53,24 @@ class SpeakingAnalyzerTest extends TestCase
         $this->assertSame([], $clean['fillers']);
     }
 
+    public function test_only_the_cue_card_talk_is_held_to_the_long_turn_length(): void
+    {
+        // A 40-word answer: short for the two-minute cue card talk, fine for the follow-up question after it.
+        $metrics = $this->analyzer->analyzeAnswer(
+            'Prototipe kedua yang kami pilih karena query-nya lebih cepat sekitar tiga puluh persen saat diuji dengan data asli dari gudang. Dampaknya, timeline proyek maju satu minggu dan tim backend bisa langsung lanjut ke fitur pelacakan berikutnya tanpa menunggu lagi.',
+            20,
+            'Prototipe mana yang dipilih?',
+            'wawancara'
+        );
+
+        $longTurn = $this->analyzer->scoreAnswer($metrics, 2, longTurn: true);
+        $followUp = $this->analyzer->scoreAnswer($metrics, 2, longTurn: false);
+
+        $this->assertGreaterThan($longTurn['fluency'], $followUp['fluency']);
+        // Without the flag (sessions recorded before it existed) part 2 counts as the long turn, as before.
+        $this->assertSame($longTurn, $this->analyzer->scoreAnswer($metrics, 2));
+    }
+
     public function test_a_rich_answer_scores_higher_than_a_vague_one(): void
     {
         $rich = $this->analyzer->analyzeAnswer(
