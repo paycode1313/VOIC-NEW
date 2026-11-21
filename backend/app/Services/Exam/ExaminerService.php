@@ -340,6 +340,9 @@ class ExaminerService
 
         $result = null;
         $local = $this->callLocalModel($turn, $forLocal());
+        if ($local !== null && $this->resolveModelReply($local, $turn) === null) {
+            Log::info('Local examiner reply unusable for '.$turn['directive'].': '.Str::limit($local, 200));
+        }
         if ($local !== null && ($resolved = $this->resolveModelReply($local, $turn)) !== null) {
             $result = $resolved + ['audio_url' => $this->synthesize($baseUrl, $resolved['text'], $turn), 'engine' => $this->engineFor($this->lastModel)];
         }
@@ -1810,6 +1813,12 @@ class ExaminerService
 
             $reply = trim((string) $response->json('reply', ''));
             $this->lastModel = $response->json('model');
+            if (! $response->successful() || $reply === '') {
+                // Why the offline composer answered instead (quality gate, model error): visible in laravel.log.
+                Log::info('Local examiner reply not used ('.$turn['directive'].'): '.json_encode([
+                    'status' => $response->status(), 'issues' => $response->json('issues'), 'error' => $response->json('error'),
+                ]));
+            }
 
             return $response->successful() && $reply !== '' ? $reply : null;
         } catch (\Throwable $exception) {
