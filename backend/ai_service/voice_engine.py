@@ -40,17 +40,30 @@ PIPER_VOICES = {
 }
 
 # Kecepatan bicara per persona (length_scale Piper: < 1 lebih cepat, > 1 lebih lambat).
-PERSONA_PACE = {"hrd": 1.0, "dosen_penguji": 1.08, "investor": 0.92}
+# Dosen berwibawa dan pelan, interview ceria dengan tempo normal, investor muda bicara cepat.
+PERSONA_PACE = {"hrd": 0.97, "dosen_penguji": 1.15, "investor": 0.84}
 
 # Piper Indonesia hanya punya satu pembicara. Agar tiga penguji tetap terdengar berbeda saat offline,
 # nada digeser per persona: header WAV ditulis dengan sample rate x faktor (nada naik/turun), dan
 # length_scale dikali faktor yang sama supaya kecepatan bicaranya tidak ikut berubah.
-PERSONA_PITCH = {"hrd": 1.06, "dosen_penguji": 0.8, "investor": 0.86}
+PERSONA_PITCH = {"hrd": 1.08, "dosen_penguji": 0.78, "investor": 0.88}
+
+# Jeda di akhir tiap kalimat (detik): dosen memberi jeda panjang untuk penekanan, investor nyaris tanpa jeda.
+# Kalimat diputar berurutan oleh aplikasi, jadi jeda ini terdengar sebagai napas antarkalimat.
+PERSONA_SENTENCE_SILENCE = {"hrd": 0.2, "dosen_penguji": 0.45, "investor": 0.08}
+
+# Variasi intonasi Piper (noise_scale) dan ritme suku kata (noise_w_scale). Lebih tinggi = lebih hidup dan
+# kurang datar seperti robot; dosen dibuat lebih stabil, interview paling ekspresif. Default Piper 0.667 / 0.8.
+PERSONA_EXPRESSION = {"hrd": (0.8, 0.9), "dosen_penguji": (0.6, 0.75), "investor": (0.75, 0.9)}
 
 # Suara online: batas waktu per kalimat, lalu jeda sebelum mencoba lagi setelah gagal (internet putus),
 # supaya tiap kalimat tidak menunggu timeout dulu sebelum jatuh ke Piper.
 EDGE_TIMEOUT_SECONDS = 6.0
 EDGE_COOLDOWN_SECONDS = 30.0
+# Server suara online kadang menjawab dalam 0,9 detik, kadang 5-6 detik untuk kalimat yang sama. Jika belum
+# selesai setelah jeda ini, permintaan kedua dikirim paralel dan yang lebih dulu selesai dipakai (suara tetap sama).
+# Percobaan tambahan dimulai pada detik-detik ini (kadang dua koneksi sekaligus tersangkut, jadi ada percobaan ketiga).
+EDGE_HEDGE_AFTER_SECONDS = (1.0, 2.5)
 _edge_down_until = 0.0
 
 _stt_model = None
@@ -152,6 +165,7 @@ def transcribe(audio_bytes: bytes, language: str = "id", prompt: Optional[str] =
             vad_filter=True,
             vad_parameters={"min_silence_duration_ms": 400},
             condition_on_previous_text=False,
+            without_timestamps=True,  # hanya teksnya yang dipakai; sedikit lebih cepat di CPU
             initial_prompt=prompt[:200] if prompt else None,
         )
         text = " ".join(segment.text.strip() for segment in segments).strip()
@@ -226,6 +240,7 @@ def synthesize_piper(text: str, role_type: str, language: str, output_dir: str) 
     output_path = os.path.join(output_dir, filename)
     pitch = PERSONA_PITCH.get(role_type, 1.0)
     pace = PERSONA_PACE.get(role_type, 1.0) * pitch
+    noise, noise_w = PERSONA_EXPRESSION.get(role_type, (0.667, 0.8))
 
     try:
         with wave.open(output_path, "wb") as wav_file:
@@ -233,11 +248,12 @@ def synthesize_piper(text: str, role_type: str, language: str, output_dir: str) 
                 try:
                     from piper import SynthesisConfig
 
-                    voice.synthesize_wav(text, wav_file, syn_config=SynthesisConfig(length_scale=pace))
+                    config = SynthesisConfig(length_scale=pace, noise_scale=noise, noise_w_scale=noise_w)
+                    voice.synthesize_wav(text, wav_file, syn_config=config)
                 except ImportError:
                     voice.synthesize_wav(text, wav_file)
             else:  # piper-tts 1.2
-                voice.synthesize(text, wav_file, length_scale=pace)
+                voice.synthesize(text, wav_file, length_scale=pace, noise_scale=noise, noise_w=noise_w)
     except Exception as exc:
         print(f"Piper synth notice: {exc}")
         try:
@@ -246,22 +262,28 @@ def synthesize_piper(text: str, role_type: str, language: str, output_dir: str) 
             pass
         return None
 
-    if pitch != 1.0:
-        _shift_wav_pitch(output_path, pitch)
+    _shift_wav_pitch(output_path, pitch, PERSONA_SENTENCE_SILENCE.get(role_type, 0.0))
     return filename
 
 
-def _shift_wav_pitch(path: str, factor: float) -> None:
-    """Putar WAV sedikit lebih cepat/lambat dengan menulis ulang sample rate di header (nada ikut bergeser)."""
+def _shift_wav_pitch(path: str, factor: float, trailing_silence: float = 0.0) -> None:
+    """
+    Putar WAV sedikit lebih cepat/lambat dengan menulis ulang sample rate di header (nada ikut bergeser),
+    lalu tambahkan jeda hening di akhir kalimat (dalam detik waktu putar).
+    """
+    if factor == 1.0 and trailing_silence <= 0:
+        return
     try:
         with wave.open(path, "rb") as src:
             params = src.getparams()
             frames = src.readframes(params.nframes)
+        framerate = int(round(params.framerate * factor))
+        silence = b"\x00" * (int(trailing_silence * framerate) * params.sampwidth * params.nchannels)
         with wave.open(path, "wb") as dst:
             dst.setnchannels(params.nchannels)
             dst.setsampwidth(params.sampwidth)
-            dst.setframerate(int(round(params.framerate * factor)))
-            dst.writeframes(frames)
+            dst.setframerate(framerate)
+            dst.writeframes(frames + silence)
     except Exception as exc:
         print(f"Piper pitch notice: {exc}")
 
@@ -269,12 +291,14 @@ def _shift_wav_pitch(path: str, factor: float) -> None:
 # Suara online (edge-tts, suara neural Microsoft). Jauh lebih alami daripada Piper: dipakai lebih dulu
 # jika aplikasi meminta engine="edge" (mode cepat online), selain itu hanya cadangan jika Piper tidak ada.
 # Suara "multilingual" yang fasih berbahasa Indonesia (dicek ulang dengan Whisper: transkrip cocok).
-# HRD = Ava (ekspresif, ramah), dosen = Brian (tenang, sedikit lebih rendah dan pelan),
-# investor = Andrew (hangat, percaya diri, lebih cepat). Persona yang sama di bahasa Inggris.
-EDGE_VOICES = {
-    "id": {"dosen_penguji": ("en-US-BrianMultilingualNeural", "-3Hz", "-4%"), "hrd": ("en-US-AvaMultilingualNeural", "+0Hz", "+0%"), "investor": ("en-US-AndrewMultilingualNeural", "+0Hz", "+6%")},
-    "en": {"dosen_penguji": ("en-US-BrianMultilingualNeural", "-3Hz", "-4%"), "hrd": ("en-US-AvaMultilingualNeural", "+0Hz", "+0%"), "investor": ("en-US-AndrewMultilingualNeural", "+0Hz", "+6%")},
+# HRD = Ava (ceria, ekspresif, sedikit lebih tinggi), dosen = Brian (berwibawa: lebih rendah dan pelan),
+# investor = Andrew (muda, energik, jauh lebih cepat). Persona yang sama di bahasa Inggris.
+_EDGE_PERSONAS = {
+    "dosen_penguji": ("en-US-BrianMultilingualNeural", "-8Hz", "-10%"),
+    "hrd": ("en-US-AvaMultilingualNeural", "+4Hz", "+5%"),
+    "investor": ("en-US-AndrewMultilingualNeural", "+2Hz", "+14%"),
 }
+EDGE_VOICES = {"id": _EDGE_PERSONAS, "en": _EDGE_PERSONAS}
 
 
 async def synthesize_edge(text: str, role_type: str, language: str, output_dir: str) -> Optional[str]:
@@ -286,20 +310,77 @@ async def synthesize_edge(text: str, role_type: str, language: str, output_dir: 
     if time.monotonic() < _edge_down_until:
         return None  # internet baru saja gagal: langsung pakai suara offline
     voice, pitch, rate = EDGE_VOICES["en" if language == "en" else "id"].get(role_type, EDGE_VOICES["id"]["hrd"])
-    filename = f"tts_{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}.mp3"
-    path = os.path.join(output_dir, filename)
+
+    async def attempt() -> str:
+        filename = f"tts_{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}.mp3"
+        path = os.path.join(output_dir, filename)
+        try:
+            await edge_tts.Communicate(text, voice, rate=rate, pitch=pitch).save(path)
+            return filename
+        except BaseException:  # termasuk dibatalkan karena percobaan lain menang
+            _unlink(path)
+            raise
+
     try:
-        await asyncio.wait_for(edge_tts.Communicate(text, voice, rate=rate, pitch=pitch).save(path), EDGE_TIMEOUT_SECONDS)
+        filename = await asyncio.wait_for(
+            _hedged(attempt, EDGE_HEDGE_AFTER_SECONDS, discard=lambda name: _unlink(os.path.join(output_dir, name))),
+            EDGE_TIMEOUT_SECONDS,
+        )
         _edge_down_until = 0.0
         return filename
     except Exception as exc:
         print(f"edge-tts notice: {type(exc).__name__} {exc} (suara offline dipakai {int(EDGE_COOLDOWN_SECONDS)} detik)")
         _edge_down_until = time.monotonic() + EDGE_COOLDOWN_SECONDS
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
         return None
+
+
+def _unlink(path: str) -> None:
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+
+async def _hedged(make_attempt, hedge_after, discard=None):
+    """
+    Jalankan make_attempt(). Pada tiap waktu di hedge_after (detik sejak mulai, satu angka atau beberapa),
+    jika belum ada yang berhasil, jalankan satu percobaan lagi secara paralel; percobaan yang gagal juga langsung
+    diganti. Hasil pertama yang berhasil dipakai dan sisanya dibatalkan; hasil lain yang kebetulan juga sudah jadi
+    diserahkan ke discard(). Gagal hanya jika semua percobaan gagal.
+    """
+    schedule = sorted(hedge_after) if isinstance(hedge_after, (list, tuple)) else [hedge_after]
+    started_at = time.monotonic()
+    tasks = [asyncio.ensure_future(make_attempt())]
+    chosen = None
+    error: Optional[BaseException] = None
+    try:
+        while True:
+            pending = {task for task in tasks if not task.done()}
+            next_at = schedule[0] - (time.monotonic() - started_at) if schedule else None
+            if pending:
+                done, _ = await asyncio.wait(pending, timeout=max(0.0, next_at) if next_at is not None else None, return_when=asyncio.FIRST_COMPLETED)
+            else:
+                done = set()
+            for task in done:
+                if task.exception() is None:
+                    chosen = task
+                    return task.result()
+                error = task.exception()
+            if done and pending - done:
+                continue  # sebagian gagal, masih ada percobaan lain yang berjalan
+            if not schedule:
+                if not {task for task in tasks if not task.done()}:
+                    raise error or RuntimeError("semua percobaan gagal")
+                continue
+            # Waktunya tiba, atau semua percobaan yang berjalan gagal: mulai percobaan berikutnya.
+            schedule.pop(0)
+            tasks.append(asyncio.ensure_future(make_attempt()))
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+            elif task is not chosen and discard and not task.cancelled() and task.exception() is None:
+                discard(task.result())
 
 
 def edge_online() -> bool:

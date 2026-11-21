@@ -23,6 +23,7 @@ export default {
             },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                display: ['"Bricolage Grotesque Variable"', 'Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 navy: {

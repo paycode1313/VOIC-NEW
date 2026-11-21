@@ -37,6 +37,7 @@ class ExamController extends Controller
      */
     public function index(Request $request): View
     {
+        $this->rememberStudyCode($request);
         $language = $this->language($request);
 
         $recent = $request->user()
@@ -61,6 +62,7 @@ class ExamController extends Controller
     public function setup(Request $request, string $mode): View
     {
         abort_unless($this->blueprint->hasMode($mode), 404);
+        $this->rememberStudyCode($request);
 
         $parts = array_values(array_intersect([1, 2, 3], array_map('intval', (array) $request->query('parts', [1, 2, 3]))));
         $focus = in_array($request->query('focus'), ExamReportService::CRITERIA, true) ? $request->query('focus') : null;
@@ -72,9 +74,24 @@ class ExamController extends Controller
             'language' => $this->language($request),
             'selectedParts' => $parts === [] ? [1, 2, 3] : $parts,
             'focus' => $focus,
-            // Coaching is the default; drills and explicit ?type=exam open the scored mock exam.
-            'sessionType' => $focus !== null || $request->query('type') === 'exam' ? ExamFlowService::TYPE_EXAM : ExamFlowService::TYPE_COACH,
+            // Coaching is the default; drills, explicit ?type=exam and trial participants (they are scored)
+            // open the mock exam.
+            'sessionType' => $focus !== null || $request->query('type') === 'exam'
+                || ($request->session()->has('study_code') && $request->query('type') !== 'coach')
+                ? ExamFlowService::TYPE_EXAM : ExamFlowService::TYPE_COACH,
         ]);
+    }
+
+    /**
+     * Invitation links for the user trial (/latihan?kode=P07, see voic:study-links): remember the
+     * participant code, so the participant never has to type it.
+     */
+    protected function rememberStudyCode(Request $request): void
+    {
+        $code = UserStudy::normalizeCode($request->query('kode'));
+        if ($code !== null) {
+            $request->session()->put('study_code', $code);
+        }
     }
 
     /**
@@ -312,6 +329,21 @@ class ExamController extends Controller
             'Content-Type' => 'audio/webm',
             'Cache-Control' => 'private, max-age=600',
         ]);
+    }
+
+    /**
+     * Short voiced reactions ("Hmm…", "Oke, oke.") the room plays the moment the candidate stops
+     * talking, so the examiner reacts instantly while the real reply is still being prepared.
+     */
+    public function backchannels(PracticeSession $practiceSession, ExaminerService $examiner): JsonResponse
+    {
+        abort_unless($practiceSession->isExam(), 404);
+        Gate::authorize('update', $practiceSession);
+
+        $roleType = (string) ($this->blueprint->mode($practiceSession->exam_mode)['role_type'] ?? 'dosen_penguji');
+        $language = (string) ($practiceSession->exam_state['language'] ?? 'id');
+
+        return response()->json(['clips' => $examiner->backchannels($roleType, $language)]);
     }
 
     /**

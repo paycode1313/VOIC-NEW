@@ -1,0 +1,536 @@
+{
+  "title": "DFD Level 1 · Sistem VOIC",
+  "subtitle": "Proses utama sistem, penyimpanan data, dan aliran data di antaranya",
+  "width": 1900,
+  "height": 1560,
+  "note": "Tanda * menandai entitas atau penyimpanan yang digambar ulang (sama dengan aslinya) agar garis tidak bersilangan. D7 berupa berkas audio di penyimpanan lokal, bukan tabel database.",
+  "nodes": [
+    {
+      "type": "ext",
+      "key": "peserta",
+      "label": "Peserta\n(tamu / pengguna)",
+      "x": 150,
+      "y": 760,
+      "w": 190,
+      "h": 560
+    },
+    {
+      "type": "ext",
+      "key": "operator",
+      "label": "Operator Booth",
+      "x": 1730,
+      "y": 170,
+      "w": 210,
+      "h": 70
+    },
+    {
+      "type": "ext",
+      "key": "ai",
+      "label": "Layanan AI Cloud\n(Groq)",
+      "x": 1730,
+      "y": 640,
+      "w": 220,
+      "h": 80
+    },
+    {
+      "type": "ext",
+      "key": "suara",
+      "label": "Layanan Suara Online\n(Microsoft edge-tts)",
+      "x": 1730,
+      "y": 880,
+      "w": 240,
+      "h": 80
+    },
+    {
+      "type": "ext",
+      "key": "peneliti",
+      "label": "Tim Peneliti",
+      "x": 1730,
+      "y": 1420,
+      "w": 210,
+      "h": 70
+    },
+    {
+      "type": "proc",
+      "id": "1.0",
+      "label": "Kelola Akun",
+      "x": 620,
+      "y": 190
+    },
+    {
+      "type": "proc",
+      "id": "2.0",
+      "label": "Persiapan\nLatihan",
+      "x": 620,
+      "y": 470
+    },
+    {
+      "type": "proc",
+      "id": "3.0",
+      "label": "Simulasi\nPanggilan",
+      "x": 1040,
+      "y": 790,
+      "r": 86
+    },
+    {
+      "type": "proc",
+      "id": "4.0",
+      "label": "Penilaian\n& Rapor",
+      "x": 620,
+      "y": 1150
+    },
+    {
+      "type": "proc",
+      "id": "5.0",
+      "label": "Uji Coba\nPengguna",
+      "x": 1300,
+      "y": 1400
+    },
+    {
+      "type": "proc",
+      "id": "6.0",
+      "label": "Kelola Booth",
+      "x": 1350,
+      "y": 170
+    },
+    {
+      "type": "store",
+      "key": "d1",
+      "sid": "D1",
+      "label": "Pengguna",
+      "x": 1040,
+      "y": 190,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d2",
+      "sid": "D2",
+      "label": "Sesi Latihan",
+      "x": 1040,
+      "y": 470,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d3",
+      "sid": "D3",
+      "label": "Peran Penguji",
+      "x": 620,
+      "y": 660,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d4",
+      "sid": "D4",
+      "label": "Percakapan",
+      "x": 1380,
+      "y": 1090,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d7",
+      "sid": "D7",
+      "label": "Rekaman Jawaban",
+      "x": 1040,
+      "y": 1010,
+      "w": 260,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d5",
+      "sid": "D5",
+      "label": "Hasil Uji Coba",
+      "x": 900,
+      "y": 1320,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d6",
+      "sid": "D6",
+      "label": "Kuesioner",
+      "x": 1690,
+      "y": 1150,
+      "w": 220,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d1b",
+      "sid": "D1",
+      "label": "Pengguna*",
+      "dup": true,
+      "x": 560,
+      "y": 1440,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d2b",
+      "sid": "D2",
+      "label": "Sesi Latihan*",
+      "dup": true,
+      "x": 980,
+      "y": 1210,
+      "w": 250,
+      "h": 46
+    },
+    {
+      "type": "ext",
+      "key": "ai2",
+      "label": "Layanan AI Cloud*\n(Groq)",
+      "x": 220,
+      "y": 1300,
+      "w": 230,
+      "h": 80
+    },
+    {
+      "type": "ext",
+      "key": "peserta2",
+      "label": "Peserta*",
+      "x": 1010,
+      "y": 1480,
+      "w": 200,
+      "h": 60
+    }
+  ],
+  "edges": [
+    [
+      "peserta",
+      "1.0",
+      "data registrasi\n& login",
+      {
+        "off": -14,
+        "t": 0.45
+      }
+    ],
+    [
+      "1.0",
+      "peserta",
+      "status akun",
+      {
+        "off": -14,
+        "t": 0.6
+      }
+    ],
+    [
+      "1.0",
+      "d1",
+      "data pengguna",
+      {
+        "off": -12,
+        "lo": -18
+      }
+    ],
+    [
+      "d1",
+      "1.0",
+      "kredensial",
+      {
+        "off": -12,
+        "lo": -18
+      }
+    ],
+    [
+      "peserta",
+      "2.0",
+      "nama, kampus, mode,\ntopik, kode peserta",
+      {
+        "t": 0.55
+      }
+    ],
+    [
+      "d3",
+      "2.0",
+      "persona penguji",
+      {
+        "lo": 0,
+        "t": 0.5
+      }
+    ],
+    [
+      "2.0",
+      "d2",
+      "sesi baru, topik\n& status ujian",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "2.0",
+      "3.0",
+      "sesi siap,\nsalam pembuka",
+      {
+        "t": 0.42
+      }
+    ],
+    [
+      "d3",
+      "3.0",
+      "gaya bicara\npenguji",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "d2",
+      "3.0",
+      "status ujian",
+      {
+        "off": -16,
+        "lo": -48,
+        "t": 0.5
+      }
+    ],
+    [
+      "3.0",
+      "d2",
+      "status ujian baru",
+      {
+        "off": -16,
+        "lo": -60,
+        "t": 0.5
+      }
+    ],
+    [
+      "3.0",
+      "d4",
+      "pesan peserta\n& penguji",
+      {
+        "t": 0.55
+      }
+    ],
+    [
+      "3.0",
+      "d7",
+      "rekaman\njawaban",
+      {
+        "lo": 44,
+        "t": 0.5
+      }
+    ],
+    [
+      "3.0",
+      "ai",
+      "prompt & riwayat",
+      {
+        "off": 14,
+        "lo": 16,
+        "t": 0.5
+      }
+    ],
+    [
+      "ai",
+      "3.0",
+      "balasan penguji",
+      {
+        "off": 14,
+        "lo": 16,
+        "t": 0.5
+      }
+    ],
+    [
+      "3.0",
+      "suara",
+      "kalimat penguji",
+      {
+        "off": -14,
+        "lo": -16,
+        "t": 0.55
+      }
+    ],
+    [
+      "suara",
+      "3.0",
+      "audio penguji",
+      {
+        "off": -14,
+        "lo": -16,
+        "t": 0.45
+      }
+    ],
+    [
+      "d4",
+      "4.0",
+      "riwayat jawaban\n& ekspresi",
+      {
+        "t": 0.62
+      }
+    ],
+    [
+      "d7",
+      "4.0",
+      "rekaman\nper jawaban",
+      {
+        "t": 0.4
+      }
+    ],
+    [
+      "4.0",
+      "peserta",
+      "rapor, saran\n& QR rapor",
+      {
+        "t": 0.45
+      }
+    ],
+    [
+      "4.0",
+      "d5",
+      "skor uji coba",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "d5",
+      "5.0",
+      "skor latihan\nke-1 s.d. ke-3",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "peneliti",
+      "5.0",
+      "perintah rekap",
+      {
+        "off": -14,
+        "lo": -18,
+        "t": 0.5
+      }
+    ],
+    [
+      "5.0",
+      "peneliti",
+      "tautan undangan,\nrekap (CSV, grafik)",
+      {
+        "off": -14,
+        "lo": -36,
+        "t": 0.5
+      }
+    ],
+    [
+      "operator",
+      "6.0",
+      "PIN, pengunjung\nberikutnya",
+      {
+        "off": -14,
+        "lo": -30,
+        "t": 0.5
+      }
+    ],
+    [
+      "6.0",
+      "operator",
+      "papan skor\n& status AI",
+      {
+        "off": -14,
+        "lo": -30,
+        "t": 0.5
+      }
+    ],
+    [
+      "d2",
+      "6.0",
+      "skor sesi hari ini",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "peserta",
+      "3.0",
+      "jawaban suara / teks,\ndata kamera",
+      {
+        "off": -16,
+        "t": 0.35
+      }
+    ],
+    [
+      "3.0",
+      "peserta",
+      "pertanyaan, suara\n& reaksi penguji",
+      {
+        "off": -16,
+        "t": 0.3
+      }
+    ],
+    [
+      "4.0",
+      "d2b",
+      "rapor &\nband score",
+      {
+        "t": 0.55,
+        "lo": 0
+      }
+    ],
+    [
+      "4.0",
+      "ai2",
+      "jawaban terlemah",
+      {
+        "off": 14,
+        "lo": 22,
+        "t": 0.5
+      }
+    ],
+    [
+      "ai2",
+      "4.0",
+      "versi jawaban\nlebih kuat",
+      {
+        "off": 14,
+        "lo": 30,
+        "t": 0.5
+      }
+    ],
+    [
+      "4.0",
+      "d1b",
+      "profil belajar",
+      {
+        "t": 0.5,
+        "lo": 0
+      }
+    ],
+    [
+      "peserta2",
+      "5.0",
+      "jawaban\nkuesioner",
+      {
+        "t": 0.5,
+        "lo": 26
+      }
+    ],
+    [
+      "5.0",
+      "d6",
+      "kuesioner",
+      {
+        "off": 12,
+        "lo": 20,
+        "t": 0.5
+      }
+    ],
+    [
+      "d6",
+      "5.0",
+      "hasil kuesioner",
+      {
+        "off": 12,
+        "lo": 22,
+        "t": 0.5
+      }
+    ]
+  ]
+}

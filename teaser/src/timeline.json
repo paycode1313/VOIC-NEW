@@ -1,0 +1,75 @@
+{
+  "fps": 30,
+  "durationInFrames": 1290,
+  "scenes": {
+    "hook": 0,
+    "reveal": 210,
+    "examiners": 345,
+    "call": 630,
+    "report": 930,
+    "cta": 1065,
+    "end": 1290
+  },
+  "voices": {
+    "n_hook1": {
+      "at": 10,
+      "frames": 50,
+      "text": "Deg-degan mau sidang?"
+    },
+    "n_hook2": {
+      "at": 69,
+      "frames": 53,
+      "text": "Grogi pas interview?"
+    },
+    "n_hook3": {
+      "at": 130,
+      "frames": 60,
+      "text": "Ditanya investor, blank?"
+    },
+    "n_reveal": {
+      "at": 225,
+      "frames": 103,
+      "text": "Tenang. Latihan dulu, bareng penguji kami."
+    },
+    "hrd": {
+      "at": 372,
+      "frames": 65,
+      "text": "Wah, seru banget! Ceritain dong."
+    },
+    "dosen": {
+      "at": 447,
+      "frames": 98,
+      "text": "Datanya. Datanya dulu yang saya tanya."
+    },
+    "investor": {
+      "at": 555,
+      "frames": 51,
+      "text": "Oke, oke. Tapi cuannya mana?"
+    },
+    "n_call": {
+      "at": 640,
+      "frames": 107,
+      "text": "Jawab pakai suara, penguji nanya balik."
+    },
+    "call_hmm": {
+      "at": 754,
+      "frames": 49,
+      "text": "Hmm, begitu ya."
+    },
+    "call_question": {
+      "at": 805,
+      "frames": 105,
+      "text": "Delapan puluh tujuh persen. Dibanding apa?"
+    },
+    "n_report": {
+      "at": 940,
+      "frames": 77,
+      "text": "Selesai, rapor langsung keluar."
+    },
+    "n_cta": {
+      "at": 1083,
+      "frames": 146,
+      "text": "Berani ditelepon penguji kami? Coba gratis di booth Vois."
+    }
+  }
+}

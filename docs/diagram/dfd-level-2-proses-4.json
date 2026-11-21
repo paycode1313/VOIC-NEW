@@ -1,0 +1,222 @@
+{
+  "title": "DFD Level 2 · Proses 4.0 Penilaian & Rapor",
+  "subtitle": "Dari riwayat jawaban sampai rapor yang bisa dibawa pulang lewat QR",
+  "width": 1820,
+  "height": 980,
+  "note": "D1* adalah salinan penyimpanan D1 Pengguna. Versi jawaban yang lebih kuat dibuat AI cloud bila tersedia; tanpa internet, sistem memberi kerangka jawaban (pola STAR dan sejenisnya).",
+  "nodes": [
+    {
+      "type": "ext",
+      "key": "peserta",
+      "label": "Peserta",
+      "x": 1650,
+      "y": 790,
+      "w": 220,
+      "h": 80
+    },
+    {
+      "type": "ext",
+      "key": "ai",
+      "label": "Layanan AI Cloud\n(Groq)",
+      "x": 230,
+      "y": 730,
+      "w": 230,
+      "h": 80
+    },
+    {
+      "type": "proc",
+      "id": "4.1",
+      "label": "Nilai Tiap\nJawaban",
+      "x": 560,
+      "y": 240
+    },
+    {
+      "type": "proc",
+      "id": "4.2",
+      "label": "Hitung Band\n& Kriteria",
+      "x": 960,
+      "y": 240
+    },
+    {
+      "type": "proc",
+      "id": "4.3",
+      "label": "Susun Jawaban\nLebih Kuat",
+      "x": 700,
+      "y": 670
+    },
+    {
+      "type": "proc",
+      "id": "4.4",
+      "label": "Susun Rapor\n& Fokus Latihan",
+      "x": 1180,
+      "y": 510
+    },
+    {
+      "type": "proc",
+      "id": "4.5",
+      "label": "Tampilkan &\nBagikan Rapor",
+      "x": 1180,
+      "y": 810
+    },
+    {
+      "type": "store",
+      "key": "d4",
+      "sid": "D4",
+      "label": "Percakapan",
+      "x": 200,
+      "y": 240,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d7",
+      "sid": "D7",
+      "label": "Rekaman Jawaban",
+      "x": 760,
+      "y": 900,
+      "w": 260,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d2",
+      "sid": "D2",
+      "label": "Sesi Latihan",
+      "x": 1600,
+      "y": 270,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d1",
+      "sid": "D1",
+      "label": "Pengguna*",
+      "dup": true,
+      "x": 1600,
+      "y": 470,
+      "w": 240,
+      "h": 46
+    },
+    {
+      "type": "store",
+      "key": "d5",
+      "sid": "D5",
+      "label": "Hasil Uji Coba",
+      "x": 1600,
+      "y": 610,
+      "w": 240,
+      "h": 46
+    }
+  ],
+  "edges": [
+    [
+      "d4",
+      "4.1",
+      "riwayat jawaban\n& ekspresi",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "4.1",
+      "4.2",
+      "skor & catatan\nper jawaban",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "4.1",
+      "4.3",
+      "jawaban\nterlemah",
+      {
+        "t": 0.5,
+        "lo": -40
+      }
+    ],
+    [
+      "4.3",
+      "ai",
+      "jawaban terlemah",
+      {
+        "off": 14,
+        "lo": 18
+      }
+    ],
+    [
+      "ai",
+      "4.3",
+      "versi jawaban\nlebih kuat",
+      {
+        "off": 14,
+        "lo": 26
+      }
+    ],
+    [
+      "4.2",
+      "4.4",
+      "band &\n4 kriteria",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "4.3",
+      "4.4",
+      "versi jawaban\nlebih kuat",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "4.4",
+      "d2",
+      "rapor & band score",
+      {
+        "t": 0.55
+      }
+    ],
+    [
+      "4.4",
+      "d1",
+      "profil belajar",
+      {
+        "t": 0.6
+      }
+    ],
+    [
+      "4.4",
+      "d5",
+      "skor uji coba\n(jika ada kode)",
+      {
+        "t": 0.6
+      }
+    ],
+    [
+      "4.4",
+      "4.5",
+      "rapor lengkap",
+      {
+        "lo": 52
+      }
+    ],
+    [
+      "d7",
+      "4.5",
+      "rekaman\nper jawaban",
+      {
+        "t": 0.5
+      }
+    ],
+    [
+      "4.5",
+      "peserta",
+      "rapor, saran\n& QR rapor",
+      {
+        "t": 0.5
+      }
+    ]
+  ]
+}

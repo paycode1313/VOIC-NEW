@@ -9,7 +9,7 @@
 /.cursor/
 /.idea
 /.nova
-/.phpunit.cache
+/backend/.phpunit.cache
 /.vscode
 /.zed
 /backend/auth.json

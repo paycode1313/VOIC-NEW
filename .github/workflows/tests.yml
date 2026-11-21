@@ -30,6 +30,7 @@ jobs:
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      # The pages are built in frontend/ into backend/public/build.
       - name: Build frontend assets
         working-directory: frontend
         run: |

@@ -5,6 +5,8 @@
 @import '@fontsource/figtree/700.css';
 @import '@fontsource/figtree/800.css';
 @import '@fontsource/figtree/900.css';
+/* Display face for headings: a characterful grotesque with optical sizes, also bundled (offline-safe). */
+@import '@fontsource-variable/bricolage-grotesque/opsz.css';
 
 @tailwind base;
 @tailwind components;
@@ -25,6 +27,13 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
+    }
+
+    /* Every heading on the site speaks in the display face; body copy stays in Figtree. */
+    h1, h2, h3, .font-display {
+        font-family: 'Bricolage Grotesque Variable', 'Figtree', ui-sans-serif, system-ui, sans-serif;
+        font-optical-sizing: auto;
+        letter-spacing: -0.025em;
     }
 
     /* Respect Reduced Motion Preferences */
@@ -363,6 +372,118 @@
     .voic-drift, .voic-drift-slow, .voic-shake, .voic-bounce, .voic-ring, .voic-eq { animation: none; }
 }
 
+/* ------------------------------------------------------------------------------------------------
+ | "Studio" layer: what keeps the light pages from feeling flat.
+ |  - voic-grain: fine film grain over the backdrop
+ |  - voic-rise: staggered entrance (set --d for the delay)
+ |  - voic-mark: a hand-drawn highlighter stroke behind a word
+ |  - voic-wave: a small live sound wave (5 bars)
+ |  - voic-bubble: the examiner's catchphrase as a chat bubble
+ |  - voic-tilt: cards lean towards the pointer a little
+ * ----------------------------------------------------------------------------------------------- */
+@layer components {
+    .voic-grain {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        opacity: 0.1;
+        mix-blend-mode: multiply;
+    }
+
+    .voic-rise {
+        animation: voic-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation-delay: var(--d, 0ms);
+    }
+
+    .voic-mark {
+        position: relative;
+        white-space: nowrap;
+        z-index: 0;
+    }
+    .voic-mark::before {
+        content: '';
+        position: absolute;
+        inset: 52% -0.12em 4% -0.12em;
+        z-index: -1;
+        border-radius: 0.3em 0.6em 0.25em 0.5em;
+        background: var(--mark, #fde047);
+        transform: rotate(-1.5deg) scaleX(0);
+        transform-origin: left center;
+        animation: voic-mark 0.9s cubic-bezier(0.65, 0, 0.35, 1) 0.45s forwards;
+    }
+
+    .voic-wave {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        height: 1em;
+    }
+    .voic-wave > i {
+        display: block;
+        width: 3px;
+        height: 30%;
+        border-radius: 9999px;
+        background: currentColor;
+        animation: voic-eq 0.9s ease-in-out infinite;
+    }
+    .voic-wave > i:nth-child(2) { animation-delay: -0.45s; animation-duration: 0.7s; }
+    .voic-wave > i:nth-child(3) { animation-delay: -0.2s; animation-duration: 1.1s; }
+    .voic-wave > i:nth-child(4) { animation-delay: -0.6s; animation-duration: 0.8s; }
+    .voic-wave > i:nth-child(5) { animation-delay: -0.3s; animation-duration: 1s; }
+
+    .voic-bubble {
+        position: relative;
+        border-radius: 1.1rem 1.1rem 1.1rem 0.3rem;
+        background: #fff;
+        box-shadow: 0 10px 24px -12px rgb(15 23 42 / 0.25), 0 0 0 1px rgb(15 23 42 / 0.06);
+    }
+
+    .voic-tilt {
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0));
+    }
+    .voic-tilt:hover {
+        --ty: -6px;
+        box-shadow: 0 30px 60px -25px rgb(15 23 42 / 0.35);
+    }
+
+    /* Sticker-style label (big numbers, small tags) with a slight hand-placed tilt. */
+    .voic-sticker {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9999px;
+        transform: rotate(-3deg);
+        box-shadow: 0 6px 14px -8px rgb(15 23 42 / 0.45);
+    }
+}
+
+/* Report: the band ring draws itself in, criterion bars grow from the left. */
+.voic-ring-draw { animation: voic-ring-draw 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.3s backwards; }
+@keyframes voic-ring-draw { from { stroke-dashoffset: var(--full); } }
+.voic-grow { transform-origin: left; animation: voic-grow 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--d, 0ms) backwards; }
+@keyframes voic-grow { from { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .voic-ring-draw, .voic-grow { animation: none; } }
+
+/* Endless topic ticker: the content is rendered twice, so sliding by half loops seamlessly. */
+.voic-ticker { animation: voic-ticker 60s linear infinite; }
+.voic-ticker:hover { animation-play-state: paused; }
+@keyframes voic-ticker { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .voic-ticker { animation: none; } }
+
+@keyframes voic-rise {
+    from { opacity: 0; transform: translateY(18px) scale(0.985); filter: blur(4px); }
+    to { opacity: 1; transform: none; filter: none; }
+}
+
+@keyframes voic-mark {
+    to { transform: rotate(-1.5deg) scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .voic-rise { animation: none; }
+    .voic-mark::before { animation: none; transform: rotate(-1.5deg); }
+    .voic-wave > i { animation: none; height: 60%; }
+    .voic-tilt { transform: none !important; }
+}
+
 /* Booth kiosk: no account, theme or site navigation; a "Selesai" button back to the welcome screen. */
 .voic-kiosk [data-kiosk-hide] { display: none !important; }
 .voic-kiosk [data-kiosk-show] { display: inline-flex !important; }
@@ -409,4 +530,160 @@ a, button {
 .voic-bottom-nav button {
     user-select: none;
     -webkit-user-select: none;
+}
+
+/* ------------------------------------------------------------------------------------------------
+ | Motion kit: micro interactions, button animation, card hover and skeleton shimmer.
+ | Applied by selector, so every page gets it without extra classes. Uses the individual `scale` /
+ | `translate` properties, which stack on top of Tailwind's `transform` instead of replacing it.
+ |  - buttons: lift on hover, press-in on click, a light sweep over solid pill buttons, arrow nudge
+ |  - cards: lift, deeper shadow and a soft spotlight that follows the pointer (js/app.js sets --mx/--my)
+ |  - .voic-skeleton: shimmering placeholder (also on images until they have loaded)
+ |  - .voic-navbar: thin progress bar while the next page is loading
+ * ----------------------------------------------------------------------------------------------- */
+@layer components {
+    /* ---- Buttons ---- */
+    :is(button, [role="button"], input[type="submit"], a[class*="rounded-full"][class*="px-"]):not(:disabled):not([data-no-press]) {
+        transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, scale, translate;
+        transition-duration: 0.22s;
+        transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    :is(button, [role="button"], input[type="submit"], a[class*="rounded-full"][class*="px-"]):not(:disabled):not([data-no-press]):active {
+        scale: 0.96;
+        transition-duration: 0.08s;
+    }
+    :is(button, a)[class*="rounded-full"] > svg {
+        transition: translate 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Light sweep over solid, coloured pill buttons. */
+    .voic-shine,
+    :is(button, a)[class*="rounded-full"][class*="px-"]:is([class*="bg-slate-900"], [class*="bg-emerald-5"], [class*="bg-emerald-6"], [class*="bg-brand-6"], [class*="bg-blue-6"], [class*="bg-indigo-6"], [class*="bg-rose-6"], [class*="bg-sky-5"], [class*="bg-sky-6"]):not(:disabled) {
+        isolation: isolate;
+    }
+    .voic-shine:not(.absolute):not(.fixed),
+    :is(button, a)[class*="rounded-full"][class*="px-"]:is([class*="bg-slate-900"], [class*="bg-emerald-5"], [class*="bg-emerald-6"], [class*="bg-brand-6"], [class*="bg-blue-6"], [class*="bg-indigo-6"], [class*="bg-rose-6"], [class*="bg-sky-5"], [class*="bg-sky-6"]):not(:disabled):not(.absolute):not(.fixed) {
+        position: relative;
+    }
+    .voic-shine::after,
+    :is(button, a)[class*="rounded-full"][class*="px-"]:is([class*="bg-slate-900"], [class*="bg-emerald-5"], [class*="bg-emerald-6"], [class*="bg-brand-6"], [class*="bg-blue-6"], [class*="bg-indigo-6"], [class*="bg-rose-6"], [class*="bg-sky-5"], [class*="bg-sky-6"]):not(:disabled)::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        pointer-events: none;
+        background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.32) 50%, transparent 70%) no-repeat;
+        background-size: 260% 100%;
+        background-position: 130% 0;
+    }
+
+    @media (hover: hover) {
+        :is(button, a)[class*="rounded-full"][class*="px-"]:not(:disabled):not([data-no-press]):hover {
+            translate: 0 -2px;
+            box-shadow: 0 10px 22px -12px rgb(15 23 42 / 0.45);
+        }
+        :is(button, a)[class*="rounded-full"][class*="px-"]:not(:disabled):hover:active {
+            translate: 0 0;
+        }
+        /* A trailing arrow slides forward a little. */
+        :is(button, a)[class*="rounded-full"]:hover > svg:last-child:not(:first-child) {
+            translate: 3px 0;
+        }
+        .voic-shine:hover::after,
+        :is(button, a)[class*="rounded-full"][class*="px-"]:not(:disabled):hover::after {
+            animation: voic-shine 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    }
+
+    /* Inputs: the focus ring eases in; checkboxes and radios pop when ticked. */
+    :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+        transition: border-color 0.2s ease, box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s ease;
+    }
+    :is(input[type="checkbox"], input[type="radio"]):checked {
+        animation: voic-pop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ---- Cards ---- */
+    .voic-card,
+    :is(div, section, article, a, label, li)[class*="rounded-3xl"][class*="border-black/5"]:not(.voic-tilt),
+    :is(div, section, article, a, label, li)[class*="rounded-2xl"][class*="shadow-xs"],
+    :is(a, label)[class*="rounded-2xl"][class*="border"],
+    .glass-subcard {
+        transition: translate 0.35s cubic-bezier(0.16, 1, 0.3, 1), scale 0.2s ease, box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+    }
+    @media (hover: hover) {
+        .voic-card:hover,
+        :is(div, section, article, a, label, li)[class*="rounded-3xl"][class*="border-black/5"]:not(.voic-tilt):hover,
+        :is(div, section, article, a, label, li)[class*="rounded-2xl"][class*="shadow-xs"]:hover,
+        .glass-subcard:hover {
+            translate: 0 -3px;
+            border-color: rgb(37 99 235 / 0.18);
+            box-shadow: 0 18px 40px -18px rgb(15 23 42 / 0.28), 0 0 0 1px rgb(37 99 235 / 0.06);
+        }
+        /* Clickable cards lift a bit more. */
+        :is(a, label)[class*="rounded-2xl"][class*="border"]:hover,
+        a[class*="rounded-3xl"][class*="border-black/5"]:hover {
+            translate: 0 -4px;
+            border-color: rgb(37 99 235 / 0.3);
+            box-shadow: 0 22px 44px -18px rgb(37 99 235 / 0.35);
+        }
+        :is(a, label)[class*="rounded-2xl"][class*="border"]:active { scale: 0.985; }
+        /* Spotlight following the pointer (plain white cards only; gradients keep their own look). */
+        :is(.voic-card, [class*="rounded-3xl"][class*="border-black/5"], [class*="rounded-2xl"][class*="shadow-xs"], .voic-tilt)[class*="bg-white"]:not([class*="bg-gradient"]):hover {
+            background-image: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgb(37 99 235 / 0.06), transparent 65%);
+        }
+    }
+
+    /* ---- Skeleton shimmer ---- */
+    .voic-skeleton {
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.6rem;
+        background-color: rgb(15 23 42 / 0.07);
+    }
+    .voic-skeleton::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        translate: -100% 0;
+        background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.7), transparent);
+        animation: voic-shimmer 1.4s ease-in-out infinite;
+    }
+    .voic-skeleton-circle { border-radius: 9999px; }
+
+    /* Images shimmer until they arrive, then fade in (js/app.js toggles the classes). */
+    img.voic-img-loading {
+        color: transparent;
+        background: linear-gradient(90deg, rgb(15 23 42 / 0.07) 25%, rgb(15 23 42 / 0.14) 50%, rgb(15 23 42 / 0.07) 75%);
+        background-size: 200% 100%;
+        animation: voic-shimmer-bg 1.4s ease-in-out infinite;
+    }
+    img.voic-img-loaded { animation: voic-fade-in 0.45s ease-out; }
+
+    /* Page-to-page loading bar. */
+    .voic-navbar {
+        position: fixed;
+        inset: 0 0 auto 0;
+        z-index: 9999;
+        height: 3px;
+        pointer-events: none;
+        transform-origin: left;
+        background: linear-gradient(90deg, #2563eb, #10b981, #2563eb);
+        background-size: 200% 100%;
+        box-shadow: 0 0 10px rgb(37 99 235 / 0.6);
+        animation: voic-navbar-grow 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards, voic-shimmer-bg 1.2s linear infinite;
+    }
+}
+
+@keyframes voic-shine { from { background-position: 130% 0; } to { background-position: -30% 0; } }
+@keyframes voic-pop { 0% { scale: 0.7; } 60% { scale: 1.15; } 100% { scale: 1; } }
+@keyframes voic-shimmer { to { translate: 100% 0; } }
+@keyframes voic-shimmer-bg { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes voic-fade-in { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: none; } }
+@keyframes voic-navbar-grow { from { transform: scaleX(0); } 20% { transform: scaleX(0.45); } to { transform: scaleX(0.92); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .voic-skeleton::after, img.voic-img-loading { animation: none; }
+    :is(button, a, div, section, article, label, li):hover { translate: none !important; }
 }

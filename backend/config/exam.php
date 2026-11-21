@@ -94,6 +94,9 @@ return [
                 'en' => 'Practise with an HR recruiter, from introductions to situational questions.',
             ],
             'examiner' => ['name' => 'VOIC-INTERVIEW', 'title' => ['id' => 'Interview dengan HRD', 'en' => 'Interview with HR'], 'avatar' => 'images/avatars/hrd-portrait.webp',
+                // Personality on the cards, matching how this examiner talks (ExaminerService::SPEAKING_STYLE).
+                'catchphrase' => ['id' => 'Wah, seru banget! Ceritain dong.', 'en' => 'Oh wow, I love that. Tell me more!'],
+                'traits' => ['id' => ['Ceria', 'Ekspresif', 'Hangat'], 'en' => ['Bubbly', 'Expressive', 'Warm']],
                 // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
                 'rig' => ['eyes' => [[0.4395, 0.3164], [0.5586, 0.3164]], 'eyeW' => 0.0508, 'eyeH' => 0.0254, 'mouth' => [0.5, 0.4229], 'mouthW' => 0.1133, 'chin' => 0.5078]],
             'topic_label' => ['id' => 'Posisi yang dilamar', 'en' => 'Position you are applying for'],
@@ -230,6 +233,8 @@ return [
                 'en' => 'Defend your thesis: core presentation, then methodology Q&A.',
             ],
             'examiner' => ['name' => 'VOIC-SIDANG', 'title' => ['id' => 'Sidang dengan Dosen Penguji', 'en' => 'Thesis defense with an examiner'], 'avatar' => 'images/avatars/dosen-portrait.webp',
+                'catchphrase' => ['id' => 'Datanya. Datanya dulu yang saya tanya.', 'en' => 'The data. Show me the data first.'],
+                'traits' => ['id' => ['Berwibawa', 'Tegas', 'Adil'], 'en' => ['Authoritative', 'Firm', 'Fair']],
                 // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
                 'rig' => ['eyes' => [[0.4268, 0.3457], [0.5713, 0.3457]], 'eyeW' => 0.0449, 'eyeH' => 0.0215, 'mouth' => [0.501, 0.5068], 'mouthW' => 0.1367, 'chin' => 0.6104]],
             'topic_label' => ['id' => 'Judul skripsi', 'en' => 'Thesis title'],
@@ -351,6 +356,8 @@ return [
                 'en' => 'Pitch to an investor: problem, solution, then a due-diligence grilling.',
             ],
             'examiner' => ['name' => 'VOIC-BISNIS', 'title' => ['id' => 'Pitching Bisnis dengan Investor', 'en' => 'Business pitch with an investor'], 'avatar' => 'images/avatars/investor-portrait.webp',
+                'catchphrase' => ['id' => 'Oke, oke. Tapi cuannya mana?', 'en' => 'Okay, okay. But where is the money?'],
+                'traits' => ['id' => ['Energik', 'Blak-blakan', 'Gercep'], 'en' => ['Energetic', 'Blunt', 'Fast']],
                 // Face landmarks as fractions of the portrait, used by the live avatar (resources/js/avatar.js).
                 'rig' => ['eyes' => [[0.4463, 0.2979], [0.5537, 0.2979]], 'eyeW' => 0.0449, 'eyeH' => 0.0195, 'mouth' => [0.5, 0.4111], 'mouthW' => 0.1035, 'chin' => 0.4951]],
             'topic_label' => ['id' => 'Nama dan bidang startup', 'en' => 'Startup name and sector'],

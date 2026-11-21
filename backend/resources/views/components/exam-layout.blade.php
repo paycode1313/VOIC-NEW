@@ -31,6 +31,7 @@
             <div class="absolute -right-32 top-1/3 h-[28rem] w-[28rem] rounded-full bg-sky-200/40 blur-3xl"></div>
             <div class="absolute -bottom-40 left-1/3 h-[30rem] w-[30rem] rounded-full bg-amber-200/30 blur-3xl"></div>
             <div class="absolute inset-0 opacity-[0.35] [background-image:radial-gradient(rgb(15_23_42/0.07)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_70%)]"></div>
+            <div class="voic-grain absolute inset-0"></div>
         </div>
         <header x-data="{ menu: false, account: false }" class="shrink-0 border-b border-black/5 dark:border-white/5 bg-white/70 shadow-[0_1px_0_rgb(255_255_255/0.6)_inset] dark:bg-[#0c0d10]/85 backdrop-blur sticky top-0 z-30">
             <div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">

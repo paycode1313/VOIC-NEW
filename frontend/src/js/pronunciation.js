@@ -1,5 +1,5 @@
 // Pelafalan untuk suara browser (cadangan jika server tidak mengirim audio).
-// Kamus dan aturannya sama dengan ai_service/pronunciation.py: ubah di sana dan di sini bersamaan.
+// Kamus dan aturannya sama dengan backend/ai_service/pronunciation.py: ubah di sana dan di sini bersamaan.
 import lexicon from '../../../backend/ai_service/pronunciation.json';
 
 const RUPIAH_UNIT = /\bRp\.?\s*(\d+(?:[.,]\d+)?\s*(?:ribu|juta|miliar|triliun|thousand|million|billion|trillion))\b/gi;

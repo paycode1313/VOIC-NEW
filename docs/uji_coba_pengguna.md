@@ -1,5 +1,7 @@
 # Panduan Uji Coba Pengguna & Bukti untuk Juri
 
+> Struktur repo: `frontend/` (tampilan web), `backend/` (Laravel + `ai_service/`), `mobile/`. Jalankan perintah `php artisan` dan `python ai_service/...` dari folder `backend/`, dan perintah `npm` dari folder `frontend/`.
+
 Tiga bukti yang dicari juri, dan perintah yang menghasilkannya:
 
 | Bukti | Perintah | Masuk ke slide |
@@ -19,8 +21,12 @@ Tiga bukti yang dicari juri, dan perintah yang menghasilkannya:
 3. Jelaskan ke peserta: ikut 3 kali latihan ujian (bukan mode coaching), sebaiknya di hari berbeda atau minimal dengan jeda.
 
 ### Pelaksanaan
-1. Peserta membuka `/latihan`, memilih mode, lalu memilih **ujian** (bukan coaching).
-2. Di bagian **"Ikut uji coba VOIC?"**, isi **Kode peserta** (mis. `P07`). Kode diingat untuk latihan berikutnya di perangkat yang sama.
+1. **Cara termudah:** cetak tautan undangan dengan `php artisan voic:study-links --count=25` (atur dulu `VOIC_PUBLIC_URL`
+   supaya bisa dibuka dari HP), lalu kirim satu tautan ke tiap peserta (mis. lewat WhatsApp). Kode langsung tersimpan dan
+   latihan otomatis dibuka dalam mode **ujian**. Jalankan perintah yang sama kapan saja untuk melihat siapa yang sudah
+   latihan berapa kali dan siapa yang **belum** mengisi kuesioner.
+2. Tanpa tautan: peserta membuka `/latihan`, memilih mode, memilih **ujian** (bukan coaching), lalu di bagian
+   **"Ikut uji coba VOIC?"** mengisi **Kode peserta** (mis. `P07`). Kode diingat untuk latihan berikutnya di perangkat yang sama.
 3. Setelah latihan, rapor menampilkan "latihan ke-1 dari 3". Ulangi sampai 3 kali.
 4. Setelah latihan ke-3, rapor menampilkan **kuesioner 6 pertanyaan** (skala 1–5 + komentar). Pastikan peserta mengisinya.
 
