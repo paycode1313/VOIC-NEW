@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-rem Struktur repo: frontend\ (tampilan web), backend\ (Laravel + ai_service), mobile\.
+rem Struktur repo: frontend\ (JS/CSS, Vite), backend\ (Laravel, halaman Blade, ai_service), mobile\.
 rem Semua perintah PHP dan Python dijalankan dari backend\.
 cd /d "%~dp0backend"
 chcp 65001 >nul
@@ -95,8 +95,16 @@ if errorlevel 1 (
 echo   [OK] Database siap
 
 if exist public\hot del /f /q public\hot
-if exist public\build\manifest.json goto ASSETS_OK
+rem Bangun ulang jika belum pernah, atau jika ada file tampilan yang lebih baru dari build terakhir
+rem (mis. setelah git pull): JS/CSS di frontend\src, konfigurasi npm/Tailwind/Vite, atau halaman Blade.
+if not exist public\build\manifest.json goto ASSETS_FIRST
+powershell -NoProfile -Command "$m=(Get-Item 'public\build\manifest.json').LastWriteTime; $f=@(Get-ChildItem -Recurse -File '%~dp0frontend\src','resources\views'; Get-Item '%~dp0frontend\package.json','%~dp0frontend\package-lock.json','%~dp0frontend\tailwind.config.js','%~dp0frontend\vite.config.js' -ErrorAction SilentlyContinue); if ($f | Where-Object { $_.LastWriteTime -gt $m }) { exit 1 } else { exit 0 }"
+if not errorlevel 1 goto ASSETS_OK
+echo   [..] Ada perubahan tampilan sejak build terakhir, membangun ulang...
+goto ASSETS_NPM
+:ASSETS_FIRST
 echo   [..] Pertama kali: membangun tampilan web dengan npm...
+:ASSETS_NPM
 where npm >nul 2>&1
 if errorlevel 1 (
     echo   [X] Node.js/npm belum ada. Pasang Node.js LTS dari nodejs.org.
