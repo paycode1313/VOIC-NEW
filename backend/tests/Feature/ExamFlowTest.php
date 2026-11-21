@@ -226,6 +226,7 @@ class ExamFlowTest extends TestCase
         $this->get(route('exam.result', $session))
             ->assertOk()
             ->assertSee('Masukan per jawaban')
+            ->assertSee('Jawaban terbaikmu')
             ->assertSee(number_format($report['overall_band'], 1));
 
         $this->postJson(route('exam.answer', $session), ['answer' => 'lagi', 'duration_seconds' => 1, 'timestamp_seconds' => 1])

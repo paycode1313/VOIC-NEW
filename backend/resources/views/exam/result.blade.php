@@ -201,6 +201,31 @@
             </div>
         </section>
 
+        {{-- Your best moment: the report is mostly about what to fix, this is what already works. --}}
+        @php
+            $best = count($report['answers']) >= 2
+                ? collect($report['answers'])->filter(fn ($item) => trim((string) $item['answer']) !== '')->sortByDesc('band')->first()
+                : null;
+            $bestCriterion = $best ? collect($best['scores'])->sortDesc()->keys()->first() : null;
+        @endphp
+        @if ($best)
+            <section class="voic-rise mt-10 overflow-hidden rounded-3xl border border-emerald-500/15 bg-gradient-to-br from-emerald-50 via-white to-white p-6 shadow-sm sm:p-7">
+                <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-1 text-white">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.48 3.5a.56.56 0 011.04 0l2.13 5.11 5.52.44c.5.04.7.66.32.99l-4.2 3.6 1.28 5.38a.56.56 0 01-.84.61L12 16.77l-4.73 2.86a.56.56 0 01-.84-.61l1.28-5.38-4.2-3.6a.56.56 0 01.32-.99l5.52-.44 2.13-5.11z"/></svg>
+                        {{ $isEn ? 'Your best answer' : 'Jawaban terbaikmu' }}
+                    </span>
+                    <span class="rounded-full bg-white px-3 py-1 text-emerald-800 ring-1 ring-emerald-600/15">Band {{ number_format($best['band'], 1) }}</span>
+                    @if ($bestCriterion && isset($report['criteria'][$bestCriterion]))
+                        <span class="rounded-full bg-white px-3 py-1 text-emerald-800 ring-1 ring-emerald-600/15">{{ $isEn ? 'Strongest' : 'Paling kuat' }}: {{ $report['criteria'][$bestCriterion]['label'] }}</span>
+                    @endif
+                </div>
+                <p class="mt-4 text-sm font-semibold text-slate-500">{{ $best['question'] }}</p>
+                <blockquote class="font-display mt-2 text-xl font-bold leading-snug text-slate-900 sm:text-2xl">“{{ \Illuminate\Support\Str::words($best['answer'], 32, '…') }}”</blockquote>
+                <p class="mt-3 text-sm text-slate-600">{{ $isEn ? 'Keep this pattern: it is what the examiner heard as your strongest moment.' : 'Pertahankan pola ini: inilah momen yang paling kuat terdengar oleh penguji.' }}</p>
+            </section>
+        @endif
+
         {{-- Per answer --}}
         <section class="mt-10">
             <h2 class="text-3xl font-extrabold">{{ $isEn ? 'Answer by answer' : 'Masukan per jawaban' }}</h2>
