@@ -87,6 +87,8 @@ class ExaminerSpeakingStyleTest extends TestCase
         );
         $this->assertSame('Oke, pasar e-commerce, gede juga.', $examiner->clean('Oke – pasar e-commerce - gede juga.'));
         $this->assertSame('Dua kali lipat, itu lompatan besar.', $examiner->clean('Dua kali lipat (itu lompatan besar).'));
+        // A dash between numbers is a range, left for the voice to read as "sampai".
+        $this->assertSame('Targetnya 12-15 juta, periode 2025-2026.', $examiner->clean('Targetnya 12–15 juta, periode 2025 – 2026.'));
     }
 
     public function test_instruction_tags_read_aloud_by_the_model_are_removed(): void

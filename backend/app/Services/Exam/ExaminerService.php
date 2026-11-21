@@ -1643,6 +1643,8 @@ class ExaminerService
         $text = preg_replace('/[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}]+/u', '', $text) ?? $text;
         // The voice reads dashes, semicolons and brackets oddly or not at all: they become the comma pause they stand for.
         // A hyphen inside a word ("e-commerce") stays.
+        // A dash between two numbers is a range ("12–15 juta"): a plain hyphen, which the voice reads as "sampai".
+        $text = preg_replace('/(\d)\s*[—–‑-]\s*(?=\d)/u', '$1-', $text) ?? $text;
         $text = preg_replace(['/\s*[—–]\s*|\s+-\s+|\s*;\s*/u', '/\s*\(([^()]*)\)/u'], [', ', ', $1'], $text) ?? $text;
         $text = preg_replace('/,\s*(?=[,.!?]|$)/u', '', $text) ?? $text;
         $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
