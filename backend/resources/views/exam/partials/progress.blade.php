@@ -96,8 +96,9 @@
                 $diff = $prev === null ? null : round($last - $prev, 1);
             @endphp
             <div class="flex flex-col justify-between rounded-2xl border {{ $isWeakest ? 'border-amber-200/90 bg-amber-50/40' : 'border-slate-200/70 bg-slate-50/70' }} p-3.5">
-                <div class="flex items-baseline justify-between gap-2">
-                    <p class="truncate text-xs font-bold text-slate-700">{{ $label }}</p>
+                <div class="flex items-start justify-between gap-2">
+                    {{-- Wrapped rather than cut ("Kosakata & I…"): the names are short. --}}
+                    <p class="text-xs font-bold leading-snug text-slate-700">{{ $label }}</p>
                     <p class="text-sm font-extrabold tabular-nums text-slate-900">{{ number_format($last, 1) }}</p>
                 </div>
                 <svg viewBox="0 0 {{ $sw }} {{ $sh }}" class="my-2 h-7 w-full {{ $isWeakest ? 'text-amber-600' : 'text-brand-600' }}" aria-hidden="true">

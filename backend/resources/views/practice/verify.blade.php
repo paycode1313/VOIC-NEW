@@ -318,7 +318,7 @@
                 </div>
                 <div>
                     <span class="block text-[10px] uppercase font-bold text-slate-500">Durasi Bicara</span>
-                    <span class="text-slate-900 dark:text-white font-medium">{{ floor($session->duration_seconds / 60) }}m {{ $session->duration_seconds % 60 }}d</span>
+                    <span class="text-slate-900 dark:text-white font-medium">{{ floor($session->duration_seconds / 60) }}:{{ str_pad((string) ($session->duration_seconds % 60), 2, '0', STR_PAD_LEFT) }} menit</span>
                 </div>
                 <div>
                     <span class="block text-[10px] uppercase font-bold text-slate-500">Status Validasi</span>

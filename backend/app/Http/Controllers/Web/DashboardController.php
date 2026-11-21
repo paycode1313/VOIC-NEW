@@ -26,6 +26,7 @@ class DashboardController extends Controller
             'totalSessions' => $totalSessions,
             'averageScore' => $totalSessions > 0 ? round((float) (clone $sessions)->avg('overall_score'), 1) : 0,
             'bestScore' => $totalSessions > 0 ? round((float) (clone $sessions)->max('overall_score'), 1) : 0,
+            'bestBand' => $progress['points'] !== [] ? max(array_column($progress['points'], 'overall')) : null,
             'totalDurationSeconds' => (int) (clone $sessions)->sum('duration_seconds'),
             'recentSessions' => (clone $sessions)->latest()->take(6)->get(),
             'progress' => $progress['points'] !== [] ? $progress : null,

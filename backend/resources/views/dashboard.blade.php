@@ -135,7 +135,10 @@
                 </div>
                 <p class="mt-3 text-2xl font-extrabold tabular-nums tracking-tight text-slate-900 sm:text-3xl">{{ $totalSessions }}</p>
                 <p class="mt-2 truncate text-xs font-medium text-slate-500">
-                    @if ($bestScore > 0)
+                    @if ($bestBand !== null)
+                        {{-- Bands everywhere else (0-9); the internal 0-100 score would read as a different scale. --}}
+                        Band terbaik <span class="font-bold text-slate-700">{{ number_format($bestBand, 1) }}</span>
+                    @elseif ($bestScore > 0)
                         Skor terbaik <span class="font-bold text-slate-700">{{ number_format($bestScore, 0) }}</span>
                     @else
                         Belum ada riwayat sesi
@@ -355,7 +358,7 @@
                                     <span>{{ $session->created_at->locale('id')->diffForHumans() }}</span>
                                     @if ($session->duration_seconds)
                                         <span>·</span>
-                                        <span class="tabular-nums">{{ intdiv($session->duration_seconds, 60) }}m {{ $session->duration_seconds % 60 }}d</span>
+                                        <span class="tabular-nums">{{ intdiv($session->duration_seconds, 60) }}:{{ str_pad((string) ($session->duration_seconds % 60), 2, '0', STR_PAD_LEFT) }} mnt</span>
                                     @endif
                                     @unless ($finished)
                                         <span class="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">Belum selesai</span>
