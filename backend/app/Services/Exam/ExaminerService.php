@@ -1165,6 +1165,13 @@ class ExaminerService
      */
     protected function joinReaction(string $reaction, string $scripted): string
     {
+        // The scripted line announces the new part: the model announcing it too would say it twice.
+        $announces = '/\b(bagian|part)\s*\d/iu';
+        if (preg_match($announces, $scripted) && preg_match($announces, $reaction)) {
+            $kept = array_filter(preg_split('/(?<=[.!?])\s+/u', trim($reaction)) ?: [], fn ($sentence) => ! preg_match($announces, $sentence));
+            $reaction = trim(implode(' ', $kept));
+        }
+
         if (preg_match('/^(oke|okay|ok|baik|nah|oh|wah|alright|right|so)\b[,.!]?\s+/iu', $scripted, $opener)
             && preg_match('/(?<![\p{L}])'.preg_quote($opener[1], '/').'(?![\p{L}])/iu', $reaction)) {
             $scripted = Str::ucfirst(mb_substr($scripted, mb_strlen($opener[0])));

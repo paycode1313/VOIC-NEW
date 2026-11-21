@@ -141,6 +141,14 @@ class ExaminerSpeakingStyleTest extends TestCase
             'Oke, aku dengar. Sekarang kita masuk Bagian 2, Cerita Pengalaman.',
             $examiner->resolveModelReply('Oke, aku dengar.', $turn)['text'],
         );
+        // Seen live: the model announced the part itself, then the scripted line announced it again.
+        $next = ['directive' => ExaminerService::DIRECTIVE_NEXT, 'language' => 'id', 'transition' => 'Bagian 3, Tanya Jawab Penguji',
+            'scripted' => 'Sekarang kita lanjut ke Bagian 3, Tanya Jawab Penguji, di sini kita bahas lebih dalam. Kenapa kamu pilih metode itu?'];
+        $this->assertSame(
+            'Oke, pengurangan 40 persen waktu, angka yang menarik. Sekarang kita lanjut ke Bagian 3, Tanya Jawab Penguji, di sini kita bahas lebih dalam. Kenapa kamu pilih metode itu?',
+            $examiner->resolveModelReply('Oke, pengurangan 40 persen waktu, angka yang menarik. Kita masuk Bagian 3, Tanya Jawab Penguji.', $next)['text'],
+        );
+
         // A different opener is kept.
         $this->assertSame(
             'Timeboxing, masuk akal. Oke, sekarang kita masuk Bagian 2, Cerita Pengalaman.',
