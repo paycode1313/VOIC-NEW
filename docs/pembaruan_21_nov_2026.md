@@ -65,6 +65,8 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - "Kalimat yang bisa kamu pakai" di catatan coaching hanya berisi contoh kalimat utuh, bukan potongan teks.
 - **Perbandingan dengan sesi sebelumnya** (akun yang login): "▲ +0.5 dari sesi Wawancara Kerja sebelumnya".
 - Versi jawaban yang lebih kuat tidak mengarang pengalaman, proyek, atau pencapaian yang tidak disebut peserta.
+- **Jawaban terbaikmu**: kartu yang mengutip jawaban dengan band tertinggi dan kriteria terkuatnya, ditampilkan sebelum
+  daftar hal yang perlu diperbaiki.
 
 ## Tampilan
 
@@ -77,8 +79,11 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
   - Nama kriteria tidak terpotong lagi.
 - **Login:** label "atau akses cepat" satu baris, dan mockup memakai nama penguji yang baru.
 - **Riwayat:** lencana menampilkan nama penguji saat ini (VOIC-INTERVIEW, bukan VOIC-HRD).
+- **Form:** petunjuk kolom wajib dalam bahasa Indonesia ("Kolom ini perlu diisi", "Isi dulu, atau pilih salah satu di bawah"),
+  bukan "Please fill out this field" dari browser.
+- **Booth:** pengunjung yang mencoba berkali-kali hanya muncul sekali di papan peringkat, dengan band terbaiknya.
 
 ## Tes
 
-`php artisan test` (213 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
+`php artisan test` (215 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.
