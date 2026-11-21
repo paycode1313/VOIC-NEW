@@ -88,6 +88,8 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - **Riwayat:** lencana menampilkan nama penguji saat ini (VOIC-INTERVIEW, bukan VOIC-HRD).
 - **Form:** petunjuk kolom wajib dalam bahasa Indonesia ("Kolom ini perlu diisi", "Isi dulu, atau pilih salah satu di bawah"),
   bukan "Please fill out this field" dari browser.
+- **Lebih ringan:** Chart.js hanya dimuat di halaman yang menggambar grafik, sehingga skrip utama turun dari 293 KB menjadi 93 KB
+  (gzip 33 KB) di semua halaman lain, termasuk ruang panggilan di HP pengunjung.
 - **Booth:** pengunjung yang mencoba berkali-kali hanya muncul sekali di papan peringkat, dengan band terbaiknya.
 
 ## Tes
