@@ -63,6 +63,13 @@
                     <h1 class="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl"
                         x-text="isCoach ? t('Yuk ngobrol {{ config('exam.coach_minutes') }} menit', 'Let\'s chat for {{ config('exam.coach_minutes') }} minutes') : t('Siap bergabung?', 'Ready to join?')"></h1>
                     <p x-show="isCoach" x-cloak class="mt-3 text-sm leading-relaxed text-slate-500">{{ $isEn ? 'This is not a test. Talk naturally, ask anything, and your coach will show you how to say it better.' : 'Ini bukan tes. Ngobrol aja senatural mungkin, boleh nanya apa pun, nanti coach kasih tahu cara ngomong yang lebih pas.' }}</p>
+                    @if (! empty($session->feedback_notes['retry']['question']))
+                        {{-- Opened from "Latih ulang pertanyaan ini" on a report. --}}
+                        <div class="mt-4 rounded-2xl border border-black/5 bg-white p-4 shadow-sm">
+                            <p class="text-xs font-bold uppercase tracking-wider text-slate-500">{{ $isEn ? 'Practising again' : 'Latih ulang' }}</p>
+                            <p class="mt-1 font-semibold leading-snug">“{{ $session->feedback_notes['retry']['question'] }}”</p>
+                        </div>
+                    @endif
                     <p x-show="!isCoach && holdToTalk" class="mt-3 text-sm leading-relaxed text-slate-500">
                         {{ $isEn
                             ? "{$examinerName} speaks first. To answer, hold the mic button while you talk and let go to send. Hold it while they talk to cut in."

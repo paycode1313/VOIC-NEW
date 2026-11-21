@@ -34,6 +34,9 @@ class StartExamRequest extends FormRequest
             'consent' => ['accepted'],
             'session_type' => ['nullable', 'string', 'in:exam,coach'],
             'focus' => ['nullable', 'string', 'in:fluency,vocabulary,structure,delivery'],
+            // "Latih ulang pertanyaan ini" on the report: a coaching session around one question and the first answer.
+            'retry_question' => ['nullable', 'string', 'max:400'],
+            'retry_answer' => ['nullable', 'string', 'max:3000'],
         ];
     }
 

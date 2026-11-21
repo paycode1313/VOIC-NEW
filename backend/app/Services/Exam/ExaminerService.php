@@ -939,6 +939,13 @@ class ExaminerService
         if ($topic) {
             $lines[] = ($isEn ? 'They are preparing for: ' : 'Peserta sedang bersiap untuk: ').$topic;
         }
+        if (! empty($turn['retry']['question'])) {
+            $question = Str::limit((string) $turn['retry']['question'], 300);
+            $first = Str::limit((string) ($turn['retry']['answer'] ?? ''), 600);
+            $lines[] = $isEn
+                ? "They are practising one question from their exam again: \"{$question}\". Their first answer was: \"{$first}\". Help them make it stronger: compare each new try with that first answer and name what got better."
+                : "Peserta sedang melatih ulang satu pertanyaan dari ujiannya: \"{$question}\". Jawaban pertamanya: \"{$first}\". Bantu dia membuatnya lebih kuat: bandingkan setiap percobaan baru dengan jawaban pertama itu dan sebutkan apa yang sudah membaik.";
+        }
         if ($context) {
             $lines[] = ($isEn ? 'Background from the person: ' : 'Latar dari peserta: ').$context;
         }

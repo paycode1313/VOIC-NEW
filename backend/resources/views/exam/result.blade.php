@@ -271,6 +271,26 @@
                                     <p class="mt-1.5 leading-relaxed text-emerald-950 dark:text-emerald-100">{{ $item['improved'] }}</p>
                                 </div>
                             @endif
+                            {{-- Practise this one question again, with the coach: same name, campus and consent as this session. --}}
+                            @if (! $shared && $item['question'] !== '')
+                                <form method="POST" action="{{ route('exam.start', $modeKey) }}" class="flex flex-wrap items-center gap-x-3 gap-y-1 print:hidden">
+                                    @csrf
+                                    <input type="hidden" name="session_type" value="coach">
+                                    <input type="hidden" name="language" value="{{ $language }}">
+                                    <input type="hidden" name="consent" value="1">
+                                    <input type="hidden" name="topic" value="{{ $session->feedback_notes['topic'] ?? '' }}">
+                                    <input type="hidden" name="guest_name" value="{{ $session->feedback_notes['guest_name'] ?? '' }}">
+                                    <input type="hidden" name="campus" value="{{ $session->feedback_notes['campus'] ?? '' }}">
+                                    <input type="hidden" name="study_code" value="{{ $session->feedback_notes['study_code'] ?? '' }}">
+                                    <input type="hidden" name="retry_question" value="{{ \Illuminate\Support\Str::limit($item['question'], 390, '') }}">
+                                    <input type="hidden" name="retry_answer" value="{{ \Illuminate\Support\Str::limit($item['answer'], 2900, '') }}">
+                                    <button type="submit" class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:brightness-110" style="background: rgb({{ $glow }})">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                                        {{ $isEn ? 'Practise this question again' : 'Latih ulang pertanyaan ini' }}
+                                    </button>
+                                    <span class="text-xs text-slate-500">{{ $isEn ? 'With the coach, no score. Same name and consent as this session.' : 'Bareng coach, tanpa nilai. Nama & persetujuan sama seperti sesi ini.' }}</span>
+                                </form>
+                            @endif
                         </div>
                     </details>
                 @empty

@@ -154,6 +154,14 @@ class ExamFlowService
             $who = $candidate['name'].($candidate['campus'] ? ($language === 'en' ? ' from ' : ' dari ').$candidate['campus'] : '');
             $opening = preg_replace('/^(Halo|Hi|Hello),/u', '$1 '.addcslashes($who, '\\$').',', $opening, 1) ?? $opening;
         }
+        // "Latih ulang pertanyaan ini" from a report: straight to that question, no small talk.
+        if (! empty($session->feedback_notes['retry']['question'])) {
+            $name = $candidate['name'] ?? null;
+            $question = rtrim((string) $session->feedback_notes['retry']['question']);
+            $opening = $language === 'en'
+                ? 'Hi'.($name ? " {$name}" : '').", let's practise one question from your session again. The question was: {$question} Give it another go, take your time, and I'll help you make it stronger."
+                : 'Halo'.($name ? " {$name}" : '').", kita latih ulang satu pertanyaan dari sesi tadi ya. Pertanyaannya: {$question} Coba jawab lagi, santai aja, nanti aku bantu bikin lebih kuat.";
+        }
 
         $session->forceFill(['exam_state' => $state])->save();
 
@@ -229,6 +237,7 @@ class ExamFlowService
             'language' => $state['language'],
             'topic' => $state['topic'],
             'context_material' => $session->feedback_notes['context_material'] ?? null,
+            'retry' => $session->feedback_notes['retry'] ?? null,
             'candidate' => $this->candidate($session),
             'part' => 1,
             'part_title' => $this->blueprint->text($definition['coach']['title'] ?? '', $state['language']),
@@ -659,6 +668,7 @@ class ExamFlowService
             'language' => $state['language'],
             'topic' => $state['topic'],
             'context_material' => $session->feedback_notes['context_material'] ?? null,
+            'retry' => $session->feedback_notes['retry'] ?? null,
             'candidate' => $this->candidate($session),
             'part' => (int) $state['part'],
             'part_title' => '',

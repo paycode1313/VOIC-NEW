@@ -114,6 +114,14 @@ class ExamController extends Controller
             'campus' => $request->filled('campus') ? trim((string) $request->validated('campus')) : null,
         ];
 
+        // Retry one question from a report with the coach (coaching sessions only: an exam follows its own plan).
+        if ($request->validated('session_type') === ExamFlowService::TYPE_COACH && $request->filled('retry_question')) {
+            $notes['retry'] = [
+                'question' => trim((string) $request->validated('retry_question')),
+                'answer' => trim((string) $request->validated('retry_answer', '')),
+            ];
+        }
+
         // User trial: the participant code is remembered for the next practice on this device.
         $studyCode = UserStudy::normalizeCode($request->validated('study_code'));
         if ($studyCode !== null) {

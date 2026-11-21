@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\PracticeSession;
 use App\Models\User;
+use App\Services\Exam\ExamFlowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -160,5 +161,41 @@ class CoachSessionTest extends TestCase
 
         $this->get(route('dashboard'))->assertOk()->assertSee($session->reportUrl(), false)->assertDontSee('Perkembangan band keseluruhan');
         $this->get(route('practice.history'))->assertOk()->assertSee('coach');
+    }
+
+    public function test_a_weak_answer_from_the_report_can_be_practised_again_with_the_coach(): void
+    {
+        Http::fake(['*' => Http::response([], 503)]);
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        // A finished exam with a weak answer.
+        $this->post(route('exam.start', 'wawancara'), ['topic' => 'Data Analyst', 'session_type' => 'exam', 'parts' => [1], 'consent' => '1'])->assertRedirect();
+        $exam = PracticeSession::latest('id')->firstOrFail();
+        for ($i = 0; $i < 8 && ($exam->refresh()->exam_state['phase'] ?? null) !== 'completed'; $i++) {
+            $this->postJson(route('exam.answer', $exam), ['answer' => 'Saya suka data karena seru aja sih.', 'duration_seconds' => 6, 'timestamp_seconds' => $i * 10])->assertOk();
+        }
+        $this->postJson(route('exam.finish', $exam), ['duration_seconds' => 120])->assertOk();
+        $answer = $exam->refresh()->feedback_notes['exam_report']['answers'][0];
+
+        // Every answer card offers a retry with the coach.
+        $this->get(route('exam.result', $exam))->assertOk()->assertSee('Latih ulang pertanyaan ini');
+
+        $this->post(route('exam.start', 'wawancara'), [
+            'session_type' => 'coach', 'language' => 'id', 'topic' => 'Data Analyst', 'consent' => '1',
+            'retry_question' => $answer['question'], 'retry_answer' => $answer['answer'],
+        ])->assertRedirect();
+        $coach = PracticeSession::latest('id')->firstOrFail();
+
+        // The coach opens with that very question and asks for another go.
+        $opening = $coach->messages()->first()->message;
+        $this->assertStringContainsString('latih ulang', $opening);
+        $this->assertStringContainsString($answer['question'], $opening);
+
+        // The coach model knows the first answer, to compare and show the progress.
+        $flow = app(ExamFlowService::class);
+        $this->postJson(route('exam.answer', $coach), ['answer' => 'Saya tertarik ke data karena waktu magang saya bikin dashboard penjualan yang dipakai tiap minggu.', 'duration_seconds' => 12, 'timestamp_seconds' => 20])->assertOk();
+        Http::assertSent(fn ($request) => str_contains((string) json_encode($request->data()), 'Saya suka data karena seru aja sih.')
+            && str_contains((string) json_encode($request->data(), JSON_UNESCAPED_UNICODE), 'melatih ulang'));
     }
 }
