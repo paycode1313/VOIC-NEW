@@ -7,6 +7,26 @@ window.Alpine = Alpine;
 window.Chart = Chart;
 window.voicSpeechText = speechText;
 
+// Read a text aloud with the browser voice (report: hear how the stronger answer sounds).
+// Same pronunciation rules and voice choice as the call room. Returns false when the browser has no voice.
+window.voicSpeak = (text, language = 'id', onEnd = () => {}) => {
+    const synth = window.speechSynthesis;
+    if (!synth || !text) return false;
+    synth.cancel();
+    const lang = language === 'en' ? 'en-US' : 'id-ID';
+    // [placeholders] are there to be filled in, not read out: a short pause instead.
+    const utterance = new SpeechSynthesisUtterance(speechText(text.replace(/\s*\[[^\]]*\]\s*/g, ', '), language));
+    utterance.lang = lang;
+    utterance.rate = language === 'en' ? 0.98 : 1.02;
+    const voices = synth.getVoices();
+    const voice = voices.find((v) => v.lang === lang && /natural|google|online/i.test(v.name)) || voices.find((v) => v.lang.startsWith(lang.slice(0, 2)));
+    if (voice) utterance.voice = voice;
+    utterance.onend = onEnd;
+    utterance.onerror = onEnd;
+    synth.speak(utterance);
+    return true;
+};
+
 Alpine.data('examRoom', examRoom);
 
 // Cards marked .voic-tilt lean a few degrees towards a mouse pointer (not on touch, not with reduced motion).
