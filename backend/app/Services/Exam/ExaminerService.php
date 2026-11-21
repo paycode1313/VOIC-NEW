@@ -1462,37 +1462,53 @@ class ExaminerService
                 : "Waktu kita sudah habis. {$good} {$practice} Semangat, ".($isHr ? 'aku yakin kamu bisa' : 'saya yakin kamu bisa').'!';
         }
 
-        if ($this->analyzer->soundsUnsure($answer)) {
-            $tip = $isEn
-                ? 'That is totally fine, when you are unsure just say: "Let me think for a second", then give your best answer.'
-                : 'Nggak apa-apa kok. Kalau ragu, bilang saja: "Boleh saya pikirkan sebentar?", lalu jawab semampunya, itu terdengar jauh lebih tenang.';
-        } elseif (str_ends_with(trim($answer), '?')) {
-            $tip = $isEn
-                ? 'Good question. The trick is simple: give the main point first in one sentence, then one real example.'
-                : 'Pertanyaan bagus. Triknya sederhana: sampaikan poin utama dulu dalam satu kalimat, lalu satu contoh nyata.';
-        } elseif ($now['filler_count'] >= 2) {
-            $tip = $isEn
-                ? 'I heard a few "um"s. Try a short silent pause instead, it sounds much more confident.'
-                : 'Tadi ada beberapa "eh". Coba ganti dengan jeda diam sebentar, kedengarannya jauh lebih percaya diri.';
-        } elseif ($now['word_count'] < 12) {
-            $tip = $isEn
-                ? 'That was quite short. Add one real example, like: "For example, when I..., I..., and the result was..."'
-                : 'Jawabannya masih singkat. Tambahkan satu contoh nyata, misalnya: "Contohnya, waktu saya ..., saya ..., dan hasilnya ..."';
-        } elseif (! $now['has_numbers'] && $turn['role_type'] !== 'hrd') {
-            $tip = $isEn
-                ? 'Nice. It becomes stronger with a number, for example: "...which improved accuracy to 87 percent."'
-                : 'Bagus. Akan lebih kuat kalau ada angka, misalnya: "... sehingga akurasinya naik menjadi 87 persen."';
-        } elseif (! $now['has_numbers']) {
-            $tip = $isEn
-                ? 'Nice story. End it with the result, ideally a number: "As a result, we finished two days early."'
-                : 'Ceritanya sudah bagus. Tutup dengan hasilnya, kalau bisa pakai angka: "Hasilnya, kami selesai dua hari lebih cepat."';
-        } else {
-            $tip = $isEn
-                ? 'That was clear and concrete. One more polish: open with your main point in the first sentence.'
-                : 'Itu sudah jelas dan konkret. Satu poles lagi: sebutkan poin utamamu di kalimat pertama.';
+        $said = implode(' ', array_map(fn ($item) => (string) $item['content'], array_filter($turn['history'] ?? [], fn ($item) => $item['role'] !== 'user')));
+        $wrap = ! empty($turn['wrap_up']);
+
+        // "Makasih kak, membantu banget": a warm reply and one more practice, not a critique of a "short answer".
+        if ($now['word_count'] <= 14 && preg_match('/\b(makasih|terima ?kasih|thanks|thank you|membantu banget|helpful)\b/iu', $answer)) {
+            return ($isEn ? 'You are welcome, glad it helps! If you want one more round, try this: ' : 'Sama-sama, senang bisa bantu! Kalau mau satu latihan lagi, coba jawab ini ya: ')
+                .$this->coachPracticeQuestion($turn);
         }
 
-        $wrap = ! empty($turn['wrap_up']);
+        // "Saya mau latihan pertanyaan kelemahan" / "kalau ditanya gaji saya bingung": coach that very topic.
+        // Checked before "unsure", which "bingung" would trigger with a generic tip.
+        // Only a request ("mau latihan", "bingung", "gimana", "help") or a short remark, not an answer that mentions the word.
+        $asksForTopic = $now['word_count'] <= 15 || preg_match('/\b(latihan|belajar|bingung|gimana|bagaimana|cara|bantu|ajarin|practi[cs]e|help|how)\b/iu', $answer);
+        if ($asksForTopic && ($topic = $this->coachTopic($answer, $isEn)) !== null && ! str_contains($said, $topic['question'])) {
+            return $topic['tip'].' '.($isEn ? 'Try it now: ' : 'Coba jawab sekarang: ').$topic['question'];
+        }
+
+        // Tips that fit this answer, best first; one already given in this chat is not said again.
+        $tips = array_filter([
+            $this->analyzer->soundsUnsure($answer) ? ($isEn
+                ? 'That is totally fine, when you are unsure just say: "Let me think for a second", then give your best answer.'
+                : 'Nggak apa-apa kok. Kalau ragu, bilang saja: "Boleh saya pikirkan sebentar?", lalu jawab semampunya, itu terdengar jauh lebih tenang.') : null,
+            str_ends_with(trim($answer), '?') ? ($isEn
+                ? 'Good question. The trick is simple: give the main point first in one sentence, then one real example.'
+                : 'Pertanyaan bagus. Triknya sederhana: sampaikan poin utama dulu dalam satu kalimat, lalu satu contoh nyata.') : null,
+            $now['filler_count'] >= 2 ? ($isEn
+                ? 'I heard a few "um"s. Try a short silent pause instead, it sounds much more confident.'
+                : 'Tadi ada beberapa "eh". Coba ganti dengan jeda diam sebentar, kedengarannya jauh lebih percaya diri.') : null,
+            $now['word_count'] < 12 ? ($isEn
+                ? 'That was quite short. Add one real example, like: "For example, when I..., I..., and the result was..."'
+                : 'Jawabannya masih singkat. Tambahkan satu contoh nyata, misalnya: "Contohnya, waktu saya ..., saya ..., dan hasilnya ..."') : null,
+            ! $now['has_numbers'] && $turn['role_type'] !== 'hrd' ? ($isEn
+                ? 'Nice. It becomes stronger with a number, for example: "...which improved accuracy to 87 percent."'
+                : 'Bagus. Akan lebih kuat kalau ada angka, misalnya: "... sehingga akurasinya naik menjadi 87 persen."') : null,
+            ! $now['has_numbers'] ? ($isEn
+                ? 'Nice story. End it with the result, ideally a number: "As a result, we finished two days early."'
+                : 'Ceritanya sudah bagus. Tutup dengan hasilnya, kalau bisa pakai angka: "Hasilnya, kami selesai dua hari lebih cepat."') : null,
+            $isEn
+                ? 'That was clear and concrete. One more polish: open with your main point in the first sentence.'
+                : 'Itu sudah jelas dan konkret. Satu poles lagi: sebutkan poin utamamu di kalimat pertama.',
+            $isEn
+                ? 'One more habit worth keeping: after your example, add one sentence on what you learned from it.'
+                : 'Satu kebiasaan lagi yang bagus: setelah contoh, tambahkan satu kalimat tentang pelajaran yang kamu ambil.',
+        ]);
+        $fresh = array_values(array_filter($tips, fn ($tip) => ! str_contains($said, $tip)));
+        $tip = $fresh[0] ?? reset($tips);
+
         $tryAgain = (int) $turn['turn'] % 2 === 1 && ! $wrap;
         if ($tryAgain) {
             $next = $isEn ? 'Try saying your answer again that way, I am listening.' : 'Coba ucapkan ulang jawaban '.$you.' dengan cara itu, '.($isHr ? 'aku dengarkan' : 'saya dengarkan').'.';
@@ -1509,6 +1525,62 @@ class ExaminerService
      *
      * @param  array<string, mixed>  $turn
      */
+    /**
+     * A topic the person asks to practise ("mau latihan pertanyaan kelemahan", "kalau ditanya gaji saya bingung"),
+     * with a tip for it and a practice question. Null when the answer is not about one of these topics.
+     *
+     * @return array{tip: string, question: string}|null
+     */
+    protected function coachTopic(string $answer, bool $isEn): ?array
+    {
+        $topics = [
+            '/kelemahan|kekurangan|weakness/iu' => [
+                'Pilih kelemahan yang nyata tapi bukan inti pekerjaannya, lalu ceritakan langkah yang lagi kamu lakukan untuk memperbaikinya. Hindari jawaban klise seperti "saya perfeksionis".',
+                'Apa kelemahan terbesarmu, dan apa yang lagi kamu lakukan untuk memperbaikinya?',
+                'Pick a real weakness that is not the core of the job, then tell what you are doing to improve it. Avoid clichés like "I am a perfectionist".',
+                'What is your biggest weakness, and what are you doing to improve it?',
+            ],
+            '/gaji|salary|kompensasi|ekspektasi/iu' => [
+                'Sebut rentang yang realistis dari riset pasar, lalu tunjukkan kamu terbuka berdiskusi, misalnya: "Dari riset saya, kisarannya sekian sampai sekian, dan saya terbuka untuk berdiskusi."',
+                'Berapa gaji yang kamu harapkan untuk posisi ini?',
+                'Give a realistic range from market research, then show you are open to discussing it: "From my research the range is about this much, and I am open to discussing it."',
+                'What salary do you expect for this role?',
+            ],
+            '/kelebihan|kekuatan|strength/iu' => [
+                'Sebut satu kelebihan yang paling relevan dengan posisinya, lalu buktikan dengan satu kejadian nyata.',
+                'Apa kelebihan terbesarmu, dan kapan kelebihan itu benar-benar kepakai?',
+                'Name the one strength that matters most for the role, then prove it with one real moment.',
+                'What is your biggest strength, and when did it really make a difference?',
+            ],
+            '/perkenal|ceritakan (tentang )?(diri|dirimu)|tell me about yourself|introduce/iu' => [
+                'Pakai urutan sekarang, dulu, lalu nanti: siapa kamu sekarang, pengalaman yang paling relevan, lalu kenapa kamu cocok untuk posisi ini. Cukup satu menit.',
+                'Coba perkenalkan dirimu dalam satu menit.',
+                'Use present, past, future: who you are now, your most relevant experience, then why you fit this role. One minute is enough.',
+                'Introduce yourself in one minute.',
+            ],
+            '/kenapa (kami|perusahaan|posisi|tertarik)|motivasi|why (us|this)/iu' => [
+                'Sambungkan satu hal spesifik dari perusahaan atau posisinya dengan pengalaman atau tujuanmu sendiri. Hindari jawaban umum seperti "perusahaannya bagus".',
+                'Kenapa kamu tertarik dengan posisi ini?',
+                'Connect one specific thing about the company or role with your own experience or goals. Avoid generic answers like "it is a great company".',
+                'Why are you interested in this role?',
+            ],
+            '/konflik|beda pendapat|conflict|disagree/iu' => [
+                'Ceritakan dengan urutan situasi, apa yang kamu lakukan, lalu hasilnya. Tunjukkan kamu mendengarkan dulu sebelum mencari jalan tengah.',
+                'Ceritain waktu kamu beda pendapat sama rekan tim, dan gimana kamu nyelesaiinnya?',
+                'Tell it as situation, what you did, then the result. Show that you listened first before finding a middle ground.',
+                'Tell me about a time you disagreed with a teammate, and how you resolved it?',
+            ],
+        ];
+
+        foreach ($topics as $pattern => [$tipId, $questionId, $tipEn, $questionEn]) {
+            if (preg_match($pattern, $answer)) {
+                return $isEn ? ['tip' => $tipEn, 'question' => $questionEn] : ['tip' => $tipId, 'question' => $questionId];
+            }
+        }
+
+        return null;
+    }
+
     protected function coachPracticeQuestion(array $turn): string
     {
         $asked = implode(' ', array_map(fn ($item) => $item['content'], array_filter($turn['history'] ?? [], fn ($item) => $item['role'] !== 'user')));
