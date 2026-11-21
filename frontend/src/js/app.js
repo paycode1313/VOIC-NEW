@@ -29,6 +29,35 @@ window.voicSpeak = (text, language = 'id', onEnd = () => {}) => {
 
 Alpine.data('examRoom', examRoom);
 
+// Form hints follow the browser's language ("Please fill out this field") even on an Indonesian page (the UI is
+// Indonesian unless ?lang=en): say them in Indonesian. A field's own oninvalid message runs after this one and wins.
+if (!/[?&]lang=en\b/.test(location.search)) {
+    document.addEventListener('invalid', (event) => {
+        const field = event.target;
+        if (!field?.validity || field.validity.customError) return;
+        const { validity } = field;
+        const message = validity.valueMissing
+            ? (field.type === 'checkbox' ? 'Centang kotak ini dulu ya.' : 'Kolom ini perlu diisi.')
+            : validity.typeMismatch && field.type === 'email' ? 'Tulis alamat email yang benar, misalnya nama@email.com.'
+            : validity.tooShort ? `Minimal ${field.minLength} karakter ya.`
+            : validity.tooLong ? `Maksimal ${field.maxLength} karakter.`
+            : validity.patternMismatch ? 'Formatnya belum sesuai.'
+            : '';
+        if (message) {
+            field.setCustomValidity(message);
+            field.dataset.voicHint = '1';
+        }
+    }, true);
+    const clear = (event) => {
+        if (event.target?.dataset?.voicHint) {
+            event.target.setCustomValidity('');
+            delete event.target.dataset.voicHint;
+        }
+    };
+    document.addEventListener('input', clear, true);
+    document.addEventListener('change', clear, true);
+}
+
 // Cards marked .voic-tilt lean a few degrees towards a mouse pointer (not on touch, not with reduced motion).
 if (window.matchMedia?.('(hover: hover) and (prefers-reduced-motion: no-preference)').matches) {
     document.addEventListener('pointermove', (event) => {
