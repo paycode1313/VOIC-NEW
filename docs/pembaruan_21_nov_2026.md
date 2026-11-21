@@ -39,6 +39,13 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - Memilih "Fresh Graduate" atau "Mahasiswa" di kolom kampus tidak lagi menghasilkan sapaan "Halo Rina dari Fresh Graduate".
 - Coach tidak lagi menyuruh mengganti kata lisan yang wajar ("pakai" → "menggunakan").
 - Layanan AI lokal (Python) menandai balasan yang membeo agar tidak dipanen sebagai data latih.
+- **Pelafalan:** "Rp 12-15 juta" dibaca "12 sampai 15 juta rupiah" (sebelumnya "12 rupiah-15 juta"). Rentang angka
+  dibaca "sampai"/"to". Aturan ini berlaku sama di suara server (Python) dan suara browser (JS).
+- **Tanpa internet dan tanpa AI lokal** (composer offline):
+  - Coach mengenali permintaan topik (kelemahan, gaji, kelebihan, perkenalan, kenapa tertarik, konflik) dan
+    memberi tips khusus beserta pertanyaan latihannya.
+  - Coach membalas ucapan terima kasih dengan hangat dan tidak mengulang tips yang sama.
+  - Kutipan jawaban memakai huruf asli peserta ("API-nya", bukan "api-nya"), dan HRD konsisten memakai "aku".
 
 ## Rapor
 
@@ -56,6 +63,8 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - Penilaian yang lebih adil: target 160 kata hanya untuk cerita 2 menit di Bagian 2, bukan untuk pertanyaan
   lanjutan sesudahnya.
 - "Kalimat yang bisa kamu pakai" di catatan coaching hanya berisi contoh kalimat utuh, bukan potongan teks.
+- **Perbandingan dengan sesi sebelumnya** (akun yang login): "▲ +0.5 dari sesi Wawancara Kerja sebelumnya".
+- Versi jawaban yang lebih kuat tidak mengarang pengalaman, proyek, atau pencapaian yang tidak disebut peserta.
 
 ## Tampilan
 
@@ -71,5 +80,5 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 
 ## Tes
 
-`php artisan test` (208 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (79 tes) lulus semua.
+`php artisan test` (213 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.
