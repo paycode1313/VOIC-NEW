@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\PracticeSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -195,5 +196,31 @@ class CoachSessionTest extends TestCase
         $this->postJson(route('exam.answer', $coach), ['answer' => 'Saya tertarik ke data karena waktu magang saya bikin dashboard penjualan yang dipakai tiap minggu.', 'duration_seconds' => 12, 'timestamp_seconds' => 20])->assertOk();
         Http::assertSent(fn ($request) => str_contains((string) json_encode($request->data()), 'Saya suka data karena seru aja sih.')
             && str_contains((string) json_encode($request->data(), JSON_UNESCAPED_UNICODE), 'melatih ulang'));
+    }
+
+    public function test_without_the_local_ai_the_cloud_writes_the_coaching_notes(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key', 'exam.speed_mode' => 'online']);
+        Http::fake(function ($request) {
+            if (! str_contains($request->url(), 'api.groq.com')) {
+                return Http::response([], 503);
+            }
+            $last = (string) collect($request->data()['messages'])->last()['content'];
+            if (str_contains($last, 'Ringkas sesi coaching ini')) {
+                return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => "BAGUS:\n- Kamu sudah menyebut magang enam bulan sebagai bukti.\nLATIH:\n- Tutup jawaban kelemahan dengan langkah perbaikan.\nKALIMAT:\n- \"Kelemahan saya terlalu detail, sekarang saya pakai timeboxing.\""]]]]);
+            }
+
+            return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => 'Oke, kebayang. Coba ulangi dengan satu contoh ya?']]]]);
+        });
+
+        $session = $this->startCoach();
+        $this->postJson(route('exam.answer', $session), ['answer' => 'Saya mau latihan jawab pertanyaan kelemahan.', 'duration_seconds' => 5, 'timestamp_seconds' => 5])->assertOk();
+        $this->postJson(route('exam.finish', $session), ['duration_seconds' => 60])->assertOk();
+
+        $report = $session->refresh()->feedback_notes['coach_report'];
+        $this->assertSame(['Kamu sudah menyebut magang enam bulan sebagai bukti.'], $report['strengths']);
+        $this->assertSame(['Tutup jawaban kelemahan dengan langkah perbaikan.'], $report['practice']);
+        $this->assertContains('Kelemahan saya terlalu detail, sekarang saya pakai timeboxing.', $report['phrases']);
     }
 }

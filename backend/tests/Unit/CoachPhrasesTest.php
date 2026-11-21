@@ -37,6 +37,14 @@ class CoachPhrasesTest extends TestCase
         ], $this->phrases([$line]));
     }
 
+    public function test_a_closing_straight_quote_does_not_open_a_phrase(): void
+    {
+        // Seen live: the closing quote of "perfeksionis" opened a "phrase" that was the coach's own advice.
+        $line = 'Eh, bentar, "perfeksionis" itu jawaban klasik yang sering bikin recruiter malas denger. Ganti dengan kelemahan nyata, misalnya "Saya dulu terlalu detail, sekarang saya pakai timeboxing."';
+
+        $this->assertSame(['Saya dulu terlalu detail, sekarang saya pakai timeboxing.'], $this->phrases([$line]));
+    }
+
     public function test_sentences_glued_together_by_the_model_are_split(): void
     {
         $examiner = app(ExaminerService::class);

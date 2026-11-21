@@ -221,13 +221,15 @@ class ExamReportService
         $phrases = [];
         foreach ($coachLines as $line) {
             // “…” and "…" pairs only: a closing quote and the next opening one are not a phrase.
-            preg_match_all('/“([^“”]{15,220})”|"([^"]{15,220})"/u', (string) $line, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+            // A straight quote opens before a word and closes after one, so the closing quote of a short
+            // quote ("perfeksionis" itu ...) never opens a new one.
+            preg_match_all('/“([^“”]{15,220})”|(?<![\p{L}\p{N}])"(?=\S)([^"]{15,220})(?<=\S)"(?![\p{L}\p{N}])/u', (string) $line, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
             foreach ($matches as $match) {
                 [$phrase, $offset] = ($match[1][1] ?? -1) >= 0 ? $match[1] : $match[2];
                 $phrase = trim($phrase);
                 // An example sentence, not a word to look at ("hindari kata “saya terlalu perfeksionis”").
                 $before = mb_strtolower(substr((string) $line, max(0, $offset - 40), min(40, $offset)));
-                if (count(preg_split('/\s+/u', $phrase) ?: []) < 5 || preg_match('/(hindari|jangan|bukan|ganti|avoid|instead of|not)\b[^.!?]*$/u', $before)) {
+                if (count(preg_split('/\s+/u', $phrase) ?: []) < 5 || preg_match('/(hindari|jangan|bukan|avoid|instead of|not)\b[^.!?]*$/u', $before)) {
                     continue;
                 }
                 $phrases[] = $phrase;
@@ -244,6 +246,26 @@ class ExamReportService
      * @return array{strengths?: list<string>, practice?: list<string>, phrases?: list<string>}
      */
     protected function coachSummaryFromModel(PracticeSession $session, array $messages, string $language): array
+    {
+        // Without the local AI ("online" mode on a laptop without a GPU) the cloud writes the notes, so the
+        // report is about this conversation and not only the generic fallback lines.
+        $transcript = array_map(fn (SessionMessage $message) => ['role' => $message->sender === 'user' ? 'user' : 'coach', 'content' => $message->message], $messages);
+        $fromCloud = fn (): array => array_filter($this->examiner->coachSummaryWithCloud($transcript, $language));
+
+        if ($this->examiner->onlineFirst() && ($cloud = $fromCloud()) !== []) {
+            return $cloud;
+        }
+
+        $local = $this->coachSummaryFromLocalModel($session, $messages, $language);
+
+        return $local !== [] || $this->examiner->onlineFirst() ? $local : $fromCloud();
+    }
+
+    /**
+     * @param  list<SessionMessage>  $messages
+     * @return array{strengths?: list<string>, practice?: list<string>, phrases?: list<string>}
+     */
+    protected function coachSummaryFromLocalModel(PracticeSession $session, array $messages, string $language): array
     {
         try {
             $response = Http::connectTimeout(1.5)->timeout($this->aiTimeout(45))->post(rtrim((string) Config::get('services.ai_service.url', 'http://127.0.0.1:8001'), '/').'/exam/coach-summary', [

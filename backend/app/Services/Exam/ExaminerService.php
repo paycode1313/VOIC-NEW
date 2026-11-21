@@ -1933,6 +1933,53 @@ class ExaminerService
     }
 
     /**
+     * Notes for the coaching report from the cloud model, when the local AI service cannot write them: what went
+     * well, what to practise, sentences to reuse. Same format as /exam/coach-summary in ai_service/exam_engine.py.
+     * Empty lists when no cloud model answers; never waits for the quota.
+     *
+     * @param  list<array{role: string, content: string}>  $transcript  role "user" or "coach"
+     * @return array{strengths: list<string>, practice: list<string>, phrases: list<string>}
+     */
+    public function coachSummaryWithCloud(array $transcript, string $language): array
+    {
+        $empty = ['strengths' => [], 'practice' => [], 'phrases' => []];
+        if ($transcript === [] || ! $this->cloudConfigured() || self::cloudPaused()) {
+            return $empty;
+        }
+
+        $isEn = $language === 'en';
+        $convo = implode("\n", array_map(fn ($turn) => ($turn['role'] === 'user' ? 'PESERTA' : 'COACH').': '.Str::limit((string) $turn['content'], 600), array_slice($transcript, -30)));
+        $instruction = $isEn
+            ? "Summarise this coaching chat for the participant. Use exactly this format, max 3 lines each, short and specific to what they said:\nBAGUS:\n- ...\nLATIH:\n- ...\nKALIMAT:\n- (a better sentence they can reuse, built only from their own facts: no invented numbers, say \"a certain amount\" instead)\nWrite in English."
+            : "Ringkas sesi coaching ini untuk peserta. Pakai format persis ini, maksimal 3 baris per bagian, singkat dan spesifik pada yang dia katakan:\nBAGUS:\n- ...\nLATIH:\n- ...\nKALIMAT:\n- (contoh kalimat lebih baik yang bisa dia pakai, hanya dari fakta yang dia sebut sendiri: jangan mengarang angka, pakai \"sekian\")\nTulis dalam Bahasa Indonesia, sapa peserta dengan 'kamu'.";
+
+        $raw = $this->callCloudModel([
+            ['role' => 'system', 'content' => $isEn ? 'You are a concise, honest communication coach.' : 'Kamu pelatih komunikasi yang ringkas dan jujur.'],
+            ['role' => 'user', 'content' => $convo."\n\n".$instruction],
+        ], timeout: 10, maxTokens: 400, temperature: 0.4, waitForQuota: false);
+        if ($raw === null) {
+            return $empty;
+        }
+
+        // "BAGUS:\n- a\n- b\nLATIH:\n- c" -> lists per heading.
+        $sections = $empty;
+        $current = null;
+        foreach (preg_split('/\R/u', $raw) ?: [] as $line) {
+            $line = trim(preg_replace('/[\*#_`]+/u', '', $line) ?? $line);
+            if (preg_match('/^(BAGUS|LATIH|KALIMAT)\s*:\s*(.*)$/iu', $line, $heading)) {
+                $current = ['BAGUS' => 'strengths', 'LATIH' => 'practice', 'KALIMAT' => 'phrases'][mb_strtoupper($heading[1])];
+                $line = $heading[2];
+            }
+            $item = trim(preg_replace('/^[\-•\d\.\)\s]+/u', '', $line) ?? $line, ' "“”');
+            if ($current !== null && $item !== '' && mb_strlen($item) <= 240 && count($sections[$current]) < 3) {
+                $sections[$current][] = $item;
+            }
+        }
+
+        return $sections;
+    }
+
+    /**
      * Instructions for rewriting an answer (same rules as /exam/improve in ai_service/exam_engine.py).
      */
     protected function improvePrompt(string $roleType, bool $isEn): string
