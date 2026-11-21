@@ -60,6 +60,25 @@ class BoothTest extends TestCase
             ->assertDontSee('Kemarin');
     }
 
+    public function test_a_visitor_who_tries_again_is_listed_once_with_their_best_band(): void
+    {
+        // Rina tried three times; anonymous visitors are different people and all stay.
+        foreach ([['Rina Wulandari', 'UB', 5.5], ['Rina Wulandari', 'UB', 7.0], ['rina wulandari', 'ub', 6.0], ['Budi Santoso', 'UM', 6.5], ['Pengunjung', null, 4.0], ['Pengunjung', null, 4.5]] as [$name, $campus, $band]) {
+            PracticeSession::create([
+                'user_id' => null,
+                'scenario_type' => 'Wawancara Kerja',
+                'exam_mode' => 'wawancara',
+                'feedback_notes' => ['guest_name' => $name, 'campus' => $campus, 'exam_report' => ['overall_band' => $band]],
+            ]);
+        }
+
+        $page = $this->withSession(['booth_unlocked' => true])->get(route('booth.board'))->assertOk()
+            ->assertSeeInOrder(['Rina', '7.0', 'Budi', '6.5']);
+        $this->assertSame(1, substr_count($page->getContent(), '>Rina<'), 'Rina is listed once');
+        $this->assertStringNotContainsString('5.5', $page->getContent());
+        $this->assertSame(2, substr_count($page->getContent(), '>Pengunjung<'));
+    }
+
     public function test_next_visitor_clears_the_guest_session(): void
     {
         $this->withSession([

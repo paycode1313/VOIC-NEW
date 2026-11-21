@@ -174,6 +174,18 @@ class BoothController extends Controller
     {
         return $finished
             ->sortByDesc(fn (PracticeSession $session) => $session->feedback_notes['exam_report']['overall_band'])
+            // A visitor who tries again is listed once, with their best band (sorted above, so the first one kept).
+            // An account counts as one person; a guest by full name and campus; unnamed visitors are never merged.
+            ->unique(function (PracticeSession $session) {
+                if ($session->user_id !== null) {
+                    return 'user:'.$session->user_id;
+                }
+                $name = mb_strtolower(trim((string) ($session->feedback_notes['guest_name'] ?? '')));
+
+                return $name === '' || $name === 'pengunjung'
+                    ? 'session:'.$session->id
+                    : 'guest:'.$name.'|'.mb_strtolower(trim((string) ($session->feedback_notes['campus'] ?? '')));
+            })
             ->take($limit)
             ->map(fn (PracticeSession $session) => [
                 'name' => Str::of($session->getParticipantName())->explode(' ')->first() ?: 'Pengunjung',
