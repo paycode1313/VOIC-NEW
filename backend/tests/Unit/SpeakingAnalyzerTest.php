@@ -58,6 +58,8 @@ class SpeakingAnalyzerTest extends TestCase
         // Seen live (offline composer): "Oke, aku catat soal masalah api-nya lambat banget ya."
         $this->assertSame('masalah API-nya lambat banget', $this->analyzer->keyPhrase('Eee jadi waktu magang itu, ada masalah API-nya lambat banget pas jam sibuk.', 'wawancara'));
         $this->assertSame('2000 gambar', $this->analyzer->keyPhrase('Datanya 2000 gambar dari satu pabrik.', 'sidang'));
+        // A phrase never ends on a dangling word ("Oke, oke, 2 miliar buat. Noted.").
+        $this->assertSame('2 miliar', $this->analyzer->keyPhrase('Kami butuh dana 2 miliar buat ekspansi ke lima kota.', 'pitching'));
     }
 
     public function test_only_the_cue_card_talk_is_held_to_the_long_turn_length(): void

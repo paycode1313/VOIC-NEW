@@ -39,6 +39,13 @@ class SpeakingAnalyzer
      */
     public const HESITATION = '(?=[ehmur]*([ehmur])\g{-1})(?:e+h*m*|e+r+m*|h+m+|u+h*m*)';
 
+    /**
+     * Words a quoted phrase must not end on ("2 miliar buat"): prepositions and conjunctions.
+     *
+     * @var list<string>
+     */
+    protected const DANGLING = ['buat', 'untuk', 'dari', 'ke', 'di', 'per', 'sama', 'pas', 'biar', 'dengan', 'sejak', 'selama', 'sampai', 'for', 'to', 'from', 'with', 'of', 'in', 'on', 'at', 'by'];
+
     public function __construct(protected ExamBlueprint $blueprint) {}
 
     /**
@@ -222,7 +229,7 @@ class SpeakingAnalyzer
 
         if (preg_match('/(?<![\p{L}\p{N}])(\d+[.,]?\d*\s?(?:persen|%|juta|ribu|miliar|orang|pengguna|pelanggan|gambar|data|sampel|responden|bulan|tahun|minggu|hari|percent|users|customers|months|years|weeks)(?:\s+[\p{L}\-]{3,}){0,1})/u', $normalized, $match)) {
             $words = explode(' ', trim($match[1]));
-            if (count($words) > 2 && in_array(end($words), self::STOPWORDS, true)) {
+            if (count($words) > 2 && (in_array(end($words), self::STOPWORDS, true) || in_array(end($words), self::DANGLING, true))) {
                 array_pop($words);
             }
 
