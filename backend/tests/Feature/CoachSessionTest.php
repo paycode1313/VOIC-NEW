@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\PracticeSession;
 use App\Models\User;
-use App\Services\Exam\ExamFlowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -193,7 +192,6 @@ class CoachSessionTest extends TestCase
         $this->assertStringContainsString($answer['question'], $opening);
 
         // The coach model knows the first answer, to compare and show the progress.
-        $flow = app(ExamFlowService::class);
         $this->postJson(route('exam.answer', $coach), ['answer' => 'Saya tertarik ke data karena waktu magang saya bikin dashboard penjualan yang dipakai tiap minggu.', 'duration_seconds' => 12, 'timestamp_seconds' => 20])->assertOk();
         Http::assertSent(fn ($request) => str_contains((string) json_encode($request->data()), 'Saya suka data karena seru aja sih.')
             && str_contains((string) json_encode($request->data(), JSON_UNESCAPED_UNICODE), 'melatih ulang'));
