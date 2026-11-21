@@ -210,6 +210,21 @@ class ConversationSignalsTest extends TestCase
         $this->assertSame('sample', $this->signals()->gap($this->turn($thesis + ['answer' => 'Saya mengambil data dari kuesioner yang disebar ke mahasiswa di kampus.']))[0]);
     }
 
+    public function test_the_sample_size_is_not_asked_again_once_it_was_given(): void
+    {
+        // Seen live: "Berapa jumlah data atau sampel yang kamu pakai?" after "Datanya 2000 gambar" two answers earlier.
+        $thesis = ['mode' => 'sidang', 'role_type' => 'dosen_penguji', 'part' => 2];
+        $history = [
+            ['role' => 'assistant', 'content' => 'Metodenya apa?'],
+            ['role' => 'user', 'content' => 'Saya pakai YOLOv8. Datanya 2000 gambar dari satu pabrik, saya bagi 80 persen latih dan 20 persen uji.'],
+            ['role' => 'assistant', 'content' => 'Keterbatasannya apa?'],
+        ];
+        $answer = 'Keterbatasannya, datanya cuma dari satu pabrik dan satu jenis kain, jadi mungkin belum bisa digeneralisasi.';
+
+        $this->assertSame('sample', $this->signals()->gap($this->turn($thesis + ['answer' => $answer]))[0]);
+        $this->assertNotSame('sample', $this->signals()->gap($this->turn($thesis + ['answer' => $answer, 'history' => $history]))[0] ?? null);
+    }
+
     public function test_training_data_keeps_a_hint_only_when_the_written_reply_follows_it(): void
     {
         $signals = $this->signals();

@@ -87,13 +87,35 @@ class ConversationSignals
         $text = $this->analyzer->normalize($answer);
         $wordCount = count($this->analyzer->words($text));
 
-        return $this->contradiction($turn, $isEn)
+        $gap = $this->contradiction($turn, $isEn)
             ?? match ($turn['role_type'] ?? '') {
                 'investor' => $this->investorGap($text, $isEn),
                 'dosen_penguji' => $this->examinerGap($text, $isEn, $wordCount),
                 default => $this->recruiterGap($text, $isEn, $wordCount),
+            };
+
+        // "How much data?" is not asked again when an earlier answer already gave it ("Datanya 2000 gambar").
+        if (($gap[0] ?? null) === 'sample' && $this->toldEarlier($turn, '/\d[\d.,]*\s*(data|gambar|citra|foto|sampel|responden|partisipan|images?|photos?|samples?|respondents?|participants?)\b/iu')) {
+            $gap = null;
+        }
+
+        return $gap ?? $this->genericGap($text, $isEn, $wordCount, (int) ($turn['part'] ?? 1));
+    }
+
+    /**
+     * Whether one of the candidate's earlier answers in this session matches the pattern.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    protected function toldEarlier(array $turn, string $pattern): bool
+    {
+        foreach ((array) ($turn['history'] ?? []) as $item) {
+            if (($item['role'] ?? null) === 'user' && preg_match($pattern, (string) ($item['content'] ?? ''))) {
+                return true;
             }
-        ?? $this->genericGap($text, $isEn, $wordCount, (int) ($turn['part'] ?? 1));
+        }
+
+        return false;
     }
 
     /**
