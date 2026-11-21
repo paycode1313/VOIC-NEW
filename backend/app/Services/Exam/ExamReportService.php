@@ -457,6 +457,16 @@ class ExamReportService
         // The cloud writes a stronger version when the local AI cannot ("online" mode on a laptop without a GPU):
         // without it the report only shows a generic framework, not the candidate's own answer made better.
         $fromCloud = function () use (&$improved, $targets, $items, $roleType, $language): void {
+            $missing = array_values(array_filter($targets, fn ($key) => ! isset($improved[$key])));
+            if ($missing === []) {
+                return;
+            }
+            // All of them in one request; any the model skipped are asked one by one below.
+            $improved += $this->examiner->improveManyWithCloud(
+                array_combine($missing, array_map(fn ($key) => ['question' => (string) $items[$key]['question'], 'answer' => (string) $items[$key]['answer']], $missing)),
+                $roleType,
+                $language,
+            );
             foreach ($targets as $key) {
                 if (isset($improved[$key])) {
                     continue;

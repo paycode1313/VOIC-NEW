@@ -1013,6 +1013,45 @@ class ExamFlowTest extends TestCase
             && str_contains((string) ($request->data()['messages'][1]['content'] ?? ''), 'Jawaban asli: Eee waktu magang'));
     }
 
+    public function test_the_cloud_rewrites_all_weak_answers_in_one_request(): void
+    {
+        config(['services.groq.key' => 'test-key', 'exam.speed_mode' => 'online']);
+        $rewrites = 0;
+        Http::fake(function ($request) use (&$rewrites) {
+            if (! str_contains($request->url(), 'api.groq.com')) {
+                return Http::response([], 503);
+            }
+            $system = (string) ($request->data()['messages'][0]['content'] ?? '');
+            if (! str_contains($system, 'Tulis ulang jawaban lisan peserta')) {
+                return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => 'Oke, kebayang. Terus gimana hasilnya?']]]]);
+            }
+            $rewrites++;
+            // One request carries every answer; the reply maps each number to its rewrite.
+            preg_match_all('/^\[(\d+)\]/m', (string) $request->data()['messages'][1]['content'], $numbers);
+            $json = collect($numbers[1])->mapWithKeys(fn ($n) => [$n => "Versi lebih kuat nomor {$n}: saya memprofil query, menambah index, dan respons turun ke 300 milidetik."])->all();
+
+            return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => json_encode($json)]]]]);
+        });
+
+        $session = $this->startExam('wawancara', [1]);
+        for ($i = 0; $i < 8 && $session->refresh()->exam_state['phase'] !== ExamFlowService::PHASE_COMPLETED; $i++) {
+            $this->postJson(route('exam.answer', $session), [
+                'answer' => 'Eee waktu magang API-nya lambat, saya profiling query terus tambah index, jadi 300 milidetik.',
+                'duration_seconds' => 15,
+                'timestamp_seconds' => $i * 20,
+            ])->assertOk();
+        }
+        $this->postJson(route('exam.finish', $session), ['duration_seconds' => 300])->assertOk();
+
+        $improved = array_values(array_filter($session->refresh()->feedback_notes['exam_report']['answers'], fn ($item) => $item['improved'] !== null));
+        $this->assertGreaterThanOrEqual(2, count($improved));
+        $this->assertSame(1, $rewrites);
+        foreach ($improved as $item) {
+            $this->assertSame('ai', $item['improved_source']);
+            $this->assertStringStartsWith('Versi lebih kuat nomor', $item['improved']);
+        }
+    }
+
     private function startExam(string $mode, array $parts): PracticeSession
     {
         $this->post(route('exam.start', $mode), [

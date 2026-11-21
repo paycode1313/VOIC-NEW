@@ -1796,18 +1796,76 @@ class ExaminerService
         }
 
         $isEn = $language === 'en';
-        $guide = (self::IMPROVE_GUIDE[$roleType] ?? self::IMPROVE_GUIDE['hrd'])[$isEn ? 'en' : 'id'];
-        $system = $isEn
-            ? "You are a speaking coach. Rewrite the candidate's spoken answer into a stronger answer they could say out loud: 3-4 natural sentences, at most about 70 words, in the first person. Keep every fact the candidate gave, do not invent numbers or names; where a detail is missing, use a short placeholder in square brackets. Leave out fillers such as \"um\". {$guide} Never write labels such as \"Situation:\" or \"(Action)\", the pattern should be felt from the order of the sentences. If the question is not about a past experience (a plan, a motivation, an opinion), do not force the pattern: answer directly, give a reason and one example. Reply with the rewritten answer only, in English."
-            : "Kamu adalah pelatih public speaking. Tulis ulang jawaban lisan peserta menjadi jawaban yang lebih kuat dan enak diucapkan: 3-4 kalimat lisan yang natural, paling banyak sekitar 70 kata, sebagai orang pertama (saya). Pertahankan semua fakta dari peserta, jangan mengarang angka atau nama; jika ada detail yang kurang, pakai placeholder singkat dalam kurung siku. Buang kata pengisi seperti \"eh\". {$guide} Jangan pernah menulis label seperti \"Situasi:\" atau \"(Aksi)\", polanya cukup terasa dari urutan kalimat. Kalau pertanyaannya bukan soal pengalaman (rencana, motivasi, pendapat), jangan paksakan pola itu: jawab langsung, beri alasan, dan satu contoh. Hindari kata kaku seperti \"menyadari bahwa\", \"mengenai\", \"tersebut\". Balas hanya dengan jawaban hasil tulis ulang, dalam Bahasa Indonesia.";
-
         $raw = $this->callCloudModel([
-            ['role' => 'system', 'content' => $system],
+            ['role' => 'system', 'content' => $this->improvePrompt($roleType, $isEn)],
             ['role' => 'user', 'content' => ($isEn ? "Question: {$question}\nOriginal answer: " : "Pertanyaan: {$question}\nJawaban asli: ").$answer],
         ], timeout: 10, maxTokens: 320, temperature: 0.5);
 
+        return $this->tidyImproved((string) $raw);
+    }
+
+    /**
+     * Rewrite several weak answers in ONE cloud request (one round trip instead of three, and the free
+     * per-minute token quota pays for the instructions once). Returns key => rewrite for the answers it
+     * managed; the caller rewrites the rest one by one.
+     *
+     * @param  array<int, array{question: string, answer: string}>  $items
+     * @return array<int, string>
+     */
+    public function improveManyWithCloud(array $items, string $roleType, string $language): array
+    {
+        $items = array_filter($items, fn ($item) => count(preg_split('/\s+/u', trim((string) $item['answer'])) ?: []) >= 3);
+        if ($items === [] || ! $this->cloudConfigured() || self::cloudPaused()) {
+            return [];
+        }
+
+        $isEn = $language === 'en';
+        $numbered = [];
+        $blocks = [];
+        foreach (array_values(array_keys($items)) as $i => $key) {
+            $numbered[(string) ($i + 1)] = $key;
+            $blocks[] = '['.($i + 1)."]\n".($isEn ? 'Question: ' : 'Pertanyaan: ').$items[$key]['question']."\n".($isEn ? 'Original answer: ' : 'Jawaban asli: ').$items[$key]['answer'];
+        }
+        $format = $isEn
+            ? ' There are several numbered answers below. Rewrite each one separately and reply with JSON only, mapping each number to its rewrite: {"1": "...", "2": "..."}.'
+            : ' Di bawah ada beberapa jawaban bernomor. Tulis ulang masing-masing secara terpisah dan balas HANYA dengan JSON yang memetakan nomor ke hasilnya: {"1": "...", "2": "..."}.';
+
+        $raw = (string) $this->callCloudModel([
+            // The single-answer prompt ends with "reply with the rewritten answer only": here the reply is JSON.
+            ['role' => 'system', 'content' => str_replace(['Reply with the rewritten answer only, in English.', 'Balas hanya dengan jawaban hasil tulis ulang, dalam Bahasa Indonesia.'], $isEn ? 'Write in English.' : 'Tulis dalam Bahasa Indonesia.', $this->improvePrompt($roleType, $isEn)).$format],
+            ['role' => 'user', 'content' => implode("\n\n", $blocks)],
+        ], timeout: 12, maxTokens: 180 * count($items), temperature: 0.5);
+
+        $json = json_decode(trim(preg_replace('/^```(?:json)?|```$/m', '', $raw) ?? $raw), true);
+        $result = [];
+        foreach (is_array($json) ? $json : [] as $number => $text) {
+            if (isset($numbered[(string) $number]) && is_string($text) && ($tidy = $this->tidyImproved($text)) !== null) {
+                $result[$numbered[(string) $number]] = $tidy;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Instructions for rewriting an answer (same rules as /exam/improve in ai_service/exam_engine.py).
+     */
+    protected function improvePrompt(string $roleType, bool $isEn): string
+    {
+        $guide = (self::IMPROVE_GUIDE[$roleType] ?? self::IMPROVE_GUIDE['hrd'])[$isEn ? 'en' : 'id'];
+
+        return $isEn
+            ? "You are a speaking coach. Rewrite the candidate's spoken answer into a stronger answer they could say out loud: 3-4 natural sentences, at most about 70 words, in the first person. Keep every fact the candidate gave, do not invent numbers or names; where a detail is missing, use a short placeholder in square brackets. Leave out fillers such as \"um\". {$guide} Never write labels such as \"Situation:\" or \"(Action)\", the pattern should be felt from the order of the sentences. If the question is not about a past experience (a plan, a motivation, an opinion), do not force the pattern: answer directly, give a reason and one example. Reply with the rewritten answer only, in English."
+            : "Kamu adalah pelatih public speaking. Tulis ulang jawaban lisan peserta menjadi jawaban yang lebih kuat dan enak diucapkan: 3-4 kalimat lisan yang natural, paling banyak sekitar 70 kata, sebagai orang pertama (saya). Pertahankan semua fakta dari peserta, jangan mengarang angka atau nama; jika ada detail yang kurang, pakai placeholder singkat dalam kurung siku. Buang kata pengisi seperti \"eh\". {$guide} Jangan pernah menulis label seperti \"Situasi:\" atau \"(Aksi)\", polanya cukup terasa dari urutan kalimat. Kalau pertanyaannya bukan soal pengalaman (rencana, motivasi, pendapat), jangan paksakan pola itu: jawab langsung, beri alasan, dan satu contoh. Hindari kata kaku seperti \"menyadari bahwa\", \"mengenai\", \"tersebut\". Balas hanya dengan jawaban hasil tulis ulang, dalam Bahasa Indonesia.";
+    }
+
+    /**
+     * A rewritten answer ready to show, or null when it is too short or too long to be one.
+     */
+    protected function tidyImproved(string $raw): ?string
+    {
         // Placeholders in [brackets] belong here, so not clean(), which removes them.
-        $text = trim(trim(preg_replace('/\s+/u', ' ', preg_replace('/[\*#_`~]+/u', '', (string) $raw) ?? '') ?? ''), '"“”');
+        $text = trim(trim(preg_replace('/\s+/u', ' ', preg_replace('/[\*#_`~]+/u', '', $raw) ?? '') ?? ''), '"“”');
         // A spoken answer has no "Situasi:" / "(Aksi)" labels, even when the model writes them anyway.
         $labels = 'Situasi|Tugas|Aksi|Tindakan|Hasil|Situation|Task|Action|Result';
         $text = preg_replace(['/\s*\((?:'.$labels.')\)/iu', '/(^|[.!?]\s+)(?:'.$labels.')\s*:\s*/iu'], ['', '$1'], $text) ?? $text;
