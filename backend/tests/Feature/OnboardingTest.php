@@ -112,7 +112,7 @@ class OnboardingTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('initialOpen: true', false);
-        $response->assertSee('Panduan Orientasi & Personalisasi', false);
+        $response->assertSee('Panduan Orientasi &amp; Personalisasi', false);
         $response->assertSee('Panduan Pemakaian');
     }
 
