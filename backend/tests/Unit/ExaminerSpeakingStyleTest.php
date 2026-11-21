@@ -89,6 +89,26 @@ class ExaminerSpeakingStyleTest extends TestCase
         $this->assertSame('Dua kali lipat, itu lompatan besar.', $examiner->clean('Dua kali lipat (itu lompatan besar).'));
     }
 
+    public function test_instruction_tags_read_aloud_by_the_model_are_removed(): void
+    {
+        $examiner = app(ExaminerService::class);
+
+        // Seen live (cloud model, English session): the tag name was spoken.
+        $this->assertSame(
+            "Cool goal, Rina. Now we're in Part 3, Deep Discussion. If a teammate kept missing deadlines, what would you do?",
+            $examiner->clean("Cool goal, Rina. ANNOUNCE: Now we're in Part 3, Deep Discussion. If a teammate kept missing deadlines, what would you do?"),
+        );
+        // An unclosed quote around the planned question goes too.
+        $this->assertSame(
+            'Nice start, Rina. Now we will move to What weakness are you currently working on?',
+            $examiner->clean('Nice start, Rina. ANNOUNCE: Now we will move to “What weakness are you currently working on?'),
+        );
+        $this->assertSame('Oke. Kenapa kamu pilih metode itu?', $examiner->clean('Oke. FOKUS: Kenapa kamu pilih metode itu?'));
+        $this->assertSame('Oke, kebayang. Terus gimana?', $examiner->clean('TANPA PUJIAN Oke, kebayang. Terus gimana?'));
+        // Ordinary capitals are not tags.
+        $this->assertSame('Pakai metrik AI, NLP: itu jelas.', $examiner->clean('Pakai metrik AI, NLP: itu jelas.'));
+    }
+
     public function test_the_prompt_asks_for_human_reactions_instead_of_echoing_the_answer(): void
     {
         $examiner = app(ExaminerService::class);
@@ -130,6 +150,11 @@ class ExaminerSpeakingStyleTest extends TestCase
 
         // The tag is explained once, in the system prompt.
         $this->assertStringContainsString('TANPA PUJIAN', $examiner->systemPrompt($turn('x')));
+
+        // Coaching too: the coach praised every turn in a live session ("Wah, mantap", "Nice").
+        $coach = fn (string $line) => ['directive' => ExaminerService::DIRECTIVE_COACH, 'session_type' => 'coach'] + $turn($line);
+        $this->assertStringContainsString('[LATIH | TANPA PUJIAN]', $examiner->turnInstruction($coach('Wah, mantap udah pakai contoh.')));
+        $this->assertStringContainsString('TANPA PUJIAN = ', $examiner->systemPrompt($coach('x')));
     }
 
     public function test_a_reaction_and_the_scripted_line_do_not_say_the_same_opener_twice(): void

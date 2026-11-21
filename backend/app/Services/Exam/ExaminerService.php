@@ -914,6 +914,7 @@ class ExaminerService
                 'Talk like a real person in a voice call: short spoken sentences, no lists, no markdown, no emoji, no speaker labels.',
                 'Every turn: react to what they actually said, then teach ONE concrete thing (wording, structure, tone, or a filler habit). When useful, give a better example sentence in quotes that they can copy.',
                 'Then keep the conversation going: ask them to try saying it again in the better way, or give a new realistic practice question, or ask what they want to work on next.',
+                'Teach natural professional speech, not written language: never tell them to swap a normal spoken word for a stiff one. A better example sentence keeps their own facts; say "a certain number" instead of inventing one.',
                 'Follow their lead. If they ask a question, answer it simply and practically first.',
                 'Remember what they told you earlier in this chat and build on it instead of starting over.',
                 'If they are nervous or unsure, encourage them in one short sentence before teaching.',
@@ -924,6 +925,7 @@ class ExaminerService
                 'Bicaralah seperti orang sungguhan di panggilan suara: kalimat lisan yang pendek, tanpa daftar, tanpa markdown, tanpa emoji, tanpa label nama.',
                 'Setiap giliran: tanggapi isi yang benar-benar dia katakan, lalu ajarkan SATU hal konkret (pilihan kata, struktur jawaban, nada bicara, atau kebiasaan kata pengisi). Jika berguna, beri contoh kalimat yang lebih baik di dalam tanda kutip yang bisa langsung dia tiru.',
                 'Lalu jaga obrolan tetap jalan: minta dia mencoba mengucapkan ulang dengan cara yang lebih baik, atau beri satu pertanyaan latihan yang realistis, atau tanyakan apa yang ingin dia latih berikutnya.',
+                'Ajarkan bahasa lisan yang profesional tapi natural, bukan bahasa tulisan: jangan menyuruh mengganti kata lisan yang wajar dengan kata baku yang kaku (misalnya "pakai" jadi "menggunakan"). Contoh kalimat yang lebih baik tetap memakai fakta dari peserta; ucapkan "sekian" daripada mengarang angka.',
                 'Ikuti arah obrolannya. Kalau dia bertanya, jawab dulu dengan sederhana dan praktis.',
                 'Ingat apa yang dia ceritakan sebelumnya di obrolan ini dan lanjutkan dari situ, jangan mulai dari nol.',
                 'Kalau dia gugup atau ragu, semangati dalam satu kalimat pendek sebelum mengajari.',
@@ -1039,11 +1041,15 @@ class ExaminerService
                     ."[COACH] at most 4 spoken sentences: react to what they said, teach one concrete improvement (with a better example sentence in quotes if useful), then keep the conversation going.\n"
                     ."[COACH | ONE MINUTE LEFT] the same, but start summarising the most important tip and ask for one last short try.\n"
                     ."[CLOSE] time is up: close warmly in at most 3 sentences (one thing they already do well, the one habit to keep practising, an encouraging goodbye). Do not ask a question.\n"
+                    .'Extra tag NO PRAISE = you praised them last turn: this time no compliment, go straight to the tip.
+'
                     .'Extra tag TENSE = they looked tense on camera: start with one short, kind sentence that helps them relax. Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'
                 : "Setiap pesan peserta diakhiri tag dalam kurung siku yang memberi tahu tugasmu di giliran ini (jangan pernah dibacakan):\n"
                     ."[LATIH] maksimal 4 kalimat lisan: tanggapi yang dia katakan, ajarkan satu perbaikan konkret (dengan contoh kalimat yang lebih baik dalam tanda kutip jika berguna), lalu jaga obrolan tetap berlanjut.\n"
                     ."[LATIH | SISA SATU MENIT] sama, tetapi mulai rangkum tips paling penting dan minta satu percobaan singkat terakhir.\n"
                     ."[TUTUP] waktu habis: tutup dengan hangat maksimal 3 kalimat (satu hal yang sudah bagus, satu kebiasaan yang perlu terus dilatih, salam penyemangat). Jangan bertanya.\n"
+                    .'Tag tambahan TANPA PUJIAN = giliran lalu kamu sudah memuji: kali ini tanpa pujian, langsung ke tipsnya.
+'
                     .'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya. Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.';
         }
 
@@ -1086,6 +1092,10 @@ class ExaminerService
         $tags = [$isEn ? 'COACH' : 'LATIH'];
         if (! empty($turn['wrap_up'])) {
             $tags[] = $isEn ? 'ONE MINUTE LEFT' : 'SISA SATU MENIT';
+        }
+        // A coach encourages, but "Wah, mantap!" / "Nice!" on every turn stops meaning anything.
+        if ($this->praisedLastTurn($turn)) {
+            $tags[] = $isEn ? 'NO PRAISE' : 'TANPA PUJIAN';
         }
 
         return ($answer !== '' ? $answer : ($isEn ? '(silence)' : '(diam)'))."\n".'['.implode(' | ', array_merge($tags, $this->visualTags($turn))).']';
@@ -1532,6 +1542,19 @@ class ExaminerService
     public function clean(string $text, int $maxSentences = 3): string
     {
         $text = preg_replace('/[\*#_`~]+/u', '', $text) ?? $text;
+        // The turn tags (see instructionLegend()) are for the model, but now and then it reads one out:
+        // "Cool goal. ANNOUNCE: Now we're in Part 3". Uppercase only, so ordinary words stay.
+        $text = preg_replace([
+            '/(?<![\p{L}])(?:ANNOUNCE|UMUMKAN|FOCUS|FOKUS|LINK|KAITKAN|PROBE|GALI|NEXT|LANJUT|REACT|TANGGAPI|CLARIFY|JELASKAN|COACH|LATIH|CLOSE|TUTUP)\s*:\s*/u',
+            '/(?<![\p{L}])(?:NO PRAISE|TANPA PUJIAN|LOOKING AWAY|TIDAK MENATAP|ONE MINUTE LEFT|SISA SATU MENIT|TENSE|TEGANG)(?![\p{L}])\s*[:|]?\s*/u',
+        ], '', $text) ?? $text;
+        // A quote left open (the model quoted the planned question and never closed it) is read as noise.
+        if (mb_substr_count($text, '“') !== mb_substr_count($text, '”')) {
+            $text = str_replace(['“', '”'], '', $text);
+        }
+        if (substr_count($text, '"') % 2 === 1) {
+            $text = str_replace('"', '', $text);
+        }
         $text = preg_replace('/^\s*[\-•\d]+[\.\)]\s*/mu', '', $text) ?? $text;
         // A speaker label is a short run of capitalised words ("Prof. Hendra:", "VOIC Interview:"), never a sentence like "Bagus. Coba bilang:".
         $text = preg_replace('/^\s*(?:[\p{Lu}][\p{L}\.]*)(?:\s[\p{Lu}][\p{L}\.]*){0,3}:\s+/u', '', trim($text)) ?? $text;
