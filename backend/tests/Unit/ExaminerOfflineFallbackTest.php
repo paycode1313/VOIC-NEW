@@ -44,6 +44,50 @@ class ExaminerOfflineFallbackTest extends TestCase
         $this->assertFalse(ExaminerService::cloudPaused());
     }
 
+    public function test_a_reply_cut_off_by_the_token_limit_keeps_only_its_complete_sentences(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key']);
+        // A reasoning model spent its tokens thinking: the reply stops mid-word.
+        Http::fake(['*' => Http::response(['choices' => [['finish_reason' => 'length', 'message' => ['content' => 'Oke, lumayan buat dua bulan. Tapi itu kan jawaban buat to']]]])]);
+
+        $this->assertSame('Oke, lumayan buat dua bulan.', $this->callCloud(app(ExaminerService::class)));
+    }
+
+    public function test_a_cut_off_reply_without_one_complete_sentence_tries_the_next_model(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key', 'services.groq.fallback_model' => 'second-model']);
+        Http::fakeSequence('api.groq.com/*')
+            ->push(['choices' => [['finish_reason' => 'length', 'message' => ['content' => 'Tapi tunggu, itu kan jawaban buat to']]]])
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => 'Oke. Gimana kamu ngukurnya?']]]]);
+
+        $this->assertSame('Oke. Gimana kamu ngukurnya?', $this->callCloud(app(ExaminerService::class)));
+        Http::assertSentCount(2);
+    }
+
+    public function test_a_short_echo_question_does_not_swallow_the_real_question(): void
+    {
+        $examiner = app(ExaminerService::class);
+        $method = new \ReflectionMethod($examiner, 'upToFirstQuestion');
+
+        // "300 milidetik?" is a reaction, the question is the next one.
+        $this->assertSame(
+            '300 milidetik? Lumayan. Terus, gimana cara kamu ngukurnya?',
+            $method->invoke($examiner, '300 milidetik? Lumayan. Terus, gimana cara kamu ngukurnya? Aku penasaran.'),
+        );
+        // A real question first: the turn still ends there.
+        $this->assertSame(
+            'Kenapa kamu pilih Laravel buat API itu?',
+            $method->invoke($examiner, 'Kenapa kamu pilih Laravel buat API itu? Terus databasenya apa?'),
+        );
+        // Only short questions: the first one is kept.
+        $this->assertSame('Oh ya?', $method->invoke($examiner, 'Oh ya? Serius?'));
+        // A short question with a question word is a real question.
+        $this->assertSame('Kenapa?', $method->invoke($examiner, 'Kenapa? Ceritain dong alasannya.'));
+        $this->assertSame('Serius? Terus gimana?', $method->invoke($examiner, 'Serius? Terus gimana? Aku penasaran.'));
+    }
+
     public function test_connectivity_reports_offline_when_the_internet_is_down(): void
     {
         Cache::flush();

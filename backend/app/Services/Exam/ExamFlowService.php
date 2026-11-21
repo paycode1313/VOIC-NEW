@@ -30,6 +30,24 @@ class ExamFlowService
     /** Seconds before the end when the coach starts wrapping up. */
     public const COACH_WRAP_UP_SECONDS = 90;
 
+    /**
+     * The "Kampus / sekolah / instansi" field also offers who the candidate is (see exam/setup.blade.php).
+     * Those are told to the examiner as a description ("Rina, seorang fresh graduate"), never as a place.
+     *
+     * @var array<string, array{id: string, en: string}>
+     */
+    public const CANDIDATE_STATUSES = [
+        'mahasiswa' => ['id' => 'mahasiswa', 'en' => 'a university student'],
+        'university student' => ['id' => 'mahasiswa', 'en' => 'a university student'],
+        'pelajar' => ['id' => 'pelajar', 'en' => 'a student'],
+        'siswa' => ['id' => 'pelajar', 'en' => 'a student'],
+        'fresh graduate' => ['id' => 'fresh graduate', 'en' => 'a fresh graduate'],
+        'profesional / umum' => ['id' => 'profesional', 'en' => 'a working professional'],
+        'profesional' => ['id' => 'profesional', 'en' => 'a working professional'],
+        'professional' => ['id' => 'profesional', 'en' => 'a working professional'],
+        'umum' => ['id' => 'profesional', 'en' => 'a working professional'],
+    ];
+
     public function __construct(
         protected ExamBlueprint $blueprint,
         protected ExaminerService $examiner,
@@ -721,8 +739,14 @@ class ExamFlowService
             return null;
         }
         $campus = trim((string) ($notes['campus'] ?? ''));
+        // The quick picks on the setup page are what the candidate is, not where they are from.
+        $status = self::CANDIDATE_STATUSES[mb_strtolower($campus)] ?? null;
 
-        return ['name' => Str::limit(Str::of($name)->explode(' ')->first(), 30, ''), 'campus' => $campus !== '' ? Str::limit($campus, 80, '') : null];
+        return [
+            'name' => Str::limit(Str::of($name)->explode(' ')->first(), 30, ''),
+            'campus' => $campus !== '' && $status === null ? Str::limit($campus, 80, '') : null,
+            'status' => $status,
+        ];
     }
 
     protected function recordExaminerMessage(PracticeSession $session, string $text, ?string $audioUrl, array $state, string $kind, int $timestampSeconds = 0, ?string $engine = null, ?string $reply = null, ?int $answeredPart = null, array $extra = []): SessionMessage

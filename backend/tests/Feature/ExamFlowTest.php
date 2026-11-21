@@ -927,6 +927,25 @@ class ExamFlowTest extends TestCase
         ]);
         $this->assertStringContainsString('Kamu sedang bicara dengan Rifai dari Universitas Brawijaya.', $prompt);
 
+        // The setup page offers "Mahasiswa", "Fresh Graduate" and "Profesional / Umum" for the same field:
+        // those are what the candidate is, not where they are from ("Halo Rina dari Fresh Graduate").
+        $this->post(route('exam.start', 'wawancara'), [
+            'guest_name' => 'Rina', 'campus' => 'Fresh Graduate', 'session_type' => 'exam', 'language' => 'id', 'parts' => [1], 'consent' => '1',
+        ])->assertRedirect();
+        $session = PracticeSession::latest('id')->firstOrFail();
+        $this->assertStringStartsWith('Halo Rina, aku VOIC Interview', $session->messages()->first()->message);
+        $prompt = app(ExaminerService::class)->systemPrompt([
+            'mode' => 'wawancara', 'role_type' => 'hrd', 'examiner_name' => 'VOIC-INTERVIEW', 'language' => 'id', 'topic' => null,
+            'context_material' => null, 'candidate' => app(ExamFlowService::class)->candidate($session),
+        ]);
+        $this->assertStringContainsString('Kamu sedang bicara dengan Rina, seorang fresh graduate.', $prompt);
+        $this->assertStringNotContainsString('dari Fresh Graduate', $prompt);
+
+        $this->post(route('exam.start', 'sidang'), [
+            'guest_name' => 'Rina', 'campus' => 'Mahasiswa', 'session_type' => 'coach', 'language' => 'id', 'consent' => '1',
+        ])->assertRedirect();
+        $this->assertStringStartsWith('Halo Rina, aku VOIC Sidang.', PracticeSession::latest('id')->firstOrFail()->messages()->first()->message);
+
         // Without a name the greeting stays generic.
         $this->post(route('exam.start', 'wawancara'), ['session_type' => 'exam', 'language' => 'id', 'parts' => [1], 'consent' => '1'])->assertRedirect();
         $this->assertStringStartsWith('Halo, aku VOIC Interview', PracticeSession::latest('id')->firstOrFail()->messages()->first()->message);

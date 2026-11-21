@@ -87,10 +87,10 @@ class ExaminerService
         'hrd' => [
             'id' => 'Gaya bahasamu: ceria, ekspresif, dan hangat, seperti HR yang ramah dan heboh dengan cara yang menyenangkan, bukan bahasa surat resmi. '
                 .'Panggil kandidat dengan "kamu" dan dirimu "aku". Pakai kata seperti "nggak", "udah", "gimana", "banget", "dikit", "beneran", dan partikel "sih", "nih", "ya", "kok", "dong" secukupnya. '
-                .'Tunjukkan antusiasme dengan reaksi spontan seperti "Wah, seru banget!", "Ih, keren!", "Aduh, aku suka jawaban itu", atau "Oh gitu, hmm" (jangan pakai kata pembuka yang sama dua kali berturut-turut). '
+                .'Tunjukkan antusiasme dengan reaksi spontan yang berganti-ganti, misalnya "Oh ya?", "Hmm, oke, kebayang", "Wah, seru!", "Eh, bentar, aku penasaran", atau "Oke, aku tagih buktinya ya" (jangan pakai kata pembuka yang sama dua kali berturut-turut, dan jangan memuji di setiap giliran). '
                 .'Hindari kata kaku seperti "tersebut", "merupakan", "apakah", "Anda", "sangat", "mengenai", "demikian". '
                 .'Kalimatmu pendek-pendek dan intonasinya hidup, boleh pakai tanda seru sesekali.',
-            'en' => 'Your style: bubbly, expressive and warm, like a cheerful recruiter on a call. Use contractions, short sentences and lively reactions such as "Oh wow, I love that" or "Hmm, okay"; avoid formal written phrases.',
+            'en' => 'Your style: bubbly, expressive and warm, like a cheerful recruiter on a call. Use contractions, short sentences and lively reactions that keep changing, such as "Oh really?", "Hmm, okay, I can picture it", "Oh wow" or "Okay, I want proof"; do not praise every turn, and avoid formal written phrases.',
         ],
         'investor' => [
             'id' => 'Gaya bahasamu: muda, cepat, energik, dan blak-blakan seperti investor muda yang lagi ngopi sama founder, bukan bahasa proposal. '
@@ -118,12 +118,12 @@ class ExaminerService
     public const VIBE = [
         'id' => 'Vibe kamu: keren, cerdas, dan asyik diajak ngobrol, seperti teman yang karismatik, tapi selalu baik dan menghargai. '
             .'Responsmu cepat dan padat: biasanya dua kalimat pendek, jangan bertele-tele. '
-            .'Boleh pakai humor ringan, perumpamaan yang segar, atau pujian yang spesifik dan nggak lebay (misalnya "Nah, itu jawaban yang solid" atau "Wah, ini baru namanya next level"). '
+            .'Boleh pakai humor ringan, perumpamaan yang segar, atau sesekali pujian yang spesifik dan nggak lebay (misalnya "Nah, itu jawaban yang solid"), tapi pujian yang terlalu sering malah terdengar palsu. '
             .'Pakai paling banyak satu ungkapan gaul per giliran supaya tetap natural, nggak maksa. '
             .'Jangan pernah kasar, menyindir, merendahkan, atau berkata kotor; kalau peserta bercanda atau kasar, tanggapi dengan santai dan tetap sopan.',
         'en' => 'Your vibe: cool, clever and fun to talk to, like a charismatic friend, but always kind and respectful. '
             .'Reply fast and tight: usually two short sentences, no rambling. '
-            .'Light humour, a fresh analogy or a specific, not over-the-top compliment is welcome ("Now that is a solid answer"). '
+            .'Light humour, a fresh analogy or, now and then, a specific, not over-the-top compliment is welcome ("Now that is a solid answer"), but praise in every turn sounds fake. '
             .'At most one slang phrase per turn so it stays natural. '
             .'Never be rude, sarcastic, belittling or swear; if the candidate jokes or is rude, stay relaxed and polite.',
     ];
@@ -822,7 +822,9 @@ class ExaminerService
                 'If the answer is vague or very short, gently ask for a concrete example, a number, or the reason behind it.',
                 'If the candidate is nervous, jokes, or says they do not know, respond like a kind human in one short sentence, then keep going.',
                 'Never give the full model answer and never score the candidate during the exam.',
-                'Open your reply with a concrete detail from the last answer (a name, number, term or event) instead of generic praise, and do not start two turns in a row with the same word (such as "Interesting", "Okay", "Great").',
+                'React like a person, not a summary: pick ONE detail from the answer and respond to it in a few words of your own (at most about 8). Never restate or summarise what the candidate just said, they know what they said. Vary how you react: curiosity, a quick "got it", a light joke, gentle doubt, or go straight to the question.',
+                'Praise only when it is earned, not every turn, and never use the same compliment twice in a session ("great", "awesome", "solid"). Do not start two turns in a row with the same word (such as "Interesting", "Okay", "Great").',
+                'Your questions are spoken too: short (at most about 20 words) and in the same casual register as the rest of your turn. Use only full stops, commas, question and exclamation marks: no dashes, semicolons or brackets, your words are read out by a voice.',
                 'Build your question from the candidate\'s own words, so it could only be asked of this person; do not ask something they already answered, even in different words.',
                 'If the candidate asks you something back (about the role, the company, your opinion), answer briefly and realistically as your character would, then return to your question.',
             ]
@@ -834,17 +836,16 @@ class ExaminerService
                 'Kalau jawabannya kabur atau sangat singkat, minta contoh konkret, angka, atau alasannya dengan sopan.',
                 'Kalau peserta gugup, bercanda, atau bilang tidak tahu, tanggapi seperti manusia yang ramah dalam satu kalimat pendek, lalu lanjutkan.',
                 'Jangan memberikan contoh jawaban lengkap dan jangan memberi nilai selama ujian berlangsung.',
-                'Buka tanggapan dengan detail konkret dari jawaban terakhir (nama, angka, istilah, atau kejadian), bukan pujian umum, dan jangan memulai dua giliran berturut-turut dengan kata yang sama (misalnya "Menarik", "Oke", "Wah", "Baik").',
+                'Tanggapi seperti manusia, bukan seperti ringkasan: ambil SATU detail dari jawaban dan tanggapi dengan beberapa kata milikmu sendiri (paling banyak sekitar 8 kata). Jangan pernah mengulang atau merangkum jawaban peserta, dia tahu apa yang baru dia katakan. Variasikan caramu menanggapi: penasaran, "oke, kebayang" singkat, sedikit humor, sedikit ragu, atau langsung bertanya.',
+                'Puji hanya kalau memang pantas, jangan di setiap giliran, dan jangan pakai pujian yang sama dua kali dalam satu sesi (misalnya "keren", "mantap", "solid"). Jangan memulai dua giliran berturut-turut dengan kata yang sama (misalnya "Menarik", "Oke", "Wah", "Baik").',
+                'Pertanyaanmu juga lisan: pendek (paling banyak sekitar 20 kata) dan sesantai kalimatmu yang lain, misalnya "gimana cara kamu ngukurnya?", bukan "bagaimana kamu mengukurnya?". Pakai tanda baca titik, koma, tanda tanya, dan tanda seru saja: tanpa tanda pisah, titik koma, atau tanda kurung, karena kalimatmu dibacakan suara.',
                 'Susun pertanyaan dari kata-kata peserta sendiri, sehingga pertanyaan itu hanya cocok untuk orang ini; jangan menanyakan hal yang sudah dia jawab, walau dengan kalimat berbeda.',
                 'Kalau peserta balik bertanya (soal posisi, perusahaan, atau pendapatmu), jawab singkat dan realistis sesuai peranmu, lalu kembali ke pertanyaanmu.',
             ];
 
         $lines = [$persona];
         if (! empty($turn['candidate']['name'])) {
-            $campus = $turn['candidate']['campus'] ?? null;
-            $lines[] = $isEn
-                ? 'You are talking with '.$turn['candidate']['name'].($campus ? ' from '.$campus : '').'. Use their name now and then (not in every turn).'
-                : 'Kamu sedang bicara dengan '.$turn['candidate']['name'].($campus ? ' dari '.$campus : '').'. Sesekali panggil dia dengan namanya (jangan di setiap giliran).';
+            $lines[] = $this->candidateLine($turn['candidate'], $isEn);
         }
         if ($topic) {
             $lines[] = ($isEn ? 'Session topic: ' : 'Topik sesi: ').$topic;
@@ -931,10 +932,7 @@ class ExaminerService
 
         $lines = [$persona];
         if (! empty($turn['candidate']['name'])) {
-            $campus = $turn['candidate']['campus'] ?? null;
-            $lines[] = $isEn
-                ? 'You are talking with '.$turn['candidate']['name'].($campus ? ' from '.$campus : '').'. Use their name now and then (not in every turn).'
-                : 'Kamu sedang bicara dengan '.$turn['candidate']['name'].($campus ? ' dari '.$campus : '').'. Sesekali panggil dia dengan namanya (jangan di setiap giliran).';
+            $lines[] = $this->candidateLine($turn['candidate'], $isEn);
         }
         if ($topic) {
             $lines[] = ($isEn ? 'They are preparing for: ' : 'Peserta sedang bersiap untuk: ').$topic;
@@ -962,6 +960,22 @@ class ExaminerService
     }
 
     /**
+     * Who the examiner is talking to: "Rifai dari Universitas Brawijaya" or "Rina, seorang fresh graduate".
+     *
+     * @param  array{name: string, campus?: ?string, status?: ?array{id: string, en: string}}  $candidate
+     */
+    protected function candidateLine(array $candidate, bool $isEn): string
+    {
+        $campus = $candidate['campus'] ?? null;
+        $status = $candidate['status'][$isEn ? 'en' : 'id'] ?? null;
+        $who = $candidate['name'].($campus ? ($isEn ? ' from ' : ' dari ').$campus : '').($status ? ($isEn ? ', ' : ', seorang ').$status : '');
+
+        return $isEn
+            ? "You are talking with {$who}. Use their name now and then (not in every turn)."
+            : "Kamu sedang bicara dengan {$who}. Sesekali panggil dia dengan namanya (jangan di setiap giliran).";
+    }
+
+    /**
      * The spoken style for this examiner (unknown roles talk like the thesis examiner).
      */
     public function speakingStyle(string $roleType, bool $isEn): string
@@ -985,29 +999,29 @@ class ExaminerService
                 ? "How you dig, like an experienced investor: every big claim needs a number (users, revenue, monthly growth, CAC, retention). \"No competitors\" means asking what customers use today. Test a realistic market size, the business model, an edge that is hard to copy, the team, and what the money will be used for. When a number sounds too optimistic, ask for the assumption behind it.\n"
                     ."Style examples (copy the pattern, not the content):\n"
                     ."Founder: \"The market is huge and nobody is doing this yet.\" You: \"Huge and empty usually makes me cautious. How do your customers solve this problem today, before your product exists?\"\n"
-                    .'Founder: "We already have 300 users after two months." You: "Three hundred in two months is a decent start. How many of them are still active this month, and how many pay?"'
+                    .'Founder: "We already have 300 users after two months." You: "Decent for two months. But where is the money? How many are still active this month, and how many pay?"'
                 : "Cara kamu menggali seperti investor berpengalaman: setiap klaim besar harus ada angkanya (pengguna, pendapatan, pertumbuhan per bulan, CAC, retensi). Klaim \"tidak ada pesaing\" berarti tanyakan apa yang dipakai pelanggan sekarang. Uji ukuran pasar yang realistis, model bisnis, keunggulan yang sulit ditiru, tim, dan untuk apa dana dipakai. Kalau angka terdengar terlalu optimis, tanyakan asumsinya.\n"
                     ."Contoh gaya (tiru polanya, bukan isinya):\n"
                     ."Founder: \"Pasarnya besar sekali dan belum ada yang garap.\" Kamu: \"Bentar, bentar. Pasar gede tapi masih kosong, jujur ya, itu malah bikin saya waspada. Sebelum ada produk kamu, pelanggan ngatasin masalah ini pakai cara apa?\"\n"
-                    .'Founder: "Dalam dua bulan kami sudah punya 300 pengguna." Kamu: "Oke, oke, tiga ratus pengguna dalam dua bulan, lumayan tuh. Tapi cuannya mana? Berapa yang masih aktif bulan ini, dan berapa yang udah bayar?"',
+                    .'Founder: "Dalam dua bulan kami sudah punya 300 pengguna." Kamu: "Oke, lumayan buat dua bulan. Tapi cuannya mana? Berapa yang masih aktif bulan ini, dan berapa yang udah bayar?"',
             'dosen_penguji' => $isEn
                 ? "How you examine, like a thesis examiner: tie every answer back to the research problem and objectives. A claim that something is \"better\" or \"more accurate\" must say compared to what and measured by which metric. Ask why the method was chosen, how much data or how many respondents and how they were selected, validity and reliability, limitations, and the contribution of the research. Stay courteous, never belittle.\n"
                     ."Style examples (copy the pattern, not the content):\n"
                     ."Student: \"My model is more accurate for detecting leaf disease.\" You: \"More accurate is a strong claim. Compared with which method, and with what metric did you measure it?\"\n"
-                    .'Student: "I collected data from 50 respondents through a questionnaire." You: "Fifty respondents through a questionnaire, noted. How did you choose them, and is that number enough for the analysis you used?"'
+                    .'Student: "I collected data from 50 respondents through a questionnaire." You: "Noted. How did you choose them, and is that number enough for the analysis you used?"'
                 : "Cara kamu menguji seperti dosen penguji sidang: kaitkan setiap jawaban ke rumusan masalah dan tujuan penelitian. Klaim \"lebih baik\" atau \"lebih akurat\" harus jelas dibandingkan dengan apa dan diukur dengan metrik apa. Tanyakan alasan memilih metode, jumlah data atau responden dan cara memilihnya, validitas dan reliabilitas, keterbatasan, serta kontribusi penelitian. Tetap santun, jangan menjatuhkan.\n"
                     ."Contoh gaya (tiru polanya, bukan isinya):\n"
                     ."Mahasiswa: \"Model saya lebih akurat untuk mendeteksi penyakit daun.\" Kamu: \"Lebih akurat. Itu klaim yang kuat, saya tegaskan ya. Dibandingkan dengan metode apa, dan kamu ukur pakai metrik apa?\"\n"
-                    .'Mahasiswa: "Saya mengambil data dari 50 responden lewat kuesioner." Kamu: "Lima puluh responden lewat kuesioner, saya catat. Nah, cara kamu milih mereka gimana, dan jumlah segitu cukup nggak untuk analisis yang kamu pakai?"',
+                    .'Mahasiswa: "Saya mengambil data dari 50 responden lewat kuesioner." Kamu: "Baik, saya catat. Nah, cara kamu milih mereka gimana, dan jumlah segitu cukup nggak untuk analisis yang kamu pakai?"',
             default => $isEn
                 ? "How you dig, like an experienced recruiter: follow the STAR pattern (situation, task, action, result). When the candidate says \"we\" a lot, ask what they did themselves. When they claim a trait (hard-working, detail-oriented), ask for one real moment that shows it. When a story stops at the action, ask about the result or impact. Listen for motivation, teamwork and fit with the role.\n"
                     ."Style examples (copy the pattern, not the content):\n"
-                    ."Candidate: \"We doubled the online store's sales in three months.\" You: \"Doubling sales in three months is a big jump. In that team, which part did you personally own?\"\n"
-                    .'Candidate: "I am very detail-oriented." You: "Detail-oriented, nice. Can you tell me about a time that habit actually saved a piece of work?"'
+                    ."Candidate: \"We doubled the online store's sales in three months.\" You: \"Doubled? Nice. In that team, which part did you personally own?\"\n"
+                    .'Candidate: "I am very detail-oriented." You: "Okay, I want proof. When did that habit last actually save a piece of work?"'
                 : "Cara kamu menggali seperti recruiter berpengalaman: kejar pola STAR (situasi, tugas, aksi, hasil). Kalau kandidat banyak bilang \"kami\", tanyakan apa yang dia kerjakan sendiri. Kalau dia mengaku punya sifat baik (teliti, pekerja keras), minta satu kejadian nyata yang membuktikannya. Kalau cerita berhenti di aksi, tanyakan hasil atau dampaknya. Perhatikan motivasi, kerja sama tim, dan kecocokan dengan posisi.\n"
                     ."Contoh gaya (tiru polanya, bukan isinya):\n"
-                    ."Kandidat: \"Kami berhasil menaikkan penjualan toko online dua kali lipat dalam tiga bulan.\" Kamu: \"Wah, dua kali lipat dalam tiga bulan? Seru banget! Nah, di tim itu, bagian mana yang beneran kamu pegang sendiri?\"\n"
-                    .'Kandidat: "Saya orangnya teliti banget." Kamu: "Ih, aku suka orang teliti. Kapan terakhir kali ketelitianmu itu beneran nyelametin satu kerjaan?"',
+                    ."Kandidat: \"Kami berhasil menaikkan penjualan toko online dua kali lipat dalam tiga bulan.\" Kamu: \"Dua kali lipat? Seru! Nah, di tim itu, bagian mana yang beneran kamu pegang sendiri?\"\n"
+                    .'Kandidat: "Saya orangnya teliti banget." Kamu: "Oke, aku tagih buktinya ya. Kapan terakhir kali ketelitianmu itu beneran nyelametin satu kerjaan?"',
         };
     }
 
@@ -1041,6 +1055,7 @@ class ExaminerService
                 ."[CLARIFY] the candidate did not understand or asked something back: in at most 2 sentences, explain your question more simply (maybe with a small example), then ask it again in different words. If they asked about something else (the role, the company, your view), answer that briefly first, then return to your question.\n"
                 ."Extra tag FOCUS: ... = what an experienced examiner noticed is missing or doubtful in the answer: make your question dig into exactly that, in your own words, without mentioning the tag (for \"check consistency\", ask politely which of the two is right).\n"
                 ."Extra tag LINK: ... = something the candidate said earlier in this session that fits the next topic: refer back to it naturally when you raise the topic (\"Earlier you mentioned ...\").\n"
+                ."Extra tag NO PRAISE = you praised them last turn: this time no compliment at all (no \"great\", \"nice\", \"solid\"), react with curiosity, a light joke or go straight to the question.\n"
                 .'Extra tag TENSE = the candidate looked tense on camera: start with one short, kind sentence that helps them relax (for example, suggest a breath). Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'
             : "Setiap pesan peserta diakhiri tag dalam kurung siku: bagian ujian saat ini dan tugasmu di giliran ini (jangan pernah dibacakan):\n"
                 ."[TANGGAPI] SATU kalimat pendek yang menanggapi jawaban secara spesifik. Jangan bertanya apa pun, setelah ini ada pengumuman.\n"
@@ -1049,6 +1064,7 @@ class ExaminerService
                 ."[JELASKAN] peserta belum paham atau balik bertanya: dalam maksimal 2 kalimat, jelaskan maksud pertanyaanmu dengan lebih sederhana (boleh dengan contoh kecil), lalu tanyakan lagi dengan kata-kata berbeda. Kalau yang dia tanyakan hal lain (posisi, perusahaan, pendapatmu), jawab singkat dulu, lalu kembali ke pertanyaanmu.\n"
                 ."Tag tambahan FOKUS: ... = hal yang menurut penguji berpengalaman masih kurang atau meragukan dari jawaban itu: arahkan pertanyaanmu tepat ke situ dengan kata-katamu sendiri, tanpa menyebut tagnya (untuk \"cek konsistensi\", tanyakan dengan sopan mana yang benar).\n"
                 ."Tag tambahan KAITKAN: ... = hal yang pernah dikatakan peserta di sesi ini dan cocok dengan topik berikutnya: rujuk kembali secara alami saat membuka topik itu (\"Tadi kamu sempat menyebut ...\").\n"
+                ."Tag tambahan TANPA PUJIAN = giliran lalu kamu sudah memuji: kali ini jangan memuji sama sekali (tanpa \"keren\", \"mantap\", \"bagus\"), tanggapi dengan rasa penasaran, humor ringan, atau langsung bertanya.\n"
                 .'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya (misalnya mengajak tarik napas). Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.';
     }
 
@@ -1113,8 +1129,48 @@ class ExaminerService
         if ($turn['directive'] === self::DIRECTIVE_NEXT && empty($turn['skip_link']) && ($link = $this->signals->link($turn)) !== null) {
             $tags[] = ($isEn ? 'LINK: "' : 'KAITKAN: "').$link.'"';
         }
+        // Models praise every single turn ("keren!", "mantap!", "bagus!") despite the rule in the system prompt;
+        // a tag on this very turn is obeyed. The examiner still praises, just not twice in a row.
+        if ($turn['directive'] !== self::DIRECTIVE_CLARIFY && $this->praisedLastTurn($turn)) {
+            $tags[] = $isEn ? 'NO PRAISE' : 'TANPA PUJIAN';
+        }
 
         return $answer."\n".'['.implode(' | ', array_merge($tags, $this->visualTags($turn))).']';
+    }
+
+    /**
+     * Words of praise in either language. Whole words only, so "bagusnya" or "topik" do not count.
+     */
+    public const PRAISE = '/(?<![\p{L}])(keren|mantap|mantul|bagus|hebat|kreatif|solid|top|luar biasa|salut|impresif|seru|kece|cakep|pinter|pintar|asyik|asik|jempol|efektif banget|suka banget|great|awesome|nice|impressive|amazing|excellent|brilliant|love that|well done)(?![\p{L}])/iu';
+
+    /**
+     * Whether the examiner's previous line praised the candidate.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    protected function praisedLastTurn(array $turn): bool
+    {
+        foreach (array_reverse((array) ($turn['history'] ?? [])) as $item) {
+            if (($item['role'] ?? null) === 'assistant') {
+                return (bool) preg_match(self::PRAISE, (string) ($item['content'] ?? ''));
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * A model reaction followed by the scripted line, without saying the same opener twice:
+     * "Oke, aku dengar." + "Oke, sekarang kita masuk Bagian 2" becomes "Oke, aku dengar. Sekarang kita masuk Bagian 2".
+     */
+    protected function joinReaction(string $reaction, string $scripted): string
+    {
+        if (preg_match('/^(oke|okay|ok|baik|nah|oh|wah|alright|right|so)\b[,.!]?\s+/iu', $scripted, $opener)
+            && preg_match('/(?<![\p{L}])'.preg_quote($opener[1], '/').'(?![\p{L}])/iu', $reaction)) {
+            $scripted = Str::ucfirst(mb_substr($scripted, mb_strlen($opener[0])));
+        }
+
+        return trim($reaction.' '.$scripted);
     }
 
     /**
@@ -1231,12 +1287,12 @@ class ExaminerService
                 // No question: keep the model's reaction and let the plan ask the question.
                 $reaction = $this->stripQuestions($reply);
 
-                return $reaction === '' ? null : ['text' => trim($reaction.' '.$scripted), 'reply' => $reaction];
+                return $reaction === '' ? null : ['text' => $this->joinReaction($reaction, $scripted), 'reply' => $reaction];
 
             default:
                 $reaction = $this->stripQuestions($reply);
 
-                return $reaction === '' ? null : ['text' => trim($reaction.' '.$scripted), 'reply' => $reaction];
+                return $reaction === '' ? null : ['text' => $this->joinReaction($reaction, $scripted), 'reply' => $reaction];
         }
     }
 
@@ -1274,7 +1330,7 @@ class ExaminerService
         return match ($turn['directive']) {
             self::DIRECTIVE_FOLLOW_UP => ['text' => $reply = $this->offlineReply($turn), 'reply' => $reply],
             self::DIRECTIVE_CLARIFY => ['text' => $reply = $this->offlineClarify($turn), 'reply' => $reply],
-            default => ['text' => trim(($reaction = $this->offlineReaction($turn)).' '.$scripted), 'reply' => $reaction],
+            default => ['text' => $this->joinReaction($reaction = $this->offlineReaction($turn), $scripted), 'reply' => $reaction],
         };
     }
 
@@ -1289,10 +1345,43 @@ class ExaminerService
     }
 
     /**
-     * Cut anything after the first question so the turn ends on the question.
+     * A short spoken reaction that ends with a question mark but asks nothing: "300 milidetik?", "Oh ya?",
+     * "Serius?", "Dua kali lipat?". Short questions with a question word ("Kenapa?", "Terus gimana?") do ask.
+     * Same rule as is_echo_reaction() in ai_service/exam_engine.py.
+     */
+    public static function isEchoReaction(string $sentence): bool
+    {
+        $sentence = trim($sentence);
+        $words = preg_split('/\s+/u', $sentence) ?: [];
+
+        return str_ends_with($sentence, '?') && count($words) <= 3
+            && ! preg_match('/(?<![\p{L}])(apa|apakah|kenapa|mengapa|gimana|bagaimana|siapa|kapan|berapa|mana|kok|masa|why|how|what|which|who|when|where)(?![\p{L}])/iu', $sentence);
+    }
+
+    /**
+     * Cut anything after the first real question so the turn ends on the question. A very short question
+     * before it ("300 milidetik?", "Oh ya?") is a spoken reaction, not the question, so it does not end the turn.
      */
     protected function upToFirstQuestion(string $text): string
     {
+        $sentences = preg_split('/(?<=[.!?])\s+/u', trim($text)) ?: [];
+        $firstQuestion = null;
+
+        foreach ($sentences as $i => $sentence) {
+            if (! str_ends_with($sentence, '?')) {
+                continue;
+            }
+            $firstQuestion ??= $i;
+            if (! self::isEchoReaction($sentence)) {
+                return implode(' ', array_slice($sentences, 0, $i + 1));
+            }
+        }
+
+        if ($firstQuestion !== null) {
+            return implode(' ', array_slice($sentences, 0, $firstQuestion + 1));
+        }
+
+        // A question mark inside a sentence ("Kenapa? karena ...") without one at a sentence end.
         $position = mb_strpos($text, '?');
 
         return $position === false ? $text : trim(mb_substr($text, 0, $position + 1));
@@ -1443,6 +1532,10 @@ class ExaminerService
         // Qwen models now and then slip a Chinese/Japanese/Korean word into Indonesian ("sebagai 切入点 awal");
         // the voice cannot read it, and the sentence still makes sense without it.
         $text = preg_replace('/[\p{Han}\p{Hiragana}\p{Katakana}\p{Hangul}]+/u', '', $text) ?? $text;
+        // The voice reads dashes, semicolons and brackets oddly or not at all: they become the comma pause they stand for.
+        // A hyphen inside a word ("e-commerce") stays.
+        $text = preg_replace(['/\s*[—–]\s*|\s+-\s+|\s*;\s*/u', '/\s*\(([^()]*)\)/u'], [', ', ', $1'], $text) ?? $text;
+        $text = preg_replace('/,\s*(?=[,.!?]|$)/u', '', $text) ?? $text;
         $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
         $text = preg_replace('/\s+([,.!?])/u', '$1', $text) ?? $text;
         // Only unwrap quotes around the whole reply; quoted example sentences inside must stay intact.
@@ -1690,6 +1783,17 @@ class ExaminerService
                 }
 
                 $reply = trim((string) $response->json('choices.0.message.content', ''));
+                // Out of tokens (a reasoning model can spend most of them thinking): the reply stops mid-word,
+                // "...itu kan jawaban buat to". Keep the sentences that are complete, or ask the next model.
+                if ($response->json('choices.0.finish_reason') === 'length') {
+                    $complete = preg_match('/^.*[.!?…]["”]?/us', $reply, $match) ? trim($match[0]) : '';
+                    if ($complete === '') {
+                        Log::warning("Cloud examiner model {$provider['model']} ran out of tokens before one full sentence.");
+
+                        continue;
+                    }
+                    $reply = $complete;
+                }
                 if ($response->successful() && $reply !== '') {
                     return $reply;
                 }

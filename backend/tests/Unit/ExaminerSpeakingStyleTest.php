@@ -76,6 +76,78 @@ class ExaminerSpeakingStyleTest extends TestCase
         $this->assertSame('Bagus sekali.', $examiner->clean('Bagus sekali 好的.'));
     }
 
+    public function test_dashes_and_semicolons_become_spoken_pauses(): void
+    {
+        $examiner = app(ExaminerService::class);
+
+        // The voice reads a dash oddly (or not at all); a comma is the pause the model meant.
+        $this->assertSame(
+            'Jadi kamu bikin prototipe, mantap! Apa yang bikin lebih cepat, dan gimana ngukurnya?',
+            $examiner->clean('Jadi kamu bikin prototipe—mantap! Apa yang bikin lebih cepat; dan gimana ngukurnya?'),
+        );
+        $this->assertSame('Oke, pasar e-commerce, gede juga.', $examiner->clean('Oke – pasar e-commerce - gede juga.'));
+        $this->assertSame('Dua kali lipat, itu lompatan besar.', $examiner->clean('Dua kali lipat (itu lompatan besar).'));
+    }
+
+    public function test_the_prompt_asks_for_human_reactions_instead_of_echoing_the_answer(): void
+    {
+        $examiner = app(ExaminerService::class);
+
+        foreach (['id' => 'Jangan pernah mengulang atau merangkum jawaban peserta', 'en' => 'Never restate or summarise what the candidate just said'] as $language => $rule) {
+            foreach (['hrd', 'investor', 'dosen_penguji'] as $role) {
+                $prompt = $examiner->systemPrompt($this->turn($role, 'VOIC-INTERVIEW', $language));
+                $this->assertStringContainsString($rule, $prompt, "{$role} {$language}");
+                // The style examples must not teach the old "repeat the number, then praise" pattern.
+                $this->assertDoesNotMatchRegularExpression('/tiga ratus pengguna dalam dua bulan, lumayan|Lima puluh responden lewat kuesioner, saya catat|Three hundred in two months is/u', $prompt);
+            }
+        }
+    }
+
+    public function test_after_a_compliment_the_next_turn_is_asked_not_to_praise(): void
+    {
+        $examiner = app(ExaminerService::class);
+        $turn = fn (string $lastExaminerLine, string $language = 'id') => $this->turn('hrd', 'VOIC-INTERVIEW', $language) + [
+            'answer' => 'Saya pakai eager loading dan index.',
+            'directive' => ExaminerService::DIRECTIVE_NEXT,
+            'planned_question' => 'Apa hobimu?',
+            'transition' => '',
+            'part' => 1,
+            'part_title' => 'Perkenalan',
+            'skip_link' => true,
+            'history' => [
+                ['role' => 'assistant', 'content' => $lastExaminerLine],
+                ['role' => 'user', 'content' => 'Jawaban sebelumnya.'],
+            ],
+        ];
+
+        $this->assertStringContainsString('TANPA PUJIAN', $examiner->turnInstruction($turn('300 milidetik, mantap! Terus gimana?')));
+        $this->assertStringContainsString('TANPA PUJIAN', $examiner->turnInstruction($turn('Wah, keren banget. Lanjut ya?')));
+        $this->assertStringContainsString('TANPA PUJIAN', $examiner->turnInstruction($turn('Wah, backend pake Laravel pasti seru! Terus?')));
+        // Words that only contain a compliment do not count.
+        $this->assertStringNotContainsString('TANPA PUJIAN', $examiner->turnInstruction($turn('Topiknya soal bagusnya hasil. Kenapa?')));
+        $this->assertStringNotContainsString('TANPA PUJIAN', $examiner->turnInstruction($turn('Oke, kebayang. Terus gimana?')));
+        $this->assertStringContainsString('NO PRAISE', $examiner->turnInstruction($turn('Doubled? Nice. Which part was yours?', 'en')));
+
+        // The tag is explained once, in the system prompt.
+        $this->assertStringContainsString('TANPA PUJIAN', $examiner->systemPrompt($turn('x')));
+    }
+
+    public function test_a_reaction_and_the_scripted_line_do_not_say_the_same_opener_twice(): void
+    {
+        $examiner = app(ExaminerService::class);
+        $turn = ['directive' => ExaminerService::DIRECTIVE_REACT, 'language' => 'id', 'scripted' => 'Oke, sekarang kita masuk Bagian 2, Cerita Pengalaman.'];
+
+        $this->assertSame(
+            'Oke, aku dengar. Sekarang kita masuk Bagian 2, Cerita Pengalaman.',
+            $examiner->resolveModelReply('Oke, aku dengar.', $turn)['text'],
+        );
+        // A different opener is kept.
+        $this->assertSame(
+            'Timeboxing, masuk akal. Oke, sekarang kita masuk Bagian 2, Cerita Pengalaman.',
+            $examiner->resolveModelReply('Timeboxing, masuk akal.', $turn)['text'],
+        );
+    }
+
     public function test_brand_names_are_spoken_as_words(): void
     {
         $this->assertSame('VOIC Interview', ExaminerService::spokenName('VOIC-INTERVIEW'));

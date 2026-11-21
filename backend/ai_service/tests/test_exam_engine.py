@@ -54,6 +54,26 @@ class QualityGateTest(unittest.TestCase):
         reply = "Maksud saya, kenapa Anda memilih metode itu dan bukan metode lain?"
         self.assertEqual(exam_engine.quality_issues(reply, "Maaf Prof, maksud pertanyaan Bapak bagaimana ya kalau boleh tahu?", "clarify", "id"), [])
 
+    def test_restating_the_answer_is_flagged(self):
+        # Seen live (cloud model): the reaction replays the candidate's own story word for word.
+        answer = ("Eee jadi waktu magang itu, ada masalah API-nya lambat banget pas jam sibuk, bisa sampai lima detik. "
+                  "Saya profiling query-nya, ternyata ada N plus satu query, terus saya tambahin eager loading dan index. "
+                  "Hasilnya waktu respons turun jadi sekitar 300 milidetik.")
+        parrot = ("Profiling query, terus pakai eager loading sama index, terus respons turun dari lima detik ke 300 milidetik, mantap! "
+                  "Kalau teman deketmu disuruh ngegambarin kamu dalam tiga kata, kira-kira dia bakal bilang apa?")
+        self.assertIn("parrots_answer", exam_engine.quality_issues(parrot, answer, "follow_up", "id"))
+        human = "Eager loading, klasik tapi ampuh. Terus, gimana kamu mastiin masalahnya nggak balik lagi pas datanya makin gede?"
+        self.assertEqual(exam_engine.quality_issues(human, answer, "follow_up", "id"), [])
+
+    def test_a_short_echo_reaction_is_not_the_question(self):
+        self.assertFalse(exam_engine.is_question("300 milidetik?"))
+        self.assertFalse(exam_engine.is_question("Oh ya?"))
+        self.assertTrue(exam_engine.is_question("Kenapa?"))
+        self.assertTrue(exam_engine.is_question("Terus gimana?"))
+        reply = "300 milidetik? Lumayan. Gimana cara kamu ngukurnya waktu itu? Aku penasaran."
+        self.assertEqual(exam_engine.trim_questions(reply, "follow_up"), "300 milidetik? Lumayan. Gimana cara kamu ngukurnya waktu itu?")
+        self.assertNotIn("multiple_questions", exam_engine.quality_issues(exam_engine.trim_questions(reply, "follow_up"), "Hasilnya turun ke 300 milidetik setelah saya ukur.", "follow_up", "id"))
+
     def test_react_must_not_ask(self):
         self.assertIn("react_with_question", exam_engine.quality_issues("Kecepatan YOLOv8 di pabrik tekstil masuk akal ya?", ANSWER, "react", "id"))
 

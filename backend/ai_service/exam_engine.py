@@ -269,9 +269,45 @@ IMPERATIVE_ASK = re.compile(
 )
 
 
+QUESTION_WORD = re.compile(
+    r"(?<![^\W\d_])(apa|apakah|kenapa|mengapa|gimana|bagaimana|siapa|kapan|berapa|mana|kok|masa|why|how|what|which|who|when|where)(?![^\W\d_])",
+    re.IGNORECASE,
+)
+
+
+def is_echo_reaction(sentence: str) -> bool:
+    """Reaksi lisan pendek bertanda tanya yang tidak menanyakan apa pun: "300 milidetik?", "Oh ya?", "Serius?".
+
+    Pertanyaan pendek dengan kata tanya ("Kenapa?", "Terus gimana?") tetap pertanyaan.
+    Aturan yang sama dengan ExaminerService::isEchoReaction() di Laravel.
+    """
+    sentence = (sentence or "").strip()
+    return sentence.endswith("?") and len(sentence.split()) <= 3 and not QUESTION_WORD.search(sentence)
+
+
 def is_question(sentence: str) -> bool:
     sentence = (sentence or "").strip()
+    if is_echo_reaction(sentence):
+        return False
     return sentence.endswith("?") or bool(IMPERATIVE_ASK.match(sentence))
+
+
+def parrots_answer(reply: str, answer: str) -> bool:
+    """Tanggapan yang mengulang/merangkum jawaban peserta ("Profiling query, terus eager loading, terus
+    respons turun ke 300 milidetik, mantap!") alih-alih menanggapinya seperti manusia.
+
+    Dilihat dari kalimat sebelum pertanyaan: banyak kata isi dan sebagian besar diambil dari jawaban.
+    """
+    reaction = []
+    for sentence in re.split(r"(?<=[.?!])\s+", reply or ""):
+        if is_question(sentence):
+            break
+        reaction.append(sentence)
+    said = content_words(" ".join(reaction))
+    if len(said) < 8:
+        return False
+    borrowed = said & content_words(answer)
+    return len(borrowed) >= 6 and len(borrowed) / len(said) >= 0.6
 
 
 def count_questions(text: str) -> int:
@@ -396,6 +432,9 @@ def quality_issues(reply: str, answer: str, directive: str, language: str, earli
             tails = {w[-5:] for w in answer_words if len(w) >= 5}
             if not any(w[-5:] in tails for w in content_words(reply) if len(w) >= 5):
                 issues.append("not_grounded_in_answer")
+        # The other side of grounding: picking up one detail is listening, replaying the answer is not.
+        if parrots_answer(reply, answer):
+            issues.append("parrots_answer")
 
     if language == "id" and re.search(r"\b(the|and|you|your|what|how)\b", lowered) and not re.search(r"\b(yang|dan|anda|kamu|apa)\b", lowered):
         issues.append("wrong_language")
