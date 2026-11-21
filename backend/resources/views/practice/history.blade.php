@@ -109,8 +109,12 @@
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="truncate text-base font-extrabold tracking-tight text-slate-900">{{ $session->scenario_type }}</p>
-                                @if ($session->aiRole)
-                                    <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">{{ $session->aiRole->name }}</span>
+                                @php
+                                    // The examiner's current name (config/exam.php); the ai_roles table still has the old ones ("VOIC-HRD").
+                                    $examinerName = $session->exam_mode ? config('exam.modes.'.$session->exam_mode.'.examiner.name') : null;
+                                @endphp
+                                @if ($examinerName || $session->aiRole)
+                                    <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600">{{ $examinerName ?? $session->aiRole->name }}</span>
                                 @endif
                             </div>
                             <p class="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500">

@@ -220,9 +220,17 @@ class ExamReportService
     {
         $phrases = [];
         foreach ($coachLines as $line) {
-            preg_match_all('/["“”]([^"“”]{15,220})["“”]/u', (string) $line, $matches);
-            foreach ($matches[1] as $phrase) {
-                $phrases[] = trim($phrase);
+            // “…” and "…" pairs only: a closing quote and the next opening one are not a phrase.
+            preg_match_all('/“([^“”]{15,220})”|"([^"]{15,220})"/u', (string) $line, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+            foreach ($matches as $match) {
+                [$phrase, $offset] = ($match[1][1] ?? -1) >= 0 ? $match[1] : $match[2];
+                $phrase = trim($phrase);
+                // An example sentence, not a word to look at ("hindari kata “saya terlalu perfeksionis”").
+                $before = mb_strtolower(substr((string) $line, max(0, $offset - 40), min(40, $offset)));
+                if (count(preg_split('/\s+/u', $phrase) ?: []) < 5 || preg_match('/(hindari|jangan|bukan|ganti|avoid|instead of|not)\b[^.!?]*$/u', $before)) {
+                    continue;
+                }
+                $phrases[] = $phrase;
             }
         }
 

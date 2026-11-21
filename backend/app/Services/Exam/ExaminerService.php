@@ -1568,6 +1568,9 @@ class ExaminerService
         $text = preg_replace('/,\s*(?=[,.!?]|$)/u', '', $text) ?? $text;
         $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
         $text = preg_replace('/\s+([,.!?])/u', '$1', $text) ?? $text;
+        // Sentences glued together ("ya?Bagus", "Engineer.Oke") would never be counted or cut, and the voice
+        // reads them as one endless turn. "S.Kom" and "3.5" stay: only after a lowercase letter.
+        $text = preg_replace(['/([!?])(?=\p{Lu})/u', '/(?<=\p{Ll})\.(?=\p{Lu}\p{Ll})/u'], ['$1 ', '. '], $text) ?? $text;
         // Only unwrap quotes around the whole reply; quoted example sentences inside must stay intact.
         if (preg_match('/^["“](.*)["”]$/us', $text, $wrapped) && ! preg_match('/["“”]/u', $wrapped[1])) {
             $text = trim($wrapped[1]);
