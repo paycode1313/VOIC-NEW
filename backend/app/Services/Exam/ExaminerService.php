@@ -1880,7 +1880,7 @@ class ExaminerService
         $raw = $this->callCloudModel([
             ['role' => 'system', 'content' => $this->improvePrompt($roleType, $isEn)],
             ['role' => 'user', 'content' => ($isEn ? "Question: {$question}\nOriginal answer: " : "Pertanyaan: {$question}\nJawaban asli: ").$answer],
-        ], timeout: 10, maxTokens: 320, temperature: 0.5);
+        ], timeout: 10, maxTokens: 320, temperature: 0.5, waitForQuota: false);
 
         return $this->tidyImproved((string) $raw);
     }
@@ -1891,9 +1891,9 @@ class ExaminerService
      * managed; the caller rewrites the rest one by one.
      *
      * @param  array<int, array{question: string, answer: string}>  $items
-     * @return array<int, string>
+     * @return array<int, string>|null null when no cloud model answered
      */
-    public function improveManyWithCloud(array $items, string $roleType, string $language): array
+    public function improveManyWithCloud(array $items, string $roleType, string $language): ?array
     {
         $items = array_filter($items, fn ($item) => count(preg_split('/\s+/u', trim((string) $item['answer'])) ?: []) >= 3);
         if ($items === [] || ! $this->cloudConfigured() || self::cloudPaused()) {
@@ -1911,11 +1911,15 @@ class ExaminerService
             ? ' There are several numbered answers below. Rewrite each one separately and reply with JSON only, mapping each number to its rewrite: {"1": "...", "2": "..."}.'
             : ' Di bawah ada beberapa jawaban bernomor. Tulis ulang masing-masing secara terpisah dan balas HANYA dengan JSON yang memetakan nomor ke hasilnya: {"1": "...", "2": "..."}.';
 
-        $raw = (string) $this->callCloudModel([
+        $raw = $this->callCloudModel([
             // The single-answer prompt ends with "reply with the rewritten answer only": here the reply is JSON.
             ['role' => 'system', 'content' => str_replace(['Reply with the rewritten answer only, in English.', 'Balas hanya dengan jawaban hasil tulis ulang, dalam Bahasa Indonesia.'], $isEn ? 'Write in English.' : 'Tulis dalam Bahasa Indonesia.', $this->improvePrompt($roleType, $isEn)).$format],
             ['role' => 'user', 'content' => implode("\n\n", $blocks)],
-        ], timeout: 12, maxTokens: 180 * count($items), temperature: 0.5);
+        ], timeout: 12, maxTokens: 180 * count($items), temperature: 0.5, waitForQuota: false);
+
+        if ($raw === null) {
+            return null; // No cloud answer at all (quota, network): the caller does not try each answer either.
+        }
 
         $json = json_decode(trim(preg_replace('/^```(?:json)?|```$/m', '', $raw) ?? $raw), true);
         $result = [];
@@ -1960,7 +1964,7 @@ class ExaminerService
      *
      * @param  list<array{role: string, content: string}>  $messages
      */
-    protected function callCloudModel(array $messages, int $timeout = 12, int $maxTokens = 140, float $temperature = 0.75): ?string
+    protected function callCloudModel(array $messages, int $timeout = 12, int $maxTokens = 140, float $temperature = 0.75, bool $waitForQuota = true): ?string
     {
         if (self::cloudPaused()) {
             return null;
@@ -1992,7 +1996,8 @@ class ExaminerService
                 // Free tiers limit tokens per minute (Groq: 8000, about three turns). When the quota frees up
                 // within a few seconds, waiting is far quicker than the local model on a laptop CPU.
                 $retryAfter = (float) $response->header('retry-after');
-                if ($response->status() === 429 && $retryAfter > 0 && $retryAfter <= self::CLOUD_RETRY_WAIT) {
+                // Not for extras such as the report's rewrites: finishing a session never waits for the quota.
+                if ($waitForQuota && $response->status() === 429 && $retryAfter > 0 && $retryAfter <= self::CLOUD_RETRY_WAIT) {
                     Sleep::for((int) ceil($retryAfter * 1000))->milliseconds();
                     $response = $send();
                 }

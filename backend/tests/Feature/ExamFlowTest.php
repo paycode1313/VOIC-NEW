@@ -10,6 +10,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -1067,6 +1068,41 @@ class ExamFlowTest extends TestCase
         $improved = array_values(array_filter($session->refresh()->feedback_notes['exam_report']['answers'], fn ($item) => $item['improved_source'] === 'ai'));
         $this->assertNotEmpty($improved);
         $this->assertSame('Waktu magang, API kami lambat sampai lima detik. Saya mencari penyebabnya. Saya memprofil query dan menambah index. Respons turun ke 300 milidetik.', $improved[0]['improved']);
+    }
+
+    public function test_finishing_never_waits_for_the_cloud_quota_to_rewrite_answers(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key', 'services.groq.fallback_model' => '', 'exam.speed_mode' => 'online']);
+        $rewrites = 0;
+        Http::fake(function ($request) use (&$rewrites) {
+            if (! str_contains($request->url(), 'api.groq.com')) {
+                return Http::response([], 503);
+            }
+            if (str_contains((string) ($request->data()['messages'][0]['content'] ?? ''), 'Tulis ulang jawaban lisan peserta')) {
+                $rewrites++;
+
+                // The free per-minute quota is used up by the session that just ended.
+                return Http::response(['error' => ['message' => 'Rate limit reached']], 429, ['retry-after' => '5']);
+            }
+
+            return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => 'Oke, kebayang. Terus gimana hasilnya?']]]]);
+        });
+
+        $session = $this->startExam('wawancara', [1]);
+        for ($i = 0; $i < 8 && $session->refresh()->exam_state['phase'] !== ExamFlowService::PHASE_COMPLETED; $i++) {
+            $this->postJson(route('exam.answer', $session), ['answer' => 'Eee API-nya lambat, saya tambah index jadi lebih cepat.', 'duration_seconds' => 10, 'timestamp_seconds' => $i * 15])->assertOk();
+        }
+
+        Sleep::fake();
+        $this->postJson(route('exam.finish', $session), ['duration_seconds' => 200])->assertOk();
+
+        // One rewrite request, no waiting, no retry per answer: the report falls back to the answer framework.
+        Sleep::assertNeverSlept();
+        $this->assertSame(1, $rewrites);
+        $improved = array_filter($session->refresh()->feedback_notes['exam_report']['answers'], fn ($item) => $item['improved'] !== null);
+        $this->assertNotEmpty($improved);
+        $this->assertSame(['framework'], array_values(array_unique(array_column($improved, 'improved_source'))));
     }
 
     public function test_the_cloud_rewrites_all_weak_answers_in_one_request(): void

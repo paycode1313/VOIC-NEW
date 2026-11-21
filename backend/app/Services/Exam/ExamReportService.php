@@ -463,11 +463,15 @@ class ExamReportService
                 return;
             }
             // All of them in one request; any the model skipped are asked one by one below.
-            $improved += $this->examiner->improveManyWithCloud(
+            $batch = $this->examiner->improveManyWithCloud(
                 array_combine($missing, array_map(fn ($key) => ['question' => (string) $items[$key]['question'], 'answer' => (string) $items[$key]['answer']], $missing)),
                 $roleType,
                 $language,
             );
+            if ($batch === null) {
+                return; // The cloud did not answer at all (quota, network): no point asking again per answer.
+            }
+            $improved += $batch;
             foreach ($targets as $key) {
                 if (isset($improved[$key])) {
                     continue;
