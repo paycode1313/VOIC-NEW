@@ -127,6 +127,7 @@
                     <div>
                         <label for="guest_name" class="block text-sm font-semibold">{{ $isEn ? 'Your name' : 'Nama panggilan' }}</label>
                         <input id="guest_name" @guest name="guest_name" @endguest x-ref="name" x-model="name" type="text" maxlength="100" required autocomplete="given-name"
+                               oninvalid="this.setCustomValidity(@js($isEn ? 'Tell us what to call you.' : 'Isi dulu nama panggilanmu ya.'))" oninput="this.setCustomValidity('')"
                                @keydown.enter.prevent="$refs.campus.focus()" @if ($user) readonly @endif
                                placeholder="{{ $isEn ? 'e.g. Rifai' : 'mis. Rifai' }}"
                                class="mt-2 w-full rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] focus:border-slate-900 focus:ring-slate-900 read-only:opacity-70 dark:border-white/10 dark:bg-white/5">
@@ -135,6 +136,7 @@
                     <div>
                         <label for="campus" class="block text-sm font-semibold">{{ $isEn ? 'Campus / school / institution' : 'Kampus / sekolah / instansi' }}</label>
                         <input id="campus" name="campus" x-ref="campus" x-model="campus" type="text" maxlength="120" required autocomplete="organization"
+                               oninvalid="this.setCustomValidity(@js($isEn ? 'Fill this in, or pick one of the options below.' : 'Isi dulu, atau pilih salah satu di bawah.'))" oninput="this.setCustomValidity('')"
                                @keydown.enter.prevent="next()"
                                placeholder="{{ $isEn ? 'e.g. Universitas Brawijaya' : 'mis. Universitas Brawijaya' }}"
                                class="mt-2 w-full rounded-xl border-black/10 bg-[#f6f6f3] px-4 py-3 text-[15px] focus:border-slate-900 focus:ring-slate-900 dark:border-white/10 dark:bg-white/5">
@@ -258,6 +260,7 @@
 
                 <label class="mt-4 flex items-start gap-3 rounded-2xl border border-black/5 bg-white p-4 text-sm dark:border-white/10 dark:bg-white/[0.03]">
                     <input type="checkbox" name="consent" value="1" required @checked(old('consent'))
+                           oninvalid="this.setCustomValidity(@js($isEn ? 'Please tick this box to start the call.' : 'Centang dulu ya supaya panggilan bisa dimulai.'))" onchange="this.setCustomValidity('')"
                            class="mt-0.5 h-4 w-4 rounded border-black/20 text-slate-900 focus:ring-slate-900">
                     <span class="text-slate-600 dark:text-slate-400">
                         @if (\App\Services\Exam\ExaminerService::isCloudModel(config('exam.ai_model')))
