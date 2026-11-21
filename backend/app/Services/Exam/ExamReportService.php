@@ -5,6 +5,8 @@ namespace App\Services\Exam;
 use App\Models\PracticeSession;
 use App\Models\SessionMessage;
 use App\Services\Study\UserStudy;
+use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -66,7 +68,9 @@ class ExamReportService
         $criteria = $this->aggregateCriteria($items, $language, $eyeContact !== null);
         $overallBand = $items === [] ? 0.0 : $this->analyzer->toBand(array_sum(array_column($criteria, 'band')) / count($criteria));
 
-        $items = $this->attachImprovedAnswers($items, $mode, $language, $state['topic'] ?? null);
+        // The stronger versions are written after the report is shown (completeImprovements(), called from the
+        // report page): waiting for an AI here kept people on "Menyusun rapor" for seconds, up to 30 on a laptop CPU.
+        $items = $this->markPendingImprovements($items, $mode, $language);
 
         $totalWords = array_sum(array_map(fn ($item) => $item['metrics']['word_count'], $items));
         $speakingSeconds = array_sum(array_map(fn ($item) => $item['metrics']['duration_seconds'], $items));
@@ -461,20 +465,83 @@ class ExamReportService
     }
 
     /**
-     * Ask the local model to rewrite the weakest answers; fall back to a framework template.
+     * The three weakest answers get a stronger version. For now they show the answer framework and wait
+     * ("pending") for completeImprovements() to write the real one.
      *
      * @param  list<array<string, mixed>>  $items
      * @return list<array<string, mixed>>
      */
-    protected function attachImprovedAnswers(array $items, string $mode, string $language, ?string $topic): array
+    protected function markPendingImprovements(array $items, string $mode, string $language): array
     {
-        if ($items === []) {
-            return $items;
-        }
-
         $order = array_keys($items);
         usort($order, fn ($a, $b) => $items[$a]['band'] <=> $items[$b]['band']);
-        $targets = array_slice($order, 0, 3);
+
+        foreach (array_slice($order, 0, 3) as $key) {
+            $items[$key]['improved'] = $this->frameworkTemplate($mode, $items[$key]['part'], $language);
+            $items[$key]['improved_source'] = 'pending';
+        }
+
+        return $items;
+    }
+
+    /**
+     * Write the stronger versions the report is still waiting for, save them and return the report's answers.
+     * One request at a time per session: a second one (another tab) waits for the first and reads its result.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function completeImprovements(PracticeSession $session): array
+    {
+        $lock = Cache::lock('voic:improve:'.$session->id, 90);
+
+        try {
+            $lock->block(60);
+        } catch (LockTimeoutException) {
+            return $session->refresh()->feedback_notes['exam_report']['answers'] ?? [];
+        }
+
+        try {
+            $session->refresh();
+            $notes = $session->feedback_notes ?? [];
+            $report = $notes['exam_report'] ?? null;
+            if (! is_array($report)) {
+                return [];
+            }
+
+            $pending = array_keys(array_filter($report['answers'], fn ($item) => ($item['improved_source'] ?? null) === 'pending'));
+            if ($pending === []) {
+                return $report['answers'];
+            }
+
+            $improved = $this->rewriteAnswers($report['answers'], $pending, (string) $session->exam_mode, (string) ($report['language'] ?? 'id'), $session->exam_state['topic'] ?? null);
+            foreach ($pending as $key) {
+                if (isset($improved[$key])) {
+                    $report['answers'][$key]['improved'] = $improved[$key];
+                }
+                $report['answers'][$key]['improved_source'] = isset($improved[$key]) ? 'ai' : 'framework';
+            }
+
+            $notes['exam_report'] = $report;
+            $session->forceFill(['feedback_notes' => $notes])->save();
+
+            return $report['answers'];
+        } finally {
+            $lock->release();
+        }
+    }
+
+    /**
+     * Stronger versions of the given answers: the cloud and/or the local model, whichever is set up first.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @param  list<int>  $targets
+     * @return array<int, string>
+     */
+    protected function rewriteAnswers(array $items, array $targets, string $mode, string $language, ?string $topic): array
+    {
+        if ($targets === []) {
+            return [];
+        }
 
         $improved = [];
         $roleType = $this->blueprint->mode($mode)['role_type'];
@@ -545,17 +612,7 @@ class ExamReportService
             $fromCloud();
         }
 
-        foreach ($targets as $key) {
-            if (isset($improved[$key])) {
-                $items[$key]['improved'] = $improved[$key];
-                $items[$key]['improved_source'] = 'ai';
-            } else {
-                $items[$key]['improved'] = $this->frameworkTemplate($mode, $items[$key]['part'], $language);
-                $items[$key]['improved_source'] = 'framework';
-            }
-        }
-
-        return $items;
+        return $improved;
     }
 
     /**

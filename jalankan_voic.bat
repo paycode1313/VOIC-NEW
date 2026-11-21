@@ -195,6 +195,25 @@ if not errorlevel 1 (
     echo   [OK] Web sudah berjalan di port 8000
     goto WEB_DONE
 )
+rem OPcache: tanpa ini PHP mengompilasi ulang ratusan file Laravel di setiap request (sekitar 1 detik per
+rem request di laptop Windows, termasuk tiap giliran menjawab dan "Selesai"); dengan ini sekitar 0,1 detik.
+rem php.ini tidak diubah: file tambahan ini dimuat bersama konfigurasi bawaan (awalan ";" = folder bawaan tetap dipakai).
+php -r "exit(extension_loaded('Zend OPcache') ? 0 : (is_file(ini_get('extension_dir') . '/php_opcache.dll') ? 2 : 1));"
+set "OPC=%errorlevel%"
+if "%OPC%"=="1" goto OPCACHE_DONE
+if not exist storage\app\php-ini mkdir storage\app\php-ini
+(
+    if "%OPC%"=="2" echo zend_extension=opcache
+    echo opcache.enable=1
+    echo opcache.enable_cli=1
+    echo opcache.memory_consumption=128
+    echo opcache.max_accelerated_files=20000
+    echo opcache.validate_timestamps=1
+    echo opcache.revalidate_freq=2
+) > storage\app\php-ini\zz-voic-opcache.ini
+set "PHP_INI_SCAN_DIR=;%CD%\storage\app\php-ini"
+echo   [OK] OPcache aktif (halaman jauh lebih cepat)
+:OPCACHE_DONE
 rem 0.0.0.0 agar HP pengunjung di Wi-Fi yang sama bisa membuka QR rapor
 start "VOIC_LARAVEL" /min cmd /k "php artisan serve --host=0.0.0.0 --port=8000"
 set /a WAIT=0

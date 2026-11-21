@@ -242,7 +242,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-slate-500">
                                     <span>{{ $isEn ? 'Part' : 'Bagian' }} {{ $item['part'] }}{{ $item['kind'] === 'long_turn' ? ($isEn ? ' · Long turn' : ' · Cue card') : '' }}</span>
-                                    @if (($item['improved_source'] ?? null) === 'ai')
+                                    @if (in_array($item['improved_source'] ?? null, ['ai', 'pending'], true))
                                         <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-600/15">
                                             <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zm7 12l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg>
                                             {{ $isEn ? 'Stronger version inside' : 'Ada versi lebih kuat' }}
@@ -292,26 +292,7 @@
                             @endif
 
                             @if ($item['improved'])
-                                <div class="rounded-2xl border border-emerald-500/20 bg-emerald-50 p-4 dark:bg-emerald-500/10"
-                                     x-data="{ playing: false, canSpeak: 'speechSynthesis' in window }" @pagehide.window="window.speechSynthesis?.cancel()">
-                                    <div class="flex items-center justify-between gap-3">
-                                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                                            {{ $item['improved_source'] === 'ai' ? ($isEn ? 'A stronger version' : 'Versi jawaban yang lebih kuat') : ($isEn ? 'Suggested answer framework' : 'Kerangka jawaban yang disarankan') }}
-                                        </p>
-                                        @if ($item['improved_source'] === 'ai')
-                                            {{-- Hear how it sounds: this is a speaking practice, the better answer should be heard, not only read. --}}
-                                            <button type="button" x-show="canSpeak" x-cloak data-no-press
-                                                    @click="if (playing) { window.speechSynthesis.cancel(); playing = false } else { playing = window.voicSpeak(@js($item['improved']), @js($language), () => playing = false) }"
-                                                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-sm ring-1 ring-emerald-600/20 transition hover:bg-emerald-100 print:hidden"
-                                                    :aria-pressed="playing.toString()">
-                                                <svg x-show="!playing" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"/></svg>
-                                                <span x-show="playing" x-cloak class="voic-wave text-[11px]" aria-hidden="true"><i></i><i></i><i></i></span>
-                                                <span x-text="playing ? @js($isEn ? 'Stop' : 'Berhenti') : @js($isEn ? 'Listen' : 'Dengarkan')"></span>
-                                            </button>
-                                        @endif
-                                    </div>
-                                    <p class="mt-1.5 leading-relaxed text-emerald-950 dark:text-emerald-100">{{ $item['improved'] }}</p>
-                                </div>
+                                @include('exam.partials.improved', ['answerKey' => $answerKey, 'loadable' => ! $shared])
                             @endif
                             {{-- Practise this one question again, with the coach: same name, campus and consent as this session. --}}
                             @if (! $shared && $item['question'] !== '')
@@ -338,6 +319,18 @@
                 @empty
                     <p class="rounded-3xl border border-dashed border-black/10 p-8 text-center text-slate-500 dark:border-white/15">{{ $isEn ? 'No answers were recorded in this session.' : 'Belum ada jawaban yang terekam di sesi ini.' }}</p>
                 @endforelse
+                @if (! $shared && collect($report['answers'])->contains(fn ($item) => ($item['improved_source'] ?? null) === 'pending'))
+                    {{-- The report is on screen at once; the AI's stronger versions arrive here a few seconds later. --}}
+                    <div hidden x-data x-init="
+                        fetch(@js(route('exam.improvements', $session)), { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, Accept: 'application/json' } })
+                            .then((response) => response.ok ? response.json() : Promise.reject(response.status))
+                            .then((data) => Object.entries(data.html || {}).forEach(([key, html]) => {
+                                const block = document.querySelector(`[data-improved-key='${key}']`);
+                                if (block) block.outerHTML = html;
+                            }))
+                            .catch(() => document.querySelectorAll('[data-improved-spinner]').forEach((spinner) => spinner.remove()))
+                    "></div>
+                @endif
             </div>
         </section>
 

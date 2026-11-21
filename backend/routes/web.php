@@ -34,6 +34,7 @@ Route::prefix('latihan')->name('exam.')->controller(ExamController::class)->grou
     Route::get('/sesi/{practiceSession}/reaksi', 'backchannels')->middleware('throttle:30,1')->name('backchannels');
     Route::post('/sesi/{practiceSession}/selesai', 'finish')->name('finish');
     Route::get('/sesi/{practiceSession}/hasil', 'result')->name('result');
+    Route::post('/sesi/{practiceSession}/versi-kuat', 'improvements')->middleware('throttle:20,1')->name('improvements');
     Route::get('/hasil/{practiceSession}', 'shared')->middleware(['signed:relative', 'throttle:60,1'])->name('shared');
     Route::delete('/sesi/{practiceSession}', 'destroy')->name('destroy');
     Route::get('/sesi/{practiceSession}/rekaman/{message}', 'recording')->scopeBindings()->name('recording');

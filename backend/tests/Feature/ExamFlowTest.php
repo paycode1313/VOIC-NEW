@@ -1033,6 +1033,8 @@ class ExamFlowTest extends TestCase
             ])->assertOk();
         }
         $this->postJson(route('exam.finish', $session), ['duration_seconds' => 300])->assertOk();
+        // The report page asks for the stronger versions once it is on screen.
+        $this->postJson(route('exam.improvements', $session))->assertOk();
 
         $improved = array_values(array_filter($session->refresh()->feedback_notes['exam_report']['answers'], fn ($item) => $item['improved'] !== null));
         $this->assertNotEmpty($improved);
@@ -1064,10 +1066,65 @@ class ExamFlowTest extends TestCase
             $this->postJson(route('exam.answer', $session), ['answer' => 'Eee API-nya lambat, saya tambah index.', 'duration_seconds' => 10, 'timestamp_seconds' => $i * 15])->assertOk();
         }
         $this->postJson(route('exam.finish', $session), ['duration_seconds' => 200])->assertOk();
+        // The report page asks for the stronger versions once it is on screen.
+        $this->postJson(route('exam.improvements', $session))->assertOk();
 
         $improved = array_values(array_filter($session->refresh()->feedback_notes['exam_report']['answers'], fn ($item) => $item['improved_source'] === 'ai'));
         $this->assertNotEmpty($improved);
         $this->assertSame('Waktu magang, API kami lambat sampai lima detik. Saya mencari penyebabnya. Saya memprofil query dan menambah index. Respons turun ke 300 milidetik.', $improved[0]['improved']);
+    }
+
+    public function test_the_report_appears_without_waiting_for_the_ai_and_the_stronger_versions_follow(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key', 'exam.speed_mode' => 'online']);
+        $rewrites = 0;
+        Http::fake(function ($request) use (&$rewrites) {
+            if (! str_contains($request->url(), 'api.groq.com')) {
+                return Http::response([], 503);
+            }
+            if (str_contains((string) ($request->data()['messages'][0]['content'] ?? ''), 'Tulis ulang jawaban lisan peserta')) {
+                $rewrites++;
+                preg_match_all('/^\[(\d+)\]/m', (string) $request->data()['messages'][1]['content'], $numbers);
+
+                return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => json_encode(collect($numbers[1])->mapWithKeys(fn ($n) => [$n => "Versi kuat {$n}: saya memprofil query, menambah index, dan respons turun ke 300 milidetik."])->all())]]]]);
+            }
+
+            return Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => 'Oke, kebayang. Terus gimana hasilnya?']]]]);
+        });
+
+        $user = User::factory()->create();
+        $this->actingAs($user);
+        $session = $this->startExam('wawancara', [1]);
+        for ($i = 0; $i < 8 && $session->refresh()->exam_state['phase'] !== ExamFlowService::PHASE_COMPLETED; $i++) {
+            $this->postJson(route('exam.answer', $session), ['answer' => 'Eee API-nya lambat, saya tambah index jadi lebih cepat.', 'duration_seconds' => 10, 'timestamp_seconds' => $i * 15])->assertOk();
+        }
+
+        // "Selesai": no AI rewrite on the way to the report.
+        $this->postJson(route('exam.finish', $session), ['duration_seconds' => 200])->assertOk();
+        $this->assertSame(0, $rewrites);
+        $answers = $session->refresh()->feedback_notes['exam_report']['answers'];
+        $this->assertContains('pending', array_column($answers, 'improved_source'));
+        $this->get(route('exam.result', $session))->assertOk()
+            ->assertSee('Lagi nulis versi yang lebih kuat')
+            ->assertSee('versi-kuat', false);
+
+        // Someone else cannot trigger it.
+        $this->actingAs(User::factory()->create());
+        $this->postJson(route('exam.improvements', $session))->assertForbidden();
+
+        // The report page asks for them: one request for all, rendered blocks back, saved for next time.
+        $this->actingAs($user);
+        $html = $this->postJson(route('exam.improvements', $session))->assertOk()->json('html');
+        $this->assertSame(1, $rewrites);
+        $this->assertStringContainsString('Versi kuat', implode('', $html));
+        $this->assertStringNotContainsString('Lagi nulis', implode('', $html));
+        $this->assertNotContains('pending', array_column($session->refresh()->feedback_notes['exam_report']['answers'], 'improved_source'));
+
+        // Opening the report again: no new AI request, no spinner.
+        $this->postJson(route('exam.improvements', $session))->assertOk();
+        $this->assertSame(1, $rewrites);
+        $this->get(route('exam.result', $session))->assertOk()->assertDontSee('Lagi nulis versi yang lebih kuat');
     }
 
     public function test_finishing_never_waits_for_the_cloud_quota_to_rewrite_answers(): void
@@ -1096,6 +1153,8 @@ class ExamFlowTest extends TestCase
 
         Sleep::fake();
         $this->postJson(route('exam.finish', $session), ['duration_seconds' => 200])->assertOk();
+        // The report page asks for the stronger versions once it is on screen.
+        $this->postJson(route('exam.improvements', $session))->assertOk();
 
         // One rewrite request, no waiting, no retry per answer: the report falls back to the answer framework.
         Sleep::assertNeverSlept();
@@ -1134,6 +1193,8 @@ class ExamFlowTest extends TestCase
             ])->assertOk();
         }
         $this->postJson(route('exam.finish', $session), ['duration_seconds' => 300])->assertOk();
+        // The report page asks for the stronger versions once it is on screen.
+        $this->postJson(route('exam.improvements', $session))->assertOk();
 
         $improved = array_values(array_filter($session->refresh()->feedback_notes['exam_report']['answers'], fn ($item) => $item['improved'] !== null));
         $this->assertGreaterThanOrEqual(2, count($improved));

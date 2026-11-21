@@ -414,6 +414,26 @@ class ExamController extends Controller
     }
 
     /**
+     * The stronger versions of the weakest answers, written after the report is already on screen (see
+     * ExamReportService::completeImprovements()). Returns the rendered blocks by answer index.
+     */
+    public function improvements(PracticeSession $practiceSession, ExamReportService $reports): JsonResponse
+    {
+        abort_unless($practiceSession->isExam() && $practiceSession->hasReport(), 404);
+        Gate::authorize('view', $practiceSession);
+
+        $language = $practiceSession->feedback_notes['exam_report']['language'] ?? 'id';
+        $html = [];
+        foreach ($reports->completeImprovements($practiceSession) as $key => $item) {
+            if (! empty($item['improved'])) {
+                $html[$key] = view('exam.partials.improved', ['item' => $item, 'answerKey' => $key, 'language' => $language, 'isEn' => $language === 'en', 'loadable' => false])->render();
+            }
+        }
+
+        return response()->json(['html' => $html]);
+    }
+
+    /**
      * Read-only report opened from the QR code on a phone (signed link, no login needed).
      */
     public function shared(PracticeSession $practiceSession): View
