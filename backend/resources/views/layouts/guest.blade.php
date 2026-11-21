@@ -43,7 +43,7 @@
                                     <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-navy-950"></span>
                                 </div>
                                 <div>
-                                    <p class="text-sm font-bold text-white">Rania Putri · Lead HR Recruiter</p>
+                                    <p class="text-sm font-bold text-white">VOIC-INTERVIEW · HR Recruiter</p>
                                     <p class="text-xs text-sky-300">Wawancara Kerja · Bagian 3 (Follow-up)</p>
                                 </div>
                             </div>

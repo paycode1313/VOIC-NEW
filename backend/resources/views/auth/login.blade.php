@@ -124,7 +124,7 @@
         {{-- Divider --}}
         <div class="relative my-5 flex items-center justify-center">
             <div class="w-full border-t border-slate-200/80"></div>
-            <span class="bg-white px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">atau akses cepat</span>
+            <span class="shrink-0 whitespace-nowrap bg-white px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">atau akses cepat</span>
             <div class="w-full border-t border-slate-200/80"></div>
         </div>
 
