@@ -74,6 +74,11 @@ class ConversationSignalsTest extends TestCase
         $this->assertSame('competitors', $this->signals()->gap($this->turn($investor + ['answer' => 'Produk kami unik dan sampai sekarang belum ada pesaing di Indonesia.']))[0]);
         $this->assertSame('no_number', $this->signals()->gap($this->turn($investor + ['answer' => 'Pertumbuhan pengguna kami pesat sekali sejak peluncuran bulan lalu.']))[0]);
         $this->assertSame('broad_market', $this->signals()->gap($this->turn($investor + ['answer' => 'Target pasar kami semua umkm, ada 64 juta usaha.']))[0]);
+
+        // The use of funds in spoken words ("buat ekspansi", "nambah tim") is an answer, not a gap. Seen live.
+        $this->assertNotSame('funds', $this->signals()->gap($this->turn($investor + ['answer' => 'Kami butuh dana 2 miliar buat ekspansi ke lima kota dan nambah tim sales lapangan.']))[0] ?? null);
+        $this->assertNotSame('funds', $this->signals()->gap($this->turn($investor + ['answer' => 'Modalnya 500 juta, bakal dipake buat rekrut dua engineer.']))[0] ?? null);
+        $this->assertSame('funds', $this->signals()->gap($this->turn($investor + ['answer' => 'Kami butuh dana 2 miliar buat 10 persen saham.']))[0]);
     }
 
     public function test_thesis_examiner_asks_for_a_comparison_a_reason_and_the_sample(): void

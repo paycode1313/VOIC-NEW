@@ -337,7 +337,8 @@ class ConversationSignals
         }
 
         // "untuk 10 persen saham" is the deal, not the use of the money: only real spending words count.
-        $spending = '/\b(dipakai|digunakan|dialokasikan|alokasi\w*|untuk (?:biaya|membangun|membuka|merekrut|rekrut|ekspansi|pemasaran|marketing|operasional|pengembangan|gudang|tim|produk|riset|hiring)|use of funds|to (?:hire|build|expand|grow|fund)|spend\w*|allocat\w*)\b/u';
+        // Spoken forms too: "buat ekspansi", "nambah tim", "dipake buat rekrut".
+        $spending = '/\b(dipakai|dipake|digunakan|dialokasikan|alokasi\w*|(?:untuk|buat|bakal|mau) (?:biaya|bangun|membangun|buka|membuka|merekrut|rekrut|nambah|menambah|ekspansi|pemasaran|marketing|iklan|operasional|pengembangan|gudang|tim|produk|riset|hiring|gaji|server)|nambah tim|menambah tim|use of funds|to (?:hire|build|expand|grow|fund)|spend\w*|allocat\w*)\b/u';
         // "Kami butuh 500 juta untuk 10 persen saham" is a funding ask even without the word "dana".
         if (preg_match('/\b(pendanaan|investasi|dana|modal|saham|funding|raise|raising|equity|stake)\b/u', $text) && $hasNumbers && ! preg_match($spending, $text)) {
             return ['funds', $isEn ? 'the use of funds is not explained' : 'penggunaan dana belum dijelaskan'];
