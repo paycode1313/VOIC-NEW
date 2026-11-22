@@ -9,7 +9,7 @@ cd frontend && npm install && npm run build   # ada perubahan tampilan & JS (fon
 cd ../backend && composer install && php artisan migrate
 ```
 
-Tidak ada migration baru dan tidak ada setting `.env` baru. Mode online (Groq) tetap memakai `GROQ_API_KEY` yang sama.
+Tidak ada migration baru. Setting `.env` baru (opsional): `CEREBRAS_API_KEY`, lihat bagian AI lokal. Mode online (Groq) tetap memakai `GROQ_API_KEY` yang sama.
 
 ## Struktur folder (penting)
 
@@ -55,6 +55,9 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
   sekitar 23 token/detik): giliran pertama turun dari 90 detik (gagal) menjadi 43 detik, giliran berikutnya 15-19 detik,
   dan balasannya **nyambung** dengan jawaban peserta (sebelumnya salah tangkap dan mengulang instruksinya sendiri).
   AI cloud tetap memakai prompt lengkap. Setel `VOIC_LOCAL_PROMPT=full` untuk laptop dengan GPU.
+- **Cadangan cloud gratis: Cerebras.** Isi `CEREBRAS_API_KEY` di `.env` (gratis di cloud.cerebras.ai, tanpa kartu kredit).
+  Saat kuota gratis Groq habis, penguji pindah ke Cerebras sebelum turun ke AI lokal. Modelnya sama (gpt-oss-120b),
+  jadi gaya bicara penguji tidak berubah. Urutan: Groq → Cerebras → OpenAI (jika ada kunci) → AI lokal → offline.
 - AI lokal tetap jauh lebih lambat dari Groq, jadi untuk booth sebaiknya tetap mode online dengan AI lokal hanya sebagai cadangan.
 
 ## Rapor
@@ -111,5 +114,5 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 
 ## Tes
 
-`php artisan test` (222 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
+`php artisan test` (224 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.

@@ -66,6 +66,14 @@ return [
         'model' => env('ELEVENLABS_MODEL', 'eleven_flash_v2_5'),
     ],
 
+    // Free backup when Groq's quota runs out (cloud.cerebras.ai, about 1M tokens a day). gpt-oss-120b is the
+    // same model as Groq's first choice, so the examiner keeps the same voice; chat only (no speech-to-text).
+    'cerebras' => [
+        'key' => env('CEREBRAS_API_KEY'),
+        'model' => env('CEREBRAS_MODEL', 'gpt-oss-120b'),
+        'url' => env('CEREBRAS_URL', 'https://api.cerebras.ai/v1/chat/completions'),
+    ],
+
     'openai' => [
         'key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),

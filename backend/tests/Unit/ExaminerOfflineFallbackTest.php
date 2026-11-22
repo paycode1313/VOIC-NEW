@@ -66,6 +66,29 @@ class ExaminerOfflineFallbackTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_cerebras_answers_with_the_same_model_when_groq_quota_is_used_up(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key', 'services.groq.fallback_model' => '', 'services.cerebras.key' => 'cb-key', 'services.openai.key' => '']);
+        Http::fake([
+            'api.groq.com/*' => Http::response(['error' => ['message' => 'Rate limit reached']], 429),
+            'api.cerebras.ai/*' => Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => 'Oke. Gimana kamu ngukurnya?']]]]),
+        ]);
+
+        $this->assertSame('Oke. Gimana kamu ngukurnya?', $this->callCloud(app(ExaminerService::class)));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.cerebras.ai')
+            && $request['model'] === 'gpt-oss-120b'
+            && $request['reasoning_effort'] === 'low'
+            && $request->hasHeader('Authorization', 'Bearer cb-key'));
+    }
+
+    public function test_a_cerebras_key_alone_turns_on_the_cloud_examiner(): void
+    {
+        config(['services.groq.key' => '', 'services.openai.key' => '', 'services.cerebras.key' => 'cb-key']);
+
+        $this->assertTrue(app(ExaminerService::class)->cloudConfigured());
+    }
+
     public function test_a_short_echo_question_does_not_swallow_the_real_question(): void
     {
         $examiner = app(ExaminerService::class);

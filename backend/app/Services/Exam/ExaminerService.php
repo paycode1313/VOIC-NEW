@@ -731,10 +731,15 @@ class ExaminerService
             if ($this->cloudConfigured()) {
                 if (! OpenRouterClient::handles($chosen)) {
                     $status['engine'] = 'cloud_llm';
-                    $status['model'] = (string) Config::get((string) Config::get('services.groq.key', '') !== '' ? 'services.groq.model' : 'services.openai.model');
+                    $status['model'] = (string) Config::get(match (true) {
+                        (string) Config::get('services.groq.key', '') !== '' => 'services.groq.model',
+                        (string) Config::get('services.cerebras.key', '') !== '' => 'services.cerebras.model',
+                        default => 'services.openai.model',
+                    });
                 }
                 $status['prefer_browser_stt'] = true;
-                $status['stt_cloud'] = true;
+                // Cerebras only chats: speech-to-text in the cloud needs Groq or OpenAI.
+                $status['stt_cloud'] = (string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '';
             } else {
                 $status['reason'] = 'VOIC_SPEED_MODE=online tetapi belum ada kunci AI cloud, jadi tetap memakai AI lokal.';
                 $status['fix'] = 'Buat API key gratis di console.groq.com/keys, isi GROQ_API_KEY di .env, lalu php artisan config:clear';
@@ -1945,11 +1950,13 @@ class ExaminerService
     }
 
     /**
-     * Whether a cloud key (Groq or OpenAI) is configured.
+     * Whether a cloud key (Groq, Cerebras or OpenAI) is configured.
      */
     public function cloudConfigured(): bool
     {
-        return (string) Config::get('services.groq.key', '') !== '' || (string) Config::get('services.openai.key', '') !== '';
+        return (string) Config::get('services.groq.key', '') !== ''
+            || (string) Config::get('services.cerebras.key', '') !== ''
+            || (string) Config::get('services.openai.key', '') !== '';
     }
 
     /**
@@ -2125,7 +2132,7 @@ class ExaminerService
     }
 
     /**
-     * Call Groq or OpenAI when keys are configured.
+     * Call Groq, then Cerebras, then OpenAI, whichever keys are configured.
      *
      * @param  list<array{role: string, content: string}>  $messages
      */
@@ -2140,6 +2147,8 @@ class ExaminerService
             $groq + ['model' => (string) Config::get('services.groq.model', 'openai/gpt-oss-120b')],
             // Each Groq model has its own free quota: a second model answers when the first is busy.
             $groq + ['model' => (string) Config::get('services.groq.fallback_model', '')],
+            // Free backup with its own quota (Cerebras), then the paid OpenAI key if there is one.
+            ['key' => (string) Config::get('services.cerebras.key', ''), 'url' => (string) Config::get('services.cerebras.url', 'https://api.cerebras.ai/v1/chat/completions'), 'model' => (string) Config::get('services.cerebras.model', 'gpt-oss-120b')],
             ['key' => (string) Config::get('services.openai.key', ''), 'url' => 'https://api.openai.com/v1/chat/completions', 'model' => (string) Config::get('services.openai.model', 'gpt-4o-mini')],
         ];
 
@@ -2149,7 +2158,7 @@ class ExaminerService
             }
 
             $body = ['model' => $provider['model'], 'messages' => $messages, 'temperature' => $temperature, 'max_tokens' => $maxTokens];
-            if (str_starts_with($provider['model'], 'openai/gpt-oss')) {
+            if (str_contains($provider['model'], 'gpt-oss')) {
                 // A reasoning model thinks before it answers; the thinking shares max_tokens with the reply,
                 // so with 140 the reply comes back empty. Low effort keeps it under a second on Groq.
                 $body = ['reasoning_effort' => 'low', 'max_tokens' => $maxTokens + 560] + $body;
