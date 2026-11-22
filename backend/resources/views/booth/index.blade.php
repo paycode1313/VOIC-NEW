@@ -1,6 +1,6 @@
 @php
     $engineLabel = ['local_llm' => 'AI lokal aktif', 'ollama_cloud' => ($status['model'] ?? 'Model').' (cloud) aktif', 'openrouter' => ($status['model'] ?? 'Model').' (OpenRouter) aktif', 'cloud_llm' => 'AI cloud aktif', 'offline_composer' => 'AI offline · mode cadangan'][$status['engine']] ?? $status['engine'];
-    $healthy = in_array($status['engine'], ['local_llm', 'ollama_cloud', 'openrouter'], true);
+    $healthy = in_array($status['engine'], ['local_llm', 'ollama_cloud', 'openrouter', 'cloud_llm'], true);
 @endphp
 
 <x-exam-layout title="Operator Booth">
@@ -37,6 +37,39 @@
                 @if ($status['reason'])
                     <p class="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-400/10 dark:text-amber-200">{{ $status['reason'] }}<br><span class="font-mono">{{ $status['fix'] }}</span></p>
                 @endif
+
+                {{-- What really happened in the last 15 minutes (refreshes every 15 s) --}}
+                <div x-data="{ h: null, async load() { try { const r = await fetch(@js(route('booth.health')), { headers: { Accept: 'application/json' } }); if (r.ok) this.h = await r.json() } catch (e) {} },
+                              pct(n) { return this.h && this.h.turns.total ? Math.round(100 * n / this.h.turns.total) : 0 } }"
+                     x-init="load(); setInterval(() => load(), 15000)" class="mt-4 border-t border-black/5 pt-4 dark:border-white/10" data-ai-health>
+                    <div class="flex items-center justify-between gap-2">
+                        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">15 menit terakhir</p>
+                        <span x-show="h" x-cloak class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
+                              :class="{ green: 'bg-emerald-100 text-emerald-800', amber: 'bg-amber-100 text-amber-800', red: 'bg-rose-100 text-rose-800' }[h?.level]">
+                            <span class="h-2 w-2 rounded-full" :class="{ green: 'bg-emerald-500', amber: 'bg-amber-500', red: 'bg-rose-500 animate-pulse' }[h?.level]"></span>
+                            <span x-text="{ green: 'Lancar', amber: 'Perlu dipantau', red: 'Banyak cadangan' }[h?.level]"></span>
+                        </span>
+                    </div>
+                    <template x-if="h && h.turns.total === 0">
+                        <p class="mt-2 text-sm text-slate-500">Belum ada giliran penguji.</p>
+                    </template>
+                    <template x-if="h && h.turns.total > 0">
+                        <div>
+                            <div class="mt-3 flex h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-white/10" role="img" :aria-label="`Cloud ${pct(h.turns.cloud)} persen, AI lokal ${pct(h.turns.local)} persen, cadangan ${pct(h.turns.composer)} persen`">
+                                <span class="bg-emerald-500" :style="`width:${pct(h.turns.cloud)}%`"></span>
+                                <span class="bg-sky-500" :style="`width:${pct(h.turns.local)}%`"></span>
+                                <span class="bg-amber-400" :style="`width:${pct(h.turns.composer)}%`"></span>
+                            </div>
+                            <ul class="mt-2 grid grid-cols-3 gap-2 text-xs">
+                                <li><span class="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-500"></span>Cloud <b x-text="h.turns.cloud"></b></li>
+                                <li><span class="mr-1 inline-block h-2 w-2 rounded-full bg-sky-500"></span>AI lokal <b x-text="h.turns.local"></b></li>
+                                <li><span class="mr-1 inline-block h-2 w-2 rounded-full bg-amber-400"></span>Cadangan <b x-text="h.turns.composer"></b></li>
+                            </ul>
+                        </div>
+                    </template>
+                    <p x-show="h" x-cloak class="mt-2 text-xs text-slate-500">Kuota cloud penuh: <b x-text="h?.quota_full ?? 0"></b>x dalam 10 menit</p>
+                    <p x-show="h?.advice" x-cloak x-text="h?.advice" class="mt-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-400/10 dark:text-amber-200"></p>
+                </div>
             </div>
         </div>
 

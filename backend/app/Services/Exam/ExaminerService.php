@@ -2266,6 +2266,9 @@ class ExaminerService
             try {
                 $send = fn () => Http::connectTimeout(3)->timeout($timeout)->withToken($provider['key'])->post($provider['url'], $body);
                 $response = $send();
+                if ($response->status() === 429) {
+                    self::noteQuotaFull();
+                }
                 // Free tiers limit tokens per minute (Groq: 8000, about three turns). When the quota frees up
                 // within a few seconds, waiting is far quicker than the local model on a laptop CPU.
                 $retryAfter = (float) $response->header('retry-after');
@@ -2317,6 +2320,27 @@ class ExaminerService
         }
 
         return null;
+    }
+
+    /**
+     * Count a "quota full" answer (HTTP 429) from a cloud model.
+     */
+    public static function noteQuotaFull(): void
+    {
+        // One counter per minute, so the booth screen can show the last ten minutes.
+        $key = 'voic.cloud.quota_full.'.intdiv(time(), 60);
+        Cache::add($key, 0, 900);
+        Cache::increment($key);
+    }
+
+    /**
+     * How often a cloud model said "quota full" (HTTP 429) in the last $minutes minutes, for the booth operator.
+     */
+    public static function quotaFullCount(int $minutes = 10): int
+    {
+        $now = intdiv(time(), 60);
+
+        return array_sum(array_map(fn ($minute) => (int) Cache::get('voic.cloud.quota_full.'.$minute, 0), range($now - $minutes + 1, $now)));
     }
 
     /**

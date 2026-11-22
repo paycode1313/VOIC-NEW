@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\PracticeSession;
+use App\Models\SessionMessage;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExaminerService;
 use Illuminate\Contracts\View\View;
@@ -82,6 +83,55 @@ class BoothController extends Controller
     public function status(ExaminerService $examiner): JsonResponse
     {
         return response()->json($examiner->connectivity());
+    }
+
+    /**
+     * Who actually answered the visitors in the last 15 minutes (cloud, the laptop's model, or the offline
+     * composer) and how often the free cloud quota was full: settings say what should happen, this says what did.
+     * Operator only; counts, no visitor data.
+     */
+    public function health(Request $request, ExaminerService $examiner): JsonResponse
+    {
+        abort_unless($this->unlocked($request), 403);
+
+        $groups = ['cloud_llm' => 'cloud', 'openrouter' => 'cloud', 'ollama_cloud' => 'cloud', 'local_llm' => 'local', 'offline_composer' => 'composer'];
+        $counts = ['cloud' => 0, 'local' => 0, 'composer' => 0];
+        SessionMessage::query()
+            ->where('sender', 'ai')
+            ->where('created_at', '>=', now()->subMinutes(15))
+            ->get(['meta'])
+            ->each(function (SessionMessage $message) use ($groups, &$counts) {
+                $group = $groups[$message->meta['engine'] ?? ''] ?? null;
+                if ($group !== null) {
+                    $counts[$group]++;
+                }
+            });
+
+        $total = array_sum($counts);
+        $quotaFull = ExaminerService::quotaFullCount(10);
+        $connectivity = $examiner->connectivity();
+        $composerShare = $total > 0 ? $counts['composer'] / $total : 0;
+
+        // Red: visitors mostly get the fallback. Amber: it happens now and then, or the quota is getting tight.
+        $level = match (true) {
+            $total >= 4 && $composerShare > 0.5, ! $connectivity['internet'] && $counts['local'] === 0 && $total > 0 => 'red',
+            $composerShare >= 0.2 || $counts['local'] > 0 || $quotaFull >= 5 => 'amber',
+            default => 'green',
+        };
+
+        return response()->json([
+            'level' => $level,
+            'turns' => $counts + ['total' => $total],
+            'quota_full' => $quotaFull,
+            'internet' => $connectivity['internet'],
+            'advice' => match (true) {
+                ! $connectivity['internet'] => 'Internet putus: penguji memakai AI lokal (lambat) atau jawaban cadangan. Cek Wi-Fi atau pakai hotspot HP.',
+                $level === 'red' && $quotaFull > 0 => 'Kuota AI cloud gratis penuh: sebagian besar giliran dijawab cadangan. Beri jeda antar pengunjung beberapa menit.',
+                $quotaFull >= 5 => 'Kuota cloud mulai penuh ('.$quotaFull.'x dalam 10 menit). Masih tertangani model cadangan, tapi jangan tambah pengunjung bersamaan.',
+                $counts['local'] > 0 => 'Sebagian giliran dijawab AI lokal (lebih lambat). Biasanya karena cloud sempat tidak bisa dihubungi.',
+                default => null,
+            },
+        ]);
     }
 
     /**

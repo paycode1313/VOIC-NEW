@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\PracticeSession;
+use App\Services\Exam\ExaminerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -143,5 +145,35 @@ class BoothTest extends TestCase
     public function test_next_visitor_requires_the_operator(): void
     {
         $this->post(route('booth.next'))->assertForbidden();
+    }
+
+    public function test_the_operator_sees_who_answered_the_visitors_lately(): void
+    {
+        Cache::flush();
+        $this->get(route('booth.health'))->assertForbidden();
+
+        $session = PracticeSession::create(['user_id' => null, 'scenario_type' => 'Wawancara Kerja', 'exam_mode' => 'wawancara']);
+        foreach (['cloud_llm', 'cloud_llm', 'cloud_llm', 'offline_composer', null] as $engine) {
+            $session->messages()->create(['sender' => 'ai', 'message' => 'Halo', 'meta' => array_filter(['engine' => $engine])]);
+        }
+        // An hour ago: not part of the picture any more.
+        $session->messages()->create(['sender' => 'ai', 'message' => 'Lama', 'meta' => ['engine' => 'offline_composer']])
+            ->forceFill(['created_at' => now()->subHour()])->save();
+        ExaminerService::noteQuotaFull();
+        ExaminerService::noteQuotaFull();
+
+        $this->withSession(['booth_unlocked' => true])->getJson(route('booth.health'))->assertOk()
+            ->assertJsonPath('turns', ['cloud' => 3, 'local' => 0, 'composer' => 1, 'total' => 4])
+            ->assertJsonPath('quota_full', 2)
+            ->assertJsonPath('level', 'amber');
+
+        // Mostly the fallback while the quota is full: red, with advice for the operator.
+        foreach (range(1, 4) as $i) {
+            $session->messages()->create(['sender' => 'ai', 'message' => 'Halo', 'meta' => ['engine' => 'offline_composer']]);
+        }
+        Cache::put('voic.connectivity', ['internet' => true, 'cloud_ai' => true, 'online_voice' => true, 'ai_service' => true], 60);
+        $this->withSession(['booth_unlocked' => true])->getJson(route('booth.health'))
+            ->assertJsonPath('level', 'red')
+            ->assertJsonPath('advice', fn ($advice) => str_contains((string) $advice, 'Kuota AI cloud gratis penuh'));
     }
 }

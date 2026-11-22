@@ -127,6 +127,11 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
   dan pertanyaan yang direncanakan yang ditanyakan.
 - Reaksi bertanda tanya yang agak panjang ("Wah, API pelacakan pakai Laravel?") tidak lagi memotong pertanyaan aslinya.
 
+- **Kartu "15 menit terakhir" di halaman operator `/booth`** (diperbarui tiap 15 detik): siapa yang sebenarnya menjawab
+  pengunjung (cloud, AI lokal, atau jawaban cadangan), berapa kali kuota cloud gratis penuh dalam 10 menit, lampu
+  hijau/kuning/merah, dan saran untuk operator ("Kuota AI cloud gratis penuh… beri jeda antar pengunjung beberapa menit").
+  Status "AI cloud aktif" kini hijau (sebelumnya kuning seperti peringatan).
+
 ## Tampilan
 
 - **HP:**
@@ -146,5 +151,5 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 
 ## Tes
 
-`php artisan test` (231 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
+`php artisan test` (232 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.

@@ -54,6 +54,7 @@ Route::prefix('booth')->name('booth.')->controller(BoothController::class)->grou
     Route::get('/', 'index')->name('index');
     Route::post('/masuk', 'unlock')->middleware('throttle:10,1')->name('unlock');
     Route::get('/papan', 'board')->name('board');
+    Route::get('/kesehatan-ai', 'health')->name('health');
     Route::post('/berikutnya', 'nextVisitor')->name('next');
     Route::post('/kunci', 'lock')->name('lock');
 });
