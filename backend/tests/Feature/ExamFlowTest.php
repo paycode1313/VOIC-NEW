@@ -823,7 +823,7 @@ class ExamFlowTest extends TestCase
             ->assertJsonPath('examiner_message.text', 'Empat puluh toko itu lumayan. Datanya kamu jaga konsisten gimana?');
 
         Http::assertSent(fn ($request) => ($request['model'] ?? null) === 'openai/gpt-oss-120b'
-            && $request['reasoning_effort'] === 'low' && $request['max_tokens'] === 700);
+            && $request['reasoning_effort'] === 'low' && $request['max_tokens'] === 380);
         Http::assertSent(fn ($request) => ($request['model'] ?? null) === 'qwen/qwen3.8-27b'
             && ! isset($request['reasoning_effort']) && $request['max_tokens'] === 140);
     }

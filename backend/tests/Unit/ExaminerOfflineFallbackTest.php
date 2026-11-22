@@ -81,6 +81,31 @@ class ExaminerOfflineFallbackTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_an_unusable_cloud_reply_goes_to_the_composer_not_the_slow_local_model(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key', 'exam.speed_mode' => 'online']);
+        // Seen live: asked for a pure reaction before the part announcement, the model asked a question instead.
+        Http::fake([
+            'api.groq.com/*' => Http::response(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => 'Timeboxing, ya? Bisa kasih contoh konkret?']]]]),
+            '*' => Http::response([], 503),
+        ]);
+        $turn = [
+            'mode' => 'wawancara', 'role_type' => 'hrd', 'examiner_name' => 'VOIC Interview', 'language' => 'id', 'topic' => null,
+            'context_material' => null, 'session_type' => null, 'coach_title' => 'Coach', 'coach_skills' => '',
+            'answer' => 'Sekarang saya pakai timeboxing biar tetap sesuai deadline.', 'directive' => ExaminerService::DIRECTIVE_REACT,
+            'planned_question' => null, 'transition' => 'Bagian 2, Cerita Pengalaman', 'part' => 1, 'part_title' => 'Perkenalan',
+            'history' => [], 'question' => 'Apa kelemahanmu?', 'scripted' => 'Oke, sekarang kita masuk Bagian 2, Cerita Pengalaman.',
+            'candidate' => ['name' => 'Rina', 'campus' => null, 'status' => null], 'session_id' => 1, 'turn' => 3, 'visual' => null,
+        ];
+
+        $result = app(ExaminerService::class)->respond($turn);
+
+        $this->assertSame('offline_composer', $result['engine']);
+        $this->assertStringContainsString('Bagian 2, Cerita Pengalaman', $result['text']);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/exam/respond'));
+    }
+
     public function test_cerebras_answers_with_the_same_model_when_groq_quota_is_used_up(): void
     {
         Cache::flush();

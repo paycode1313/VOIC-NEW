@@ -114,6 +114,19 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - **Satu gangguan Wi-Fi tidak lagi memindahkan semua pengunjung ke AI lokal.** Sebelumnya satu koneksi gagal menghentikan
   cloud 30 detik untuk semua orang. Sekarang langsung dicoba lagi, dan cloud baru dihentikan setelah dua kegagalan berturut-turut.
 
+- **Kuota cloud lebih awet (sekitar 22% lebih hemat per giliran).** Diukur langsung di Groq: setiap giliran dulu
+  "memesan" sekitar 2.900-3.250 token dari kuota per menit, sekarang 2.200-2.760.
+  - Jatah berpikir model gpt-oss diturunkan dari 560 ke 240 token (yang terpakai cuma 8-62). Groq menghitung jatah yang
+    *dipesan*, bukan yang terpakai.
+  - Prompt cloud hanya menjelaskan tag yang dipakai di giliran itu. AI lokal tetap memakai prompt yang sama di setiap
+    giliran (supaya cache-nya tetap berguna).
+- **Balasan cloud yang tidak cocok tidak lagi menunggu AI lokal.** Contoh nyata: diminta reaksi singkat sebelum pengumuman
+  Bagian 2, model malah bertanya. Dulu giliran itu dilempar ke AI lokal (27-35 detik); sekarang composer offline langsung
+  menjawab (sekitar 3 detik). AI lokal tetap jadi cadangan saat cloud benar-benar tidak bisa dihubungi.
+- **Penguji tidak menjawab pertanyaannya sendiri** ("Kalau temen setim telat, biasanya aku cek dulu…"): kalimat itu dibuang
+  dan pertanyaan yang direncanakan yang ditanyakan.
+- Reaksi bertanda tanya yang agak panjang ("Wah, API pelacakan pakai Laravel?") tidak lagi memotong pertanyaan aslinya.
+
 ## Tampilan
 
 - **HP:**
@@ -133,5 +146,5 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 
 ## Tes
 
-`php artisan test` (227 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
+`php artisan test` (231 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.

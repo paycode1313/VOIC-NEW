@@ -185,6 +185,60 @@ class ExaminerSpeakingStyleTest extends TestCase
         );
     }
 
+    public function test_the_examiner_does_not_answer_its_own_next_question(): void
+    {
+        $examiner = app(ExaminerService::class);
+        $planned = 'Kalau ada temen setim yang bagiannya telat terus, kamu bakal ngapain?';
+        $next = ['directive' => ExaminerService::DIRECTIVE_NEXT, 'language' => 'id', 'transition' => 'Bagian 3, Diskusi Mendalam',
+            'planned_question' => $planned, 'scripted' => 'Sekarang kita lanjut ke Bagian 3, Diskusi Mendalam. '.$planned];
+
+        // Seen live (gpt-oss): the examiner answered the question itself, then asked about something else.
+        $this->assertSame(
+            'Oke, target lima tahunmu jelas. Sekarang kita lanjut ke Bagian 3, Diskusi Mendalam. '.$planned,
+            $examiner->resolveModelReply('Oke, target lima tahunmu jelas. Kalau temen setim telat, biasanya aku cek dulu apa hambatannya, terus bantu atur prioritas. Sekarang masuk Bagian 3, Diskusi Mendalam. Gimana cara kamu cari jalan tengah itu?', $next)['text'],
+        );
+        // An ordinary reaction in the first person stays the model's own turn.
+        $this->assertSame(
+            'Oke, aku catat soal mentoring. Sekarang kita lanjut ke Bagian 3, Diskusi Mendalam. Kalau ada temen setim yang sering telat, kamu bakal gimana?',
+            $examiner->resolveModelReply('Oke, aku catat soal mentoring. Sekarang kita lanjut ke Bagian 3, Diskusi Mendalam. Kalau ada temen setim yang sering telat, kamu bakal gimana?', $next)['text'],
+        );
+    }
+
+    public function test_a_longer_echo_before_the_real_question_does_not_end_the_turn(): void
+    {
+        $examiner = app(ExaminerService::class);
+        $method = new \ReflectionMethod($examiner, 'upToFirstQuestion');
+
+        // Seen live: the turn ended on "Wah, API pelacakan pakai Laravel?" and the real question was cut.
+        $this->assertSame(
+            'Wah, API pelacakan pakai Laravel? Keren. Bulan pertama mau belajar apa dulu?',
+            $method->invoke($examiner, 'Wah, API pelacakan pakai Laravel? Keren. Bulan pertama mau belajar apa dulu? Aku penasaran.'),
+        );
+        // A short yes/no question with nothing after it is the question.
+        $this->assertSame('Kamu yang pimpin timnya?', $method->invoke($examiner, 'Kamu yang pimpin timnya?'));
+    }
+
+    public function test_the_cloud_prompt_explains_only_the_tags_of_this_turn(): void
+    {
+        $examiner = app(ExaminerService::class);
+        $turn = $this->turn('hrd', 'VOIC Interview') + [
+            'answer' => 'Saya magang enam bulan sebagai backend developer.', 'directive' => ExaminerService::DIRECTIVE_NEXT,
+            'planned_question' => 'Apa kelebihanmu?', 'transition' => '', 'part' => 1, 'part_title' => 'Perkenalan', 'skip_link' => true,
+            'history' => [], 'question' => 'Boleh kenalan dulu?', 'scripted' => 'Apa kelebihanmu?', 'candidate' => ['name' => 'Rina', 'campus' => null, 'status' => null],
+            'session_id' => 1, 'turn' => 1, 'visual' => null,
+        ];
+
+        $cloud = $examiner->buildMessages(['cloud' => true] + $turn)[0]['content'];
+        $this->assertStringContainsString('[LANJUT: "topik"]', $cloud);
+        $this->assertStringNotContainsString('[GALI]', $cloud);
+        $this->assertStringNotContainsString('TEGANG', $cloud);
+        // The model on this laptop keeps the same system prompt on every turn (its prompt cache).
+        $local = $examiner->buildMessages($turn)[0]['content'];
+        $this->assertStringContainsString('[GALI]', $local);
+        $this->assertStringContainsString('TEGANG', $local);
+        $this->assertLessThan(mb_strlen($local) - 800, mb_strlen($cloud));
+    }
+
     public function test_the_local_model_gets_a_compact_prompt_and_the_cloud_the_full_one(): void
     {
         Cache::flush();

@@ -291,7 +291,9 @@ class ExaminerService
      */
     public function respond(array $turn, ?callable $onSentence = null): array
     {
-        $messages = $this->buildMessages($turn);
+        // Cloud models (Groq, OpenRouter) have no prompt cache to keep stable: their system prompt explains only the
+        // tags of this turn, which saves part of the free per-minute token quota.
+        $messages = $this->buildMessages(['cloud' => true] + $turn);
         // The local model gets the compact prompt (see compactPrompt()); built only when the local model is asked.
         $localMessages = null;
         $forLocal = function () use (&$localMessages, $turn): array {
@@ -317,8 +319,18 @@ class ExaminerService
         // (no internet, quota), the local chain below takes over as if nothing happened.
         if ($this->onlineFirst()) {
             $cloud = $this->callCloudModel($messages, timeout: 8);
-            if ($cloud !== null && ($resolved = $this->resolveModelReply($cloud, $turn)) !== null) {
+            $resolved = $cloud !== null ? $this->resolveModelReply($cloud, $turn) : null;
+            $result = null;
+            if ($resolved !== null) {
                 $result = $resolved + ['audio_url' => null, 'engine' => 'cloud_llm'];
+            } elseif ($cloud !== null) {
+                // The cloud is up, this one reply just does not fit the turn (seen live: a question in a pure
+                // reaction before the part announcement, "Timeboxing, ya? Bisa kasih contoh...?"). The composer
+                // answers at once; the local model would take 15-60 s on a laptop without a GPU.
+                Log::info('Cloud examiner reply unusable for '.$turn['directive'].', composer answers: '.Str::limit($cloud, 200));
+                $result = $this->offlineTurn($turn) + ['audio_url' => null, 'engine' => 'offline_composer'];
+            }
+            if ($result !== null) {
                 if ($onSentence !== null) {
                     // Voice sentence by sentence, so the first words are heard while the rest is still being synthesized.
                     foreach ($this->sentences($result['text']) as $sentence) {
@@ -985,7 +997,7 @@ class ExaminerService
         }
         $lines[] = implode("\n", array_map(fn ($rule, $i) => ($i + 1).'. '.$rule, $rules, array_keys($rules)));
         $lines[] = $this->playbook((string) $turn['role_type'], $isEn);
-        $lines[] = $this->instructionLegend($isEn, coach: false);
+        $lines[] = $this->instructionLegend($isEn, coach: false, only: $this->legendTags($turn));
 
         return implode("\n", $lines);
     }
@@ -1068,7 +1080,7 @@ class ExaminerService
             $lines[] = ($isEn ? 'Background from the person: ' : 'Latar dari peserta: ').$context;
         }
         $lines[] = implode("\n", array_map(fn ($rule, $i) => ($i + 1).'. '.$rule, $rules, array_keys($rules)));
-        $lines[] = $this->instructionLegend($isEn, coach: true);
+        $lines[] = $this->instructionLegend($isEn, coach: true, only: $this->legendTags($turn));
 
         return implode("\n", $lines);
     }
@@ -1158,45 +1170,93 @@ class ExaminerService
      * which is what keeps the examiner fast on a laptop CPU (the long instructions used to cost
      * 3-9 seconds of reading on every single turn).
      */
-    protected function instructionLegend(bool $isEn, bool $coach): string
+    protected function instructionLegend(bool $isEn, bool $coach, ?array $only = null): string
     {
-        if ($coach) {
-            return $isEn
-                ? "Each message from the person ends with a tag in square brackets that tells you what to do this turn (never read it aloud):\n"
-                    ."[COACH] at most 4 spoken sentences: react to what they said, teach one concrete improvement (with a better example sentence in quotes if useful), then keep the conversation going.\n"
-                    ."[COACH | ONE MINUTE LEFT] the same, but start summarising the most important tip and ask for one last short try.\n"
-                    ."[CLOSE] time is up: close warmly in at most 3 sentences (one thing they already do well, the one habit to keep practising, an encouraging goodbye). Do not ask a question.\n"
-                    .'Extra tag NO PRAISE = you praised them last turn: this time no compliment, go straight to the tip.
-'
-                    .'Extra tag TENSE = they looked tense on camera: start with one short, kind sentence that helps them relax. Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'
-                : "Setiap pesan peserta diakhiri tag dalam kurung siku yang memberi tahu tugasmu di giliran ini (jangan pernah dibacakan):\n"
-                    ."[LATIH] maksimal 4 kalimat lisan: tanggapi yang dia katakan, ajarkan satu perbaikan konkret (dengan contoh kalimat yang lebih baik dalam tanda kutip jika berguna), lalu jaga obrolan tetap berlanjut.\n"
-                    ."[LATIH | SISA SATU MENIT] sama, tetapi mulai rangkum tips paling penting dan minta satu percobaan singkat terakhir.\n"
-                    ."[TUTUP] waktu habis: tutup dengan hangat maksimal 3 kalimat (satu hal yang sudah bagus, satu kebiasaan yang perlu terus dilatih, salam penyemangat). Jangan bertanya.\n"
-                    .'Tag tambahan TANPA PUJIAN = giliran lalu kamu sudah memuji: kali ini tanpa pujian, langsung ke tipsnya.
-'
-                    .'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya. Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.';
+        // [tags it explains, text]. With $only (the cloud: no prompt cache to keep stable) just the tags of this
+        // turn are explained: the other lines cost about 300 tokens of the free per-minute quota on every turn.
+        $entries = $coach
+            ? ($isEn
+                ? [
+                    [['COACH'], '[COACH] at most 4 spoken sentences: react to what they said, teach one concrete improvement (with a better example sentence in quotes if useful), then keep the conversation going.'],
+                    [['ONE MINUTE LEFT'], '[COACH | ONE MINUTE LEFT] the same, but start summarising the most important tip and ask for one last short try.'],
+                    [['CLOSE'], '[CLOSE] time is up: close warmly in at most 3 sentences (one thing they already do well, the one habit to keep practising, an encouraging goodbye). Do not ask a question.'],
+                    [['NO PRAISE'], 'Extra tag NO PRAISE = you praised them last turn: this time no compliment, go straight to the tip.'],
+                    [['TENSE', 'LOOKING AWAY'], 'Extra tag TENSE = they looked tense on camera: start with one short, kind sentence that helps them relax. Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'],
+                ]
+                : [
+                    [['LATIH'], '[LATIH] maksimal 4 kalimat lisan: tanggapi yang dia katakan, ajarkan satu perbaikan konkret (dengan contoh kalimat yang lebih baik dalam tanda kutip jika berguna), lalu jaga obrolan tetap berlanjut.'],
+                    [['SISA SATU MENIT'], '[LATIH | SISA SATU MENIT] sama, tetapi mulai rangkum tips paling penting dan minta satu percobaan singkat terakhir.'],
+                    [['TUTUP'], '[TUTUP] waktu habis: tutup dengan hangat maksimal 3 kalimat (satu hal yang sudah bagus, satu kebiasaan yang perlu terus dilatih, salam penyemangat). Jangan bertanya.'],
+                    [['TANPA PUJIAN'], 'Tag tambahan TANPA PUJIAN = giliran lalu kamu sudah memuji: kali ini tanpa pujian, langsung ke tipsnya.'],
+                    [['TEGANG', 'TIDAK MENATAP'], 'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya. Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.'],
+                ])
+            : ($isEn
+                ? [
+                    [['REACT'], '[REACT] ONE short sentence reacting specifically to the answer. Do not ask any question, an announcement follows.'],
+                    [['PROBE'], '[PROBE] at most 2 sentences: a short specific reaction, then exactly ONE follow-up question that digs deeper into the answer (why, how, an example, or a number).'],
+                    [['NEXT'], '[NEXT: "topic"] at most 3 sentences: react specifically to the answer, then move on naturally and ask about the topic in quotes in your own words, linking it to what they said if it fits. With "ANNOUNCE: ..." also mention that we are now moving to that part.'],
+                    [['CLARIFY'], '[CLARIFY] the candidate did not understand or asked something back: in at most 2 sentences, explain your question more simply (maybe with a small example), then ask it again in different words. If they asked about something else (the role, the company, your view), answer that briefly first, then return to your question.'],
+                    [['FOCUS'], 'Extra tag FOCUS: ... = what an experienced examiner noticed is missing or doubtful in the answer: make your question dig into exactly that, in your own words, without mentioning the tag (for "check consistency", ask politely which of the two is right).'],
+                    [['LINK'], 'Extra tag LINK: ... = something the candidate said earlier in this session that fits the next topic: refer back to it naturally when you raise the topic ("Earlier you mentioned ...").'],
+                    [['NO PRAISE'], 'Extra tag NO PRAISE = you praised them last turn: this time no compliment at all (no "great", "nice", "solid"), react with curiosity, a light joke or go straight to the question.'],
+                    [['TENSE', 'LOOKING AWAY'], 'Extra tag TENSE = the candidate looked tense on camera: start with one short, kind sentence that helps them relax (for example, suggest a breath). Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'],
+                ]
+                : [
+                    [['TANGGAPI'], '[TANGGAPI] SATU kalimat pendek yang menanggapi jawaban secara spesifik. Jangan bertanya apa pun, setelah ini ada pengumuman.'],
+                    [['GALI'], '[GALI] maksimal 2 kalimat: tanggapan singkat yang spesifik, lalu tepat SATU pertanyaan lanjutan yang menggali jawaban itu lebih dalam (kenapa, bagaimana, contoh, atau angka).'],
+                    [['LANJUT'], '[LANJUT: "topik"] maksimal 3 kalimat: tanggapi jawaban secara spesifik, lalu beralih dengan luwes dan tanyakan topik dalam tanda kutip dengan kata-katamu sendiri, kaitkan dengan jawaban peserta bila cocok. Jika ada "UMUMKAN: ...", sebutkan juga bahwa kita sekarang masuk ke bagian itu.'],
+                    [['JELASKAN'], '[JELASKAN] peserta belum paham atau balik bertanya: dalam maksimal 2 kalimat, jelaskan maksud pertanyaanmu dengan lebih sederhana (boleh dengan contoh kecil), lalu tanyakan lagi dengan kata-kata berbeda. Kalau yang dia tanyakan hal lain (posisi, perusahaan, pendapatmu), jawab singkat dulu, lalu kembali ke pertanyaanmu.'],
+                    [['FOKUS'], 'Tag tambahan FOKUS: ... = hal yang menurut penguji berpengalaman masih kurang atau meragukan dari jawaban itu: arahkan pertanyaanmu tepat ke situ dengan kata-katamu sendiri, tanpa menyebut tagnya (untuk "cek konsistensi", tanyakan dengan sopan mana yang benar).'],
+                    [['KAITKAN'], 'Tag tambahan KAITKAN: ... = hal yang pernah dikatakan peserta di sesi ini dan cocok dengan topik berikutnya: rujuk kembali secara alami saat membuka topik itu ("Tadi kamu sempat menyebut ...").'],
+                    [['TANPA PUJIAN'], 'Tag tambahan TANPA PUJIAN = giliran lalu kamu sudah memuji: kali ini jangan memuji sama sekali (tanpa "keren", "mantap", "bagus"), tanggapi dengan rasa penasaran, humor ringan, atau langsung bertanya.'],
+                    [['TEGANG', 'TIDAK MENATAP'], 'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya (misalnya mengajak tarik napas). Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.'],
+                ]);
+
+        $header = $coach
+            ? ($isEn
+                ? 'Each message from the person ends with a tag in square brackets that tells you what to do this turn (never read it aloud):'
+                : 'Setiap pesan peserta diakhiri tag dalam kurung siku yang memberi tahu tugasmu di giliran ini (jangan pernah dibacakan):')
+            : ($isEn
+                ? 'Each candidate message ends with a tag in square brackets: the current part of the exam and what to do this turn (never read it aloud):'
+                : 'Setiap pesan peserta diakhiri tag dalam kurung siku: bagian ujian saat ini dan tugasmu di giliran ini (jangan pernah dibacakan):');
+
+        $lines = [$header];
+        foreach ($entries as [$tags, $text]) {
+            if ($only === null || array_intersect($tags, $only) !== []) {
+                $lines[] = $text;
+            }
         }
 
-        return $isEn
-            ? "Each candidate message ends with a tag in square brackets: the current part of the exam and what to do this turn (never read it aloud):\n"
-                ."[REACT] ONE short sentence reacting specifically to the answer. Do not ask any question, an announcement follows.\n"
-                ."[PROBE] at most 2 sentences: a short specific reaction, then exactly ONE follow-up question that digs deeper into the answer (why, how, an example, or a number).\n"
-                ."[NEXT: \"topic\"] at most 3 sentences: react specifically to the answer, then move on naturally and ask about the topic in quotes in your own words, linking it to what they said if it fits. With \"ANNOUNCE: ...\" also mention that we are now moving to that part.\n"
-                ."[CLARIFY] the candidate did not understand or asked something back: in at most 2 sentences, explain your question more simply (maybe with a small example), then ask it again in different words. If they asked about something else (the role, the company, your view), answer that briefly first, then return to your question.\n"
-                ."Extra tag FOCUS: ... = what an experienced examiner noticed is missing or doubtful in the answer: make your question dig into exactly that, in your own words, without mentioning the tag (for \"check consistency\", ask politely which of the two is right).\n"
-                ."Extra tag LINK: ... = something the candidate said earlier in this session that fits the next topic: refer back to it naturally when you raise the topic (\"Earlier you mentioned ...\").\n"
-                ."Extra tag NO PRAISE = you praised them last turn: this time no compliment at all (no \"great\", \"nice\", \"solid\"), react with curiosity, a light joke or go straight to the question.\n"
-                .'Extra tag TENSE = the candidate looked tense on camera: start with one short, kind sentence that helps them relax (for example, suggest a breath). Extra tag LOOKING AWAY = they often looked away from the camera: briefly and kindly remind them to keep eye contact.'
-            : "Setiap pesan peserta diakhiri tag dalam kurung siku: bagian ujian saat ini dan tugasmu di giliran ini (jangan pernah dibacakan):\n"
-                ."[TANGGAPI] SATU kalimat pendek yang menanggapi jawaban secara spesifik. Jangan bertanya apa pun, setelah ini ada pengumuman.\n"
-                ."[GALI] maksimal 2 kalimat: tanggapan singkat yang spesifik, lalu tepat SATU pertanyaan lanjutan yang menggali jawaban itu lebih dalam (kenapa, bagaimana, contoh, atau angka).\n"
-                ."[LANJUT: \"topik\"] maksimal 3 kalimat: tanggapi jawaban secara spesifik, lalu beralih dengan luwes dan tanyakan topik dalam tanda kutip dengan kata-katamu sendiri, kaitkan dengan jawaban peserta bila cocok. Jika ada \"UMUMKAN: ...\", sebutkan juga bahwa kita sekarang masuk ke bagian itu.\n"
-                ."[JELASKAN] peserta belum paham atau balik bertanya: dalam maksimal 2 kalimat, jelaskan maksud pertanyaanmu dengan lebih sederhana (boleh dengan contoh kecil), lalu tanyakan lagi dengan kata-kata berbeda. Kalau yang dia tanyakan hal lain (posisi, perusahaan, pendapatmu), jawab singkat dulu, lalu kembali ke pertanyaanmu.\n"
-                ."Tag tambahan FOKUS: ... = hal yang menurut penguji berpengalaman masih kurang atau meragukan dari jawaban itu: arahkan pertanyaanmu tepat ke situ dengan kata-katamu sendiri, tanpa menyebut tagnya (untuk \"cek konsistensi\", tanyakan dengan sopan mana yang benar).\n"
-                ."Tag tambahan KAITKAN: ... = hal yang pernah dikatakan peserta di sesi ini dan cocok dengan topik berikutnya: rujuk kembali secara alami saat membuka topik itu (\"Tadi kamu sempat menyebut ...\").\n"
-                ."Tag tambahan TANPA PUJIAN = giliran lalu kamu sudah memuji: kali ini jangan memuji sama sekali (tanpa \"keren\", \"mantap\", \"bagus\"), tanggapi dengan rasa penasaran, humor ringan, atau langsung bertanya.\n"
-                .'Tag tambahan TEGANG = peserta terlihat tegang di kamera: awali dengan satu kalimat singkat yang ramah untuk menenangkannya (misalnya mengajak tarik napas). Tag tambahan TIDAK MENATAP = peserta sering tidak menatap kamera: ingatkan singkat dan sopan agar menjaga kontak mata.';
+        return implode("\n", $lines);
+    }
+
+    /**
+     * The tags to explain in the system prompt: all of them (null) for a model on this laptop, whose prompt cache
+     * needs the same system prompt on every turn; only this turn's tags for the cloud.
+     *
+     * @param  array<string, mixed>  $turn
+     * @return list<string>|null
+     */
+    protected function legendTags(array $turn): ?array
+    {
+        return empty($turn['cloud']) ? null : self::turnTags($this->turnInstruction($turn));
+    }
+
+    /**
+     * The tag names of one turn instruction, e.g. ['Bagian 1 - Perkenalan', 'LANJUT', 'TANPA PUJIAN'] from its last
+     * line '[Bagian 1 - Perkenalan | LANJUT: "..." | TANPA PUJIAN]'. Only the tag line: the answer above it may
+     * contain any word ("latih", "fokus").
+     *
+     * @return list<string>
+     */
+    protected static function turnTags(string $instruction): array
+    {
+        $line = trim(Str::afterLast($instruction, "\n"));
+        if (! str_starts_with($line, '[') || ! str_ends_with($line, ']')) {
+            return [];
+        }
+
+        return array_map(fn ($tag) => trim(explode(':', $tag, 2)[0]), explode(' | ', mb_substr($line, 1, -1)));
     }
 
     /**
@@ -1420,6 +1480,16 @@ class ExaminerService
                 return ['text' => $reply, 'reply' => $reply];
 
             case self::DIRECTIVE_NEXT:
+                // The examiner answered the next question itself ("Kalau temen setim telat, biasanya aku cek dulu
+                // hambatannya..."), then asked something else: drop that, and ask the planned question.
+                $planned = trim((string) ($turn['planned_question'] ?? ''));
+                $sentences = preg_split('/(?<=[.!?])\s+/u', $reply) ?: [];
+                $own = array_filter($sentences, fn ($sentence) => $this->answersOwnQuestion($sentence, $planned));
+                if ($own !== [] && $scripted !== '') {
+                    $reaction = $this->stripQuestions(implode(' ', array_diff_key($sentences, $own)));
+
+                    return ['text' => $this->joinReaction($reaction, $scripted), 'reply' => $reaction];
+                }
                 if (str_contains($reply, '?')) {
                     $reply = $this->ensureTransition($this->upToFirstQuestion($reply), $turn);
 
@@ -1436,6 +1506,25 @@ class ExaminerService
 
                 return $reaction === '' ? null : ['text' => $this->joinReaction($reaction, $scripted), 'reply' => $reaction];
         }
+    }
+
+    /**
+     * A statement in which the examiner speaks for itself (aku/saya, I) about the very topic it is about to ask:
+     * at least two content words of the planned question, outside a question.
+     */
+    protected function answersOwnQuestion(string $sentence, string $planned): bool
+    {
+        if ($planned === '' || str_ends_with(trim($sentence), '?')
+            || ! preg_match('/(?<![\p{L}])(aku|saya|I|I\'m|I\'d|my)(?![\p{L}])/u', $sentence)) {
+            return false;
+        }
+
+        $words = fn (string $text): array => array_unique(array_filter(
+            preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($text)) ?: [],
+            fn ($word) => mb_strlen($word) >= 4 && ! in_array($word, ['kalau', 'yang', 'kamu', 'bakal', 'ngapain', 'gimana', 'bagaimana', 'terus', 'biasanya', 'pernah', 'menurut', 'menurutmu', 'what', 'would', 'your', 'with', 'about', 'that', 'there', 'when', 'have'], true),
+        ));
+
+        return count(array_intersect($words($sentence), $words($planned))) >= 2;
     }
 
     /**
@@ -1491,12 +1580,12 @@ class ExaminerService
      * "Serius?", "Dua kali lipat?". Short questions with a question word ("Kenapa?", "Terus gimana?") do ask.
      * Same rule as is_echo_reaction() in ai_service/exam_engine.py.
      */
-    public static function isEchoReaction(string $sentence): bool
+    public static function isEchoReaction(string $sentence, int $maxWords = 3): bool
     {
         $sentence = trim($sentence);
         $words = preg_split('/\s+/u', $sentence) ?: [];
 
-        return str_ends_with($sentence, '?') && count($words) <= 3
+        return str_ends_with($sentence, '?') && count($words) <= $maxWords
             && ! preg_match('/(?<![\p{L}])(apa|apakah|kenapa|mengapa|gimana|bagaimana|siapa|kapan|berapa|mana|kok|masa|why|how|what|which|who|when|where)(?![\p{L}])/iu', $sentence);
     }
 
@@ -1514,7 +1603,10 @@ class ExaminerService
                 continue;
             }
             $firstQuestion ??= $i;
-            if (! self::isEchoReaction($sentence)) {
+            // With a question after it, a longer echo is a reaction too: "Wah, API pelacakan pakai Laravel?" followed
+            // by the real question used to end the turn on the echo.
+            $later = array_filter(array_slice($sentences, $i + 1), fn ($next) => str_ends_with($next, '?'));
+            if (! self::isEchoReaction($sentence, $later !== [] ? 6 : 3)) {
                 return implode(' ', array_slice($sentences, 0, $i + 1));
             }
         }
@@ -2165,7 +2257,10 @@ class ExaminerService
             if (str_contains($provider['model'], 'gpt-oss')) {
                 // A reasoning model thinks before it answers; the thinking shares max_tokens with the reply,
                 // so with 140 the reply comes back empty. Low effort keeps it under a second on Groq.
-                $body = ['reasoning_effort' => 'low', 'max_tokens' => $maxTokens + 560] + $body;
+                // Measured: 24-62 thinking tokens per turn. Groq counts the max_tokens asked for (not the ones used)
+                // against the free per-minute quota, so 560 spare tokens cost about a fifth of every turn's quota.
+                // A rare longer thought is caught below (finish_reason "length": next model).
+                $body = ['reasoning_effort' => 'low', 'max_tokens' => $maxTokens + 240] + $body;
             }
 
             try {
