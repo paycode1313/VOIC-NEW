@@ -55,7 +55,11 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
   sekitar 23 token/detik): giliran pertama turun dari 90 detik (gagal) menjadi 43 detik, giliran berikutnya 15-19 detik,
   dan balasannya **nyambung** dengan jawaban peserta (sebelumnya salah tangkap dan mengulang instruksinya sendiri).
   AI cloud tetap memakai prompt lengkap. Setel `VOIC_LOCAL_PROMPT=full` untuk laptop dengan GPU.
-- **Cadangan cloud gratis: Cerebras.** Isi `CEREBRAS_API_KEY` di `.env` (gratis di cloud.cerebras.ai, tanpa kartu kredit).
+- **Model Groq ketiga (gratis, kunci yang sama):** `openai/gpt-oss-20b`. Kuota gratis Groq dibatasi 8.000 token per menit
+  **per model** (sekitar 3 giliran penguji), jadi saat booth ramai model pertama cepat penuh. Urutannya sekarang
+  gpt-oss-120b → qwen3.8-27b → gpt-oss-20b, sehingga kapasitas per menit naik sekitar 50% tanpa biaya. Diuji dengan
+  3 sesi wawancara beruntun: semua giliran tetap dijawab cloud dalam 2-4 detik. Ubah lewat `GROQ_THIRD_MODEL` (kosongkan untuk mematikan).
+- **Cadangan cloud gratis: Cerebras.** Isi `CEREBRAS_API_KEY` di `.env` (cloud.cerebras.ai; saat ini minta top up $5 dulu, jadi opsional).
   Saat kuota gratis Groq habis, penguji pindah ke Cerebras sebelum turun ke AI lokal. Modelnya sama (gpt-oss-120b),
   jadi gaya bicara penguji tidak berubah. Urutan: Groq → Cerebras → OpenAI (jika ada kunci) → AI lokal → offline.
 - AI lokal tetap jauh lebih lambat dari Groq, jadi untuk booth sebaiknya tetap mode online dengan AI lokal hanya sebagai cadangan.

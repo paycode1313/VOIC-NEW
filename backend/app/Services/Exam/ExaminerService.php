@@ -2147,6 +2147,7 @@ class ExaminerService
             $groq + ['model' => (string) Config::get('services.groq.model', 'openai/gpt-oss-120b')],
             // Each Groq model has its own free quota: a second model answers when the first is busy.
             $groq + ['model' => (string) Config::get('services.groq.fallback_model', '')],
+            $groq + ['model' => (string) Config::get('services.groq.third_model', '')],
             // Free backup with its own quota (Cerebras), then the paid OpenAI key if there is one.
             ['key' => (string) Config::get('services.cerebras.key', ''), 'url' => (string) Config::get('services.cerebras.url', 'https://api.cerebras.ai/v1/chat/completions'), 'model' => (string) Config::get('services.cerebras.model', 'gpt-oss-120b')],
             ['key' => (string) Config::get('services.openai.key', ''), 'url' => 'https://api.openai.com/v1/chat/completions', 'model' => (string) Config::get('services.openai.model', 'gpt-4o-mini')],

@@ -1130,7 +1130,7 @@ class ExamFlowTest extends TestCase
     public function test_finishing_never_waits_for_the_cloud_quota_to_rewrite_answers(): void
     {
         Cache::flush();
-        config(['services.groq.key' => 'test-key', 'services.groq.fallback_model' => '', 'exam.speed_mode' => 'online']);
+        config(['services.groq.key' => 'test-key', 'services.groq.fallback_model' => '', 'services.groq.third_model' => '', 'exam.speed_mode' => 'online']);
         $rewrites = 0;
         Http::fake(function ($request) use (&$rewrites) {
             if (! str_contains($request->url(), 'api.groq.com')) {

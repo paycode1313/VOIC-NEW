@@ -50,6 +50,9 @@ return [
         // qwen3.8-27b 86.2%); the fallback answers when the first model's per-minute quota is used up.
         'model' => env('GROQ_MODEL', 'openai/gpt-oss-120b'),
         'fallback_model' => env('GROQ_FALLBACK_MODEL', 'qwen/qwen3.8-27b'),
+        // Free tier limits each model to 8000 tokens a minute (about three examiner turns), per model:
+        // a third model adds capacity for a busy booth at no cost, with the same GROQ_API_KEY.
+        'third_model' => env('GROQ_THIRD_MODEL', 'openai/gpt-oss-20b'),
     ],
 
     'openrouter' => [
