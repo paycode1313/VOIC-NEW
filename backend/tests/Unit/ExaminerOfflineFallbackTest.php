@@ -24,13 +24,28 @@ class ExaminerOfflineFallbackTest extends TestCase
         $examiner = app(ExaminerService::class);
 
         $this->assertNull($this->callCloud($examiner));
-        // One attempt only: the second Groq model is on the same (dead) network.
-        Http::assertSentCount(1);
+        // Two attempts: one failed connection may be a blip, the second one means the network is down.
+        Http::assertSentCount(2);
         $this->assertTrue(ExaminerService::cloudPaused());
 
         // The next turn does not wait for another timeout.
         $this->assertNull($this->callCloud($examiner));
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
+    }
+
+    public function test_one_slow_connection_does_not_send_every_visitor_to_the_local_ai(): void
+    {
+        Cache::flush();
+        config(['services.groq.key' => 'test-key', 'services.groq.fallback_model' => 'second-model']);
+        // The venue's Wi-Fi hiccups once: the first connection times out, the retry gets through.
+        Http::fakeSequence('api.groq.com/*')
+            ->pushFailedConnection()
+            ->push(['choices' => [['finish_reason' => 'stop', 'message' => ['content' => 'Oke. Gimana kamu ngukurnya?']]]]);
+
+        $this->assertSame('Oke. Gimana kamu ngukurnya?', $this->callCloud(app(ExaminerService::class)));
+        $this->assertFalse(ExaminerService::cloudPaused());
+        // The blip is forgotten: a later single failure is again treated as a blip.
+        $this->assertFalse(Cache::has(ExaminerService::CLOUD_FAILS_KEY));
     }
 
     public function test_cloud_is_used_again_once_the_pause_is_over(): void

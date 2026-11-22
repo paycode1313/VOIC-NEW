@@ -76,6 +76,9 @@ class ExaminerService
 
     public const CLOUD_DOWN_SECONDS = 30;
 
+    /** Connection failures in the last minute, across visitors: one is a blip, two in a row means no internet. */
+    public const CLOUD_FAILS_KEY = 'voic.cloud.connection_failures';
+
     /**
      * How each examiner talks out loud: spoken language like a real call, not the written language of a
      * letter or a thesis. HRD is the most casual, the investor semi-casual and direct, the thesis examiner
@@ -2190,6 +2193,8 @@ class ExaminerService
                     $reply = $complete;
                 }
                 if ($response->successful() && $reply !== '') {
+                    Cache::forget(self::CLOUD_FAILS_KEY);
+
                     return $reply;
                 }
                 // Without this the app silently falls back to the (slow) local model, e.g. when the
@@ -2197,7 +2202,16 @@ class ExaminerService
                 Log::warning("Cloud examiner model {$provider['model']} failed: HTTP {$response->status()} "
                     .Str::limit((string) $response->json('error.message', $response->body()), 200));
             } catch (ConnectionException $exception) {
-                // No internet (or the provider is unreachable): the other providers are on the same network.
+                // One slow connection is often a blip of the venue's Wi-Fi: pausing the cloud for every visitor at
+                // the booth would send them all to the slow local AI. Try the next model at once; a second failure
+                // in a row (from any visitor) means no internet, and the other providers are on the same network.
+                Cache::add(self::CLOUD_FAILS_KEY, 0, 60);
+                if (Cache::increment(self::CLOUD_FAILS_KEY) < 2) {
+                    Log::warning('Cloud examiner connection failed once, trying again: '.$exception->getMessage());
+
+                    continue;
+                }
+                Cache::forget(self::CLOUD_FAILS_KEY);
                 Cache::put(self::CLOUD_DOWN_KEY, true, self::CLOUD_DOWN_SECONDS);
                 Log::warning('Cloud examiner unreachable, using the local AI for '.self::CLOUD_DOWN_SECONDS.'s: '.$exception->getMessage());
 

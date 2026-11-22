@@ -99,6 +99,21 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 - `jalankan_voic.bat` mengaktifkan **OPcache** untuk server web tanpa mengubah `php.ini`. Setiap request turun dari
   sekitar 0,9 detik menjadi sekitar 0,1 detik, termasuk setiap giliran menjawab di panggilan.
 
+## Booth ramai: banyak pengunjung sekaligus
+
+- **`jalankan_voic.bat` kini memakai Apache dari Laragon** (jika ada), bukan `php artisan serve`. Server bawaan PHP di
+  Windows hanya melayani satu request sekaligus, jadi pengunjung kedua menunggu balasan AI pengunjung pertama selesai.
+  Diuji: 50 request bersamaan semuanya berhasil, paling lambat 0,1 detik; tiga wawancara bersamaan berjalan tanpa error.
+  - Pengaturan Laragon tidak diubah: VOIC menulis konfigurasinya sendiri (`php artisan voic:apache`, ke `storage/app/apache`)
+    di port 8000 seperti biasa. Jika Apache tidak ada atau gagal menyala, otomatis kembali ke `php artisan serve`.
+  - Saat Apache dipakai, `.env` dibaca sekali saat start (`config:cache`), karena membaca `.env` bersamaan di banyak thread
+    bisa gagal acak. **Setelah mengubah `.env`, tutup VOIC lalu jalankan bat lagi.** Cache dilepas otomatis saat VOIC ditutup.
+  - Paksa server lama dengan `VOIC_WEB_SERVER=artisan` di `.env`. Log Apache: `storage/logs/apache-error.log`.
+- **SQLite tahan request bersamaan:** menunggu giliran sampai 5 detik (sebelumnya langsung gagal "database is locked")
+  dan memakai mode WAL.
+- **Satu gangguan Wi-Fi tidak lagi memindahkan semua pengunjung ke AI lokal.** Sebelumnya satu koneksi gagal menghentikan
+  cloud 30 detik untuk semua orang. Sekarang langsung dicoba lagi, dan cloud baru dihentikan setelah dua kegagalan berturut-turut.
+
 ## Tampilan
 
 - **HP:**
@@ -118,5 +133,5 @@ Diuji langsung dengan model cloud (Groq) di ketiga penguji, mode coaching, dan b
 
 ## Tes
 
-`php artisan test` (224 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
+`php artisan test` (227 tes) dan `python -m unittest discover -s tests` di `backend/ai_service` (80 tes) lulus semua.
 Setiap perbaikan di atas punya tesnya sendiri.

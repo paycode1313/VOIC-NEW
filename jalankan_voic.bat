@@ -214,17 +214,49 @@ if not exist storage\app\php-ini mkdir storage\app\php-ini
 set "PHP_INI_SCAN_DIR=;%CD%\storage\app\php-ini"
 echo   [OK] OPcache aktif (halaman jauh lebih cepat)
 :OPCACHE_DONE
+rem Server web: Apache dari Laragon jika ada. "php artisan serve" di Windows melayani SATU request sekaligus,
+rem jadi saat beberapa pengunjung menjawab bersamaan, masing-masing menunggu giliran (2-4 detik per balasan AI).
+rem Apache melayani banyak pengunjung sekaligus. Pengaturan Laragon tidak diubah: VOIC memakai konfigurasinya sendiri
+rem (storage\app\apache\httpd.conf). Paksa server lama dengan baris VOIC_WEB_SERVER=artisan di .env.
+set "WEB_KIND=artisan"
+set "HTTPD="
+findstr /b /c:"VOIC_WEB_SERVER=artisan" .env >nul 2>&1
+if not errorlevel 1 goto WEB_ARTISAN
+if not exist storage\app\apache mkdir storage\app\apache
+php artisan voic:apache > storage\app\apache\httpd.path 2>nul
+if errorlevel 1 goto WEB_ARTISAN
+set /p HTTPD=<storage\app\apache\httpd.path
+if not defined HTTPD goto WEB_ARTISAN
+rem Banyak request sekaligus: .env dibaca sekali di sini, bukan di tiap request (membaca .env bersamaan di
+rem banyak thread bisa gagal acak). Akibatnya: setelah mengubah .env, tutup VOIC lalu jalankan file ini lagi.
+php artisan config:cache >nul
+set "WEB_KIND=apache"
+start "VOIC_LARAVEL" /min cmd /k ""%HTTPD%" -f "%CD%\storage\app\apache\httpd.conf""
+goto WEB_STARTED
+:WEB_ARTISAN
 rem 0.0.0.0 agar HP pengunjung di Wi-Fi yang sama bisa membuka QR rapor
 start "VOIC_LARAVEL" /min cmd /k "php artisan serve --host=0.0.0.0 --port=8000"
+:WEB_STARTED
 set /a WAIT=0
 :WAIT_WEB
 call :port_open 8000
 if not errorlevel 1 (
-    echo   [OK] Web berjalan
+    if "%WEB_KIND%"=="apache" (
+        echo   [OK] Web berjalan di Apache - melayani banyak pengunjung sekaligus
+    ) else (
+        echo   [OK] Web berjalan
+    )
     goto WEB_DONE
 )
 set /a WAIT+=1
 if !WAIT! geq 15 (
+    if "%WEB_KIND%"=="apache" (
+        echo   [*] Apache gagal menyala, lihat storage\logs\apache-error.log. Memakai server bawaan PHP...
+        call :kill VOIC_LARAVEL
+        php artisan config:clear >nul
+        set "WEB_KIND=artisan"
+        goto WEB_ARTISAN
+    )
     echo   [*] Web lambat menyala. Buka jendela VOIC_LARAVEL untuk melihat errornya.
     goto WEB_DONE
 )
@@ -299,6 +331,8 @@ call :kill VOIC_SCHEDULER
 call :kill VOIC_LARAVEL
 call :kill VOIC_AI_SERVICE
 if "%STARTED_OLLAMA%"=="1" call :kill VOIC_OLLAMA
+rem Cache konfigurasi untuk Apache dilepas lagi, supaya perubahan .env berikutnya langsung terbaca.
+if "%WEB_KIND%"=="apache" php artisan config:clear >nul
 echo  Selesai. Sampai jumpa.
 timeout /t 2 /nobreak >nul
 exit /b 0
