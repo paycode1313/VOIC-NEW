@@ -21,6 +21,12 @@ Kedua aplikasi mobile mengonsumsi endpoint Laravel Sanctum yang sama:
 - **Mode ujian**: `GET /api/v1/exam/modes`
 - **Ujian 3 bagian** (mesin yang sama dengan web): `POST /api/v1/exam/{mode}/start` (`consent: true`), `POST /api/v1/exam/{id}/answer` (teks hasil pengenalan suara HP, atau file `audio` untuk Whisper lokal), `POST /api/v1/exam/{id}/finish`, `GET /api/v1/exam/{id}`
 - **Riwayat**: `GET /api/v1/practice`, `GET /api/v1/practice/{id}`
+- **Status AI** (publik): `GET /api/v1/exam/status`: mesin yang sedang menjawab (cloud, AI lokal, atau penyusun offline)
+- **Reaksi singkat penguji**: `GET /api/v1/exam/{id}/backchannels`: klip suara "Hmm…", "Oke, oke." untuk diputar saat peserta selesai bicara
+- **Tambahan rapor**: `GET /api/v1/exam/{id}/improvements`: versi jawaban yang lebih kuat (ujian) atau catatan coach (coaching), ditulis setelah rapor muncul (panggil lagi beberapa detik kemudian jika masih kosong)
+- **Rekaman jawaban**: `GET /api/v1/exam/{id}/recordings/{messageId}`
+- **Nilai balasan penguji**: `POST /api/v1/exam/{id}/messages/{messageId}/rate` (`rating: good|bad`)
+- **Hapus data sesi** (transkrip + rekaman): `DELETE /api/v1/exam/{id}`
 
 Skor dan rapor dihitung server dari jawaban asli; aplikasi tidak lagi mengirim skor sendiri. Endpoint lama `/practice/start|message|finish` (dialog template) sudah dihapus.
 

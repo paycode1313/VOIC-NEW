@@ -40,6 +40,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register'])->name('api.v1.auth.register');
     Route::get('/roles', [AiRoleController::class, 'index'])->name('api.v1.roles.index');
     Route::get('/exam/modes', [ExamController::class, 'modes'])->name('api.v1.exam.modes');
+    Route::get('/exam/status', [ExamController::class, 'status'])->middleware('throttle:30,1')->name('api.v1.exam.status');
 
     // Protected Mobile Endpoints (Requires Sanctum Bearer Token)
     Route::middleware('auth:sanctum')->group(function () {
@@ -56,6 +57,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/exam/{practiceSession}/answer', [ExamController::class, 'answer'])->whereNumber('practiceSession')->middleware('throttle:40,1')->name('api.v1.exam.answer');
         Route::post('/exam/{practiceSession}/finish', [ExamController::class, 'finish'])->whereNumber('practiceSession')->name('api.v1.exam.finish');
         Route::get('/exam/{practiceSession}', [ExamController::class, 'show'])->whereNumber('practiceSession')->name('api.v1.exam.show');
+        Route::delete('/exam/{practiceSession}', [ExamController::class, 'destroy'])->whereNumber('practiceSession')->name('api.v1.exam.destroy');
+        Route::get('/exam/{practiceSession}/backchannels', [ExamController::class, 'backchannels'])->whereNumber('practiceSession')->middleware('throttle:30,1')->name('api.v1.exam.backchannels');
+        Route::get('/exam/{practiceSession}/improvements', [ExamController::class, 'improvements'])->whereNumber('practiceSession')->middleware('throttle:20,1')->name('api.v1.exam.improvements');
+        Route::get('/exam/{practiceSession}/recordings/{message}', [ExamController::class, 'recording'])->whereNumber(['practiceSession', 'message'])->name('api.v1.exam.recording');
+        Route::post('/exam/{practiceSession}/messages/{message}/rate', [ExamController::class, 'rate'])->whereNumber(['practiceSession', 'message'])->middleware('throttle:60,1')->name('api.v1.exam.rate');
     });
 
 });

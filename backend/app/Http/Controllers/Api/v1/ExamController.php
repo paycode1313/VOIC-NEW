@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Models\AiRole;
 use App\Models\PracticeSession;
+use App\Models\SessionMessage;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExamFlowService;
 use App\Services\Exam\ExaminerService;
 use App\Services\Exam\ExamReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Three-part mock exam for the mobile apps (Sanctum token auth).
@@ -198,6 +201,97 @@ class ExamController extends Controller
         }
 
         return response()->json(['success' => true] + $flow->payload($practiceSession, $practiceSession->messages()->where('sender', 'ai')->latest('id')->first()));
+    }
+
+    /**
+     * Which AI engine is answering right now (cloud, local AI or the offline composer), like the web room shows.
+     */
+    public function status(ExaminerService $examiner): JsonResponse
+    {
+        return response()->json(['success' => true] + $examiner->availability());
+    }
+
+    /**
+     * Short voiced reactions ("Hmm…", "Oke, oke.") to play the moment the candidate stops talking.
+     */
+    public function backchannels(Request $request, PracticeSession $practiceSession, ExaminerService $examiner): JsonResponse
+    {
+        $this->authorizeOwner($request, $practiceSession);
+
+        $roleType = (string) ($this->blueprint->mode($practiceSession->exam_mode)['role_type'] ?? 'dosen_penguji');
+        $language = (string) ($practiceSession->exam_state['language'] ?? 'id');
+        $clips = array_map(fn (string $clip): string => str_starts_with($clip, '/') ? url($clip) : $clip, $examiner->backchannels($roleType, $language));
+
+        return response()->json(['success' => true, 'clips' => array_values($clips)]);
+    }
+
+    /**
+     * The report's follow-up content, written after the report appears: stronger versions of the weakest answers
+     * (exam), or the coach's notes (coaching). Same data as the web report, as JSON instead of HTML.
+     */
+    public function improvements(Request $request, PracticeSession $practiceSession, ExamReportService $reports): JsonResponse
+    {
+        $this->authorizeOwner($request, $practiceSession);
+        abort_unless($practiceSession->hasReport(), 404);
+
+        if (isset($practiceSession->feedback_notes['coach_report'])) {
+            return response()->json(['success' => true, 'session_type' => 'coach', 'coach_report' => $reports->completeCoachSummary($practiceSession)]);
+        }
+
+        $improvements = collect($reports->completeImprovements($practiceSession))
+            ->filter(fn (array $item): bool => ! empty($item['improved']))
+            ->map(fn (array $item, int|string $key): array => ['answer_index' => $key] + $item)
+            ->values();
+
+        return response()->json(['success' => true, 'session_type' => 'exam', 'improvements' => $improvements]);
+    }
+
+    /**
+     * Play back one of the candidate's recorded answers.
+     */
+    public function recording(Request $request, PracticeSession $practiceSession, SessionMessage $message): BinaryFileResponse
+    {
+        $this->authorizeOwner($request, $practiceSession);
+        abort_unless($message->practice_session_id === $practiceSession->id && $message->sender === 'user', 404);
+
+        $path = $message->meta['recording'] ?? null;
+        abort_unless(is_string($path) && Storage::disk('local')->exists($path), 404);
+
+        $mime = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+            'm4a', 'mp4' => 'audio/mp4',
+            'mp3' => 'audio/mpeg',
+            'wav' => 'audio/wav',
+            'ogg' => 'audio/ogg',
+            default => 'audio/webm',
+        };
+
+        return response()->file(Storage::disk('local')->path($path), ['Content-Type' => $mime, 'Cache-Control' => 'private, max-age=600']);
+    }
+
+    /**
+     * Rate whether an examiner reply felt natural and on-topic (good ratings become training data).
+     */
+    public function rate(Request $request, PracticeSession $practiceSession, SessionMessage $message): JsonResponse
+    {
+        $this->authorizeOwner($request, $practiceSession);
+        abort_unless($message->practice_session_id === $practiceSession->id && $message->sender === 'ai', 404);
+
+        $validated = $request->validate(['rating' => ['required', 'string', 'in:good,bad']]);
+        $message->update(['meta' => array_merge($message->meta ?? [], ['rating' => $validated['rating']])]);
+
+        return response()->json(['success' => true, 'rating' => $validated['rating']]);
+    }
+
+    /**
+     * Delete a session, its transcript and its recordings at the candidate's request.
+     */
+    public function destroy(Request $request, PracticeSession $practiceSession): JsonResponse
+    {
+        $this->authorizeOwner($request, $practiceSession);
+
+        $practiceSession->deleteWithRecordings();
+
+        return response()->json(['success' => true, 'message' => 'Data sesi latihan sudah dihapus.']);
     }
 
     /**

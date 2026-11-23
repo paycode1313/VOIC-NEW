@@ -96,4 +96,63 @@ class ExamApiTest extends TestCase
 
         $this->postJson(route('api.v1.exam.start', 'sidang'), ['parts' => [1]])->assertUnprocessable()->assertJsonValidationErrors('consent');
     }
+
+    public function test_mobile_client_gets_the_report_extras_and_can_delete_its_data(): void
+    {
+        Storage::fake('local');
+        Http::fake([
+            '*/stt' => Http::response(['text' => 'Saya memakai YOLOv8 untuk deteksi cacat kain di pabrik tekstil karena cepat.']),
+            '*' => Http::response([], 503),
+        ]);
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->getJson(route('api.v1.exam.status'))->assertOk()->assertJsonPath('success', true);
+
+        $sessionId = $this->postJson(route('api.v1.exam.start', 'sidang'), ['parts' => [1], 'consent' => true])->json('session_id');
+        $this->getJson(route('api.v1.exam.backchannels', $sessionId))->assertOk()->assertJsonStructure(['clips']);
+
+        $this->post(route('api.v1.exam.answer', $sessionId), [
+            'audio' => UploadedFile::fake()->createWithContent('a.m4a', str_repeat('A', 3000)),
+            'duration_seconds' => 8,
+        ], ['Accept' => 'application/json'])->assertOk();
+
+        $session = PracticeSession::find($sessionId);
+        $answer = $session->messages()->where('sender', 'user')->first();
+        $reply = $session->messages()->where('sender', 'ai')->latest('id')->first();
+
+        $recording = $this->get(route('api.v1.exam.recording', [$sessionId, $answer->id]));
+        $recording->assertOk();
+        $this->assertSame('audio/mp4', $recording->headers->get('Content-Type'));
+        $this->getJson(route('api.v1.exam.recording', [$sessionId, $reply->id]))->assertNotFound();
+
+        $this->postJson(route('api.v1.exam.rate', [$sessionId, $reply->id]), ['rating' => 'good'])->assertOk()->assertJsonPath('rating', 'good');
+        $this->assertSame('good', $reply->fresh()->meta['rating']);
+
+        // Extras appear once there is a report.
+        $this->getJson(route('api.v1.exam.improvements', $sessionId))->assertNotFound();
+        $this->postJson(route('api.v1.exam.finish', $sessionId), ['duration_seconds' => 30])->assertOk();
+        $this->getJson(route('api.v1.exam.improvements', $sessionId))
+            ->assertOk()
+            ->assertJsonPath('session_type', 'exam')
+            ->assertJsonStructure(['improvements']);
+
+        $this->deleteJson(route('api.v1.exam.destroy', $sessionId))->assertOk();
+        $this->assertNull(PracticeSession::find($sessionId));
+        Storage::disk('local')->assertMissing($answer->meta['recording']);
+    }
+
+    public function test_report_extras_belong_to_the_owner_only(): void
+    {
+        Http::fake(['*' => Http::response([], 503)]);
+        Sanctum::actingAs(User::factory()->create());
+        $sessionId = $this->postJson(route('api.v1.exam.start', 'sidang'), ['parts' => [1], 'consent' => true])->json('session_id');
+        $reply = PracticeSession::find($sessionId)->messages()->where('sender', 'ai')->first();
+
+        Sanctum::actingAs(User::factory()->create());
+        $this->getJson(route('api.v1.exam.backchannels', $sessionId))->assertForbidden();
+        $this->getJson(route('api.v1.exam.improvements', $sessionId))->assertForbidden();
+        $this->postJson(route('api.v1.exam.rate', [$sessionId, $reply->id]), ['rating' => 'bad'])->assertForbidden();
+        $this->deleteJson(route('api.v1.exam.destroy', $sessionId))->assertForbidden();
+        $this->assertNotNull(PracticeSession::find($sessionId));
+    }
 }
