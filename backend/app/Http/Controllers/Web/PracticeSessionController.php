@@ -83,11 +83,15 @@ class PracticeSessionController extends Controller
     /**
      * Delete a practice session and all associated messages.
      */
-    public function destroy(PracticeSession $practiceSession): JsonResponse
+    public function destroy(Request $request, PracticeSession $practiceSession): JsonResponse|RedirectResponse
     {
         Gate::authorize('delete', $practiceSession);
 
         $practiceSession->delete();
+
+        if (! $request->expectsJson()) {
+            return redirect()->route('practice.history')->with('status', 'Sesi latihan berhasil dihapus.');
+        }
 
         return response()->json([
             'success' => true,
@@ -107,39 +111,14 @@ class PracticeSessionController extends Controller
             return redirect()->to($practiceSession->reportUrl());
         }
 
+        // Sessions from the first VOIC version: a compact archive report.
         $practiceSession->load(['aiRole', 'messages', 'user']);
-        $benchmarkData = $verificationService->getBenchmarkData($practiceSession);
-
-        $user = $practiceSession->user ?? auth()->user();
-        $streakData = $user ? $user->getStreakData() : ['streak' => 1, 'has_practiced_today' => true, 'is_streak_at_risk' => false];
-        $rankProgress = $user ? $user->getRankProgress() : [
-            'level' => 1,
-            'title' => 'Novice Speaker',
-            'current_sessions' => 1,
-            'next_sessions' => 3,
-            'progress_pct' => 33,
-            'needed_sessions' => 2,
-            'next_title' => 'Confident Communicator',
-        ];
-        $recommendedMission = $user ? $user->getNextRecommendedMission() : [
-            'id' => 'first_streak',
-            'title' => 'Kunci Streak Hari Pertama',
-            'subtitle' => 'Target: Buat Akun & Lanjutkan Latihan',
-            'desc' => 'Simpan rapor ini dan lanjutkan latihan besok untuk membangun kebiasaan berbicara percaya diri!',
-            'icon' => 'sparkles',
-            'role_key' => 'dosen_penguji',
-            'badge_target' => 'Tatapan Elang',
-            'route' => route('register', ['claim_session_id' => $practiceSession->id]),
-        ];
 
         return view('practice.show', [
             'session' => $practiceSession,
             'role' => $practiceSession->aiRole,
             'messages' => $practiceSession->messages,
-            'benchmarkData' => $benchmarkData,
-            'streakData' => $streakData,
-            'rankProgress' => $rankProgress,
-            'recommendedMission' => $recommendedMission,
+            'benchmarkData' => $verificationService->getBenchmarkData($practiceSession),
         ]);
     }
 
