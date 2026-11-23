@@ -56,6 +56,15 @@ return [
     'local_prompt' => env('VOIC_LOCAL_PROMPT', 'compact'),
 
     /*
+    | Guided local examiner (default on). A 3B model on a CPU invents facts ("empat bulan uji coba, tiga ratus
+    | foto" that the candidate never said) and ignores [LANJUT]. Guided: on a part change the local model only
+    | reacts and VOIC asks the planned question itself; every sentence it writes is checked before it is spoken
+    | (numbers the candidate never said, praise twice in a row, a question asked before) and a rejected question
+    | is replaced by VOIC's own targeted probe. Cloud models are not affected. false = the model's raw reply.
+    */
+    'local_guided' => (bool) env('VOIC_LOCAL_GUIDED', true),
+
+    /*
     | "offline" (default): everything runs on this laptop (private, no internet), speed depends on the hardware.
     | "online": for a laptop without a GPU at a booth with internet. A fast cloud model (GROQ_API_KEY or
     | OPENAI_API_KEY) answers first and the browser recognises speech, so the examiner replies in 1-2 seconds.

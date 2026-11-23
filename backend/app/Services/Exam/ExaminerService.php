@@ -296,8 +296,9 @@ class ExaminerService
         $messages = $this->buildMessages(['cloud' => true] + $turn);
         // The local model gets the compact prompt (see compactPrompt()); built only when the local model is asked.
         $localMessages = null;
-        $forLocal = function () use (&$localMessages, $turn): array {
-            return $localMessages ??= $this->buildMessages($this->forLocal($turn));
+        $localTurn = $turn;
+        $forLocal = function () use (&$localMessages, $localTurn): array {
+            return $localMessages ??= $this->buildMessages($this->forLocal($localTurn));
         };
         $baseUrl = $this->baseUrl();
 
@@ -346,19 +347,28 @@ class ExaminerService
 
         // Streaming: sentences are spoken while the model is still writing. A pure reaction
         // is followed by a fixed announcement, so it is not worth streaming.
-        if ($onSentence !== null && $turn['directive'] !== self::DIRECTIVE_REACT) {
-            $streamed = $this->streamLocalModel($turn, $forLocal(), $onSentence);
+        if ($onSentence !== null && $localTurn['directive'] !== self::DIRECTIVE_REACT) {
+            $streamed = $this->streamLocalModel($localTurn, $forLocal(), $onSentence);
             if ($streamed !== null) {
                 return $streamed;
             }
         }
 
         $result = null;
-        $local = $this->callLocalModel($turn, $forLocal());
-        if ($local !== null && $this->resolveModelReply($local, $turn) === null) {
-            Log::info('Local examiner reply unusable for '.$turn['directive'].': '.Str::limit($local, 200));
+        $local = $this->callLocalModel($localTurn, $forLocal());
+        if ($local !== null && $this->guided() && ! self::isCoachDirective($turn['directive'])) {
+            $local = $this->guardLocalReply($local, $localTurn);
         }
-        if ($local !== null && ($resolved = $this->resolveModelReply($local, $turn)) !== null) {
+        $resolved = match (true) {
+            $local === null => null,
+            $this->guidedNext($turn) => ($reaction = $this->stripQuestions($local, 1)) === '' ? null
+                : ['text' => $this->joinReaction($reaction, trim((string) $turn['scripted'])), 'reply' => $reaction],
+            default => $this->resolveModelReply($local, $localTurn),
+        };
+        if ($local !== null && $resolved === null) {
+            Log::info('Local examiner reply unusable for '.$localTurn['directive'].': '.Str::limit($local, 200));
+        }
+        if ($resolved !== null) {
             $result = $resolved + ['audio_url' => $this->synthesize($baseUrl, $resolved['text'], $turn), 'engine' => $this->engineFor($this->lastModel)];
         }
 
@@ -380,6 +390,146 @@ class ExaminerService
     }
 
     /**
+     * Whether the local model runs guided (config exam.local_guided). Cloud models through Ollama are not.
+     */
+    public function guided(): bool
+    {
+        return (bool) Config::get('exam.local_guided', true) && ! self::isCloudModel($this->ollamaModel());
+    }
+
+    /**
+     * A part change answered by the guided local model: its own question is dropped and the planned one is asked
+     * word for word, so a small model cannot skip the part or swap the topic (seen with voic-coach 3B on
+     * [LANJUT]). Not done through the REACT tag: a 3B model trained to ask writes a question there anyway.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    protected function guidedNext(array $turn): bool
+    {
+        return $this->guided() && $turn['directive'] === self::DIRECTIVE_NEXT && trim((string) ($turn['scripted'] ?? '')) !== '';
+    }
+
+    /**
+     * A local reply with every sentence checked by guardSentence(); null when nothing is left.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function guardLocalReply(string $reply, array $turn): ?string
+    {
+        $kept = [];
+        foreach (preg_split('/(?<=[.!?])\s+/u', trim($reply)) ?: [] as $sentence) {
+            if (($sentence = $this->guardSentence($sentence, $turn)) !== null) {
+                $kept[] = $sentence;
+            }
+        }
+
+        return $kept === [] ? null : implode(' ', $kept);
+    }
+
+    /**
+     * One sentence of a small local model, checked before it is spoken. Null drops it:
+     * - a number the candidate never said (seen with voic-coach 3B: "Empat bulan terakhir uji coba ... tiga ratus
+     *   puluh foto" after an answer about two thousand photos), the most damaging thing an examiner can do;
+     * - a question already asked in this session;
+     * - praise right after a turn that praised (the model ignores TANPA PUJIAN): a short compliment goes, a
+     *   leading one ("Bagus sekali, lalu ...") is cut off.
+     *
+     * @param  array<string, mixed>  $turn
+     */
+    public function guardSentence(string $sentence, array $turn): ?string
+    {
+        $sentence = trim($sentence);
+        if ($sentence === '') {
+            return null;
+        }
+
+        $said = mb_strtolower(implode(' ', [
+            $turn['answer'] ?? '', $turn['question'] ?? '', $turn['topic'] ?? '', $turn['scripted'] ?? '', $turn['planned_question'] ?? '',
+            ...array_map(fn ($item) => (string) ($item['content'] ?? ''), (array) ($turn['history'] ?? [])),
+        ]));
+        // The model says numbers as words ("40 toko" comes back as "empat puluh toko"): both forms count as said.
+        $said .= ' '.preg_replace_callback('/\d+/', fn ($m) => self::numberInWords((int) $m[0]), preg_replace('/(?<=\d)[.,](?=\d{3}(?!\d))/', '', $said) ?? $said);
+        preg_match_all(self::NUMBER_TOKEN, mb_strtolower($sentence), $numbers);
+        foreach ($numbers[0] as $number) {
+            if (! preg_match('/(?<![\p{L}\p{N}])'.preg_quote($number, '/').'(?![\p{L}\p{N}])/u', $said)) {
+                return null;
+            }
+        }
+
+        if (str_ends_with($sentence, '?') && ! self::isEchoReaction($sentence)) {
+            $words = self::contentWords($sentence);
+            foreach ((array) ($turn['history'] ?? []) as $item) {
+                if (($item['role'] ?? null) !== 'assistant') {
+                    continue;
+                }
+                foreach (preg_split('/(?<=[.!?])\s+/u', (string) ($item['content'] ?? '')) ?: [] as $asked) {
+                    $old = self::contentWords($asked);
+                    if (str_ends_with(trim($asked), '?') && count($words) >= 3 && count($old) >= 3
+                        && count(array_intersect($words, $old)) / count(array_unique([...$words, ...$old])) >= 0.6) {
+                        return null;
+                    }
+                }
+            }
+        }
+
+        if ($turn['directive'] !== self::DIRECTIVE_CLARIFY && $this->praisedLastTurn($turn) && preg_match(self::PRAISE, $sentence)) {
+            if (count(preg_split('/\s+/u', $sentence) ?: []) <= 5) {
+                return null;
+            }
+            $cut = preg_replace('/^(?:(?:wah|wow|oh|nah|oke|ya)[,!]?\s+)?(?:\p{L}+\s+){0,2}?'.self::PRAISE_WORDS.'(?:\s+(?:sekali|banget|ya|nih|sih|juga))*\s*[,!.]\s*/iu', '', $sentence);
+            if ($cut === null || $cut === $sentence || preg_match(self::PRAISE, $cut) || mb_strlen($cut) < 8) {
+                return null;
+            }
+            $sentence = Str::ucfirst($cut);
+        }
+
+        return $sentence;
+    }
+
+    /**
+     * An integer in Indonesian words: 40 => "empat puluh", 2000 => "dua ribu", 115 => "seratus lima belas".
+     */
+    public static function numberInWords(int $number): string
+    {
+        $ones = ['nol', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'];
+        if ($number < 12) {
+            return $ones[max(0, $number)];
+        }
+        if ($number < 20) {
+            return $ones[$number - 10].' belas';
+        }
+        foreach ([[1_000_000_000_000, 'triliun'], [1_000_000_000, 'miliar'], [1_000_000, 'juta'], [1000, 'ribu'], [100, 'ratus'], [10, 'puluh']] as [$size, $word]) {
+            if ($number >= $size) {
+                $head = intdiv($number, $size);
+                $rest = $number % $size;
+                $lead = $head === 1 && in_array($word, ['ribu', 'ratus'], true) ? 'se'.$word : self::numberInWords($head).' '.$word;
+
+                return $rest === 0 ? $lead : $lead.' '.self::numberInWords($rest);
+            }
+        }
+
+        return (string) $number;
+    }
+
+    /**
+     * Numbers in a sentence, as digits or Indonesian/English number words ("satu" is too common to count).
+     */
+    protected const NUMBER_TOKEN = '/(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?|(?<![\p{L}])(?:dua|tiga|empat|lima|enam|tujuh|delapan|sembilan|sepuluh|sebelas|belas|puluh|ratus|ribu|juta|miliar|triliun|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|twenty|thirty|forty|fifty|hundred|thousand|million|billion)(?![\p{L}])/u';
+
+    /**
+     * Words of four letters or more, lowercased, for comparing two questions.
+     *
+     * @return list<string>
+     */
+    protected static function contentWords(string $text): array
+    {
+        return array_values(array_unique(array_filter(
+            preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($text)) ?: [],
+            fn ($word) => mb_strlen($word) >= 4 && ! in_array($word, ['yang', 'kamu', 'saya', 'bisa', 'kalau', 'dengan', 'untuk', 'apakah', 'bagaimana', 'gimana', 'jelaskan', 'what', 'your', 'that', 'with', 'about', 'could'], true),
+        )));
+    }
+
+    /**
      * Stream the turn from the local model sentence by sentence.
      * Returns null when nothing was spoken, so the caller can fall back.
      *
@@ -393,6 +543,11 @@ class ExaminerService
         $spoken = [];
         $firstAudio = null;
         $model = null;
+        $received = 0;
+        // Coaching is left as it is: its example sentences may carry numbers ("naik 15 persen") and run longer.
+        $guided = $this->guided() && ! self::isCoachDirective($turn['directive']);
+        $guidedNext = $this->guidedNext($turn);
+        $statements = 0;
 
         try {
             $response = Http::connectTimeout(1.5)
@@ -435,8 +590,27 @@ class ExaminerService
                     }
 
                     if (($event['type'] ?? null) === 'sentence' && trim((string) $event['text']) !== '') {
+                        $received++;
                         $text = $this->clean((string) $event['text'], 5);
-                        $audioUrl = $this->audioSource($event['audio_data'] ?? null, $event['audio_file'] ?? null);
+                        $checked = $guided ? $this->guardLocalReply($text, $turn) : $text;
+                        if ($checked !== null && $guided) {
+                            // One short reaction is listening; more sentences from a 3B model is where it starts inventing.
+                            $isQuestion = str_ends_with($checked, '?') && ! self::isEchoReaction($checked);
+                            if (($guidedNext && $isQuestion) || (! $isQuestion && $statements >= 1)) {
+                                continue;
+                            }
+                            $statements += $isQuestion ? 0 : 1;
+                        }
+                        if ($checked === null) {
+                            Log::info('Local examiner sentence dropped ('.$turn['directive'].'): '.Str::limit($text, 160));
+
+                            continue;
+                        }
+                        // A sentence the guard shortened is voiced again; its audio was made for the original.
+                        $audioUrl = $checked === $text
+                            ? $this->audioSource($event['audio_data'] ?? null, $event['audio_file'] ?? null)
+                            : $this->synthesize($this->baseUrl(), $checked, $turn, inline: true);
+                        $text = $checked;
                         if ($audioUrl !== null && ! str_starts_with($audioUrl, 'data:')) {
                             $firstAudio ??= $audioUrl;
                         }
@@ -449,11 +623,30 @@ class ExaminerService
             Log::info('Local examiner stream unavailable: '.$exception->getMessage());
         }
 
-        if ($spoken === []) {
+        if ($spoken === [] && $received === 0) {
             return null;
+        }
+        // Everything the model wrote was dropped by the guard: VOIC's own reaction and probe answer at once,
+        // instead of asking the slow model a second time.
+        if ($spoken === []) {
+            $own = $this->offlineTurn($turn)['text'];
+            $onSentence($own, $this->synthesize($this->baseUrl(), $own, $turn, inline: true));
+
+            return ['text' => $own, 'reply' => $own, 'audio_url' => null, 'engine' => 'offline_composer'];
         }
 
         $reply = trim(implode(' ', $spoken));
+
+        if ($guidedNext) {
+            $reaction = $reply;
+            $full = $this->joinReaction($reaction, trim((string) $turn['scripted']));
+            $tail = str_starts_with($full, $reaction) ? trim(mb_substr($full, mb_strlen($reaction))) : trim((string) $turn['scripted']);
+            foreach ($this->sentences($tail) as $sentence) {
+                $onSentence($sentence, $this->synthesize($this->baseUrl(), $sentence, $turn, inline: true));
+            }
+
+            return ['text' => trim($reaction.' '.$tail), 'reply' => $reaction, 'audio_url' => $firstAudio, 'engine' => $this->engineFor($model)];
+        }
 
         // The model must end an asking turn with a question; if it did not, finish it for it.
         // Coaching turns may end on a tip or an invitation to try again, so they are left as they are.
@@ -1337,6 +1530,9 @@ class ExaminerService
      * Words of praise in either language. Whole words only, so "bagusnya" or "topik" do not count.
      */
     public const PRAISE = '/(?<![\p{L}])(keren|mantap|mantul|bagus|hebat|kreatif|solid|top|luar biasa|salut|impresif|seru|kece|cakep|pinter|pintar|asyik|asik|jempol|efektif banget|suka banget|great|awesome|nice|impressive|amazing|excellent|brilliant|love that|well done)(?![\p{L}])/iu';
+
+    /** The words of PRAISE as one group, for cutting a leading compliment off a sentence. */
+    protected const PRAISE_WORDS = '(keren|mantap|mantul|bagus|hebat|kreatif|solid|top|luar biasa|salut|impresif|seru|kece|cakep|pinter|pintar|asyik|asik|jempol|efektif banget|suka banget|great|awesome|nice|impressive|amazing|excellent|brilliant|love that|well done)';
 
     /**
      * Whether the examiner's previous line praised the candidate.

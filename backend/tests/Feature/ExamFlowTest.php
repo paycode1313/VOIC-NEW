@@ -236,6 +236,8 @@ class ExamFlowTest extends TestCase
 
     public function test_model_asks_the_next_question_in_its_own_words(): void
     {
+        // Unguided: how a capable model is used. The guided default for a small model is tested below.
+        config(['exam.local_guided' => false]);
         $modelReply = 'Menarik, YOLOv8 untuk cacat kain dengan 2000 gambar itu cukup besar. Ngomong-ngomong, apa yang awalnya bikin Anda tertarik ke topik ini, apakah dari pengalaman di pabrik?';
         Http::fake([
             '*/exam/respond' => Http::response(['reply' => $modelReply]),
@@ -335,6 +337,7 @@ class ExamFlowTest extends TestCase
 
     public function test_voice_answer_is_transcribed_locally_and_reply_streams_sentence_by_sentence(): void
     {
+        config(['exam.local_guided' => false]);
         Storage::fake('local');
         $ndjson = implode("\n", [
             json_encode(['type' => 'sentence', 'text' => 'Dua ribu gambar dari pabrik itu dataset yang lumayan.', 'audio_file' => 'tts_1_a.wav']),
@@ -375,6 +378,57 @@ class ExamFlowTest extends TestCase
         $this->artisan('voic:latency')->expectsOutputToContain('Sampai suara penguji terdengar')->assertSuccessful();
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/exam/respond/stream') && $request['inline_audio'] === true);
         $this->assertStringContainsString('YOLOv8', $session->messages()->where('sender', 'user')->first()->message);
+    }
+
+    public function test_guided_local_model_keeps_its_reaction_but_asks_the_planned_question_and_never_invents_numbers(): void
+    {
+        // What voic-coach 3B did on a CPU: an invented figure, then its own question instead of the next part.
+        $ndjson = implode("\n", [
+            json_encode(['type' => 'sentence', 'text' => 'Dua ribu gambar dari pabrik itu dataset yang lumayan.', 'audio_file' => 'tts_1_a.wav']),
+            json_encode(['type' => 'sentence', 'text' => 'Empat bulan uji coba dengan tiga ratus foto per hari juga bagus.', 'audio_file' => 'tts_1_b.wav']),
+            json_encode(['type' => 'sentence', 'text' => 'Apakah proses training YOLOv8 masih berlangsung?', 'audio_file' => 'tts_1_c.wav']),
+            json_encode(['type' => 'done', 'reply' => '...', 'issues' => []]),
+        ])."\n";
+        Http::fake([
+            '*/exam/respond/stream' => Http::response($ndjson, 200, ['Content-Type' => 'application/x-ndjson']),
+            '*' => Http::response([], 503),
+        ]);
+
+        $session = $this->startExam('sidang', [1]);
+        $response = $this->post(route('exam.answer.stream', $session), [
+            'answer' => 'Judul penelitian saya deteksi cacat kain dengan YOLOv8 memakai 2000 gambar dari pabrik tekstil di Bandung.',
+            'duration_seconds' => 12,
+            'timestamp_seconds' => 12,
+        ])->assertOk();
+
+        $events = array_map(fn ($line) => json_decode($line, true), array_values(array_filter(explode("\n", $response->streamedContent()))));
+        $spoken = implode(' ', array_column(array_filter($events, fn ($event) => $event['type'] === 'sentence'), 'text'));
+        $planned = $session->refresh()->messages()->where('sender', 'ai')->latest('id')->first()->meta['planned_question'];
+
+        $this->assertNotEmpty($planned);
+        // "2000" said as "dua ribu" is the candidate's own figure; "empat bulan", "tiga ratus foto" are not.
+        $this->assertStringStartsWith('Dua ribu gambar dari pabrik itu dataset yang lumayan.', $spoken);
+        $this->assertStringNotContainsString('Empat bulan', $spoken);
+        $this->assertStringNotContainsString('training YOLOv8', $spoken);
+        $this->assertStringEndsWith($planned, $spoken);
+    }
+
+    public function test_guard_drops_invented_numbers_repeated_questions_and_praise_twice_in_a_row(): void
+    {
+        $examiner = app(ExaminerService::class);
+        $turn = ['directive' => ExaminerService::DIRECTIVE_FOLLOW_UP, 'answer' => 'Saya membangun dashboard untuk 40 toko dengan YOLOv8 dan 2.000 gambar.', 'history' => []];
+
+        $this->assertSame('Empat puluh toko itu lumayan.', $examiner->guardSentence('Empat puluh toko itu lumayan.', $turn));
+        $this->assertSame('Dua ribu gambar cukup untuk YOLOv8.', $examiner->guardSentence('Dua ribu gambar cukup untuk YOLOv8.', $turn));
+        $this->assertNull($examiner->guardSentence('Tiga ribu gambar itu banyak.', $turn));
+        $this->assertNull($examiner->guardSentence('Akurasinya 95 persen, ya.', $turn));
+
+        $asked = ['history' => [['role' => 'assistant', 'content' => 'Keren banget! Bagaimana cara kamu memilih data gambarnya?']]] + $turn;
+        $this->assertNull($examiner->guardSentence('Bagaimana cara kamu memilih data gambar?', $asked));
+        $this->assertNull($examiner->guardSentence('Bagus sekali!', $asked));
+        $this->assertSame('Lalu siapa yang memberi label gambarnya?', $examiner->guardSentence('Hebat, lalu siapa yang memberi label gambarnya?', $asked));
+        // Without praise in the turn before, a compliment is allowed.
+        $this->assertSame('Bagus sekali!', $examiner->guardSentence('Bagus sekali!', $turn));
     }
 
     public function test_stream_falls_back_to_one_offline_sentence_when_no_model_runs(): void
@@ -724,7 +778,8 @@ class ExamFlowTest extends TestCase
 
     public function test_online_speed_mode_lets_the_cloud_model_answer_first_and_falls_back_to_local(): void
     {
-        config(['exam.speed_mode' => 'online', 'services.groq.key' => 'test-key']);
+        // Unguided, so the local reply is used word for word (the guided default would ask the planned question).
+        config(['exam.speed_mode' => 'online', 'services.groq.key' => 'test-key', 'exam.local_guided' => false]);
         $localReply = 'Dua tahun di proyek React itu relevan. Bagian mana yang paling menantang?';
         $cloudUp = true;
         Http::fake(function ($request) use (&$cloudUp, $localReply) {
