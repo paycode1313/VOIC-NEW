@@ -687,3 +687,27 @@ a, button {
     .voic-skeleton::after, img.voic-img-loading { animation: none; }
     :is(button, a, div, section, article, label, li):hover { translate: none !important; }
 }
+
+/* ------------------------------------------------------------------------------------------------
+ | Scroll effects (js/scroll-fx.js): Lenis smooth scroll, GSAP word-by-word headings, Motion cards.
+ | html.voic-fx is set by app.js before the module loads, so nothing flashes before it animates in.
+ * ----------------------------------------------------------------------------------------------- */
+.voic-fx [data-split] { visibility: hidden; }
+.voic-fx [data-reveal] { opacity: 0; }
+/* Each word rises out of its own mask; the padding keeps descenders and highlighter strokes from being cut. */
+.voic-word {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding: 0 0.14em 0.16em;
+    margin: 0 -0.14em -0.16em;
+}
+.voic-word-in { display: inline-block; will-change: transform; }
+/* The highlighter stroke waits until its heading has appeared. */
+[data-split]:not(.is-in) .voic-mark::before { animation-play-state: paused; }
+/* Motion owns these cards' movement: switch off the css lift so the two do not add up. */
+[data-reveal] {
+    translate: none !important;
+    transition-property: box-shadow, border-color, background-color !important;
+    will-change: transform;
+}

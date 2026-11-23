@@ -122,4 +122,10 @@ document.addEventListener('submit', (event) => {
 // Back/forward from the cache: remove a bar left over from leaving the page.
 window.addEventListener('pageshow', () => document.querySelectorAll('.voic-navbar').forEach((bar) => bar.remove()));
 
+// Landing-style pages: smooth scroll (Lenis), word-by-word headings (GSAP) and card motion (Motion).
+// Loaded only where a page asks for it, and never with reduced motion (the layout's <head> sets html.voic-fx).
+if (document.documentElement.classList.contains('voic-fx') && document.querySelector('[data-split], [data-reveal]')) {
+    import('./scroll-fx').catch(() => document.documentElement.classList.remove('voic-fx'));
+}
+
 Alpine.start();

@@ -16,7 +16,7 @@
                     <span class="relative flex h-2 w-2"><span class="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-75"></span><span class="relative h-2 w-2 rounded-full bg-emerald-500"></span></span>
                     {{ $online ? '3 penguji AI lagi online' : 'AI berjalan di laptop, tanpa internet' }}
                 </span>
-                <h1 class="voic-rise mt-5 text-[2.75rem] font-extrabold leading-[1] sm:text-6xl xl:text-[3.9rem]" style="--d: 80ms">
+                <h1 data-split data-split-delay="0.1" class="mt-5 text-[2.75rem] font-extrabold leading-[1] sm:text-6xl xl:text-[3.9rem]">
                     Latihan <span class="voic-mark" style="--mark: #fde68a">ngomong</span><br class="hidden sm:block"> bareng
                     <span class="whitespace-nowrap bg-gradient-to-r from-amber-500 via-indigo-500 to-violet-500 bg-clip-text text-transparent">penguji AI.</span>
                 </h1>
@@ -113,11 +113,11 @@
 
     {{-- Examiners, like contacts you can call --}}
     <section class="mx-auto max-w-6xl px-4 pb-4 pt-16 sm:px-6">
-        <h2 class="text-3xl font-extrabold sm:text-4xl">Pilih penguji yang mau kamu <span class="voic-mark" style="--mark: #c7d2fe">telepon</span></h2>
+        <h2 data-split class="text-3xl font-extrabold sm:text-4xl">Pilih penguji yang mau kamu <span class="voic-mark" style="--mark: #c7d2fe">telepon</span></h2>
         <div class="mt-6 grid gap-5 md:grid-cols-3">
             @foreach ($modes as $key => $mode)
-                <a href="{{ route('exam.setup', $key) }}" style="--glow: {{ $glows[$mode['accent']] ?? '99 102 241' }}"
-                   class="voic-tilt group flex items-center gap-4 rounded-3xl border border-black/5 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                <a href="{{ route('exam.setup', $key) }}" data-reveal="tilt" style="--glow: {{ $glows[$mode['accent']] ?? '99 102 241' }}"
+                   class="group flex items-center gap-4 rounded-3xl border border-black/5 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
                     <div class="relative isolate flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white">
                         <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(circle,rgb(var(--glow)/0.6),transparent_70%)]"></div>
                         <img src="{{ asset($mode['examiner']['avatar']) }}" alt="" class="h-14 w-14 rounded-full object-cover" loading="lazy">
@@ -138,7 +138,7 @@
 
     {{-- How it works --}}
     <div id="cara-kerja" class="mx-auto max-w-6xl scroll-mt-20 px-4 sm:px-6">
-        @include('exam.partials.steps', ['isEn' => false, 'title' => 'Seperti ujian sungguhan, dalam 12 menit', 'steps' => [
+        @include('exam.partials.steps', ['isEn' => false, 'title' => 'Seperti ujian sungguhan, dalam 12 menit', 'fx' => true, 'steps' => [
             ['Pemanasan', 'Pertanyaan singkat tentang dirimu. Penguji menanggapi jawabanmu dan bertanya lebih dalam kalau masih kabur.', '#fde68a'],
             ['Kartu topik', 'Satu menit menyiapkan catatan, lalu bicara sampai dua menit tanpa disela. Melatih kelancaran dan struktur.', '#c7d2fe'],
             ['Diskusi', 'Pertanyaan situasional dan metodologi. Penguji menguji alasan, bukti, dan batasan argumenmu.', '#ddd6fe'],
@@ -147,7 +147,7 @@
 
     {{-- Report + privacy --}}
     <section class="mx-auto grid max-w-6xl gap-6 px-4 py-20 sm:px-6 md:grid-cols-2">
-        <div class="relative overflow-hidden rounded-3xl border border-black/5 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
+        <div data-reveal class="relative overflow-hidden rounded-3xl border border-black/5 bg-white p-6 dark:border-white/10 dark:bg-white/[0.03]">
             {{-- A miniature report, so "rapor" is something you can see, not just read about --}}
             <div class="float-right mb-3 ml-6 mr-1 mt-1 hidden w-40 rotate-3 rounded-2xl bg-slate-900 p-3.5 text-white shadow-xl sm:block" aria-hidden="true">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-white/60">Band score</p>
@@ -159,7 +159,7 @@
                     </div>
                 @endforeach
             </div>
-            <h2 class="text-2xl font-extrabold">Rapor yang bisa ditindaklanjuti</h2>
+            <h2 data-split class="text-2xl font-extrabold">Rapor yang bisa ditindaklanjuti</h2>
             <ul class="mt-4 space-y-2.5 text-sm text-slate-600 dark:text-slate-400">
                 <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Band score 0–9 untuk kelancaran, kosakata, isi, dan delivery</span></li>
                 <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Kata pengisi ("eh", "ehm") ditandai langsung di transkrip</span></li>
@@ -168,13 +168,13 @@
                 <li class="flex gap-2"><svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Bawa pulang lewat QR code, tanpa perlu akun</span></li>
             </ul>
         </div>
-        <div class="relative overflow-hidden rounded-3xl bg-indigo-50 p-6 text-slate-900 ring-1 ring-indigo-100">
+        <div data-reveal class="relative overflow-hidden rounded-3xl bg-indigo-50 p-6 text-slate-900 ring-1 ring-indigo-100">
             <svg class="pointer-events-none absolute -bottom-6 -right-6 h-40 w-40 text-indigo-200/70" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clip-rule="evenodd"/></svg>
             @if ($online)
-                <h2 class="relative text-2xl font-extrabold">Privasi: yang perlu kamu tahu</h2>
+                <h2 data-split class="relative text-2xl font-extrabold">Privasi: yang perlu kamu tahu</h2>
                 <p class="relative mt-3 text-sm opacity-80">Supaya penguji bisa menjawab dalam sekejap, teks jawabanmu diproses AI cloud (Groq), suara penguji dibuat layanan suara Microsoft, dan browser mengenali ucapanmu. Rekaman dan rapor disimpan di laptop ini. Data tamu dihapus otomatis setelah {{ config('exam.retention_days') }} hari, dan kamu bisa menghapusnya kapan saja dari rapor.</p>
             @else
-                <h2 class="relative text-2xl font-extrabold">Privasi: semua di laptop ini</h2>
+                <h2 data-split class="relative text-2xl font-extrabold">Privasi: semua di laptop ini</h2>
                 <p class="relative mt-3 text-sm opacity-80">Pengenal suara (Whisper), otak AI (Ollama), dan suara penguji (Piper) berjalan di laptop. Suaramu tidak dikirim ke internet. Data tamu dihapus otomatis setelah {{ config('exam.retention_days') }} hari, dan kamu bisa menghapusnya kapan saja dari rapor.</p>
             @endif
             <a href="{{ route('exam.index') }}" class="relative mt-5 inline-block rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-500 dark:bg-slate-900 dark:text-white">Coba sekarang</a>

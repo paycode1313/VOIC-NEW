@@ -18,6 +18,8 @@
                 } catch (e) {}
                 // Booth kiosk (set by the welcome screen): hide account and navigation links.
                 try { if (sessionStorage.getItem('voic_kiosk') === '1') document.documentElement.classList.add('voic-kiosk'); } catch (e) {}
+                // Scroll effects (js/scroll-fx.js) hide [data-split]/[data-reveal] until they animate in: decide before the first paint.
+                if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) document.documentElement.classList.add('voic-fx');
             })();
         </script>
         @vite(['src/css/app.css', 'src/js/app.js'])
