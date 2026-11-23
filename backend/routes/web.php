@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\BoothController;
+use App\Http\Controllers\Web\ClassroomController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\DemoSessionController;
 use App\Http\Controllers\Web\ExamController;
@@ -72,6 +73,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/practice/{practiceSession}', [PracticeSessionController::class, 'show'])->name('practice.show');
     Route::delete('/practice/{practiceSession}', [PracticeSessionController::class, 'destroy'])->name('practice.destroy');
     Route::get('/practice-export-csv', [PracticeSessionController::class, 'exportCsv'])->name('practice.export');
+});
+
+// Mentor dashboard: lecturers create a class, students join with its code and share their reports (read-only).
+Route::middleware(['auth', 'verified'])->prefix('kelas')->name('classrooms.')->controller(ClassroomController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->middleware('throttle:10,1')->name('store');
+    Route::get('/gabung/{code?}', 'joinForm')->name('join');
+    Route::post('/gabung', 'join')->middleware('throttle:20,1')->name('join.store');
+    Route::get('/{classroom}', 'show')->whereNumber('classroom')->name('show');
+    Route::delete('/{classroom}', 'destroy')->whereNumber('classroom')->name('destroy');
+    Route::delete('/{classroom}/keluar', 'leave')->whereNumber('classroom')->name('leave');
+    Route::get('/{classroom}/mahasiswa/{student}', 'member')->whereNumber(['classroom', 'student'])->name('member');
+    Route::delete('/{classroom}/mahasiswa/{student}', 'removeMember')->whereNumber(['classroom', 'student'])->name('member.remove');
 });
 
 Route::middleware('auth')->group(function () {

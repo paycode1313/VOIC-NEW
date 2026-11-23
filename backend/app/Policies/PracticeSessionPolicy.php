@@ -24,7 +24,13 @@ class PracticeSessionPolicy
             return true;
         }
 
-        return $user !== null && $practiceSession->user_id === $user->id;
+        if ($user === null) {
+            return false;
+        }
+
+        // The owner, or the mentor of a class the owner joined (read-only: update and delete stay with the owner).
+        return $practiceSession->user_id === $user->id
+            || ($practiceSession->user !== null && $user->mentors($practiceSession->user));
     }
 
     /**

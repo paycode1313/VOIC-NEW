@@ -35,6 +35,9 @@ menaruh hasil build di `backend/public/build`. Perintah PHP dan Python dijalanka
 - **Belajar dari rapor**: jawaban terbaikmu, versi lebih kuat dari jawaban terlemah (bisa didengarkan), tombol
   **Latih ulang pertanyaan ini** yang membuka sesi coaching untuk satu pertanyaan, dan perbandingan dengan sesi sebelumnya.
 - **Mode booth**: panel operator ber-PIN (`/booth`) dan papan skor (`/booth/papan`).
+- **Kelas untuk dosen** (`/kelas`): dosen, pembimbing, atau biro karier membuat kelas dan membagikan kode/QR. Mahasiswa
+  bergabung dengan persetujuan, lalu dosen melihat band terakhir, perubahan, kriteria terlemah, dan rapor tiap mahasiswa
+  (hanya baca; rekaman suara tetap pribadi, mahasiswa bisa keluar kapan saja). Setelah pull: `php artisan migrate`.
 - **Privasi**: persetujuan peserta dan penghapusan otomatis data tamu setelah `VOIC_RETENTION_DAYS` hari.
 - **API mobile** (`/api/v1`) untuk aplikasi Flutter / React Native di folder `mobile/`.
 

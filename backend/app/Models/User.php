@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -44,6 +45,35 @@ class User extends Authenticatable implements MustVerifyEmail
     public function practiceSessions(): HasMany
     {
         return $this->hasMany(PracticeSession::class);
+    }
+
+    /**
+     * Classes this user created as a mentor.
+     *
+     * @return HasMany<Classroom, $this>
+     */
+    public function ownedClassrooms(): HasMany
+    {
+        return $this->hasMany(Classroom::class, 'owner_id');
+    }
+
+    /**
+     * Classes this user joined as a student (their mentors can see their practice reports).
+     *
+     * @return BelongsToMany<Classroom, $this>
+     */
+    public function joinedClassrooms(): BelongsToMany
+    {
+        return $this->belongsToMany(Classroom::class, 'classroom_members')->withTimestamps();
+    }
+
+    /**
+     * Whether this user mentors a class that the given student joined.
+     */
+    public function mentors(User $student): bool
+    {
+        return $this->id !== $student->id
+            && $this->ownedClassrooms()->whereHas('members', fn ($query) => $query->whereKey($student->id))->exists();
     }
 
     /**
