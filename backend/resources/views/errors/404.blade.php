@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('code', '404')
+@section('mark', '#fde68a')
+@section('title', 'Halamannya tidak ketemu')
+@section('message', 'Mungkin tautannya salah ketik, atau latihannya sudah dihapus. Data tamu memang dihapus otomatis setelah beberapa hari.')

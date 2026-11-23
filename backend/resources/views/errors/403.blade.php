@@ -1,0 +1,5 @@
+@extends('errors.layout')
+@section('code', '403')
+@section('mark', '#fecaca')
+@section('title', 'Halaman ini bukan untukmu')
+@section('message', 'Rapor dan rekaman latihan hanya bisa dibuka oleh pemiliknya. Kalau ini latihanmu, buka dari perangkat atau akun yang sama.')
