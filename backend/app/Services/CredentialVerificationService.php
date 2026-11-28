@@ -3,15 +3,21 @@
 namespace App\Services;
 
 use App\Models\PracticeSession;
+use Illuminate\Support\Carbon;
 
 class CredentialVerificationService
 {
     /**
      * Generate a cryptographic-style unique certificate serial number for a session.
+     *
+     * Built from the stored creation time read as UTC, as the app did when it ran on UTC: the serial on a
+     * printed certificate keeps matching its verification page whatever APP_TIMEZONE is.
      */
     public function generateCertificateSerial(PracticeSession $session): string
     {
-        $hashInput = $session->id.'|'.$session->created_at?->toISOString().'|'.($session->user_id ?? 'guest');
+        $stored = $session->getRawOriginal('created_at');
+        $created = $stored ? Carbon::parse($stored, 'UTC')->toISOString() : '';
+        $hashInput = $session->id.'|'.$created.'|'.($session->user_id ?? 'guest');
         $hash = strtoupper(substr(hash('sha256', $hashInput), 0, 10));
 
         return "VOIC-CERT-{$hash}";
