@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\PublicUrl;
 use Database\Factories\PracticeSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -125,7 +126,7 @@ class PracticeSession extends Model
     {
         $signed = URL::temporarySignedRoute('exam.shared', now()->addDays($days), ['practiceSession' => $this], absolute: false);
 
-        return rtrim((string) (config('exam.public_url') ?: url('/')), '/').$signed;
+        return PublicUrl::base().$signed;
     }
 
     /**

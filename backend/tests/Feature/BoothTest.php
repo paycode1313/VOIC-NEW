@@ -7,6 +7,7 @@ use App\Services\Exam\ExaminerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class BoothTest extends TestCase
@@ -32,6 +33,22 @@ class BoothTest extends TestCase
         $this->get(route('booth.index'))->assertOk()
             ->assertSee('Pengunjung berikutnya')
             ->assertSee('http://192.168.1.50:8000/latihan');
+    }
+
+    /**
+     * Without VOIC_PUBLIC_URL every QR points at this laptop (localhost), which no phone can open:
+     * the operator is told on their own page, never on a visitor's report.
+     */
+    public function test_the_operator_is_warned_when_phones_cannot_reach_the_qr_codes(): void
+    {
+        $this->withSession(['booth_unlocked' => true])->get(route('booth.index'))->assertOk()->assertDontSee('VOIC_PUBLIC_URL');
+
+        config(['exam.public_url' => null]);
+        URL::forceRootUrl('http://127.0.0.1:8000');
+
+        $this->withSession(['booth_unlocked' => true])->get(route('booth.index'))->assertOk()
+            ->assertSee('QR belum bisa dibuka dari HP')
+            ->assertSee('VOIC_PUBLIC_URL');
     }
 
     public function test_operator_page_is_disabled_without_a_configured_pin(): void

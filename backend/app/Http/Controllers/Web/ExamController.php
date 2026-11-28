@@ -15,6 +15,7 @@ use App\Services\Exam\ExamFlowService;
 use App\Services\Exam\ExaminerService;
 use App\Services\Exam\ExamProgressService;
 use App\Services\Exam\ExamReportService;
+use App\Services\PublicUrl;
 use App\Services\Study\UserStudy;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
@@ -481,6 +482,7 @@ class ExamController extends Controller
                 'canManage' => $canManage,
                 'shared' => $shared,
                 'shareUrl' => $practiceSession->shareUrl(),
+                'phoneQr' => PublicUrl::reachableFromPhone(),
             ]);
         }
 
@@ -498,6 +500,7 @@ class ExamController extends Controller
             'canManage' => $canManage,
             'shared' => $shared,
             'shareUrl' => $practiceSession->shareUrl(),
+            'phoneQr' => PublicUrl::reachableFromPhone(),
             'drill' => fn (string $criterion) => app(ExamProgressService::class)->drillUrl($practiceSession->exam_mode, $criterion),
             'previousBand' => $this->previousBand($practiceSession),
             'study' => $this->studyState($practiceSession, $canManage && ! $shared),

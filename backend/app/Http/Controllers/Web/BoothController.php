@@ -7,6 +7,7 @@ use App\Models\PracticeSession;
 use App\Models\SessionMessage;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExaminerService;
+use App\Services\PublicUrl;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -42,7 +43,8 @@ class BoothController extends Controller
                 'average' => $finished->isEmpty() ? null : round($finished->avg(fn ($session) => $session->feedback_notes['exam_report']['overall_band']), 1),
             ],
             'leaders' => $this->leaders($finished),
-            'startUrl' => rtrim((string) (config('exam.public_url') ?: url('/')), '/').'/latihan',
+            'startUrl' => PublicUrl::to('latihan'),
+            'phoneReachable' => PublicUrl::reachableFromPhone(),
         ]);
     }
 
@@ -60,7 +62,7 @@ class BoothController extends Controller
 
         return view('booth.board', [
             'leaders' => $this->leaders($finished, 10),
-            'startUrl' => rtrim((string) (config('exam.public_url') ?: url('/')), '/').'/latihan',
+            'startUrl' => PublicUrl::to('latihan'),
         ]);
     }
 
@@ -73,7 +75,7 @@ class BoothController extends Controller
         return view('booth.attract', [
             'modes' => $this->blueprint->modes(),
             'today' => PracticeSession::query()->takenByPeople()->whereNotNull('exam_mode')->whereDate('created_at', today())->count(),
-            'startUrl' => rtrim((string) (config('exam.public_url') ?: url('/')), '/').'/latihan',
+            'startUrl' => PublicUrl::to('latihan'),
         ]);
     }
 

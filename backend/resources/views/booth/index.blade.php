@@ -14,6 +14,13 @@
             </div>
         </div>
 
+        @unless ($phoneReachable)
+            <div class="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200 dark:bg-amber-400/10 dark:text-amber-200 dark:ring-amber-400/20">
+                <p class="font-bold">QR belum bisa dibuka dari HP</p>
+                <p class="mt-1">Semua QR (rapor pengunjung dan "Mulai dari HP") mengarah ke <span class="font-mono">{{ $startUrl }}</span>, yang hanya jalan di laptop ini. Isi <span class="font-mono">VOIC_PUBLIC_URL</span> di <span class="font-mono">backend/.env</span> dengan IP LAN laptop (mis. <span class="font-mono">http://192.168.1.50:8000</span>) atau alamat tunnel, lalu jalankan ulang VOIC. Sampai saat itu rapor pengunjung tampil tanpa QR.</p>
+            </div>
+        @endunless
+
         <div class="mt-6 grid gap-4 md:grid-cols-[1.4fr_1fr]">
             {{-- Next visitor: the one button operators press most --}}
             <form method="POST" action="{{ route('booth.next') }}" class="rounded-3xl bg-indigo-50 p-6 text-slate-900 ring-1 ring-indigo-100">

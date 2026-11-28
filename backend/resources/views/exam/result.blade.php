@@ -22,7 +22,7 @@
         <section class="voic-rise relative isolate overflow-hidden rounded-[2rem] bg-white p-6 text-slate-900 shadow-sm sm:p-8" style="--glow: {{ $glow }}">
             <div class="pointer-events-none absolute inset-0 -z-10 opacity-50 [background-image:repeating-linear-gradient(-45deg,rgb(var(--glow)/0.07)_0_2px,transparent_2px_16px)] [mask-image:linear-gradient(to_left,black,transparent_60%)]"></div>
             <div class="pointer-events-none absolute inset-0 -z-10 [background:radial-gradient(50%_90%_at_15%_50%,rgb(var(--glow)/0.45),transparent_70%)]"></div>
-            <div @class(["grid gap-8 md:grid-cols-[auto_1fr] md:items-center", "lg:grid-cols-[auto_1fr_auto]" => ! $shared])>
+            <div @class(["grid gap-8 md:grid-cols-[auto_1fr] md:items-center", "lg:grid-cols-[auto_1fr_auto]" => ! $shared && $phoneQr])>
                 <div class="flex items-center justify-center gap-4">
                     <div class="relative flex h-36 w-36 items-center justify-center">
                         <svg class="absolute inset-0 -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
@@ -87,8 +87,8 @@
                         </button>
                     </div>
                 </div>
-                @unless ($shared)
-                    {{-- Take it home: QR to a signed, read-only copy of this report --}}
+                @if (! $shared && $phoneQr)
+                    {{-- Take it home: QR to a signed, read-only copy of this report (hidden while it would point at localhost) --}}
                     <div class="flex flex-col items-center gap-3 rounded-2xl bg-slate-900/[0.06] p-4 text-center ring-1 ring-slate-900/10 md:col-span-2 md:flex-row md:text-left lg:col-span-1 lg:flex-col lg:text-center">
                         <div id="report-qr" data-url="{{ $shareUrl }}" class="h-40 w-40 shrink-0 rounded-2xl bg-white p-2 [&_svg]:h-full [&_svg]:w-full" aria-label="{{ $isEn ? 'QR code to this report' : 'QR code rapor ini' }}"></div>
                         <div>
@@ -99,29 +99,20 @@
                             <p class="mt-1 max-w-[12rem] text-xs text-slate-600 md:max-w-none lg:max-w-[12rem]">{{ $isEn ? 'Scan with your phone camera. Works for 7 days, no account.' : 'Pindai pakai kamera HP. Berlaku 7 hari, tanpa akun.' }}</p>
                         </div>
                     </div>
-                @endunless
+                @endif
             </div>
         </section>
 
         @unless ($shared)
-            @if (str_contains($shareUrl, '://localhost') || str_contains($shareUrl, '://127.0.0.1') || $canManage)
-            <section class="mt-4 flex flex-col items-center gap-2 rounded-3xl border border-black/5 bg-white px-5 py-3 text-center dark:border-white/10 dark:bg-white/[0.03] sm:flex-row sm:justify-between sm:text-left">
-                <div>
-                    @if (str_contains($shareUrl, '://localhost') || str_contains($shareUrl, '://127.0.0.1'))
-                        <p class="rounded-lg bg-amber-50 px-2 py-1 text-xs text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
-                            {{ $isEn ? 'Operator: set VOIC_PUBLIC_URL (LAN IP or tunnel) so phones can open this.' : 'Operator: isi VOIC_PUBLIC_URL di .env (IP LAN atau tunnel) agar QR bisa dibuka di HP.' }}
-                        </p>
-                    @endif
-                    @if ($canManage)
-                        <form method="POST" action="{{ route('exam.destroy', $session) }}" class="mt-1"
-                              onsubmit="return confirm('{{ $isEn ? 'Delete this session, transcript and recordings permanently?' : 'Hapus sesi, transkrip, dan rekaman ini secara permanen?' }}')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="text-xs font-semibold text-rose-600 hover:underline">{{ $isEn ? 'Delete my data' : 'Hapus data saya' }}</button>
-                        </form>
-                    @endif
-                </div>
-            </section>
+            @if ($canManage)
+                <section class="mt-4 flex flex-col items-center gap-2 rounded-3xl border border-black/5 bg-white px-5 py-3 text-center dark:border-white/10 dark:bg-white/[0.03] sm:flex-row sm:justify-between sm:text-left">
+                    <form method="POST" action="{{ route('exam.destroy', $session) }}"
+                          onsubmit="return confirm('{{ $isEn ? 'Delete this session, transcript and recordings permanently?' : 'Hapus sesi, transkrip, dan rekaman ini secara permanen?' }}')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-xs font-semibold text-rose-600 hover:underline">{{ $isEn ? 'Delete my data' : 'Hapus data saya' }}</button>
+                    </form>
+                </section>
             @endif
             <script src="{{ asset('js/qrcode.min.js') }}"></script>
             <script>

@@ -51,10 +51,16 @@
 
         @unless ($shared)
             <section class="mt-4 flex flex-col items-center gap-5 rounded-3xl border border-black/5 bg-white p-5 dark:border-white/10 dark:bg-white/[0.03] sm:flex-row">
-                <div id="report-qr" data-url="{{ $shareUrl }}" class="h-36 w-36 shrink-0 rounded-xl bg-white p-1.5 [&_svg]:h-full [&_svg]:w-full" aria-label="{{ $isEn ? 'QR code to these notes' : 'QR code catatan ini' }}"></div>
+                @if ($phoneQr)
+                    <div id="report-qr" data-url="{{ $shareUrl }}" class="h-36 w-36 shrink-0 rounded-xl bg-white p-1.5 [&_svg]:h-full [&_svg]:w-full" aria-label="{{ $isEn ? 'QR code to these notes' : 'QR code catatan ini' }}"></div>
+                @endif
                 <div class="flex-1 text-center sm:text-left">
-                    <p class="font-bold">{{ $isEn ? 'Take these notes home' : 'Bawa pulang catatan ini' }}</p>
-                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ $isEn ? 'Scan with your phone. Valid for 7 days.' : 'Pindai dengan kamera HP. Berlaku 7 hari.' }}</p>
+                    @if ($phoneQr)
+                        <p class="font-bold">{{ $isEn ? 'Take these notes home' : 'Bawa pulang catatan ini' }}</p>
+                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ $isEn ? 'Scan with your phone. Valid for 7 days.' : 'Pindai dengan kamera HP. Berlaku 7 hari.' }}</p>
+                    @else
+                        <p class="font-bold">{{ $isEn ? 'Keep practising' : 'Lanjut latihan' }}</p>
+                    @endif
                     <div class="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
                         <a href="{{ route('exam.setup', ['mode' => $modeKey] + ($isEn ? ['lang' => 'en'] : [])) }}" class="rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white dark:bg-white dark:text-slate-900">{{ $isEn ? 'Chat again' : 'Ngobrol lagi' }}</a>
                         <a href="{{ route('exam.setup', ['mode' => $modeKey, 'type' => 'exam'] + ($isEn ? ['lang' => 'en'] : [])) }}" class="rounded-full border border-black/10 px-4 py-2 text-sm font-semibold hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10">{{ $isEn ? 'Try the mock exam' : 'Coba simulasi ujian' }}</a>

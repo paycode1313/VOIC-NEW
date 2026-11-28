@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
@@ -574,6 +575,24 @@ class ExamFlowTest extends TestCase
 
         // Tampering with the link is rejected.
         $this->get(str_replace('expires=', 'expires=1', $path))->assertForbidden();
+    }
+
+    /**
+     * A QR to localhost cannot open on a phone: the visitor gets no broken QR and no operator instructions.
+     */
+    public function test_a_report_hides_the_phone_qr_when_the_address_only_works_on_this_laptop(): void
+    {
+        $this->offline();
+        config(['exam.public_url' => null]);
+        URL::forceRootUrl('http://127.0.0.1:8000');
+        $session = $this->finishedSession();
+
+        $this->get(route('exam.result', $session))->assertOk()
+            ->assertSee('Masukan per jawaban')
+            ->assertSee('Hapus data saya')
+            ->assertDontSee('Bawa pulang rapormu')
+            ->assertDontSee('id="report-qr"', false)
+            ->assertDontSee('VOIC_PUBLIC_URL');
     }
 
     public function test_candidate_can_delete_their_session(): void
