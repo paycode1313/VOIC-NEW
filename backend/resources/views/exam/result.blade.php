@@ -104,16 +104,6 @@
         </section>
 
         @unless ($shared)
-            @if ($canManage)
-                <section class="mt-4 flex flex-col items-center gap-2 rounded-3xl border border-black/5 bg-white px-5 py-3 text-center dark:border-white/10 dark:bg-white/[0.03] sm:flex-row sm:justify-between sm:text-left">
-                    <form method="POST" action="{{ route('exam.destroy', $session) }}"
-                          onsubmit="return confirm('{{ $isEn ? 'Delete this session, transcript and recordings permanently?' : 'Hapus sesi, transkrip, dan rekaman ini secara permanen?' }}')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-xs font-semibold text-rose-600 hover:underline">{{ $isEn ? 'Delete my data' : 'Hapus data saya' }}</button>
-                    </form>
-                </section>
-            @endif
             <script src="{{ asset('js/qrcode.min.js') }}"></script>
             <script>
                 (function () {
@@ -347,5 +337,15 @@
                 @endforeach
             </div>
         </details>
+
+        @if ($canManage && ! $shared)
+            {{-- Privacy: the candidate can remove the session, transcript and recordings at any time. --}}
+            <form method="POST" action="{{ route('exam.destroy', $session) }}" class="mt-6 text-center print:hidden"
+                  onsubmit="return confirm('{{ $isEn ? 'Delete this session, transcript and recordings permanently?' : 'Hapus sesi, transkrip, dan rekaman ini secara permanen?' }}')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="text-xs font-semibold text-rose-600 hover:underline">{{ $isEn ? 'Delete my data (session, transcript and recordings)' : 'Hapus data saya (sesi, transkrip, dan rekaman)' }}</button>
+            </form>
+        @endif
     </div>
 </x-exam-layout>
