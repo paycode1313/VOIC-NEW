@@ -684,6 +684,32 @@ class ExamFlowTest extends TestCase
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/exam/respond') && str_contains($request['messages'][0]['content'], 'Peserta sedang melatih menjawab dengan poin jelas'));
     }
 
+    /**
+     * After a dropped connection the room asks where the exam stands, so it never sends an answer twice
+     * (the examiner may already have moved on) and never loses one (it resends when nothing arrived).
+     */
+    public function test_the_room_can_ask_where_the_exam_stands_after_a_dropped_connection(): void
+    {
+        $this->offline();
+        $session = $this->startExam('sidang', [1]);
+        $opening = $session->messages()->where('sender', 'ai')->latest('id')->value('id');
+
+        $this->getJson(route('exam.state', $session))->assertOk()
+            ->assertJsonPath('phase', ExamFlowService::PHASE_ANSWERING)
+            ->assertJsonPath('examiner_message.id', $opening);
+
+        $this->postJson(route('exam.answer', $session), ['answer' => 'Penelitian saya memakai YOLOv8 untuk mendeteksi cacat kain.', 'duration_seconds' => 9, 'timestamp_seconds' => 9])->assertOk();
+
+        $latest = $session->messages()->where('sender', 'ai')->latest('id')->first();
+        $this->assertNotSame($opening, $latest->id);
+        $this->getJson(route('exam.state', $session))->assertOk()
+            ->assertJsonPath('examiner_message.id', $latest->id)
+            ->assertJsonPath('examiner_message.text', $latest->message);
+
+        $this->flushSession();
+        $this->getJson(route('exam.state', $session))->assertForbidden();
+    }
+
     public function test_other_visitors_cannot_answer_someone_elses_session(): void
     {
         $this->offline();

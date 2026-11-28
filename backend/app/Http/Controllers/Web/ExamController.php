@@ -341,6 +341,20 @@ class ExamController extends Controller
     }
 
     /**
+     * Where the exam stands (same shape as the answer's "done" event). After a dropped connection the room
+     * compares the examiner's latest message with its own: moved on means the answer arrived, so it is not sent twice.
+     */
+    public function state(PracticeSession $practiceSession, ExamFlowService $flow): JsonResponse
+    {
+        abort_unless($practiceSession->isExam(), 404);
+        Gate::authorize('update', $practiceSession);
+
+        $lastMessage = $practiceSession->messages()->where('sender', 'ai')->latest('id')->first();
+
+        return response()->json($flow->payload($practiceSession, $lastMessage));
+    }
+
+    /**
      * Short voiced reactions ("Hmm…", "Oke, oke.") the room plays the moment the candidate stops
      * talking, so the examiner reacts instantly while the real reply is still being prepared.
      */

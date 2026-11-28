@@ -64,6 +64,8 @@ export default function examRoom(config) {
         countdownTimer: null,
         notes: '',
         errorMessage: '',
+        // The answer whose turn failed, kept so "Send again" resends it (recording included).
+        failedForm: null,
         hint: '',
         micLevel: 0,
         micReady: false,
@@ -758,13 +760,14 @@ export default function examRoom(config) {
                 return token === this.playToken;
             })();
 
+            let sawRetry = false;
             try {
                 const response = await fetch(this.config.streamUrl, {
                     method: 'POST',
                     headers: { Accept: 'application/x-ndjson', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                     body: form,
                 });
-                if (!response.ok || !response.body) throw new Error('HTTP ' + response.status);
+                if (!response.ok || !response.body) throw Object.assign(new Error('HTTP ' + response.status), { httpStatus: response.status });
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
@@ -794,6 +797,7 @@ export default function examRoom(config) {
                         } else if (event.type === 'done') {
                             done = event.state;
                         } else if (event.type === 'retry') {
+                            sawRetry = true;
                             this.hint = event.message;
                         } else if (event.type === 'error') {
                             throw new Error(event.code || event.message);
@@ -810,10 +814,7 @@ export default function examRoom(config) {
                     this.status = 'listening';
                     return this.startListening();
                 }
-                this.errorMessage = this.t('Koneksi terputus. Coba kirim ulang jawabanmu.', 'Connection lost. Please try sending again.');
-                this.typed = typedText;
-                this.voiceMode = 'typing';
-                return;
+                return this.recover(form, typedText, e.httpStatus);
             }
 
             finished = true;
@@ -821,7 +822,9 @@ export default function examRoom(config) {
 
             if (!done) {
                 // "retry": nothing usable was heard; listen again without changing the exam.
-                return this.startListening(this.state.phase === 'cue_card');
+                if (sawRetry) return this.startListening(this.state.phase === 'cue_card');
+                // The stream ended without its last event (server or connection died half-way).
+                return this.recover(form, typedText, null);
             }
 
             this.state = done;
@@ -831,11 +834,67 @@ export default function examRoom(config) {
             if (completedNaturally) this.afterExaminerTurn();
         },
 
-        retry() {
+        /**
+         * A turn failed half-way. Ask the server where the exam stands before doing anything: if the
+         * examiner already moved on, the answer arrived and is never sent twice; otherwise the same answer
+         * (the recording too) is kept for "Send again", and the candidate keeps answering by voice.
+         */
+        async recover(form, typedText, httpStatus) {
+            this.stopVoice();
+            this.status = 'error';
+            if (httpStatus === 409) return this.finish(); // the exam had already ended: go to the report
+            if (httpStatus === 419) {
+                this.failedForm = null;
+                this.errorMessage = this.t('Halaman ini terlalu lama terbuka. Muat ulang halaman untuk melanjutkan.', 'This page has been open too long. Reload it to continue.');
+                return;
+            }
+            if (await this.adoptServerTurn()) return;
+
+            this.failedForm = form;
+            this.typed = typedText;
+            this.errorMessage = this.t('Koneksi terputus. Jawabanmu masih tersimpan, ketuk "Kirim ulang".', 'Connection lost. Your answer is kept, tap "Send again".');
+        },
+
+        /**
+         * True (and the room carries on with the examiner's new turn) when the server already answered.
+         */
+        async adoptServerTurn() {
+            let fresh = null;
+            try {
+                const response = await fetch(this.config.stateUrl, { headers: { Accept: 'application/json' } });
+                if (response.ok) fresh = await response.json();
+            } catch (e) { /* still offline */ }
+
+            const message = fresh?.examiner_message;
+            if (!message || message.id === this.state?.examiner_message?.id) return false;
+
+            this.failedForm = null;
             this.errorMessage = '';
-            this.status = 'listening';
-            this.answerStartedAt = Date.now();
-            this.submitAnswer();
+            this.state = fresh;
+            if (typeof fresh.remaining_seconds === 'number') this.coachRemaining = fresh.remaining_seconds;
+            const last = this.transcript[this.transcript.length - 1];
+            if (last && last.sender === 'ai' && String(last.id).startsWith('a')) last.message = message.text;
+            else this.transcript.push({ id: message.id, sender: 'ai', message: message.text, exam_part: fresh.part });
+            if (await this.playSentences([{ text: message.text, audio_url: message.audio_url }])) this.afterExaminerTurn();
+
+            return true;
+        },
+
+        async retry() {
+            this.errorMessage = '';
+            const form = this.failedForm;
+            if (!form) {
+                this.status = 'listening';
+                this.answerStartedAt = Date.now();
+                return this.submitAnswer();
+            }
+
+            this.status = 'thinking';
+            if (await this.adoptServerTurn()) return;
+            this.failedForm = null;
+            // Typed answers can be corrected before sending again.
+            if (this.typingMode && this.typed.trim()) form.set('answer', this.typed.trim());
+            await this.streamTurn(form, form.get('answer') || '');
         },
 
         async finish() {

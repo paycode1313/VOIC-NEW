@@ -13,6 +13,7 @@
         'finishUrl' => route('exam.finish', $session),
         'statusUrl' => route('exam.status'),
         'streamUrl' => route('exam.answer.stream', $session),
+        'stateUrl' => route('exam.state', $session),
         'backchannelUrl' => route('exam.backchannels', $session),
         'avatar' => [
             'image' => asset($mode['examiner']['avatar']),
@@ -328,7 +329,12 @@
 
             {{-- Messages and typing box --}}
             <div class="mx-auto w-full max-w-3xl shrink-0 px-3 pt-3 sm:px-5">
-                <p x-show="errorMessage" x-cloak class="mb-2 rounded-xl bg-rose-500/15 px-3 py-2 text-center text-sm text-rose-700" x-text="errorMessage"></p>
+                <div x-show="errorMessage" x-cloak class="mb-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-xl bg-rose-500/15 px-3 py-2 text-center text-sm text-rose-700" role="alert">
+                    <span x-text="errorMessage"></span>
+                    {{-- Voice answers: the kept recording is sent again (typed answers use the Send button below). --}}
+                    <button type="button" x-show="failedForm && !typingMode" @click="retry()"
+                            class="rounded-full bg-rose-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-rose-500">{{ $isEn ? 'Send again' : 'Kirim ulang' }}</button>
+                </div>
                 <p x-show="!errorMessage && !typingMode && !liveAnswer" class="text-center text-xs text-slate-600"
                    x-text="hint || (status === 'long_turn' ? t('Ngomong sampai selesai, lalu ketuk mic', 'Talk until you are done, then tap the mic')
                         : status === 'listening' ? (holdToTalk
