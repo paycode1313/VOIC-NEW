@@ -37,7 +37,7 @@ Route::prefix('v1')->group(function () {
 
     // Public Authentication & Reference Endpoints
     Route::post('/auth/login', [AuthController::class, 'login'])->name('api.v1.auth.login');
-    Route::post('/auth/register', [AuthController::class, 'register'])->name('api.v1.auth.register');
+    Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1')->name('api.v1.auth.register');
     Route::get('/roles', [AiRoleController::class, 'index'])->name('api.v1.roles.index');
     Route::get('/exam/modes', [ExamController::class, 'modes'])->name('api.v1.exam.modes');
     Route::get('/exam/status', [ExamController::class, 'status'])->middleware('throttle:30,1')->name('api.v1.exam.status');
