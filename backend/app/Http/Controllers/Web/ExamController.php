@@ -13,6 +13,7 @@ use App\Models\StudySurvey;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExamFlowService;
 use App\Services\Exam\ExaminerService;
+use App\Services\Exam\ExaminerVoice;
 use App\Services\Exam\ExamProgressService;
 use App\Services\Exam\ExamReportService;
 use App\Services\PublicUrl;
@@ -222,7 +223,7 @@ class ExamController extends Controller
      *
      * Events: transcript, sentence (text + audio_url), done (exam state), retry, error.
      */
-    public function answerStream(ExamStreamAnswerRequest $request, PracticeSession $practiceSession, ExamFlowService $flow, ExaminerService $examiner): StreamedResponse|JsonResponse
+    public function answerStream(ExamStreamAnswerRequest $request, PracticeSession $practiceSession, ExamFlowService $flow, ExaminerVoice $voice): StreamedResponse|JsonResponse
     {
         abort_unless($practiceSession->isExam(), 404);
 
@@ -241,7 +242,7 @@ class ExamController extends Controller
         );
         $audioPath = $pending ? Storage::disk('local')->path($pending) : null;
 
-        return response()->stream(function () use ($request, $practiceSession, $flow, $examiner, $audioPath, $pending, $typed, $state) {
+        return response()->stream(function () use ($request, $practiceSession, $flow, $voice, $audioPath, $pending, $typed, $state) {
             // Latency per turn (ms since the answer arrived), for voic:latency and the pitch deck.
             $startedAt = hrtime(true);
             $elapsed = fn (): int => (int) round((hrtime(true) - $startedAt) / 1e6);
@@ -263,7 +264,7 @@ class ExamController extends Controller
 
             $answer = $typed;
             if ($audioPath !== null && $answer === '') {
-                $transcript = $examiner->transcribe($audioPath, $state['language'] ?? 'id', $state['topic'] ?? null);
+                $transcript = $voice->transcribe($audioPath, $state['language'] ?? 'id', $state['topic'] ?? null);
                 if ($transcript === null) {
                     Storage::disk('local')->delete($pending);
                     $send(['type' => 'error', 'code' => 'stt_unavailable', 'message' => 'Pengenal suara lokal tidak aktif.']);
@@ -358,7 +359,7 @@ class ExamController extends Controller
      * Short voiced reactions ("Hmm…", "Oke, oke.") the room plays the moment the candidate stops
      * talking, so the examiner reacts instantly while the real reply is still being prepared.
      */
-    public function backchannels(PracticeSession $practiceSession, ExaminerService $examiner): JsonResponse
+    public function backchannels(PracticeSession $practiceSession, ExaminerVoice $voice): JsonResponse
     {
         abort_unless($practiceSession->isExam(), 404);
         Gate::authorize('update', $practiceSession);
@@ -366,7 +367,7 @@ class ExamController extends Controller
         $roleType = (string) ($this->blueprint->mode($practiceSession->exam_mode)['role_type'] ?? 'dosen_penguji');
         $language = (string) ($practiceSession->exam_state['language'] ?? 'id');
 
-        return response()->json(['clips' => $examiner->backchannels($roleType, $language)]);
+        return response()->json(['clips' => $voice->backchannels($roleType, $language)]);
     }
 
     /**

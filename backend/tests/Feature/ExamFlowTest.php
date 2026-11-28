@@ -6,6 +6,7 @@ use App\Models\PracticeSession;
 use App\Models\User;
 use App\Services\Exam\ExamFlowService;
 use App\Services\Exam\ExaminerService;
+use App\Services\Exam\ExaminerVoice;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -1111,7 +1112,7 @@ class ExamFlowTest extends TestCase
         $this->get(route('exam.room', $session))->assertOk()->assertSee('reaksi', false);
 
         $clips = $this->getJson(route('exam.backchannels', $session))->assertOk()->json('clips');
-        $this->assertCount(count(ExaminerService::BACKCHANNELS['investor']['id']), $clips);
+        $this->assertCount(count(ExaminerVoice::BACKCHANNELS['investor']['id']), $clips);
         $this->assertSame('data:audio/wav;base64,UklGRg==', $clips[0]);
         Http::assertSent(fn ($request) => str_ends_with($request->url(), '/tts') && $request['text'] === 'Oke, oke.' && $request['role_type'] === 'investor');
 

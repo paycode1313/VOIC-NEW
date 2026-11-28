@@ -52,6 +52,7 @@ class ExamFlowService
         protected ExamBlueprint $blueprint,
         protected ExaminerService $examiner,
         protected SpeakingAnalyzer $analyzer,
+        protected ExaminerVoice $voice,
     ) {}
 
     /**
@@ -117,7 +118,7 @@ class ExamFlowService
 
         $session->forceFill(['exam_state' => $state])->save();
 
-        $audioUrl = $this->examiner->speak($opening, $definition['role_type'], $language);
+        $audioUrl = $this->voice->speak($opening, $definition['role_type'], $language);
         $message = $this->recordExaminerMessage($session, $opening, $audioUrl, $state, 'opening');
         $this->primeModel($session);
 
@@ -165,7 +166,7 @@ class ExamFlowService
 
         $session->forceFill(['exam_state' => $state])->save();
 
-        $audioUrl = $this->examiner->speak($opening, $definition['role_type'], $language);
+        $audioUrl = $this->voice->speak($opening, $definition['role_type'], $language);
         $message = $this->recordExaminerMessage($session, $opening, $audioUrl, $state, 'opening');
         $this->primeModel($session);
 

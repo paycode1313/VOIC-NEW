@@ -9,6 +9,7 @@ use App\Models\SessionMessage;
 use App\Services\Exam\ExamBlueprint;
 use App\Services\Exam\ExamFlowService;
 use App\Services\Exam\ExaminerService;
+use App\Services\Exam\ExaminerVoice;
 use App\Services\Exam\ExamReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -114,7 +115,7 @@ class ExamController extends Controller
     /**
      * Send one answer (text, or a recording to transcribe via Whisper) and get the examiner's turn.
      */
-    public function answer(Request $request, PracticeSession $practiceSession, ExamFlowService $flow, ExaminerService $examiner): JsonResponse
+    public function answer(Request $request, PracticeSession $practiceSession, ExamFlowService $flow, ExaminerVoice $voice): JsonResponse
     {
         $this->authorizeOwner($request, $practiceSession);
 
@@ -142,7 +143,7 @@ class ExamController extends Controller
             $state = $practiceSession->exam_state;
             $audioFile = $request->file('audio');
             $originalName = $audioFile->getClientOriginalName() ?: ('answer.'.($audioFile->getClientOriginalExtension() ?: 'm4a'));
-            $result = $examiner->transcribe($audioFile->getRealPath(), $state['language'] ?? 'id', $state['topic'] ?? null, $originalName);
+            $result = $voice->transcribe($audioFile->getRealPath(), $state['language'] ?? 'id', $state['topic'] ?? null, $originalName);
             if ($result === null) {
                 return response()->json(['success' => false, 'code' => 'stt_unavailable', 'message' => 'Pengenal suara tidak aktif. Pastikan GROQ_API_KEY terisi atau AI service lokal berjalan.'], 503);
             }
@@ -214,13 +215,13 @@ class ExamController extends Controller
     /**
      * Short voiced reactions ("Hmm…", "Oke, oke.") to play the moment the candidate stops talking.
      */
-    public function backchannels(Request $request, PracticeSession $practiceSession, ExaminerService $examiner): JsonResponse
+    public function backchannels(Request $request, PracticeSession $practiceSession, ExaminerVoice $voice): JsonResponse
     {
         $this->authorizeOwner($request, $practiceSession);
 
         $roleType = (string) ($this->blueprint->mode($practiceSession->exam_mode)['role_type'] ?? 'dosen_penguji');
         $language = (string) ($practiceSession->exam_state['language'] ?? 'id');
-        $clips = array_map(fn (string $clip): string => str_starts_with($clip, '/') ? url($clip) : $clip, $examiner->backchannels($roleType, $language));
+        $clips = array_map(fn (string $clip): string => str_starts_with($clip, '/') ? url($clip) : $clip, $voice->backchannels($roleType, $language));
 
         return response()->json(['success' => true, 'clips' => array_values($clips)]);
     }
