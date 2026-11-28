@@ -7,6 +7,7 @@ use App\Models\PracticeSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PracticeHistoryTest extends TestCase
@@ -157,16 +158,20 @@ class PracticeHistoryTest extends TestCase
      */
     public function test_user_can_delete_own_session(): void
     {
+        Storage::fake('local');
         $user = User::factory()->create();
         $session = PracticeSession::factory()->create([
             'user_id' => $user->id,
         ]);
+        Storage::disk('local')->put($session->recordingsDirectory().'/1.webm', 'audio');
 
         $response = $this->actingAs($user)->deleteJson(route('practice.destroy', $session));
 
         $response->assertOk();
         $response->assertJson(['success' => true]);
         $this->assertDatabaseMissing('practice_sessions', ['id' => $session->id]);
+        // Deleting from the history removes the recorded answers too, like deleting from the report.
+        Storage::disk('local')->assertMissing($session->recordingsDirectory());
     }
 
     /**

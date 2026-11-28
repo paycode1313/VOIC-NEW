@@ -474,7 +474,7 @@ class ExamController extends Controller
         abort_unless($practiceSession->isExam(), 404);
         Gate::authorize('update', $practiceSession);
 
-        $practiceSession->deleteWithRecordings();
+        $practiceSession->delete();
 
         return redirect()->route('exam.index')->with('status', 'Data sesi latihan sudah dihapus.');
     }

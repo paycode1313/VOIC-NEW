@@ -289,7 +289,7 @@ class ExamController extends Controller
     {
         $this->authorizeOwner($request, $practiceSession);
 
-        $practiceSession->deleteWithRecordings();
+        $practiceSession->delete();
 
         return response()->json(['success' => true, 'message' => 'Data sesi latihan sudah dihapus.']);
     }

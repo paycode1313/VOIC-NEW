@@ -126,7 +126,7 @@ class MeasureLatency extends Command
                 $this->line(sprintf('  giliran %d · baca prompt %s · suara pertama %s · selesai %s · %s', $i + 1, $this->seconds($row['llm_first_token_ms'] ?? null), $this->seconds($row['first_sound_ms'] ?? $row['first_sentence_ms']), $this->seconds($row['total_ms']), $row['engine']));
             }
         } finally {
-            $session->deleteWithRecordings();
+            $session->delete();
         }
 
         return $rows;

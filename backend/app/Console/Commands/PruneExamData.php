@@ -28,7 +28,7 @@ class PruneExamData extends Command
             ->where('created_at', '<', $cutoff)
             ->chunkById(100, function ($sessions) use (&$guestSessions) {
                 foreach ($sessions as $session) {
-                    $session->deleteWithRecordings();
+                    $session->delete();
                     $guestSessions++;
                 }
             });

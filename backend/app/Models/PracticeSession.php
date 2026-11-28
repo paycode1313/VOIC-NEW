@@ -155,12 +155,12 @@ class PracticeSession extends Model
     }
 
     /**
-     * Delete the session, its messages and any recorded answer audio.
+     * However a session is deleted (report, history, API, prune), its recorded answers go with it.
+     * Messages go through the database cascade; an account deletion is handled in User::booted().
      */
-    public function deleteWithRecordings(): void
+    protected static function booted(): void
     {
-        Storage::disk('local')->deleteDirectory($this->recordingsDirectory());
-        $this->delete();
+        static::deleted(fn (PracticeSession $session) => Storage::disk('local')->deleteDirectory($session->recordingsDirectory()));
     }
 
     /**
