@@ -679,6 +679,27 @@ class ExamFlowTest extends TestCase
         $this->get(route('exam.room', $session))->assertForbidden();
     }
 
+    /**
+     * Session ids are sequential: a guest's report (name, campus, transcript) must not open for the
+     * next visitor or for anyone guessing /latihan/sesi/{id}/hasil. The signed QR link still works.
+     */
+    public function test_a_guest_report_stays_private_to_the_visitor_who_took_it(): void
+    {
+        $this->offline();
+        $session = $this->finishedSession();
+        $this->get(route('exam.result', $session))->assertOk();
+
+        $this->flushSession();
+        $this->get(route('exam.result', $session))->assertForbidden();
+        $this->postJson(route('exam.improvements', $session))->assertForbidden();
+        $this->get(route('demo.show', $session))->assertForbidden();
+
+        $this->actingAs(User::factory()->create());
+        $this->get(route('exam.result', $session))->assertForbidden();
+
+        $this->get(substr($session->shareUrl(), strlen(rtrim(url('/'), '/'))))->assertOk();
+    }
+
     public function test_the_report_compares_the_band_with_the_previous_session_in_the_same_mode(): void
     {
         $this->offline();

@@ -20,8 +20,10 @@ class PracticeSessionPolicy
      */
     public function view(?User $user, PracticeSession $practiceSession): bool
     {
+        // A guest report is only for the visitor's own browser (ids are sequential); a phone opens the
+        // signed QR link instead (exam.shared, verify).
         if ($practiceSession->isGuest()) {
-            return true;
+            return $this->update($user, $practiceSession);
         }
 
         if ($user === null) {
