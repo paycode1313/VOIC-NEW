@@ -23,16 +23,6 @@ class ExamBlueprint
     }
 
     /**
-     * Get the slugs of all modes.
-     *
-     * @return list<string>
-     */
-    public function modeKeys(): array
-    {
-        return array_keys($this->modes());
-    }
-
-    /**
      * Determine whether the given mode slug exists.
      */
     public function hasMode(string $mode): bool
