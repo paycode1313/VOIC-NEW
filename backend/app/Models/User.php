@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 #[Fillable(['name', 'email', 'password', 'has_completed_onboarding', 'onboarding_goal', 'onboarding_experience', 'ai_learning_profile'])]
@@ -21,6 +22,19 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
+
+    /**
+     * Deleting an account removes the recorded answers too: the database cascade only removes the rows,
+     * the voice files live on disk.
+     */
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user): void {
+            $user->practiceSessions()->select('id')->each(
+                fn (PracticeSession $session) => Storage::disk('local')->deleteDirectory($session->recordingsDirectory())
+            );
+        });
+    }
 
     /**
      * Get the attributes that should be cast.

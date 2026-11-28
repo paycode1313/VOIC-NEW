@@ -48,7 +48,15 @@ class PruneExamData extends Command
                 }
             });
 
-        $this->components->info("Dihapus: {$guestSessions} sesi tamu, rekaman dari {$recordings} sesi pengguna (lebih dari {$days} hari).");
+        // Recordings whose session is gone (e.g. an account deleted before deletion removed them too).
+        $folders = collect(Storage::disk('local')->directories('exam-recordings'))
+            ->filter(fn (string $path) => ctype_digit(basename($path)));
+        $existing = PracticeSession::query()->whereKey($folders->map(fn ($path) => (int) basename($path))->all())->pluck('id')->all();
+        $orphans = $folders->reject(fn (string $path) => in_array((int) basename($path), $existing, true));
+        $orphans->each(fn (string $path) => Storage::disk('local')->deleteDirectory($path));
+        $recordings += $orphans->count();
+
+        $this->components->info("Dihapus: {$guestSessions} sesi tamu, rekaman dari {$recordings} sesi pengguna (lebih dari {$days} hari, atau sesinya sudah dihapus).");
 
         return self::SUCCESS;
     }
