@@ -6,6 +6,7 @@ use App\Models\AiRole;
 use App\Models\PracticeSession;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class PracticeHistoryTest extends TestCase
@@ -20,6 +21,29 @@ class PracticeHistoryTest extends TestCase
         $response = $this->get(route('practice.history'));
 
         $response->assertRedirect(route('login'));
+    }
+
+    /**
+     * Times are shown as the candidate's clock reads them (WIB), not UTC: a session at 19:05 in Malang
+     * used to appear as 12:05. An unfinished exam offers to continue instead of opening a report.
+     */
+    public function test_history_shows_local_time_and_continues_an_unfinished_exam(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-28 19:05:00', 'Asia/Jakarta'));
+        $user = User::factory()->create();
+        PracticeSession::factory()->create([
+            'user_id' => $user->id,
+            'exam_mode' => 'pitching',
+            'scenario_type' => 'Pitching Startup',
+            'overall_score' => 0,
+            'ai_conclusion' => null,
+            'feedback_notes' => [],
+        ]);
+
+        $this->actingAs($user)->get(route('practice.history'))->assertOk()
+            ->assertSee('28 Nov 2026, 19:05')
+            ->assertDontSee('12:05')
+            ->assertSee('Lanjutkan');
     }
 
     /**
