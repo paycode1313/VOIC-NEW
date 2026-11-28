@@ -27,6 +27,7 @@ class ExamReportService
         protected ExamBlueprint $blueprint,
         protected SpeakingAnalyzer $analyzer,
         protected ExaminerService $examiner,
+        protected ReportRewriter $rewriter,
     ) {}
 
     /**
@@ -297,7 +298,7 @@ class ExamReportService
         // Without the local AI ("online" mode on a laptop without a GPU) the cloud writes the notes, so the
         // report is about this conversation and not only the generic fallback lines.
         $transcript = array_map(fn (SessionMessage $message) => ['role' => $message->sender === 'user' ? 'user' : 'coach', 'content' => $message->message], $messages);
-        $fromCloud = fn (): array => array_filter($this->examiner->coachSummaryWithCloud($transcript, $language));
+        $fromCloud = fn (): array => array_filter($this->rewriter->coachSummaryWithCloud($transcript, $language));
 
         if ($this->examiner->onlineFirst() && ($cloud = $fromCloud()) !== []) {
             return $cloud;
@@ -595,7 +596,7 @@ class ExamReportService
                 return;
             }
             // All of them in one request; any the model skipped are asked one by one below.
-            $batch = $this->examiner->improveManyWithCloud(
+            $batch = $this->rewriter->improveManyWithCloud(
                 array_combine($missing, array_map(fn ($key) => ['question' => (string) $items[$key]['question'], 'answer' => (string) $items[$key]['answer']], $missing)),
                 $roleType,
                 $language,
@@ -608,7 +609,7 @@ class ExamReportService
                 if (isset($improved[$key])) {
                     continue;
                 }
-                $text = $this->examiner->improveWithCloud((string) $items[$key]['question'], (string) $items[$key]['answer'], $roleType, $language);
+                $text = $this->rewriter->improveWithCloud((string) $items[$key]['question'], (string) $items[$key]['answer'], $roleType, $language);
                 if ($text === null) {
                     return; // No cloud (or it failed): do not wait for the other answers too.
                 }
@@ -640,7 +641,7 @@ class ExamReportService
             if ($response?->successful()) {
                 foreach ((array) $response->json('items', []) as $row) {
                     // Same clean-up as the cloud rewrite (no "Situasi:" labels, a sensible length).
-                    $text = $this->examiner->tidyImproved((string) ($row['improved'] ?? ''));
+                    $text = $this->rewriter->tidyImproved((string) ($row['improved'] ?? ''));
                     if (isset($row['key']) && $text !== null) {
                         $improved[(int) $row['key']] = $text;
                     }
