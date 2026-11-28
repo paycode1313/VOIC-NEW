@@ -123,7 +123,8 @@ class PracticeSessionTest extends TestCase
     }
 
     /**
-     * Test that authenticated users can export their session telemetry data to CSV.
+     * The history export holds what today's reports measure (mode, band per criterion, pace, fillers),
+     * keeps sessions from the first VOIC version with their 0-100 score, and only the owner's sessions.
      */
     public function test_user_can_export_practice_sessions_to_csv(): void
     {
@@ -134,19 +135,58 @@ class PracticeSessionTest extends TestCase
         PracticeSession::factory()->create([
             'user_id' => $user->id,
             'ai_role_id' => $role->id,
-            'scenario_type' => 'Sidang Skripsi AI',
+            'scenario_type' => '=HYPERLINK("http://x")',
             'overall_score' => 89.5,
-            'feedback_notes' => [
-                'language' => 'en',
-                'pitch_dynamics_score' => 84,
-                'badges' => ['Tatapan Elang', 'Artikulasi Emas'],
-            ],
+            'feedback_notes' => ['language' => 'en'],
         ]);
+        PracticeSession::factory()->create([
+            'user_id' => $user->id,
+            'ai_role_id' => $role->id,
+            'exam_mode' => 'wawancara',
+            'scenario_type' => 'Wawancara Kerja · Data Analyst',
+            'duration_seconds' => 420,
+            'overall_score' => 72.22,
+            'feedback_notes' => ['exam_report' => [
+                'language' => 'id',
+                'overall_band' => 6.5,
+                'criteria' => [
+                    'fluency' => ['band' => 6.0], 'vocabulary' => ['band' => 7.0],
+                    'structure' => ['band' => 6.5], 'delivery' => ['band' => 6.5],
+                ],
+                'stats' => ['average_wpm' => 118, 'filler_count' => 9, 'eye_contact' => 74],
+                'focus' => [['title' => 'Tutup dengan angka']],
+            ]],
+        ]);
+        PracticeSession::factory()->create(['user_id' => User::factory()->create()->id, 'scenario_type' => 'Milik orang lain']);
 
         $response = $this->actingAs($user)->get(route('practice.export'));
 
         $response->assertOk();
         $this->assertStringContainsString('text/csv', $response->headers->get('Content-Type'));
-        $this->assertStringContainsString('voic-telemetry-sessions-', $response->headers->get('Content-Disposition'));
+        $this->assertStringContainsString('voic-riwayat-latihan-', $response->headers->get('Content-Disposition'));
+
+        $csv = $response->streamedContent();
+        $this->assertStringStartsWith("\xEF\xBB\xBF", $csv, 'Excel needs the UTF-8 BOM to show accents.');
+        $rows = array_map('str_getcsv', array_filter(explode("\n", substr($csv, 3))));
+        $header = array_shift($rows);
+        $this->assertCount(2, $rows);
+        $exam = array_combine($header, $rows[0]);
+        $legacy = array_combine($header, $rows[1]);
+
+        $this->assertSame('Wawancara Kerja', $exam['Mode']);
+        $this->assertSame('Ujian', $exam['Jenis']);
+        $this->assertSame('6.5', $exam['Band Keseluruhan (0-9)']);
+        $this->assertSame('7.0', $exam['Kosakata & Istilah']);
+        $this->assertSame('118', $exam['Kata per Menit']);
+        $this->assertSame('74', $exam['Kontak Mata (%)']);
+        $this->assertSame('Tutup dengan angka', $exam['Fokus Perbaikan']);
+        $this->assertSame('Wawancara Kerja · Data Analyst', $exam['Skenario / Topik']);
+
+        $this->assertSame('Versi lama', $legacy['Jenis']);
+        $this->assertSame('', $legacy['Band Keseluruhan (0-9)']);
+        $this->assertSame('89.5', $legacy['Skor (0-100)']);
+        // Text that a spreadsheet would run as a formula is written as plain text.
+        $this->assertSame("'=HYPERLINK(\"http://x\")", $legacy['Skenario / Topik']);
+        $this->assertStringNotContainsString('Milik orang lain', $response->streamedContent());
     }
 }

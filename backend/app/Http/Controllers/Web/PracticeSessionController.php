@@ -139,74 +139,83 @@ class PracticeSessionController extends Controller
     }
 
     /**
-     * Export all practice session telemetry metrics of the authenticated user to CSV.
+     * Download the user's practice history as CSV (opens in Excel and Google Sheets): one row per session
+     * with what its report measured. Sessions from the first VOIC version keep their 0-100 score.
      */
-    public function exportCsv(Request $request): StreamedResponse
+    public function exportCsv(Request $request, ExamBlueprint $blueprint): StreamedResponse
     {
         /** @var User $user */
         $user = $request->user();
 
-        $sessions = $user->practiceSessions()
-            ->with('aiRole')
-            ->orderByDesc('id')
-            ->get();
+        $sessions = $user->practiceSessions()->orderByDesc('id')->get();
+
+        $criteria = [
+            'fluency' => 'Kelancaran & Alur',
+            'vocabulary' => 'Kosakata & Istilah',
+            'structure' => 'Isi & Struktur',
+            'delivery' => 'Delivery & Kepercayaan Diri',
+        ];
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="voic-telemetry-sessions-'.now()->format('Ymd-His').'.csv"',
+            'Content-Disposition' => 'attachment; filename="voic-riwayat-latihan-'.now()->format('Ymd-His').'.csv"',
         ];
 
-        $callback = function () use ($sessions) {
+        return response()->stream(function () use ($sessions, $criteria, $blueprint) {
             $file = fopen('php://output', 'w');
-            // Add UTF-8 BOM for Excel compatibility
-            fwrite($file, "\xEF\xBB\xBF");
+            fwrite($file, "\xEF\xBB\xBF"); // UTF-8 BOM, so Excel shows "·" and accents correctly
 
-            // CSV Header
             fputcsv($file, [
-                'ID Sesi',
-                'Skenario / Topik',
-                'Karakter AI Penguji',
-                'Bahasa',
-                'Tanggal Sesi',
-                'Durasi (Detik)',
-                'Skor Optik Wajah (0-100)',
-                'Skor Suara & Vokal (0-100)',
-                'Skor Keseluruhan (0-100)',
-                'Kontak Mata (%)',
-                'Ekspresi Rileks (%)',
-                'Kecepatan Bicara (WPM)',
-                'Dinamika Intonasi (%)',
-                'Jumlah Kata Gumaman (Filler)',
-                'Lencana / Badges',
-                'Kesimpulan AI',
+                'ID Sesi', 'Tanggal', 'Mode', 'Jenis', 'Skenario / Topik', 'Bahasa', 'Durasi (Detik)',
+                'Band Keseluruhan (0-9)', ...array_values($criteria),
+                'Kata per Menit', 'Kata Pengisi', 'Kontak Mata (%)', 'Skor (0-100)', 'Fokus Perbaikan',
             ]);
 
             foreach ($sessions as $session) {
-                $feedback = is_array($session->feedback_notes) ? $session->feedback_notes : [];
-                $badges = isset($feedback['badges']) && is_array($feedback['badges']) ? implode(', ', $feedback['badges']) : '-';
-                fputcsv($file, [
+                $notes = is_array($session->feedback_notes) ? $session->feedback_notes : [];
+                $report = $notes['exam_report'] ?? $notes['coach_report'] ?? null;
+                $isExamReport = isset($notes['exam_report']);
+                $band = fn (?float $value): string => $value === null ? '' : number_format($value, 1, '.', '');
+
+                $row = [
                     $session->id,
+                    $session->created_at?->format('Y-m-d H:i'),
+                    $session->exam_mode && $blueprint->hasMode($session->exam_mode)
+                        ? $blueprint->text($blueprint->mode($session->exam_mode)['title'], 'id') : '',
+                    match (true) {
+                        $session->exam_mode === null => 'Versi lama',
+                        isset($notes['coach_report']) => 'Coaching',
+                        $isExamReport => 'Ujian',
+                        default => 'Belum selesai',
+                    },
                     $session->scenario_type,
-                    $session->aiRole?->name ?? 'Evaluator AI',
-                    strtoupper($feedback['language'] ?? 'ID'),
-                    $session->created_at->format('Y-m-d H:i:s'),
+                    strtoupper((string) ($report['language'] ?? $notes['language'] ?? 'id')),
                     $session->duration_seconds,
-                    $session->face_score ?? '-',
-                    $session->voice_score ?? '-',
-                    $session->overall_score ?? '-',
-                    $feedback['eye_contact_score'] ?? '-',
-                    $feedback['smile_rate'] ?? '-',
-                    $feedback['pace_wpm'] ?? '-',
-                    $feedback['pitch_dynamics_score'] ?? '-',
-                    $feedback['filler_words_count'] ?? 0,
-                    $badges,
-                    $session->ai_conclusion ?? '-',
-                ]);
+                    $isExamReport ? $band((float) $report['overall_band']) : '',
+                ];
+                foreach (array_keys($criteria) as $key) {
+                    $row[] = $isExamReport && isset($report['criteria'][$key]['band']) ? $band((float) $report['criteria'][$key]['band']) : '';
+                }
+                $row[] = $report['stats']['average_wpm'] ?? $notes['pace_wpm'] ?? '';
+                $row[] = $report['stats']['filler_count'] ?? $notes['filler_words_count'] ?? '';
+                $row[] = $report['stats']['eye_contact'] ?? $notes['eye_contact_score'] ?? '';
+                $row[] = $session->overall_score === null ? '' : rtrim(rtrim(number_format((float) $session->overall_score, 2, '.', ''), '0'), '.');
+                $row[] = implode('; ', $isExamReport ? array_column($report['focus'] ?? [], 'title') : ($report['practice'] ?? []));
+
+                fputcsv($file, array_map($this->plainCell(...), $row));
             }
 
             fclose($file);
-        };
+        }, 200, $headers);
+    }
 
-        return response()->stream($callback, 200, $headers);
+    /**
+     * A spreadsheet runs a cell that starts with = + - @ as a formula: write such text as plain text.
+     */
+    protected function plainCell(mixed $value): mixed
+    {
+        return is_string($value) && $value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)
+            ? "'".$value
+            : $value;
     }
 }
